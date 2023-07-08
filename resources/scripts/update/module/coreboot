@@ -27,6 +27,16 @@ _board=""
 cbtree=""
 cbrevision=""
 
+# NODELETE= ./download coreboot
+# usage: NODELETE= ./download coreboot
+# if you do this, .git* won't be removed, nor will blobs
+# this is useful for working on patches to a coreboot tree,
+# in git, then then add in the build system
+nodelete="false"
+if [ "x${NODELETE+set}" = 'xset' ]; then
+	nodelete="true"
+fi
+
 cbcfgsdir="resources/coreboot"
 
 main()
@@ -49,6 +59,7 @@ main()
 		download_coreboot_for_board "${board}"
 	done
 
+	censor_blobs
 	rm -f ${cbcfgsdir}/*/seen
 }
 
@@ -153,7 +164,7 @@ prepare_new_coreboot_tree()
 		|| err "cannot cd to coreboot/${cbtree}"
 	git reset --hard ${cbrevision} \
 		|| err "cannot reset coreboot revision for tree, ${cbtree}"
-	git submodule update --init --checkout \
+	git submodule update --init \
 		|| err "cannot update coreboot submodules for tree, ${cbtree}"
 
 	for patch in ../../"${cbcfgsdir}"/"${cbtree}"/patches/*.patch; do
@@ -172,6 +183,84 @@ prepare_new_coreboot_tree()
 			err "${cbtree} extra.sh"
 	fi
 	)
+}
+
+censor_blobs()
+{
+	if [ "${nodelete}" = "true" ]; then
+		return
+	fi
+
+	printf "Doing this to coreboot: https://en.wikipedia.org/wiki/Book_burning\n"
+	printf "Whatever you do, don't read: https://libreboot.org/news/policy.html\n"
+
+	rm -Rf coreboot/coreboot/
+	rm -Rf coreboot/.git* coreboot/*/.git* \
+			coreboot/*/3rdparty/*/.git*
+	rm -Rf coreboot/*/util/nvidia/cbootimage/.git*
+
+	# Also delete that nasty evil documentation that
+	# tells users how to install coreboot, because those
+	# evil coreboot people recommend blobs sometimes. /s
+	rm -Rf coreboot/*/Documentation
+
+	# it's basically book-burning. GNU FSDG policy == censorship.
+	# https://en.wikipedia.org/wiki/Book_burning
+
+	# there is a much better way:
+	# https://libreboot.org/news/policy.html
+
+	# but this version of libreboot is designed for the FSF
+	# to use in their GNU Boot project.
+
+	# and i guarantee you, they will remove the above comments
+	# if they fork this code.
+
+	# *they* will call it FREEDOM.
+
+	# but it's not. they're removing your freedom to choose.
+	# and censoring everything they don't like.
+
+	# they will decide what is good for you.
+	# they will decide against you.
+	# and if you fell for their propaganda, you'll feel
+	# pure. despite the fact that your machine is still
+	# full of blobs, even if the boot flash is blob-free.
+	# see:
+	# https://libreboot.org/faq.html#what-other-firmware-exists-outside-of-libreboot
+
+	# this, despite the fact that libreboot is a free software
+	# project. they call it non-free. the truth is written here:
+
+	# https://libreboot.org/freedom-status.html
+
+	for cbdir in coreboot/*; do
+		if [ ! -d "${cbdir}" ]; then continue; fi
+		cbtree="${cbdir##coreboot/}"
+		cbtree="${cbtree%/}"
+		if [ ! -d "coreboot/${cbtree}" ]; then continue; fi
+		bloblist="resources/coreboot/${cbtree}/blobs.list"
+		if [ -f "${bloblist}" ]; then
+			for blobfile in $(cat "${bloblist}"); do
+				printf "Deleting blob: 'coreboot/%s/%s'\n" \
+						"${cbtree}" "${blobfile}"
+				rm -f "coreboot/${cbtree}/${blobfile}"
+			done
+		else
+			printf "WARNING blobs.list unavailable for %s" \
+				${cbtree} 1>&2
+		fi
+		rmlist="resources/coreboot/${cbtree}/rm.list"
+		if [ -f "${rmlist}" ]; then
+			for rmentry in $(cat "${rmlist}"); do
+				printf "Deleting directory to save space: "
+				printf "'coreboot/%s/%s'\n" \
+						"${cbtree}" "${rmentry}"
+				rm -Rf "coreboot/${cbtree}/${rmentry}"
+			done
+		fi
+	done
+
 }
 
 err()
