@@ -1,0 +1,157 @@
+From 6490aad9a1095c837a13cf3002cd4f7340267964 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 8 Jul 2023 20:33:59 +0100
+Subject: [PATCH 1/1] never add cpu microcode updates
+
+we do it at the source.
+
+this way, we can just leave the default option
+enabled in coreboot configs, which is to include
+the microcode updates.
+
+however, this patch to the coreboot build system
+will result in the default setting being ignored.
+
+simply put: no action will be taken.
+
+no microcode updates will ever be inserted.
+
+this combined with ommitting --checkout in
+the submodule update command, should result reliably
+in no-microcode roms being the only reality in this
+version of coreboot, at least on intel machines.
+
+amd is another matter (for d8 and d16, the solution was/is
+to just patch the coreboot code to not add them - which actually
+is exactly the same as this change)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/cpu/Makefile.inc                      | 59 -----------------------
+ src/cpu/intel/fit/Makefile.inc            | 33 -------------
+ src/soc/amd/common/block/cpu/Makefile.inc |  1 -
+ 3 files changed, 93 deletions(-)
+
+diff --git a/src/cpu/Makefile.inc b/src/cpu/Makefile.inc
+index 12c682d43d..6be29bc942 100644
+--- a/src/cpu/Makefile.inc
++++ b/src/cpu/Makefile.inc
+@@ -8,62 +8,3 @@ subdirs-y += ti
+ subdirs-$(CONFIG_ARCH_X86) += x86
+ subdirs-$(CONFIG_CPU_QEMU_X86) += qemu-x86
+ subdirs-$(CONFIG_CPU_POWER9) += power9
+-
+-$(eval $(call create_class_compiler,cpu_microcode,x86_32))
+-################################################################################
+-## Rules for building the microcode blob in CBFS
+-################################################################################
+-
+-cbfs-files-$(CONFIG_USE_CPU_MICROCODE_CBFS_BINS) += cpu_microcode_blob.bin
+-
+-ifeq ($(CONFIG_CPU_MICROCODE_CBFS_EXTERNAL_HEADER),y)
+-cbfs-files-y  += cpu_microcode_blob.bin
+-cpu_microcode_blob.bin-file = $(objgenerated)/microcode.bin
+-
+-$(objgenerated)/microcode.bin: $(call strip_quotes,$(CONFIG_CPU_MICROCODE_HEADER_FILES))
+-	echo "   util/scripts/ucode_h_to_bin.sh $(objgenerated)/microcode.bin \"$(CONFIG_CPU_MICROCODE_HEADER_FILES)\""
+-	util/scripts/ucode_h_to_bin.sh $(objgenerated)/microcode.bin $(CONFIG_CPU_MICROCODE_HEADER_FILES)
+-endif
+-
+-ifeq ($(CONFIG_CPU_MICROCODE_CBFS_EXTERNAL_BINS),y)
+-$(obj)/cpu_microcode_blob.bin: cpu_microcode_bins := $(call strip_quotes,$(CONFIG_CPU_UCODE_BINARIES))
+-endif
+-# otherwise `cpu_microcode_bins` should be filled by platform makefiles
+-
+-# We just mash all microcode binaries together into one binary to rule them all.
+-# This approach assumes that the microcode binaries are properly padded, and
+-# their headers specify the correct size. This works fairly well on isolatied
+-# updates, such as Intel and some AMD microcode, but won't work very well if the
+-# updates are wrapped in a container, like AMD's microcode update container. If
+-# there is only one microcode binary (i.e. one container), then we don't have
+-# this issue, and this rule will continue to work.
+-$(obj)/cpu_microcode_blob.bin: $$(wildcard $$(cpu_microcode_bins)) $(DOTCONFIG)
+-	for bin in $(cpu_microcode_bins); do \
+-		if [ ! -f "$$bin" ]; then \
+-			echo "Microcode error: $$bin does not exist"; \
+-			NO_MICROCODE_FILE=1; \
+-		fi; \
+-	done; \
+-	if [ -n "$$NO_MICROCODE_FILE" ]; then \
+-		if [ -z "$(CONFIG_USE_BLOBS)" ] && [ -n "$(CONFIG_CPU_MICROCODE_CBFS_DEFAULT_BINS)" ]; then \
+-			echo "Try enabling binary-only repository in Kconfig 'General setup' menu."; \
+-		fi; \
+-		false; \
+-	fi
+-	$(if $(cpu_microcode_bins),,false) # fail if no file is given at all
+-	@printf "    MICROCODE  $(subst $(obj)/,,$(@))\n"
+-	@echo $(cpu_microcode_bins)
+-	cat $(cpu_microcode_bins) > $@
+-
+-cpu_microcode_blob.bin-file ?= $(obj)/cpu_microcode_blob.bin
+-cpu_microcode_blob.bin-type := microcode
+-# The AMD LPC SPI DMA controller requires source files to be 64 byte aligned.
+-ifeq ($(CONFIG_SOC_AMD_COMMON_BLOCK_LPC_SPI_DMA),y)
+-cpu_microcode_blob.bin-align := 64
+-else
+-cpu_microcode_blob.bin-align := 16
+-endif
+-
+-ifneq ($(CONFIG_CPU_MICROCODE_CBFS_LOC),)
+-cpu_microcode_blob.bin-COREBOOT-position := $(CONFIG_CPU_MICROCODE_CBFS_LOC)
+-endif
+diff --git a/src/cpu/intel/fit/Makefile.inc b/src/cpu/intel/fit/Makefile.inc
+index d3f12e43e6..10d1c7c1fe 100644
+--- a/src/cpu/intel/fit/Makefile.inc
++++ b/src/cpu/intel/fit/Makefile.inc
+@@ -16,36 +16,3 @@ $(call add_intermediate, set_fit_ptr, $(IFITTOOL))
+ 	$(IFITTOOL) -f $< -F -n intel_fit -r COREBOOT -c
+ 
+ FIT_ENTRY=$(call strip_quotes, $(CONFIG_INTEL_TOP_SWAP_FIT_ENTRY_FMAP_REG))
+-
+-ifneq ($(CONFIG_UPDATE_IMAGE),y) # never update the bootblock
+-
+-ifneq ($(CONFIG_CPU_MICROCODE_CBFS_NONE),y)
+-
+-$(call add_intermediate, add_mcu_fit, set_fit_ptr $(IFITTOOL))
+-	@printf "    UPDATE-FIT Microcode\n"
+-	$(IFITTOOL) -f $< -a -n cpu_microcode_blob.bin -t 1 -s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) -r COREBOOT
+-
+-# Second FIT in TOP_SWAP bootblock
+-ifeq ($(CONFIG_INTEL_ADD_TOP_SWAP_BOOTBLOCK),y)
+-
+-$(call add_intermediate, set_ts_fit_ptr, $(IFITTOOL))
+-	@printf "    UPDATE-FIT Top Swap: set FIT pointer to table\n"
+-	$(IFITTOOL) -f $< -F -n intel_fit_ts -r COREBOOT $(TS_OPTIONS)
+-
+-$(call add_intermediate, add_ts_mcu_fit, set_ts_fit_ptr $(IFITTOOL))
+-	@printf "    UPDATE-FIT Top Swap: Microcode\n"
+-ifneq ($(FIT_ENTRY),)
+-	$(IFITTOOL) -f $< -A -n $(FIT_ENTRY) -t 1 -s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) $(TS_OPTIONS) -r COREBOOT
+-endif # FIT_ENTRY
+-	$(IFITTOOL) -f $< -a -n cpu_microcode_blob.bin -t 1 -s $(CONFIG_CPU_INTEL_NUM_FIT_ENTRIES) $(TS_OPTIONS) -r COREBOOT
+-
+-cbfs-files-y += intel_fit_ts
+-intel_fit_ts-file := fit_table.c:struct
+-intel_fit_ts-type := intel_fit
+-intel_fit_ts-align := 16
+-
+-endif # CONFIG_INTEL_ADD_TOP_SWAP_BOOTBLOCK
+-
+-endif # CONFIG_CPU_MICROCODE_CBFS_NONE
+-
+-endif # CONFIG_UPDATE_IMAGE
+diff --git a/src/soc/amd/common/block/cpu/Makefile.inc b/src/soc/amd/common/block/cpu/Makefile.inc
+index bd9e8ff88f..6f95b9684c 100644
+--- a/src/soc/amd/common/block/cpu/Makefile.inc
++++ b/src/soc/amd/common/block/cpu/Makefile.inc
+@@ -6,7 +6,6 @@ ramstage-y += cpu.c
+ 
+ ifeq ($(CONFIG_SOC_AMD_COMMON_BLOCK_UCODE),y)
+ define add-ucode-as-cbfs
+-cbfs-files-y += cpu_microcode_$(2).bin
+ cpu_microcode_$(2).bin-file := $(1)
+ cpu_microcode_$(2).bin-type := microcode
+ 
+-- 
+2.40.1
+
