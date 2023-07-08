@@ -11,7 +11,6 @@
 /util/ich9utils/ich9gen
 /TODO
 /bios_extract/
-/ec/
 /tmp/
 /payload/
 /me_cleaner/
@@ -40,8 +39,4 @@
 /push
 /version
 /versiondate
-/blobs/app/
-/blobs/cache/
-*me.bin
-/mrc/
 /util/nvmutil/nvm

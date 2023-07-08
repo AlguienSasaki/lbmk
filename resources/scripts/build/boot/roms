@@ -129,10 +129,6 @@ listboards()
 buildrom() {
 	board="$1"
 
-	# Start by building blobs and placing them in the
-	# coreboot tree only for boards that need them
-	./blobutil download ${board} || exit 1
-
 	if [ -d "resources/coreboot/${board}/" ]; then
 		./build boot roms_helper ${board}${opts}
 	else

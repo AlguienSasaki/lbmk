@@ -26,9 +26,6 @@ version="version-unknown"
 versiondate="version-date-unknown"
 cbtree="default"
 target=""
-CONFIG_HAVE_MRC=""
-CONFIG_HAVE_ME_BIN=""
-CONFIG_KBC1126_FIRMWARE=""
 ifdtool="cbutils/${cbtree}/ifdtool"
 cbfstool="cbutils/${cbtree}/cbfstool"
 
@@ -73,25 +70,6 @@ make_archive()
 		continue
 	fi
 
-	CONFIG_HAVE_MRC="y"
-	CONFIG_HAVE_ME_BIN="y"
-	CONFIG_KBC1126_FIRMWARE="y"
-	grep "CONFIG_HAVE_ME_BIN=y" \
-			"resources/coreboot/${target}/config/"* \
-			|| CONFIG_HAVE_ME_BIN="n"
-	grep "CONFIG_HAVE_MRC=y" \
-			"resources/coreboot/${target}/config/"* \
-			|| CONFIG_HAVE_MRC="n"
-	grep "CONFIG_KBC1126_FIRMWARE=y" \
-			"resources/coreboot/${target}/config"/* \
-			|| CONFIG_KBC1126_FIRMWARE="n"
-
-	# remove ME/MRC/EC firmware from ROM images
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ] \
-			|| [ "${target}" = "e6400nvidia_4mb" ]; then
-		strip_archive "${romdir}"
-	fi
-
 	printf "Generating release/%s/roms/%s-%s_%s.tar.xz\n" \
 			"${version}" "${projectname}" \
 			"${version}" "${target##*/}"
@@ -106,68 +84,6 @@ make_archive()
 	then
 		rm -Rf "${romdir}"
 		mv "${romdir}_tmp" "${romdir}"
-	fi
-}
-
-strip_archive()
-{
-	romdir=${1}
-
-	if [ ! -d coreboot/${cbtree} ]; then
-		./download coreboot ${cbtree} || exit 1
-	fi
-	./build module cbutils ${cbtree} || exit 1
-
-	rm -Rf "${romdir}_tmp" # dirty hack, to reduce disk io later
-	# rather than using /tmp, which might not be tmpfs
-	mkdir "${romdir}_tmp"
-
-	# Hash the rom before removing blobs
-	if [ ! -f "${romdir}/blobhashes" ]; then
-		printf "ROMs must match these hashes after blob insertion:" \
-			> "${romdir}/blobhashes"
-	fi
-	(
-	cd ${romdir} || err "subshell: cd"
-	sha1sum *.rom >> blobhashes || err "subshell: sha1sum"
-	)
-
-	for romfile in "${romdir}"/*.rom
-	do
-		strip_rom_image "${romfile}"
-	done
-}
-
-strip_rom_image()
-{
-	romfile=${1}
-
-	if [ ! -f "${romfile}" ]; then
-		continue
-	fi
-
-	if [ "${CONFIG_HAVE_ME_BIN}" = "y" ]; then
-		${ifdtool} --nuke me "${romfile}" || exit 1
-		mv "${romfile}" "${romdir}_tmp"/
-		mv "${romfile}.new" "${romfile}"
-	fi
-
-	if [ "${CONFIG_HAVE_MRC}" = "y" ]
-	then
-		${cbfstool} "${romfile}" remove -n mrc.bin || exit 1
-		${cbfstool} "${romfile}" print
-	fi
-
-	if [ "${CONFIG_KBC1126_FIRMWARE}" = "y" ]; then
-		${cbfstool} "${romfile}" remove -n ecfw1.bin || exit 1
-		${cbfstool} "${romfile}" remove -n ecfw2.bin || exit 1
-	fi
-
-	# TODO: replace this board-specific hack
-	if [ "${target}" = "e6400nvidia_4mb" ]; then
-		${cbfstool} "${romfile}" remove \
-			-n "pci10de,06eb.rom" \
-			|| exit 1
 	fi
 }
 

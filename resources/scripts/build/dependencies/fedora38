@@ -53,7 +53,7 @@ dnf -y install nasm perl-libwww-perl python3 subversion
 
 dnf -y install gcc
 
-# for running the crostool script (to get mrc.bin file for t440p)
+# for running the crostool script
 dnf -y install sharutils curl parted e2fsprogs unzip
 
 # for cross-compiling ARM binaries

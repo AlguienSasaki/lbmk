@@ -46,7 +46,7 @@ xbps-install -y nasm perl-LWP python subversion
 
 xbps-install -y base-devel
 
-# for running the crostool script (to get mrc.bin file for t440p)
+# for running the crostool script
 xbps-install -y sharutils curl parted e2fsprogs unzip
 
 # for cross-compiling ARM binaries

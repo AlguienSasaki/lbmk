@@ -48,7 +48,7 @@ apt-get -y install uuid-dev nasm
 
 apt-get -y install build-essential
 
-# for running the crostool script (to get mrc.bin file for t440p)
+# for running the crostool script
 apt-get -y install sharutils curl parted e2fsprogs unzip
 
 # to use the right software versions and links for compiling 

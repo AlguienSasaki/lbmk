@@ -36,9 +36,6 @@ main()
 	elif [ "${0##*/}" = "download" ]; then
 		./update module $@ || exit 1
 		exit 0
-	elif [ "${0##*/}" = "blobutil" ]; then
-		./update blobs $@ || exit 1
-		exit 0
 	elif [ $# -lt 1 ]; then
 		die "Too few arguments. Try: ${0} help"
 	fi

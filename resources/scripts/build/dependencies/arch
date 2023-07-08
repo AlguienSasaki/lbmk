@@ -49,7 +49,7 @@ pacman -S --needed --noconfirm nasm perl-libwww python subversion
 
 pacman -S --needed --noconfirm base-devel
 
-# for running the crostool script (to get mrc.bin file for t440p)
+# for running the crostool script
 pacman -S --needed --noconfirm sharutils curl parted e2fsprogs unzip
 
 # for cross-compiling ARM binaries

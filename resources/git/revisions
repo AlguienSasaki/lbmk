@@ -26,12 +26,6 @@
 	url: git://git.sv.gnu.org/gnulib 
 }
 
-{me_cleaner}{
-	rev: 43612a630c79f3bc6f2653bfe90dfe0b7b137e08
-	loc: me_cleaner
-	url: https://github.com/corna/me_cleaner.git
-}
-
 {memtest86plus}{
 	rev: a78401b9704cfdd49c89bfb31d2df08f60521d0b
 	loc: memtest86plus
@@ -49,10 +43,4 @@
 	rev: 11680db4e1251eb842bee11e53b6d1f0ae67767b
 	loc: flashrom 
 	url: https://review.coreboot.org/flashrom.git
-}
-
-{bios_extract}{
-	rev: 0a7bc1d71735ef97b00dfec0fd54a02fcc5d1bb0
-	loc: bios_extract
-	url: https://review.coreboot.org/bios_extract
 }

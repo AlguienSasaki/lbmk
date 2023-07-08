@@ -23,12 +23,11 @@ set -u -e
 
 projectname="$(cat projectname)"
 
-modlist="coreboot flashrom grub memtest86plus seabios me_cleaner u-boot"
-modlist="${modlist} bios_extract"
+modlist="coreboot flashrom grub memtest86plus seabios u-boot"
 
-dirlist="resources util" # do not add blobs directory here. it's handled below
+dirlist="resources util"
 
-filelist="lbmk blobutil modify download build README.md COPYING Makefile update"
+filelist="lbmk modify download build README.md COPYING Makefile update"
 filelist="${filelist} version versiondate projectname .gitcheck gitclone"
 
 version="version-unknown"
@@ -88,31 +87,12 @@ copy_files()
 		cp -R "${dir}/" "${srcdir}/"
 	done
 
-	copy_blobs
-
 	for i in ${filelist}; do
 		if [ ! -f "${i}" ]; then
 			rm -Rf "${srcdir}"
 			err "file '${1}' does not exist"
 		fi
 		cp ${i} "${srcdir}/"
-	done
-}
-
-copy_blobs()
-{
-	mkdir -p "${srcdir}"/blobs
-	# do not copy intel ME etc, but do copy ifd/gbe files
-	for i in t440p xx20 xx30 hp8200sff hp_ivybridge hp_sandybridge \
-			hp8300usdt; do
-		for j in ifd gbe 16_ifd; do
-			if [ -f "blobs/${i}/${j}.bin" ]; then
-				if [ ! -e "${srcdir}/blobs/${i}" ]; then
-					mkdir -p "${srcdir}/blobs/${i}"
-				fi
-				cp blobs/${i}/${j}.bin "${srcdir}/blobs/${i}"
-			fi
-		done
 	done
 }
 
@@ -127,7 +107,6 @@ purge_files()
 		cd "${i}/" || err "cd2"
 		make distclean || err "make-distclean1"
 		)
-		make clean -BC default/util/kbc1126/ || err "make-clean1"
 	done
 	)
 

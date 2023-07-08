@@ -31,9 +31,6 @@ set -u -e
 
 projectname="$(cat projectname)"
 
-blobs_required=""
-microcode_required=""
-
 kmapdir="resources/grub/keymap"
 displaymodes=""
 payloads=""
@@ -159,15 +156,6 @@ fi
 if [ "${payload_uboot}" = "y" ] && \
 		[ "${uboot_config}" = "undefined" ]; then
 	uboot_config="default"
-fi
-
-if [ "${microcode_required}" != "n" ] \
-		&& [ "${microcode_required}" != "y" ]; then
-	microcode_required="y"
-fi
-if [ "${blobs_required}" != "n" ] \
-		&& [ "${blobs_required}" != "y" ]; then
-	blobs_required="y"
 fi
 
 # Override all payload directives with cmdline args
@@ -320,10 +308,6 @@ moverom() {
 	newrompath="$2"
 	cuttype="$3"
 
-	if [ "${blobs_required}" = "n" ]; then
-		newrompath="${newrompath%.rom}_noblobs.rom"
-	fi
-
 	printf "\nCreating new ROM image: %s\n" "${newrompath}"
 
 	if [ "${cuttype}" = "4MiB IFD BIOS region" ]; then
@@ -362,21 +346,6 @@ moverom() {
 			seek=$(($(stat -c %s ${newrompath}) - 0x20000)) \
 			count=64k conv=notrunc
 		rm -f top64k.bin
-	fi
-
-	if [ "${microcode_required}" = "n" ]; then
-		_newrom_b="${newrompath%.rom}_nomicrocode.rom"
-		cp "${newrompath}" "${_newrom_b}" || exit 1
-		microcode_present="y"
-		"${cbfstool}" "${_newrom_b}" remove -n \
-				cpu_microcode_blob.bin || microcode_present="n"
-		if [ "${microcode_present}" = "n" ]; then
-			rm -f "${_newrom_b}" || exit 1
-			printf "REMARK: '%s' already lacks microcode\n" \
-					${newrompath}
-			printf "Renaming default ROM file instead.\n"
-			mv "${newrompath}" "${_newrom_b}" || exit 1
-		fi
 	fi
 }
 
