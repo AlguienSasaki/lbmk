@@ -1,0 +1,38 @@
+From 7a00638cea41ad939a59fc0e5996959435fbdb7f Mon Sep 17 00:00:00 2001
+From: "D.d.P.F. Lombard" <lombard@lombards.xyz>
+Date: Sun, 7 Feb 2021 16:40:05 +0100
+Subject: [PATCH 3/6] Tweak cmos defaults for KCMA-D8 (for a little speed
+ boost)
+
+63xx CPUs have the option to use a reduced latency value inside the crossbar.
+Setting "experimental_memory_speed_boost=Enable" aparently only has an effect
+on 63xx CPUs and may, in certain cases, yield a slight memory bandwidth
+increase (according to Timothy Pearson), but maybe it also works for
+43xx CPUs.
+
+Setting "l3_cache_partitioning=Enable" will increase performance in certain
+situations. See:
+https://developer.arm.com/documentation/100453/0401/functional-description/l3-cache/l3-cache-partitioning?lang=en
+---
+ src/mainboard/asus/kcma-d8/cmos.default | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/mainboard/asus/kcma-d8/cmos.default b/src/mainboard/asus/kcma-d8/cmos.default
+index 306687157f..4e033d756f 100644
+--- a/src/mainboard/asus/kcma-d8/cmos.default
++++ b/src/mainboard/asus/kcma-d8/cmos.default
+@@ -21,9 +21,9 @@ sata_ahci_mode=Enable
+ sata_alpm=Disable
+ maximum_p_state_limit=0xf
+ probe_filter=Auto
+-l3_cache_partitioning=Disable
++l3_cache_partitioning=Enable
+ gart=Enable
+ ehci_async_data_cache=Enable
+-experimental_memory_speed_boost=Disable
++experimental_memory_speed_boost=Enable
+ power_on_after_fail=On
+ boot_option=Fallback
+-- 
+2.25.1
+

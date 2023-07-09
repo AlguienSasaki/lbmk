@@ -1,0 +1,32 @@
+From f0aac7261e16adc8e61eca7a506ff2de5112be47 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Fri, 7 May 2021 19:43:32 +0100
+Subject: [PATCH 6/6] asus/kgpe-d16: enable lc_cache_partitioning and
+ experimental_memory_speed_boost
+
+This really only benefits 63xx opterons which are less reliable in libreboot due
+to lack of CPU microcode updates, but we might aswell enable this anyway.
+---
+ src/mainboard/asus/kgpe-d16/cmos.default | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/mainboard/asus/kgpe-d16/cmos.default b/src/mainboard/asus/kgpe-d16/cmos.default
+index 7c496a50d7..8a25620e1d 100644
+--- a/src/mainboard/asus/kgpe-d16/cmos.default
++++ b/src/mainboard/asus/kgpe-d16/cmos.default
+@@ -21,10 +21,10 @@ sata_ahci_mode=Enable
+ sata_alpm=Disable
+ maximum_p_state_limit=0xf
+ probe_filter=Auto
+-l3_cache_partitioning=Disable
++l3_cache_partitioning=Enable
+ ieee1394_controller=Enable
+ gart=Enable
+ ehci_async_data_cache=Enable
+-experimental_memory_speed_boost=Disable
++experimental_memory_speed_boost=Enable
+ power_on_after_fail=On
+ boot_option=Fallback
+-- 
+2.25.1
+
