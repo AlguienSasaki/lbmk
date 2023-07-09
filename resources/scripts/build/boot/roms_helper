@@ -81,6 +81,8 @@ seabios_opromloadonly="0"
 payload_memtest="n"
 payload_uboot="n"
 uboot_config="undefined"
+# ditto option whether to compile ada in crossgcc:
+crossgcc_ada="y" # yes by default
 # Override the above defaults using board.cfg
 . "resources/coreboot/${board}/board.cfg"
 
@@ -158,7 +160,13 @@ if [ "${payload_uboot}" = "y" ] && \
 	uboot_config="default"
 fi
 
+# ada support needed for libgfxinit submodule
+if [ "${crossgcc_ada}" != "y" ] && [ "${crossgcc_ada}" != "n" ]; then
+	crossgcc_ada="y"
+fi
+
 # Override all payload directives with cmdline args
+# (do not override crossgcc_ada)
 if [ ! -z ${payloads} ]; then	
 	echo "setting payloads $payloads"
 	payload_grub="n"
@@ -191,6 +199,9 @@ fi
 
 cat version > "${cbdir}/.coreboot-version"
 
+if [ "${crossgcc_ada}" = "n" ]; then
+	export BUILD_LANGUAGES=c
+fi
 if [ "${arch}" = "x86_32" ] || [ "${arch}" = "x86_64" ]; then
 	if [ ! -d "${cbdir}/util/crossgcc/xgcc/i386-elf/" ]; then
 		# Even for 64-bit machines, coreboot builds 32-bit ROM
