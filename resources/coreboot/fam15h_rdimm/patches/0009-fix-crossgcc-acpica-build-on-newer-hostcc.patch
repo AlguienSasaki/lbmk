@@ -1,0 +1,108 @@
+From 373dd351e374f391c9e2048e5f3e535267a04719 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 9 Jul 2023 19:37:39 +0100
+Subject: [PATCH 1/1] fix crossgcc/acpica build on newer hostcc
+
+Changes made to acpica/iasl:
+
+remove superfluous YYSTYPE declaration
+
+make LuxBuffer variables static, to avoid warnings
+treated as errors about multiple definitions
+
+AcpiGbl_DbOpt_NoRegionSupport - remove this definition
+in source/tools/acpiexec/aemain.c because it's already
+re-defined by acpiexec. otherwise the linker complains
+about multiple definitions
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ .../acpica-unix2-20190703_mitigategcc.patch   | 76 +++++++++++++++++++
+ 1 file changed, 76 insertions(+)
+ create mode 100644 util/crossgcc/patches/acpica-unix2-20190703_mitigategcc.patch
+
+diff --git a/util/crossgcc/patches/acpica-unix2-20190703_mitigategcc.patch b/util/crossgcc/patches/acpica-unix2-20190703_mitigategcc.patch
+new file mode 100644
+index 0000000000..8de47245bd
+--- /dev/null
++++ b/util/crossgcc/patches/acpica-unix2-20190703_mitigategcc.patch
+@@ -0,0 +1,76 @@
++From 66b927d923183ff62c9a757fafdeca9d1ac3fa87 Mon Sep 17 00:00:00 2001
++From: Leah Rowe <leah@libreboot.org>
++Date: Sun, 9 Jul 2023 18:58:11 +0100
++Subject: [PATCH 1/1] fix building on newer hostcc (debian sid tested)
++
++remove superfluous YYSTYPE declaration
++
++make LuxBuffer variables static, to avoid warnings
++treated as errors about multiple definitions
++
++AcpiGbl_DbOpt_NoRegionSupport - remove this definition
++in source/tools/acpiexec/aemain.c because it's already
++re-defined by acpiexec. otherwise the linker complains
++about multiple definitions
++
++Signed-off-by: Leah Rowe <leah@libreboot.org>
++---
++ source/compiler/aslcompiler.l  | 1 -
++ source/compiler/dtparser.l     | 2 +-
++ source/compiler/prparser.l     | 2 +-
++ source/tools/acpiexec/aemain.c | 1 -
++ 4 files changed, 2 insertions(+), 4 deletions(-)
++
++diff --git a/source/compiler/aslcompiler.l b/source/compiler/aslcompiler.l
++index 1949b32..a24f028 100644
++--- a/source/compiler/aslcompiler.l
+++++ b/source/compiler/aslcompiler.l
++@@ -48,7 +48,6 @@
++ 
++ #include <stdlib.h>
++ #include <string.h>
++-YYSTYPE AslCompilerlval;
++ 
++ /*
++  * Generation:  Use the following command line:
++diff --git a/source/compiler/dtparser.l b/source/compiler/dtparser.l
++index 6517e52..d35181c 100644
++--- a/source/compiler/dtparser.l
+++++ b/source/compiler/dtparser.l
++@@ -100,7 +100,7 @@ NewLine         [\n]
++ /*
++  * Local support functions
++  */
++-YY_BUFFER_STATE         LexBuffer;
+++static YY_BUFFER_STATE         LexBuffer;
++ 
++ /******************************************************************************
++  *
++diff --git a/source/compiler/prparser.l b/source/compiler/prparser.l
++index bcdef14..5a1b848 100644
++--- a/source/compiler/prparser.l
+++++ b/source/compiler/prparser.l
++@@ -116,7 +116,7 @@ Identifier      [a-zA-Z][0-9a-zA-Z]*
++ /*
++  * Local support functions
++  */
++-YY_BUFFER_STATE         LexBuffer;
+++static YY_BUFFER_STATE         LexBuffer;
++ 
++ 
++ /******************************************************************************
++diff --git a/source/tools/acpiexec/aemain.c b/source/tools/acpiexec/aemain.c
++index 58640dd..cd0add6 100644
++--- a/source/tools/acpiexec/aemain.c
+++++ b/source/tools/acpiexec/aemain.c
++@@ -84,7 +84,6 @@ BOOLEAN                     AcpiGbl_VerboseHandlers = FALSE;
++ UINT8                       AcpiGbl_RegionFillValue = 0;
++ BOOLEAN                     AcpiGbl_IgnoreErrors = FALSE;
++ BOOLEAN                     AcpiGbl_AbortLoopOnTimeout = FALSE;
++-BOOLEAN                     AcpiGbl_DbOpt_NoRegionSupport = FALSE;
++ UINT8                       AcpiGbl_UseHwReducedFadt = FALSE;
++ BOOLEAN                     AcpiGbl_DoInterfaceTests = FALSE;
++ BOOLEAN                     AcpiGbl_LoadTestTables = FALSE;
++-- 
++2.40.1
++
+-- 
+2.40.1
+
