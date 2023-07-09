@@ -1,0 +1,41 @@
+From d5dc3f23eb546cf328fdfe1e918afa028fb9cd8c Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 9 Jul 2023 04:13:52 +0100
+Subject: [PATCH 1/1] util/cbfstool Makefile: support distclean
+
+it just does make-clean
+
+this is so that this super-old coreboot revision
+interfaces well with lbmk, which runs distclean
+on cbfstool (which is supported, on modern cbfstool)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/cbfstool/Makefile | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/util/cbfstool/Makefile b/util/cbfstool/Makefile
+index d5321f6959..b8424d7d87 100644
+--- a/util/cbfstool/Makefile
++++ b/util/cbfstool/Makefile
+@@ -26,7 +26,7 @@ ifittool: $(objutil)/cbfstool/ifittool
+ 
+ cbfs-compression-tool: $(objutil)/cbfstool/cbfs-compression-tool
+ 
+-.PHONY: clean cbfstool ifittool fmaptool rmodtool ifwitool cbfs-compression-tool
++.PHONY: distclean clean cbfstool ifittool fmaptool rmodtool ifwitool cbfs-compression-tool
+ clean:
+ 	$(RM) fmd_parser.c fmd_parser.h fmd_scanner.c fmd_scanner.h
+ 	$(RM) $(objutil)/cbfstool/cbfstool $(cbfsobj)
+@@ -55,6 +55,8 @@ install: all
+ 	$(INSTALL) ifittool $(DESTDIR)$(BINDIR)
+ 	$(INSTALL) cbfs-compression-tool $(DESTDIR)$(BINDIR)
+ 
++distclean: clean
++
+ ifneq ($(V),1)
+ .SILENT:
+ endif
+-- 
+2.40.1
+
