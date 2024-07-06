@@ -8,6 +8,7 @@ usbserial_ftdi \
 usbserial_pl2303 \
 usbserial_usbdebug \
 video_colors \
+xhci \
 "
 # Modules (and always loaded)
 grub_modules=" \
@@ -35,7 +36,6 @@ crypto \
 cryptodisk \
 diskfilter \
 echo \
-xhci \
 ehci \
 eval \
 exfat \
