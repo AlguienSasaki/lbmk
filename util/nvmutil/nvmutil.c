@@ -80,6 +80,9 @@ main(int argc, char *argv[])
 #endif
 
 	if (argc < 2) { /* TODO: manpage! */
+#ifdef __OpenBSD__
+		err_if(pledge("stdio", NULL) == -1);
+#endif
 		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
 		fprintf(stderr, "USAGE:\n");
 		fprintf(stderr, " %s FILE dump\n", argv[0]);
