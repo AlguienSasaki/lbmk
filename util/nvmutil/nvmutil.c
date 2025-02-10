@@ -248,7 +248,7 @@ readGbe(void)
 		err_if(nr == -1);
 		if (nr != nf)
 			err(errno == ECANCELED,
-			    "%ld bytes written on '%s', expected %ld bytes\n",
+			    "%ld bytes read from '%s', expected %ld bytes\n",
 			    nr, filename, nf);
 
 		tnr += nr;
@@ -475,7 +475,7 @@ writeGbe(void)
 		err_if(nw == -1);
 		if (nw != nf)
 			err(errno == ECANCELED,
-			    "%ld bytes written on '%s', expected %ld bytes\n",
+			    "%ld bytes written to '%s', expected %ld bytes\n",
 			    nw, filename, nf);
 
 		tnw += nf;
