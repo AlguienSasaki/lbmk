@@ -1,7 +1,7 @@
-From 040942842dc05c9b94c9be21f01b08da3e25fe6d Mon Sep 17 00:00:00 2001
+From 0441e7eff7950bfd47fc2f5533ce2c64b785dc1d Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Wed, 24 Feb 2021 08:25:41 +0100
-Subject: [PATCH 21/22] Fix compilation on x86_64
+Subject: [PATCH 25/26] Fix compilation on x86_64
 
 Signed-off-by: Patrick Rudolph <patrick.rudolph@9elements.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Patrick Rudolph <patrick.rudolph@9elements.com>
  1 file changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/grub-core/bus/usb/xhci.c b/grub-core/bus/usb/xhci.c
-index f4591ffb5..3495bb919 100644
+index 8ad2a10f9..ceb57c9b3 100644
 --- a/grub-core/bus/usb/xhci.c
 +++ b/grub-core/bus/usb/xhci.c
 @@ -184,7 +184,7 @@ enum
@@ -36,7 +36,7 @@ index f4591ffb5..3495bb919 100644
  static inline grub_uint32_t
  grub_xhci_port_read (struct grub_xhci *x, grub_uint32_t port)
  {
-@@ -664,7 +672,7 @@ static void xhci_process_events(struct grub_xhci *x)
+@@ -697,7 +705,7 @@ static void xhci_process_events(struct grub_xhci *x)
  	    case ER_TRANSFER:
  	    case ER_COMMAND_COMPLETE:
  	      {
@@ -45,7 +45,7 @@ index f4591ffb5..3495bb919 100644
  		struct grub_xhci_ring *ring = XHCI_RING(rtrb);
  		volatile struct grub_xhci_trb  *evt = &ring->evt;
  		grub_uint32_t eidx = rtrb - ring->ring + 1;
-@@ -697,9 +705,9 @@ static void xhci_process_events(struct grub_xhci *x)
+@@ -730,9 +738,9 @@ static void xhci_process_events(struct grub_xhci *x)
  	  }
  	grub_xhci_write32(&evts->nidx, nidx);
  	volatile struct grub_xhci_ir *ir = x->ir;
@@ -58,7 +58,7 @@ index f4591ffb5..3495bb919 100644
      }
  }
  
-@@ -800,7 +808,7 @@ static void xhci_trb_queue(volatile struct grub_xhci_ring *ring,
+@@ -833,7 +841,7 @@ static void xhci_trb_queue(volatile struct grub_xhci_ring *ring,
  			   grub_uint32_t xferlen, grub_uint32_t flags)
  {
    grub_dprintf("xhci", "%s: ring %p data %llx len %d flags 0x%x remain 0x%x\n", __func__,
@@ -67,7 +67,7 @@ index f4591ffb5..3495bb919 100644
  
    if (xhci_ring_full(ring))
      {
-@@ -1907,7 +1915,7 @@ grub_xhci_setup_transfer (grub_usb_controller_t dev,
+@@ -1940,7 +1948,7 @@ grub_xhci_setup_transfer (grub_usb_controller_t dev,
    if (transfer->type == GRUB_USB_TRANSACTION_TYPE_CONTROL)
    {
      volatile struct grub_usb_packet_setup *setupdata;
@@ -76,7 +76,7 @@ index f4591ffb5..3495bb919 100644
      grub_dprintf("xhci", "%s: CONTROLL TRANS req %d\n", __func__, setupdata->request);
      grub_dprintf("xhci", "%s: CONTROLL TRANS length %d\n", __func__, setupdata->length);
  
-@@ -1974,7 +1982,7 @@ grub_xhci_setup_transfer (grub_usb_controller_t dev,
+@@ -2007,7 +2015,7 @@ grub_xhci_setup_transfer (grub_usb_controller_t dev,
  	/* Assume the ring has enough free space for all TRBs */
  	if (flags & TRB_TR_IDT && tr->size <= (int)sizeof(inline_data))
  	  {

@@ -1,7 +1,7 @@
-From dde187c07a8f2a1d3357aa362ffcc0fe8dab72d7 Mon Sep 17 00:00:00 2001
+From badcc0d5ff1d4b194c93a530344788c4231d8789 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
-Date: Sun, 15 Nov 2020 19:59:25 +0100
-Subject: [PATCH 19/22] grub-core/bus/usb: Add xhci support
+Date: Mon, 7 Dec 2020 08:41:26 +0100
+Subject: [PATCH 19/26] grub-core/bus/usb: Add xhci support
 
 Add support for xHCI USB controllers.
 The code is based on seabios implementation, but has been heavily
@@ -40,13 +40,6 @@ TODO:
   * Test on more hardware
   * Test on USB3 hubs
   * Support for USB 3.1 and USB 3.2 controllers
-
-Tested on qemu using coreboot and grub as payload:
-
-qemu-system-x86_64 -M q35 -bios $firmware -device qemu-xhci,id=xhci -accel kvm -m 1024M \
-	-device usb-storage,drive=thumbdrive,bus=xhci.0,port=3 \
-	-drive if=none,format=raw,id=thumbdrive,file=ubuntu-20.04.1-desktop-amd64.iso \
-	-device usb-kbd,bus=xhci.0
 
 Signed-off-by: Patrick Rudolph <patrick.rudolph@9elements.com>
 Signed-off-by: sylv <sylv@sylv.io>

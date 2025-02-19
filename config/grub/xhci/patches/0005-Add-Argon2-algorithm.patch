@@ -1,7 +1,7 @@
-From 65a9b252b79d5d1fa022e3da9ef91459ad8efb94 Mon Sep 17 00:00:00 2001
+From 46aa2f307de53b305045f7706b38a4e0d198875e Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 05/22] Add Argon2 algorithm
+Subject: [PATCH 05/26] Add Argon2 algorithm
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---

@@ -1,7 +1,7 @@
-From 6ce0b0629aa1377237c19290f33008ff81969962 Mon Sep 17 00:00:00 2001
+From 068442a692ab28298eab6bfd89a286c1d2ab91e0 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 08/22] Make grub-install work with Argon2
+Subject: [PATCH 08/26] Make grub-install work with Argon2
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---

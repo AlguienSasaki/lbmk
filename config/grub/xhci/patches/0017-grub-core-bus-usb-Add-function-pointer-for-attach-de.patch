@@ -1,7 +1,7 @@
-From 1518589ff286b54a27d4b11f017cb43c90cbf566 Mon Sep 17 00:00:00 2001
+From 7a977001a1574c884c4f711686c2de01386b9230 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Sun, 15 Nov 2020 19:51:42 +0100
-Subject: [PATCH 17/22] grub-core/bus/usb: Add function pointer for
+Subject: [PATCH 17/26] grub-core/bus/usb: Add function pointer for
  attach/detach events
 
 The xHCI code needs to be called for attaching or detaching a device.
@@ -19,7 +19,7 @@ Signed-off-by: Patrick Rudolph <patrick.rudolph@9elements.com>
  5 files changed, 29 insertions(+)
 
 diff --git a/grub-core/bus/usb/ehci.c b/grub-core/bus/usb/ehci.c
-index 9abebc6bd..953b851c0 100644
+index 2db07c7c0..1ee056015 100644
 --- a/grub-core/bus/usb/ehci.c
 +++ b/grub-core/bus/usb/ehci.c
 @@ -1812,6 +1812,8 @@ static struct grub_usb_controller_dev usb_controller = {

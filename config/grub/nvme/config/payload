@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2014-2016,2020-2021,2023-2024 Leah Rowe <leah@libreboot.org>
+# Copyright (C) 2014-2016,2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (C) 2015 Klemens Nanni <contact@autoboot.org>
 
 set prefix=(memdisk)/boot/grub
@@ -155,16 +155,12 @@ menuentry 'Load Operating System (incl. fully encrypted disks)  [o]' --hotkey='o
 
 	# grub device enumeration is very slow, so checks are hardcoded
 
-	# TODO: add more strings, based on what distros set up when
-	# the user select auto-partitioning on those installers
-	lvmvol="lvm/grubcrypt-bootvol lvm/grubcrypt-rootvol"
-
 	raidvol="md/0 md/1 md/2 md/3 md/4 md/5 md/6 md/7 md/8 md/9"
 
-	# in practise, doing multiple redundant checks is perfectly fast and
+	# in practise, doing multiple redundant checks is perfectly fast
 	# TODO: optimize grub itself, and use */? here for everything
 
-	for vol in ${lvmvol} ${raidvol} ; do
+	for vol in ${raidvol} ; do
 		try_bootcfg "${vol}"
 	done
 
@@ -186,22 +182,36 @@ menuentry 'Load Operating System (incl. fully encrypted disks)  [o]' --hotkey='o
 
 	set pager=0
 	echo -n "Attempting to unlock encrypted volumes"
-	for dev in ${bootdev} ${lvmvol} ${raidvol}; do
+	for dev in ${bootdev} ${raidvol}; do
 		if cryptomount "${dev}" ; then break ; fi
 	done
 	set pager=1
 	echo
 
-	# after cryptomount, lvm volumes might be available
-	for vol in ${lvmvol}; do
-		try_bootcfg "${vol}"
-	done
-
 	search_bootcfg crypto
 
-	for vol in lvm/* ; do
-		try_bootcfg "${vol}"
+	lvmvol=""
+
+	# after cryptomount, lvm volumes might be available
+	# using * is slow on some machines, but we use it here,
+	# just once. in so doing, we find every lvm volume
+	for vol in (*); do
+		if regexp ^lvm/ $vol; then
+			lvmvol="${lvmvol} ${vol}"
+			try_bootcfg "${vol}"
+		fi
 	done
+
+	# user might have put luks inside lvm
+	set pager=0
+	echo "Attempting to unlock encrypted LVMs"
+	for vol in ${lvmvol}; do
+		cryptomount "$vol"
+	done
+	set pager=1
+	echo
+
+	search_bootcfg crypto
 
 	true # Prevent pager requiring to accept each line instead of whole screen
 }
