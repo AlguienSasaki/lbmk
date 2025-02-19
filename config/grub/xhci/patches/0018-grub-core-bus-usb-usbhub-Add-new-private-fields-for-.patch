@@ -1,4 +1,4 @@
-From 4b21796042db28db773534d5f0cf83738a72b929 Mon Sep 17 00:00:00 2001
+From e8a237ffb5bd3ba5258ce5c173b31424f3a39392 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Mon, 7 Dec 2020 08:41:25 +0100
 Subject: [PATCH 18/26] grub-core/bus/usb/usbhub: Add new private fields for

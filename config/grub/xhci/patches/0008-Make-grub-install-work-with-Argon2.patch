@@ -1,4 +1,4 @@
-From 94a89aea5118294173d29bdf49e41f7801e3df48 Mon Sep 17 00:00:00 2001
+From 068442a692ab28298eab6bfd89a286c1d2ab91e0 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 08/26] Make grub-install work with Argon2

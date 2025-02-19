@@ -1,4 +1,4 @@
-From b033ef3b4b2384df4165ae7829155cafd4ee3488 Mon Sep 17 00:00:00 2001
+From 70731c46da05311edb639ce1349bb6dd3279031e Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 19:55:15 +0100
 Subject: [PATCH 23/26] xhci: workaround z790 non-root-hub speed detection

@@ -1,4 +1,4 @@
-From 3ab4a66104c772241e42b1f4f42a5890f3059164 Mon Sep 17 00:00:00 2001
+From 13f149fa5fe4e2ae0e95b3055584335beb9bdee8 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 07/26] Compile with Argon2id support
@@ -48,18 +48,18 @@ index f5f9b040c..f1f38d8d3 100644
  
  module = {
 diff --git a/grub-core/disk/luks2.c b/grub-core/disk/luks2.c
-index bc818ea69..5b9eaa599 100644
+index efae8ac65..2e742f5be 100644
 --- a/grub-core/disk/luks2.c
 +++ b/grub-core/disk/luks2.c
-@@ -27,6 +27,7 @@
- #include <grub/partition.h>
+@@ -28,6 +28,7 @@
  #include <grub/i18n.h>
+ #include <grub/safemath.h>
  
 +#include <argon2.h>
  #include <base64.h>
  #include <json.h>
  
-@@ -462,8 +463,16 @@ luks2_decrypt_key (grub_uint8_t *out_key,
+@@ -463,8 +464,16 @@ luks2_decrypt_key (grub_uint8_t *out_key,
      {
        case LUKS2_KDF_TYPE_ARGON2I:
        case LUKS2_KDF_TYPE_ARGON2ID:

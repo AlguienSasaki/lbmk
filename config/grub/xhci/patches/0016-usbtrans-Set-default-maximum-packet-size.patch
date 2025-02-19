@@ -1,4 +1,4 @@
-From f7c7c25e274b79a7c8e62250fa9bc49f81bd4456 Mon Sep 17 00:00:00 2001
+From 8af01b2548f61a9197b9f931831ca397a7e7c9b3 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Mon, 7 Dec 2020 08:41:23 +0100
 Subject: [PATCH 16/26] usbtrans: Set default maximum packet size

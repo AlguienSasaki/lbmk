@@ -1,4 +1,4 @@
-From 6eb22aa4110b99245fd31dcaad979d5049d398d6 Mon Sep 17 00:00:00 2001
+From 664ce75106049547d7595fc021a0a1f9a69e585a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 17:25:20 +0000
 Subject: [PATCH 13/13] don't print empty error messages

@@ -1,4 +1,4 @@
-From c455091ce40ffd8218802aaadeacf2039fea5036 Mon Sep 17 00:00:00 2001
+From 32c6d97e2a80c2e74dd9daf74281a89d1a05faaa Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 19:51:41 +0100
 Subject: [PATCH 22/26] xhci: fix port indexing

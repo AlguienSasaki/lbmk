@@ -1,4 +1,4 @@
-From 8094d43abecf758617aec1d4f8c9b1099cb4e67e Mon Sep 17 00:00:00 2001
+From 2472f3c2e465863c51a3cacf96ab910c015cfa8e Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Sun, 15 Nov 2020 19:00:27 +0100
 Subject: [PATCH 14/26] grub-core/bus/usb: Parse SuperSpeed companion

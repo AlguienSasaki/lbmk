@@ -1,4 +1,4 @@
-From ba1b693f60ab68af207d8f39a5d6e28f74872031 Mon Sep 17 00:00:00 2001
+From 4e2ba04266f006369dc10b981803ba3a237f2ad8 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 03/26] Add CC0 license
@@ -10,10 +10,10 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  2 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/grub-core/kern/dl.c b/grub-core/kern/dl.c
-index 8ad015b07..9980bae90 100644
+index de8c3aa8d..4a3be8568 100644
 --- a/grub-core/kern/dl.c
 +++ b/grub-core/kern/dl.c
-@@ -494,7 +494,8 @@ grub_dl_check_license (grub_dl_t mod, Elf_Ehdr *e)
+@@ -495,7 +495,8 @@ grub_dl_check_license (grub_dl_t mod, Elf_Ehdr *e)
  
    if (grub_strcmp ((char *) e + s->sh_offset, "LICENSE=GPLv3") == 0
        || grub_strcmp ((char *) e + s->sh_offset, "LICENSE=GPLv3+") == 0

@@ -1,4 +1,4 @@
-From 98b66bcfe063a4035f851a542e57dc2c4bd51a57 Mon Sep 17 00:00:00 2001
+From 96e8baf58dcae1dbc016420ea1972d50f09f8f9b Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 31 Oct 2021 03:47:05 +0000
 Subject: [PATCH 01/26] mitigate grub's missing characters for borders/arrow

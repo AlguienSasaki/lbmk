@@ -1,4 +1,4 @@
-From 7748bcc0e7cef17dbf626f83cc03e56a17075330 Mon Sep 17 00:00:00 2001
+From 233f7dd274ef2ccac7b1fc0f5cfdeb7c01aef58b Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 20:26:32 +0100
 Subject: [PATCH 24/26] xhci: configure TT for non-root-hubs

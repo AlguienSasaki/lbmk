@@ -1,4 +1,4 @@
-From 75b3d347ea5f3c51615f8ccb670b9f2033f8594f Mon Sep 17 00:00:00 2001
+From badcc0d5ff1d4b194c93a530344788c4231d8789 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Mon, 7 Dec 2020 08:41:26 +0100
 Subject: [PATCH 19/26] grub-core/bus/usb: Add xhci support

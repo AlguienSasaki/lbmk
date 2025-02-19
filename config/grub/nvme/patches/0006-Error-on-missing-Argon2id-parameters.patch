@@ -1,4 +1,4 @@
-From d3b500914ce84be6bcae0f4f5fefff21e4e0ca63 Mon Sep 17 00:00:00 2001
+From e02e392863dd30f40c538770c31268a8337433c5 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 06/14] Error on missing Argon2id parameters
@@ -9,10 +9,10 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  1 file changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/grub-core/disk/luks2.c b/grub-core/disk/luks2.c
-index d5106402f..bc818ea69 100644
+index 8036d76ff..efae8ac65 100644
 --- a/grub-core/disk/luks2.c
 +++ b/grub-core/disk/luks2.c
-@@ -38,6 +38,7 @@ GRUB_MOD_LICENSE ("GPLv3+");
+@@ -39,6 +39,7 @@ GRUB_MOD_LICENSE ("GPLv3+");
  enum grub_luks2_kdf_type
  {
    LUKS2_KDF_TYPE_ARGON2I,
@@ -20,7 +20,7 @@ index d5106402f..bc818ea69 100644
    LUKS2_KDF_TYPE_PBKDF2
  };
  typedef enum grub_luks2_kdf_type grub_luks2_kdf_type_t;
-@@ -90,7 +91,7 @@ struct grub_luks2_keyslot
+@@ -91,7 +92,7 @@ struct grub_luks2_keyslot
  	grub_int64_t time;
  	grub_int64_t memory;
  	grub_int64_t cpus;
@@ -29,7 +29,7 @@ index d5106402f..bc818ea69 100644
        struct
        {
  	const char   *hash;
-@@ -160,10 +161,11 @@ luks2_parse_keyslot (grub_luks2_keyslot_t *out, const grub_json_t *keyslot)
+@@ -161,10 +162,11 @@ luks2_parse_keyslot (grub_luks2_keyslot_t *out, const grub_json_t *keyslot)
      return grub_error (GRUB_ERR_BAD_ARGUMENT, "Missing or invalid KDF");
    else if (!grub_strcmp (type, "argon2i") || !grub_strcmp (type, "argon2id"))
      {
@@ -45,7 +45,7 @@ index d5106402f..bc818ea69 100644
  	return grub_error (GRUB_ERR_BAD_ARGUMENT, "Missing Argon2i parameters");
      }
    else if (!grub_strcmp (type, "pbkdf2"))
-@@ -459,6 +461,7 @@ luks2_decrypt_key (grub_uint8_t *out_key,
+@@ -460,6 +462,7 @@ luks2_decrypt_key (grub_uint8_t *out_key,
    switch (k->kdf.type)
      {
        case LUKS2_KDF_TYPE_ARGON2I:

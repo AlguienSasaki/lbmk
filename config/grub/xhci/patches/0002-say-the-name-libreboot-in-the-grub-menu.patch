@@ -1,4 +1,4 @@
-From 71b146159e0aad33b267d062885ca0635aa23283 Mon Sep 17 00:00:00 2001
+From f23a77c22e61e466c081d2b81b968bac4812e6b6 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 19 Nov 2022 16:30:24 +0000
 Subject: [PATCH 02/26] say the name libreboot, in the grub menu
@@ -8,7 +8,7 @@ Subject: [PATCH 02/26] say the name libreboot, in the grub menu
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/grub-core/normal/main.c b/grub-core/normal/main.c
-index bd4431000..74cfc49c0 100644
+index 04d058f55..b1cc8f236 100644
 --- a/grub-core/normal/main.c
 +++ b/grub-core/normal/main.c
 @@ -209,7 +209,7 @@ grub_normal_init_page (struct grub_term_output *term,
