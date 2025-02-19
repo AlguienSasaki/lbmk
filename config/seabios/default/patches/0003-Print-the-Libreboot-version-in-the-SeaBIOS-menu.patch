@@ -17,7 +17,7 @@ index 538b316d..8746098c 100644
  
      // Write to screen.
 -    printf("SeaBIOS (version %s)\n", VERSION);
-+    printf("Libreboot 20241206, 8th revision (SeaBIOS menu): https://libreboot.org/\n");
++    printf("Libreboot 20241206, 10th revision (SeaBIOS menu): https://libreboot.org/\n");
      display_uuid();
  }
  
