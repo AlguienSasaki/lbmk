@@ -20,8 +20,13 @@ err="fail"
 main()
 {
 	[ $# -lt 1 ] && $err "bad command"
-	spath="script/$1"; shcmd="shift 1"
-	[ "${1#-*}" != "$1" ] && spath="script/trees" && shcmd=":"
+
+	spath="script/$1"
+	shcmd="shift 1"
+	if [ "${1#-*}" != "$1" ]; then
+		spath="script/trees"
+		shcmd=":"
+	fi
 
 	for g in "command -v git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
@@ -34,12 +39,16 @@ main()
 	inject) shift 1; vendor_inject "$@" ;;
 	download) shift 1; vendor_download "$@" ;;
 	roms)
-		[ $# -gt 1 ] && [ "$2" = "serprog" ] && \
-		    mk -b stm32-vserprog pico-serprog && return 0
-		shift 1; x_ ./mk -b coreboot "$@" ;;
+		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
+			mk -b stm32-vserprog pico-serprog
+			return 0
+		fi
+		shift 1
+		x_ ./mk -b coreboot "$@" ;;
 	*)
 		[ -f "$spath" ] || $err "bad command"
-		$shcmd; "$spath" "$@" || $err "excmd: $spath $(echo "$@")" ;;
+		$shcmd
+		"$spath" "$@" || $err "excmd: $spath $(echo "$@")" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
@@ -89,7 +98,9 @@ build_release()
 {
 	(
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
-	./mk -f; x_ rm -Rf tmp; rmgit .
+	./mk -f
+	x_ rm -Rf tmp
+	rmgit .
 	x_ mv src/docs docs
 	) || $err "can't create release files"
 

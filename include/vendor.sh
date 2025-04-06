@@ -110,6 +110,7 @@ getfiles()
 fetch()
 {
 	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
+
 	[ "$5" = "/dev/null" ] && return 0; _dl="$XBMK_CACHE/file/$dlsum"
 	if [ "$dl_type" = "fspm" ] || [ "$dl_type" = "fsps" ]; then
 		# HACK: if grabbing fsp from coreboot, fix the path for lbmk
@@ -559,7 +560,9 @@ patch_release_roms()
 
 process_release_rom()
 {
-	_xrom="$1"; _xromname="${1##*/}"
+	_xrom="$1"
+	_xromname="${1##*/}"
+
 	[ -L "$_xrom" ] && \
 	    $err "$archive -> '${_xrom#"tmp/DO_NOT_FLASH/"}' is a symlink"
 	[ -f "$_xrom" ] || return 0
@@ -709,7 +712,8 @@ inject()
 	else
 		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
 		    -t $_t $_offset || $err "$rom !add $_t ($_dest)"
-	fi; xchanged="y"; :
+	fi
+	xchanged="y"; :
 }
 
 modify_mac_addresses()

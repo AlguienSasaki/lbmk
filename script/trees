@@ -22,6 +22,7 @@ main()
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
 		_f="$1" && [ "$_f" = "-d" ] && dry=":"
+
 		case "$1" in
 		-d) mode="" ;;
 		-b) mode="" ;;
@@ -35,23 +36,36 @@ main()
 		-n) mode="nconfig" ;;
 		*) $err "invalid option '-$option'" ;;
 		esac
-		[ -z "${OPTARG+x}" ] && shift 1 && break
-		project="${OPTARG#src/}"; shift 2
+
+		if [ -z "${OPTARG+x}" ]; then
+			shift 1
+			break
+		fi
+
+		project="${OPTARG#src/}"
+		shift 2
 	done
 	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
-	[ -z "$project" ] && mk $_f $(ls -1 config/git) && return 1
+	if [ -z "$project" ]; then
+		mk $_f $(ls -1 config/git)
+		return 1
+	fi
 
 	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
-	done; dest_dir="$elfdir"
+	done
+	dest_dir="$elfdir"
+
 	listfile="$datadir/build.list"
 	[ -f "$listfile" ] || listfile="" # optional on all projects
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
-	e "$mkhelpercfg" f missing && mkhelpercfg="$TMPDIR/mkhelper.cfg" && \
-	    x_ touch "$mkhelpercfg"
+	if e "$mkhelpercfg" f missing; then
+		mkhelpercfg="$TMPDIR/mkhelper.cfg"
+		x_ touch "$mkhelpercfg"
+	fi
 
 	targets="$*"; cmd="build_targets $targets"
 	singletree "$project" && cmd="build_project"
@@ -118,12 +132,15 @@ configure_project()
 	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
 	    xarch xlang`"
-	_tcfg="$1/target.cfg"; badhash="n"; [ -f "$_tcfg" ] || btype="auto"
+	_tcfg="$1/target.cfg"
+	badhash="n"
+	[ -f "$_tcfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && \
 	    eval "`setcfg "$datadir/mkhelper.cfg"`"
 
 	while [ -f "$_tcfg" ] || [ "$cmd" != "build_project" ]; do
-		eval "`setvars "" rev tree`"; eval "`setcfg "$_tcfg"`"
+		eval "`setvars "" rev tree`"
+		eval "`setcfg "$_tcfg"`"
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
@@ -131,7 +148,8 @@ configure_project()
 		[ "$mode" = "fetch" ] || break
 
 		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
-		    && break; _tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
+		    && break
+		_tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
 	done
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
@@ -141,15 +159,19 @@ configure_project()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	[ "$mode" = "fetch" ] || x_ ./mk -f "$project" "$target"
-	[ "$mode" = "fetch" ] || return 0
-	[ -f "CHANGELOG" ] && return 1; fetch_${cmd#build_}; return 1
+	if [ "$mode" != "fetch" ]; then
+		x_ ./mk -f "$project" "$target"
+		return 0
+	fi
+	[ -f "CHANGELOG" ] || fetch_${cmd#build_}
+	return 1
 }
 
 build_dependencies()
 {
 	for bd in $build_depend; do
-		bd_p="${bd%%/*}"; bd_t="${bd##*/}"
+		bd_p="${bd%%/*}"
+		bd_t="${bd##*/}"
 		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
 		[ -z "$bd_p" ] || $dry ./mk -b $bd_p $bd_t \
@@ -160,7 +182,8 @@ build_dependencies()
 check_project_hashes()
 {
 	mkdir -p "$XBMK_CACHE/hash" || $err "!mkdir '$XBMK_CACHE/hash'"
-	old_pjhash=""; [ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
+	old_pjhash=""
+	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
 	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
@@ -171,7 +194,8 @@ check_project_hashes()
 		[ -d "$rmchk" ] || continue
 		find "$rmchk" -type f -not -path "*/.git*/*" >> \
 		    "$TMPDIR/project.tmp" || $err "!find $rmchk > project.tmp"
-	done; sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
+	done
+	sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
 	    $err "!sort project tmp/list"
 
 	while read -r rmchk; do

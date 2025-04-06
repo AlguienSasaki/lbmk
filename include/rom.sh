@@ -119,7 +119,8 @@ mkcorebootbin()
 	tmprom="$TMPDIR/coreboot.rom"
 	$dry x_ cp "$srcdir/build/coreboot.rom" "$tmprom"
 
-	initmode="${defconfig##*/}"; displaymode="${initmode##*_}"
+	initmode="${defconfig##*/}"
+	displaymode="${initmode##*_}"
 	[ "$displaymode" = "$initmode" ] && displaymode="" # "normal" config
 	initmode="${initmode%%_*}"
 	cbfstool="elf/cbfstool/$tree/cbfstool"

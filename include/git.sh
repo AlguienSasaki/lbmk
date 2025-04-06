@@ -51,12 +51,14 @@ git_prep()
 
 	chkvars rev; tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
-		prep_submodules "$_loc"; fi
+		prep_submodules "$_loc"
+	fi
 
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
 	[ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$_loc" != "$XBMK_CACHE/repo/$project" ] && rmgit "$tmpgit"
+	    [ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
+	    rmgit "$tmpgit"
 
 	move_repo "$_loc"
 }
