@@ -45,7 +45,7 @@ main()
 		project="${OPTARG#src/}"
 		shift 2
 	done
-	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n)"
+	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n/-d)"
 	if [ -z "$project" ]; then
 		mk $_f $(ls -1 config/git)
 		return 1
