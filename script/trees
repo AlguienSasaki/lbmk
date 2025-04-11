@@ -176,7 +176,7 @@ configure_project()
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
 	[ -z "$mode" ] && build_dependencies
 
-	mdir="$PWD/config/submodule/$project"
+	mdir="`pwd`/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
@@ -247,7 +247,7 @@ check_cross_compiler()
 
 		x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
 
-		export PATH="$PWD/$cbdir/util/crossgcc/xgcc/bin:$PATH"
+		export PATH="`pwd`/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 		export CROSS_COMPILE="${xarch% *}-"
 		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 

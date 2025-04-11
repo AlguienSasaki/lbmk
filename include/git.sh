@@ -12,7 +12,7 @@ fetch_targets()
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
-	git_prep "$loc" "$loc" "$PWD/$configdir/$tree/patches" \
+	git_prep "$loc" "$loc" "`pwd`/$configdir/$tree/patches" \
 	    "src/$project/$tree" u
 	nuke "$project/$tree" "$project/$tree"
 }
@@ -43,7 +43,7 @@ clone_project()
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 
 	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
-	    "$url" "$bkup_url" "$PWD/config/$project/patches" "$loc"; :
+	    "$url" "$bkup_url" "`pwd`/config/$project/patches" "$loc"; :
 }
 
 git_prep()

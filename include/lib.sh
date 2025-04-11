@@ -11,7 +11,7 @@ _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 ifdtool="elf/ifdtool/default/ifdtool"
 cbfstool="elf/cbfstool/default/cbfstool"
 rmodtool="elf/cbfstool/default/rmodtool"
-tmpgit="$PWD/tmp/gitclone"
+tmpgit="`pwd`/tmp/gitclone"
 grubdata="config/data/grub"
 err="err_"
 
@@ -102,18 +102,18 @@ id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 # XBMK_CACHE is a directory, for caching downloads and git repositories
-[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$PWD/cache"
-[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
-[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$PWD/cache" ] && \
-    $err "cachedir is default, $PWD/cache, but it exists and is a symlink"
-[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$PWD/cache"
+[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="`pwd`/cache"
+[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="`pwd`/cache"
+[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "`pwd`/cache" ] && \
+    $err "cachedir is default, `pwd`/cache, but it exists and is a symlink"
+[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="`pwd`/cache"
 [ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' exists but it's a file"
 
 # unify all temporary files/directories in a single TMPDIR
 [ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || unset TMPDIR
 [ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR"
 if [ -z "${TMPDIR+x}" ]; then
-	[ -f "lock" ] && $err "$PWD/lock exists. Is a build running?"
+	[ -f "lock" ] && $err "`pwd`/lock exists. Is a build running?"
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	touch lock || $err "cannot create 'lock' file"
