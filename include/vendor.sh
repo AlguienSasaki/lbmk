@@ -3,10 +3,10 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-e6400_unpack="`pwd`/src/bios_extract/dell_inspiron_1100_unpacker.py"
-me7updateparser="`pwd`/util/me7_update_parser/me7_update_parser.py"
-pfs_extract="`pwd`/src/biosutilities/Dell_PFS_Extract.py"
-uefiextract="`pwd`/elf/uefitool/uefiextract"
+e6400_unpack="$xbmkpwd/src/bios_extract/dell_inspiron_1100_unpacker.py"
+me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
+pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
+uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
 vendir="vendorfiles"
 appdir="$vendir/app"
 cbcfgsdir="config/coreboot"
@@ -14,7 +14,7 @@ hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
-tmpromdel="`pwd`/tmp/DO_NOT_FLASH"
+tmpromdel="$xbmkpwd/tmp/DO_NOT_FLASH"
 
 cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
     CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
@@ -152,9 +152,9 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing. $dontflash"
 
-	cdir="`pwd`/$appdir"
-	_me="`pwd`/$_dest"
-	_metmp="`pwd`/tmp/me.bin"
+	cdir="$xbmkpwd/$appdir"
+	_me="$xbmkpwd/$_dest"
+	_metmp="$xbmkpwd/tmp/me.bin"
 
 	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
 	    chkvars ME11delta ME11version ME11sku ME11pch
@@ -489,8 +489,8 @@ readcfg()
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	rmodtool="elf/cbfstool/$tree/rmodtool"
-	mecleaner="`pwd`/$cbdir/util/me_cleaner/me_cleaner.py"
-	kbc1126_ec_dump="`pwd`/$cbdir/util/kbc1126/kbc1126_ec_dump"
+	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
+	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :

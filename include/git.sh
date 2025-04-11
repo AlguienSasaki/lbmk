@@ -5,6 +5,8 @@
 eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
     depend subfile_bkup repofail`"
 
+tmpgit="$xbmkpwd/tmp/gitclone"
+
 fetch_targets()
 {
 	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
@@ -12,7 +14,7 @@ fetch_targets()
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
-	git_prep "$loc" "$loc" "`pwd`/$configdir/$tree/patches" \
+	git_prep "$loc" "$loc" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" u
 	nuke "$project/$tree" "$project/$tree"
 }
@@ -43,7 +45,7 @@ clone_project()
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 
 	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
-	    "$url" "$bkup_url" "`pwd`/config/$project/patches" "$loc"; :
+	    "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"; :
 }
 
 git_prep()
