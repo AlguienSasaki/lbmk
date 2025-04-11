@@ -37,7 +37,9 @@ main()
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
-		-f) do_make="n"	 ;;
+		-f)
+			do_make="n"
+			dry=":" ;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
