@@ -17,7 +17,8 @@ err="err_"
 
 err_()
 {
-	printf "ERROR %s: %s\n" "$0" "$1" 1>&2; exit 1
+	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
+	exit 1
 }
 
 setvars()
@@ -25,14 +26,15 @@ setvars()
 	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
 	val="$1" && shift 1 && for var in "$@"; do
 		_setvars="$var=\"$val\"; $_setvars"
-	done; printf "%s\n" "${_setvars% }"
+	done
+	printf "%s\n" "${_setvars% }"
 }
 chkvars()
 {
 	for var in "$@"; do
 		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
 		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
-	done; return 0
+	done; :
 }
 
 eval "`setvars "" _nogit board reinstall versiondate projectsite projectname \
@@ -40,7 +42,8 @@ eval "`setvars "" _nogit board reinstall versiondate projectsite projectname \
 
 for fv in projectname projectsite version versiondate; do
 	eval "[ ! -f \"$fv\" ] || read -r $fv < \"$fv\" || :"
-done; chkvars projectname projectsite
+done
+chkvars projectname projectsite
 
 setcfg()
 {
@@ -57,7 +60,8 @@ e()
 	estr="[ -$es_t \"\$1\" ] || return 1"
 	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
 
-	eval "$estr"; printf "%s %s\n" "$1" "$es2" 1>&2
+	eval "$estr"
+	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
 install_packages()
@@ -140,7 +144,7 @@ expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
 
 x_() {
 	[ $# -lt 1 ] || "$@" || \
-	    $err "Unhandled non-zero exit: $(echo "$@")"; return 0
+	    $err "Unhandled non-zero exit: $(echo "$@")"; :
 }
 
 [ -e ".git" ] || [ -f "version" ] || printf "unknown\n" > version || \
@@ -155,7 +159,8 @@ versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 for p in projectname version versiondate projectsite; do
-	chkvars "$p"; eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
+	chkvars "$p"
+	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
@@ -165,7 +170,7 @@ check_defconfig()
 	[ -d "$1" ] || $err "Target '$1' not defined."
 	for x in "$1"/config/*; do
 		[ -f "$x" ] && printf "%s\n" "$x" && return 1
-	done; return 0
+	done; :
 }
 
 remkdir()
@@ -180,7 +185,8 @@ mkrom_tarball()
 	printf "%s\n" "$versiondate" > "$1/versiondate" || $err "$1 !vdate"
 	printf "%s\n" "$projectname" > "$1/projectname" || $err "$1 !pname"
 
-	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"; x_ rm -Rf "$1"; :
+	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
+	x_ rm -Rf "$1"
 }
 
 mktarball()
@@ -248,7 +254,8 @@ download()
 			$err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
 		fi
 		vendor_checksum "$4" "$cached" || dl_fail="n"
-	done; [ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
+	done
+	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
 	[ "$cached" = "$3" ] || cp "$cached" "$3" || $err "!d cp $cached $3"; :
 }
 

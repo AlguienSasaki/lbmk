@@ -20,7 +20,7 @@ extract_mrc()
 	"$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
 	    -f "$_dest" -r RO_SECTION || $err "extract_mrc: !$cbfstool $_dest"
 
-	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode; return 0
+	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode; :
 }
 
 extract_partition()
@@ -57,5 +57,5 @@ extract_refcode()
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
 	[ -z "$MRC_refcode_gbe" ] || dd if="config/ifd/hp820g2/1.bin" \
 	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc || \
-	    $err "extract_refcode $_refdest: byte $MRC_refcode_gbe"; return 0
+	    $err "extract_refcode $_refdest: byte $MRC_refcode_gbe"; :
 }

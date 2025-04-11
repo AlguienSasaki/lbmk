@@ -13,7 +13,8 @@ fetch_targets()
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
 	git_prep "$loc" "$loc" "$PWD/$configdir/$tree/patches" \
-	    "src/$project/$tree" u; nuke "$project/$tree" "$project/$tree"
+	    "src/$project/$tree" u
+	nuke "$project/$tree" "$project/$tree"
 }
 
 fetch_project()
@@ -47,9 +48,11 @@ clone_project()
 
 git_prep()
 {
-	_patchdir="$3"; _loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
+	_patchdir="$3"
+	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
-	chkvars rev; tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
+	chkvars rev
+	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
 		prep_submodules "$_loc"
 	fi
@@ -67,7 +70,7 @@ prep_submodules()
 {
 	[ -f "$mdir/module.list" ] && while read -r msrcdir; do
 		fetch_submodule "$msrcdir"
-	done < "$mdir/module.list"; return 0
+	done < "$mdir/module.list"; :
 }
 
 fetch_submodule()
@@ -125,10 +128,11 @@ tmpclone()
 git_am_patches()
 {
 	for p in "$2/"*; do
-		[ -L "$p" ] && continue; [ -e "$p" ] || continue
+		[ -L "$p" ] && continue
+		[ -e "$p" ] || continue
 		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
 		[ ! -f "$p" ] || git -C "$1" am "$p" || $err "$1 $2: !am $p"
-	done; return 0
+	done; :
 }
 
 link_crossgcc()
@@ -136,7 +140,7 @@ link_crossgcc()
 	(
 	x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
 	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
-	) || $err "$1: !xgcc link"
+	) || $err "$1: !xgcc link"; :
 }
 
 move_repo()
@@ -152,5 +156,5 @@ nuke()
 	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
 		rmf="src/${2%/}/$nukefile" && [ -L "$rmf" ] && continue
 		e "$rmf" e missing || rm -Rf "$rmf" || $err "!rm $rmf, ${2%/}"
-	done < "config/${1%/}/nuke.list"; return 0
+	done < "config/${1%/}/nuke.list"; :
 }

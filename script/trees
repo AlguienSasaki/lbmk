@@ -15,12 +15,16 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull gccdir cmakedir`"; badhash="n"
+    gnatver gnatfull gccdir cmakedir`"
 
 # ./mk -f will set this to "n", thus
 # disabling the use of make commands
 do_make="y"
 mode="all" # make all
+
+# badhash changes to "y" when project
+# files change, e.g. config files, patches
+badhash="n"
 
 flags="-m/-u/-b/-c/-x/-f/-s/-l/-n/-d"
 
@@ -82,7 +86,8 @@ main()
 		x_ touch "$mkhelpercfg"
 	fi
 
-	targets="$*"; cmd="build_targets $targets"
+	targets="$*"
+	cmd="build_targets $targets"
 	singletree "$project" && cmd="build_project"
 
 	remkdir "${tmpgit%/*}"
@@ -96,7 +101,7 @@ build_project()
 	[ "$mode" = "distclean" ] && mode="clean"
 	run_make_command || return 0
 
-	[ -n "$mode" ] || $dry copy_elf; return 0
+	[ -n "$mode" ] || $dry copy_elf; :
 }
 
 build_targets()
@@ -113,7 +118,7 @@ build_targets()
 		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$target"
 		x_ handle_defconfig
 		[ -n "$mode" ] || [ -z "$postmake" ] || $postmake || \
-		    $err "$project/$target: !postmake: $postmake"; continue
+		    $err "$project/$target: !postmake: $postmake"; :
 	done; return 0
 }
 
@@ -125,7 +130,8 @@ handle_defconfig()
 	configure_project "$target_dir" || return 0
 	x_ mkdir -p "$elfdir/$target"
 
-	chkvars tree; srcdir="src/$project/$tree"
+	chkvars tree
+	srcdir="src/$project/$tree"
 
 	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
 		[ -d "$srcdir" ] || return 0
@@ -139,7 +145,7 @@ handle_defconfig()
 		[ -n "$mode" ] || check_defconfig || continue
 		handle_makefile
 		[ -n "$mode" ] || $dry copy_elf
-	done; return 0
+	done; :
 }
 
 configure_project()
@@ -190,8 +196,8 @@ build_dependencies()
 		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
 		[ -z "$bd_p" ] || $dry ./mk -b $bd_p $bd_t \
-		    || $err "!mk $project/$tree $bd_p/$bd_t"; continue
-	done; return 0
+		    || $err "!mk $project/$tree $bd_p/$bd_t"; :
+	done; :
 }
 
 check_project_hashes()
@@ -202,7 +208,8 @@ check_project_hashes()
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
 	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
-	    "$TMPDIR/project.tmp"; x_ touch "$TMPDIR/project.tmp"
+	    "$TMPDIR/project.tmp"
+	x_ touch "$TMPDIR/project.tmp"
 	x_ touch "$TMPDIR/project.hash"
 
 	for rmchk in "$datadir" "$configdir/$tree" "$mdir"; do
@@ -258,7 +265,7 @@ check_cross_compiler()
 		# we only want to mess with hostcc to build xgcc
 		rm -f "$XBMK_CACHE/gnupath/"* || \
 		    $err "Cannot clear gnupath/"; :
-	done; return 0
+	done; :
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
@@ -297,7 +304,8 @@ check_gnu_path()
 	rm -f "$XBMK_CACHE/gnupath/"* || $err "Cannot clear gnupath/"
 	cd "$XBMK_CACHE/gnupath" || $err "Can't cd to gnupath/"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
-		[ -e "$_gnubin" ] || continue; _gnuutil="${_gnubin##*/}"
+		[ -e "$_gnubin" ] || continue
+		_gnuutil="${_gnubin##*/}"
 		x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
 	done
 	) || $err "Cannot create $2-$_gnuver link in $_gnudir"; :
@@ -326,7 +334,7 @@ elfcheck()
 	# TODO: very hacky check. do it properly (based on build.list)
 	for elftest in "$dest_dir"/*; do
 		[ -e "$elftest" ] && e "$elftest" f && return 1
-	done; return 0
+	done; :
 }
 
 handle_makefile()
@@ -350,8 +358,9 @@ handle_makefile()
 run_make_command()
 {
 	[ -z "$premake" ] || [ -n "$mode" ] || $premake || $err "!$premake"
-	$dry check_cmake "$srcdir" && [ -z "$mode" ] && $dry check_autoconf \
-	    "$srcdir"; $dry check_makefile "$srcdir" || return 1
+	$dry check_cmake "$srcdir" && [ -z "$mode" ] && \
+	    $dry check_autoconf "$srcdir"
+	$dry check_makefile "$srcdir" || return 1
 
 	$dry make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs || $err "!$mode"
 	[ -z "$mkhelper" ] || [ -n "$mode" ] || $mkhelper || $err "!$mkhelper"
@@ -366,7 +375,7 @@ check_cmake()
 	    "$1/$cmakedir" || $dry check_makefile "$1" || $err \
 	    "$1: !cmk $cmakedir"
 	[ -z "$cmakedir" ] || $dry check_makefile "$1" || \
-	    $err "check_cmake $1: can't generate Makefile"; return 0
+	    $err "check_cmake $1: can't generate Makefile"; :
 }
 
 check_autoconf()
@@ -375,21 +384,22 @@ check_autoconf()
 	cd "$1" || $err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
-	[ -f "configure" ] && x_ ./configure $autoconfargs; return 0
-	) || $err "can't bootstrap project: $1"
+	[ -f "configure" ] && x_ ./configure $autoconfargs; :
+	) || $err "can't bootstrap project: $1"; :
 }
 
 check_makefile()
 {
 	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
-	    [ -f "$1/GNUmakefile" ] || return 1; return 0
+	    [ -f "$1/GNUmakefile" ] || return 1; :
 }
 
 copy_elf()
 {
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir" && while read -r f; do
 		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"
-	done < "$listfile"; x_ make clean -C "$srcdir" $cleanargs
+	done < "$listfile"
+	x_ make clean -C "$srcdir" $cleanargs
 }
 
 main "$@" || exit 0

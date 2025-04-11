@@ -38,8 +38,10 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
 
 vendor_download()
 {
-	[ $# -gt 0 ] || $err "No argument given"; export PATH="$PATH:/sbin"
-	board="$1"; readcfg && readkconfig && bootstrap && getfiles; :
+	[ $# -gt 0 ] || $err "No argument given"
+	export PATH="$PATH:/sbin"
+	board="$1"
+	readcfg && readkconfig && bootstrap && getfiles; :
 }
 
 readkconfig()
@@ -66,9 +68,11 @@ readkconfig()
 	    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
-		eval "`setcfg "$vfile"`"; return 0
+		eval "`setcfg "$vfile"`"
+		return 0
 	done
-	printf "Vendor files not needed for: %s\n" "$board" 1>&2; return 1
+	printf "Vendor files not needed for: %s\n" "$board" 1>&2
+	return 1
 }
 
 bootstrap()
@@ -78,7 +82,7 @@ bootstrap()
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
-	    x_ ./mk -d coreboot "$MRC_refcode_cbtree"; return 0
+	    x_ ./mk -d coreboot "$MRC_refcode_cbtree"; :
 }
 
 getfiles()
@@ -109,9 +113,14 @@ getfiles()
 
 fetch()
 {
-	dl_type="$1"; dl="$2"; dl_bkup="$3"; dlsum="$4"; _dest="${5##*../}"
+	dl_type="$1"
+	dl="$2"
+	dl_bkup="$3"
+	dlsum="$4"
+	_dest="${5##*../}"
 
-	[ "$5" = "/dev/null" ] && return 0; _dl="$XBMK_CACHE/file/$dlsum"
+	[ "$5" = "/dev/null" ] && return 0
+	_dl="$XBMK_CACHE/file/$dlsum"
 	if [ "$dl_type" = "fspm" ] || [ "$dl_type" = "fsps" ]; then
 		# HACK: if grabbing fsp from coreboot, fix the path for lbmk
 		for _cdl in dl dl_bkup; do
@@ -129,11 +138,13 @@ fetch()
 
 	mkdir -p "${_dest%/*}" || \
 	    $err "mkdirs: !mkdir -p ${_dest%/*} - $dontflash"
-	remkdir "$appdir"; extract_archive "$_dl" "$appdir" "$dl_type" || \
+	remkdir "$appdir"
+	extract_archive "$_dl" "$appdir" "$dl_type" || \
 	    [ "$dl_type" = "e6400vga" ] || \
 	    $err "mkd $_dest $dl_type: !extract. $dontflash"
 
-	eval "extract_$dl_type"; set -u -e
+	eval "extract_$dl_type"
+	set -u -e
 	e "$_dest" f missing && $err "!extract_$dl_type. $dontflash"; :
 }
 
@@ -240,7 +251,8 @@ extract_kbc1126ec()
 	e "$kbc1126_ec_dump" f missing && \
 	    $err "$cbdir: kbc1126 util missing - $dontflash"
 	(
-	x_ cd "$appdir/"; mv Rompaq/68*.BIN ec.bin || :
+	x_ cd "$appdir/"
+	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
 		    unar -D 68*.CAB Rom.bin || \
@@ -347,7 +359,8 @@ vendor_inject()
 	err="fail_inject"
 	remkdir "$tmpromdel"
 
-	set +u +e; [ $# -lt 1 ] && $err "No options specified. - $dontflash"
+	set +u +e
+	[ $# -lt 1 ] && $err "No options specified. - $dontflash"
 	eval "`setvars "" nukemode new_mac xchanged`"
 
 	# randomise the MAC address by default
@@ -499,7 +512,8 @@ patch_release_roms()
 		    hashfile="$_hashes" && break; :
 	done
 
-	x_ mkdir -p "tmp"; [ -L "tmp/rom.list" ] && \
+	x_ mkdir -p "tmp"
+	[ -L "tmp/rom.list" ] && \
 	    $err "'$archive' -> tmp/rom.list is a symlink - $dontflash"
 	x_ rm -f "tmp/rom.list" "tmp/zero.1b"
 	x_ dd if=/dev/zero of=tmp/zero.1b bs=1 count=1
@@ -679,7 +693,9 @@ inject()
 	[ "$2" = "/dev/null" ] && return 0
 
 	eval "`setvars "" cbfsname _dest _t _offset`"
-	cbfsname="$1"; _dest="${2##*../}"; _t="$3"
+	cbfsname="$1"
+	_dest="${2##*../}"
+	_t="$3"
 
 	if [ "$_t" = "fsp" ]; then
 		[ $# -gt 3 ] && _offset="$4"
@@ -705,7 +721,8 @@ inject()
 		return 0
 	fi
 	if [ "$_t" = "stage" ]; then # the only stage we handle is refcode
-		x_ mkdir -p tmp; x_ rm -f "tmp/refcode"
+		x_ mkdir -p tmp
+		x_ rm -f "tmp/refcode"
 		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
 		"$cbfstool" "$rom" add-stage -f "tmp/refcode" -n "$cbfsname" \
 		    -t stage || $err "$rom: !add ref"

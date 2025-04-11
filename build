@@ -35,9 +35,15 @@ main()
 
 	case "${spath#script/}" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release) shift 1; mkrelease "$@" ;;
-	inject) shift 1; vendor_inject "$@" ;;
-	download) shift 1; vendor_download "$@" ;;
+	release)
+		shift 1
+		mkrelease "$@" ;;
+	inject)
+		shift 1
+		vendor_inject "$@" ;;
+	download)
+		shift 1
+		vendor_download "$@" ;;
 	roms)
 		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
 			mk -b stm32-vserprog pico-serprog

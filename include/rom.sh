@@ -28,11 +28,12 @@ mkserprog()
 		    && x_ cmake --build "$sersrc/build"
 		[ "$1" = "stm32" ] && x_ make -C "$sersrc" \
 		    libopencm3-just-make BOARD=$sertarget && x_ make -C \
-		    "$sersrc" BOARD=$sertarget; x_ mkdir -p "bin/serprog_$1"
+		    "$sersrc" BOARD=$sertarget
+		x_ mkdir -p "bin/serprog_$1"
 		x_ mv "$serx" "bin/serprog_$1/serprog_$sertarget.${serx##*.}"
 	done < "$TMPDIR/ser"
 
-	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; return 0
+	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; :
 }
 
 mkpicotool()
@@ -69,7 +70,7 @@ mkpayload_grub()
 	    --install-modules="$grub_install_modules" \
 	    "/boot/grub/grub_default.cfg=${srcdir}/.config" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" || \
-	    $err "$tree: cannot build grub.elf"; return 0
+	    $err "$tree: cannot build grub.elf"; :
 }
 
 mkvendorfiles()
@@ -79,7 +80,7 @@ mkvendorfiles()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    $err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
-	    x_ ./mk download "$target"; return 0
+	    x_ ./mk download "$target"; :
 }
 
 cook_coreboot_config()
@@ -108,8 +109,8 @@ check_coreboot_utils()
 			x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
 		elif [ -n "$mode" ]; then
 			x_ rm -Rf "$utilelfdir"
-		fi; continue
-	done; return 0
+		fi; :
+	done; :
 }
 
 mkcorebootbin()
@@ -177,7 +178,8 @@ add_seabios()
 	cbfs "$tmprom" "$_seabioself" "$_seaname"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
-	_z="2"; [ "$initmode" = "vgarom" ] && _z="0"
+	_z="2"
+	[ "$initmode" = "vgarom" ] && _z="0"
 	x_ "$cbfstool" "$tmprom" add-int -i $_z -n etc/pci-optionrom-exec
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
 	[ "$initmode" = "libgfxinit" ] && \
