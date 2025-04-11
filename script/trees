@@ -22,9 +22,13 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
 do_make="y"
 mode="all" # make all
 
+flags="-m/-u/-b/-c/-x/-f/-s/-l/-n/-d"
+
 main()
 {
 	[ $# -lt 1 ] && $err "No argument provided"
+	[ "${1%-*}" = "$1" ] && $err \
+	    "First argument must be a flag ($flags)"
 
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
@@ -56,7 +60,7 @@ main()
 		project="${OPTARG#src/}"
 		shift 2
 	done
-	[ -z "$_f" ] && $err "missing flag (-m/-u/-b/-c/-x/-f/-s/-l/-n/-d)"
+	[ -z "$_f" ] && $err "missing flag ($flags)"
 	if [ -z "$project" ]; then
 		mk $_f $(ls -1 config/git)
 		return 1
