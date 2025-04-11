@@ -24,7 +24,7 @@ err_()
 	exit 1
 }
 
-xbmkpwd=`pwd` || $err "Cannot generate PWD"
+xbmkpwd="`pwd`" || $err "Cannot generate PWD"
 export PWD="$xbmkpwd"
 
 setvars()
