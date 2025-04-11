@@ -16,15 +16,16 @@ vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$xbmkpwd/tmp/DO_NOT_FLASH"
 
-cv="CONFIG_HAVE_ME_BIN CONFIG_ME_BIN_PATH CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
-    CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FIRMWARE CONFIG_KBC1126_FW1 \
+cvchk="CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
+	CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
+	CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE"
+
+cv="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FW1 \
     CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
-    CONFIG_VGA_BIOS_FILE CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 \
-    CONFIG_HAVE_MRC CONFIG_MRC_FILE CONFIG_HAVE_REFCODE_BLOB \
-    CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH CONFIG_IFD_BIN_PATH \
-    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_FD_PATH CONFIG_FSP_M_FILE \
-    CONFIG_FSP_S_FILE CONFIG_FSP_S_CBFS CONFIG_FSP_M_CBFS CONFIG_FSP_USE_REPO \
-    CONFIG_FSP_FULL_FD"
+    CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 CONFIG_FSP_S_CBFS \
+    CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_GBE_BIN_PATH \
+    CONFIG_IFD_BIN_PATH CONFIG_FSP_FD_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS \
+    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD $cvchk"
 
 eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
@@ -34,7 +35,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
     IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
     TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
-    vfile $cv`"
+    vfile cbcfg $cv`"
 
 vendor_download()
 {
@@ -46,32 +47,18 @@ vendor_download()
 
 readkconfig()
 {
-	check_defconfig "$boarddir" 1>"$TMPDIR/vendorcfg.list" && return 1
+	x_ rm -f "$TMPDIR/cbcfg"
+	cbcfg="`check_defconfig "$boarddir"`" || for cbc in $cv; do
+		grep "$cbc" "$cbcfg" 1>>"$TMPDIR/cbcfg" 2>/dev/null || :
+	done
+	eval "`setcfg "$TMPDIR/cbcfg" 1`"
 
-	rm -f "$TMPDIR/tmpcbcfg" || $err "!rm $TMPDIR/tmpcbcfg - $dontflash"
-	while read -r cbcfgfile; do
-		for cbc in $cv; do
-			rm -f "$TMPDIR/tmpcbcfg2" || \
-			    $err "!rm $TMPDIR/tmpcbcfg2 - $dontflash"
-			grep "$cbc" "$cbcfgfile" 1>"$TMPDIR/tmpcbcfg2" \
-			    2>/dev/null || :
-			[ -f "$TMPDIR/tmpcbcfg2" ] || continue
-			cat "$TMPDIR/tmpcbcfg2" >> "$TMPDIR/tmpcbcfg" || \
-			    $err "!cat $TMPDIR/tmpcbcfg2 - $dontflash"
-		done
-	done < "$TMPDIR/vendorcfg.list"
-
-	eval "`setcfg "$TMPDIR/tmpcbcfg"`"
-
-	for c in CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
-	    CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
-	    CONFIG_LENOVO_TBFW_BIN CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE; do
+	for c in $cvchk; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
 		eval "`setcfg "$vfile"`"
 		return 0
 	done
-	printf "Vendor files not needed for: %s\n" "$board" 1>&2
 	return 1
 }
 
@@ -482,6 +469,7 @@ readcfg()
 	x_ ./mk -d coreboot "$tree" # even if vendorfiles not used, see: setmac
 
 	[ -z "$vcfg" ] && return 1
+
 	vfile="config/vendor/$vcfg/pkg.cfg"
 	[ -L "$vfile" ] && $err "'$archive', '$board': $vfile is a symlink"
 	[ -f "$vfile" ] || $err "'$archive', '$board': $vfile doesn't exist"
