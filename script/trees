@@ -26,10 +26,12 @@ main()
 {
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
-		_f="$1" && [ "$_f" = "-d" ] && dry=":"
+		_f="$1"
 
-		case "$1" in
-		-d) mode="" ;;
+		case "$_f" in
+		-d)
+			mode=""
+			dry=":" ;;
 		-b) mode="" ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
