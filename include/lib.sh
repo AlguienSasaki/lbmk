@@ -6,6 +6,8 @@
 export LC_COLLATE=C
 export LC_ALL=C
 
+[ -z "${PATH+x}" ] && \
+    export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 xbmkpath="$PATH"
 
 _ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
