@@ -17,6 +17,10 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
     gnatver gnatfull gccdir cmakedir`"; badhash="n"
 
+# ./mk -f will set this to "n", thus
+# disabling the use of make commands
+do_make="y"
+
 main()
 {
 	while getopts f:b:m:u:c:x:s:l:n:d: option; do
@@ -30,7 +34,7 @@ main()
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
-		-f) mode="fetch" ;;
+		-f) do_make="n"	 ;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
@@ -145,7 +149,7 @@ configure_project()
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
 		[ "$cmd" = "build_project" ] && break
-		[ "$mode" = "fetch" ] || break
+		[ "$do_make" = "y" ] && break
 
 		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
 		    && break
@@ -159,7 +163,7 @@ configure_project()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	if [ "$mode" != "fetch" ]; then
+	if [ "$do_make" = "y" ]; then
 		x_ ./mk -f "$project" "$target"
 		return 0
 	fi
