@@ -9,8 +9,6 @@ set -u -e
 . "include/lib.sh"
 . "include/git.sh"
 
-XBMKPATH="$PATH"
-
 eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
@@ -111,7 +109,7 @@ build_targets()
 
 	for x in $targets; do
 		unset CROSS_COMPILE
-		export PATH="$XBMKPATH"
+		export PATH="$xbmkpath"
 		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
 		    listfile="" && break
 		target="$x"
