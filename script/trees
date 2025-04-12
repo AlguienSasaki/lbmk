@@ -15,13 +15,11 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
     gnatver gnatfull gccdir cmakedir`"
 
-# ./mk -f will set this to "n", thus
-# disabling the use of make commands
+# ./mk -f will set this to "n"
 do_make="y"
 mode="all" # make all
 
-# badhash changes to "y" when project
-# files change, e.g. config files, patches
+# badhash changes to "y" when sources change
 badhash="n"
 
 flags="-m/-u/-b/-c/-x/-f/-s/-l/-n/-d"
