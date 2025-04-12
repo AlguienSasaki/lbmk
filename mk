@@ -44,13 +44,6 @@ main()
 	download)
 		shift 1
 		vendor_download "$@" ;;
-	roms)
-		if [ $# -gt 1 ] && [ "$2" = "serprog" ]; then
-			mk -b stm32-vserprog pico-serprog
-		else
-			shift 1
-			x_ ./mk -b coreboot "$@"
-		fi ;;
 	*)
 		[ -f "$spath" ] || $err "bad command"
 		$shcmd
