@@ -124,8 +124,7 @@ fetch()
 	rm -Rf "${_dl}_extracted" || $err "!rm ${_ul}_extracted. $dontflash"
 	e "$_dest" f && return 0
 
-	mkdir -p "${_dest%/*}" || \
-	    $err "mkdirs: !mkdir -p ${_dest%/*} - $dontflash"
+	x_ mkdir -p "${_dest%/*}"
 	remkdir "$appdir"
 	extract_archive "$_dl" "$appdir" "$dl_type" || \
 	    [ "$dl_type" = "e6400vga" ] || \
@@ -165,8 +164,7 @@ extract_intel_me_bruteforce()
 	e "$_metmp" f && return 0
 
 	[ -z "$sdir" ] && sdir="$(mktemp -d)"
-	mkdir -p "$sdir" || \
-	    $err "extract_intel_me: !mkdir -p \"$sdir\" - $dontflash"
+	x_ mkdir -p "$sdir"
 
 	set +u +e
 	(
@@ -200,11 +198,10 @@ apply_me11_deguard_mod()
 {
 	(
 	x_ cd src/deguard/
-	./finalimage.py --delta "data/delta/$ME11delta" \
+	x_ ./finalimage.py --delta "data/delta/$ME11delta" \
 	    --version "$ME11version" \
 	    --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs data/fpfs/zero \
-	    --input "$_metmp" --output "$_me" || \
-	    $err "Error running deguard for $_me - $dontflash"
+	    --input "$_metmp" --output "$_me"
 	) || $err "Error running deguard for $_me - $dontflash"
 }
 
@@ -272,8 +269,7 @@ extract_e6400vga()
 	    $err "extract_e6400vga: can't extract bios.bin - $dontflash"
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
 	) || $err "can't extract e6400 vga rom - $dontflosh"
-	cp "$appdir/$E6400_VGA_romname" "$_dest" || \
-	    $err "extract_e6400vga $board: can't cp $_dest - $dontflash"; :
+	x_ cp "$appdir/$E6400_VGA_romname" "$_dest"
 }
 
 extract_sch5545ec()
@@ -286,8 +282,7 @@ extract_sch5545ec()
 	_sch5545ec_fw="$_sch5545ec_fw/0 Raw section/body.bin" # <-- this!
 
 	"$uefiextract" "$_bios" || $err "sch5545 !extract - $dontflash"
-	cp "$_sch5545ec_fw" "$_dest" || \
-	    $err "$_dest: !sch5545 copy - $dontflash"; :
+	x_ cp "$_sch5545ec_fw" "$_dest"
 }
 
 # Lenovo ThunderBolt firmware updates:
@@ -302,14 +297,11 @@ extract_tbfw()
 	while read -r f; do
 		[ -f "$f" ] || continue
 		[ -L "$f" ] && continue
-		cp "$f" "tmp/tb.bin" || \
-		    $err "extract_tbfw $_dest: Can't copy TBT.bin - $dontflash"
+		x_ cp "$f" "tmp/tb.bin"
 		break
 	done < "tmp/tb.txt"
-	dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size || \
-	    $err "extract_tbfw $_dest: Can't pad TBT.bin - $dontflash"
-	cp "tmp/tb.bin" "$_dest" || \
-	    $err "extract_tbfw $_dest: copy error - $dontflash "; :
+	x_ dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size
+	x_ cp "tmp/tb.bin" "$_dest"
 }
 
 extract_fspm()
@@ -325,8 +317,7 @@ extract_fsps()
 # this copies the fsp s/m; re-base is handled by ./mk inject
 copy_fsp()
 {
-	cp "$appdir/Fsp_$1.fd" "$_dest" || \
-	    $err "copy_fsp: Can't copy $1 to $_dest - $dontflash"; :
+	x_ cp "$appdir/Fsp_$1.fd" "$_dest"
 }
 
 fail_inject()
@@ -501,8 +492,7 @@ patch_release_roms()
 		sha512sum --status -c "$hashfile" || \
 		    sha1sum --status -c "$hashfile" || \
 		    $err "'$archive' -> Can't verify vendor hashes. $dontflash"
-		rm -f "$hashfile" || \
-		    $err "$archive: Can't rm hashfile. $dontflash"
+		x_ rm -f "$hashfile"
 	fi
 	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
@@ -512,8 +502,7 @@ patch_release_roms()
 	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
 	[ "$xchanged" = "y" ] || return 0
 	(
-		cd "${tmpromdir%"/bin/$board"}" || \
-		    $err "Can't cd '${tmpromdir%"/bin/$board"}'; $dontflash"
+		x_ cd "${tmpromdir%"/bin/$board"}"
 		mkrom_tarball "bin/$board"
 	) || $err "Cannot re-generate '$archive' - $dontflash"
 
@@ -536,8 +525,7 @@ process_release_rom()
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
 		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
 
-		stat -c '%s' "$_xrom" > "tmp/rom.size" || \
-		    $err "$_xrom: Can't get rom size. $dontflash"
+		x_ stat -c '%s' "$_xrom" > "tmp/rom.size"
 		read -r xromsize < "tmp/rom.size" || \
 		    $err "$_xrom: Can't read rom size. $dontflash"
 
@@ -550,8 +538,7 @@ process_release_rom()
 		[ $xromsize -lt 524288 ] && \
 		    $err "$_xrom size too small; likely not a rom. $dontflash"
 
-		dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1 || \
-		    $err "$_xrom: Can't resize. $dontflash"
+		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
 		rm -f "$_xrom" || $err "Can't rm $_xrom - $dontflash"
 
 		_xrom="$_xromnew"
@@ -566,7 +553,7 @@ process_release_rom()
 	# Rename the file, prefixing a warning saying not to flash
 	cat "$_xrom" tmp/zero.1b > "${_xrom%/*}/$vfix${_xrom##*/}" || \
 	    $err "'$archive' -> can't pad/rename '$_xrom'. $dontflash"
-	rm -f "$_xrom" || $err "'$archive' -> can't rm '$_xrom'. $dontflash"
+	x_ rm -f "$_xrom"
 }
 
 patch_rom()
@@ -636,8 +623,7 @@ inject()
 		xchanged="y"
 		return 0
 	elif [ "$nukemode" = "nuke" ]; then
-		"$cbfstool" "$rom" remove -n "$cbfsname" || \
-		    $err "inject $rom: can't remove $cbfsname"
+		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 		xchanged="y"
 		return 0
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
