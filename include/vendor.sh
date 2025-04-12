@@ -416,7 +416,8 @@ check_release()
 {
 	[ -L "$archive" ] && \
 	    $err "'$archive' is a symlink, not a file - $dontflash"
-	[ -f "$archive" ] || return 1
+	e "$archive" f missing && return 1
+
 	archivename="`basename "$archive"`"
 	[ -z "$archivename" ] && \
 	    $err "Cannot determine archive file name - $dontflash"
