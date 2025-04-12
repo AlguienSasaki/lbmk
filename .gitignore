@@ -24,6 +24,8 @@
 /push
 /version
 /versiondate
+/.version
+/.versiondate
 /vendorfiles/
 *me.bin
 *sch5545ec.bin

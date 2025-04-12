@@ -50,7 +50,7 @@ eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version relname xbmk_parent`"
 
 for fv in version versiondate; do
-	eval "[ ! -f \"$fv\" ] || read -r $fv < \"$fv\" || :"
+	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 done
 
 setcfg()
@@ -155,10 +155,10 @@ x_() {
 	    $err "Unhandled non-zero exit: $(echo "$@")"; :
 }
 
-[ -e ".git" ] || [ -f "version" ] || printf "unknown\n" > version || \
-    $err "Cannot generate unknown version file"
-[ -e ".git" ] || [ -f "versiondate" ] || printf "1716415872\n" > versiondate \
-    || $err "Cannot generate unknown versiondate file"
+[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version || \
+    $err "Cannot generate unknown .version file"
+[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
+    .versiondate || $err "Cannot generate unknown .versiondate file"
 
 version_="$version"
 [ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
@@ -168,7 +168,7 @@ versiondate_="$versiondate"
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 for p in version versiondate; do
 	chkvars "$p"
-	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
+	eval "x_ printf \"%s\\n\" \"\$$p\" > .$p"
 done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
@@ -189,8 +189,8 @@ remkdir()
 
 mkrom_tarball()
 {
-	printf "%s\n" "$version" > "$1/version" || $err "$1 !version"
-	printf "%s\n" "$versiondate" > "$1/versiondate" || $err "$1 !vdate"
+	printf "%s\n" "$version" > "$1/.version" || $err "$1 !version"
+	printf "%s\n" "$versiondate" > "$1/.versiondate" || $err "$1 !vdate"
 
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
