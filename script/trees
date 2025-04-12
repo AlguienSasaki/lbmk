@@ -15,15 +15,15 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
     gnatver gnatfull gccdir cmakedir do_make badhash`"
 
-flags="-m/-u/-b/-c/-x/-f/-s/-l/-n/-d"
-
 main()
 {
+	flags="f:b:m:u:c:x:s:l:n:d:"
+
 	[ $# -lt 1 ] && $err "No argument provided"
 	[ "${1%-*}" = "$1" ] && $err \
 	    "First argument must be a flag ($flags)"
 
-	while getopts f:b:m:u:c:x:s:l:n:d: option; do
+	while getopts $flags option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
 		_f="$1"
 
