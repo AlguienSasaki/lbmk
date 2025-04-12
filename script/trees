@@ -166,12 +166,11 @@ configure_project()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	if [ "$do_make" != "n" ]; then
-		x_ ./mk -f "$project" "$target"
-		return 0
+	if [ "$do_make" = "n" ]; then
+		[ -f "CHANGELOG" ] || fetch_${cmd#build_}
+		return 1
 	fi
-	[ -f "CHANGELOG" ] || fetch_${cmd#build_}
-	return 1
+	x_ ./mk -f "$project" "$target"
 }
 
 build_dependencies()
