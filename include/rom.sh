@@ -41,9 +41,8 @@ mkpicotool()
 	rm -Rf "$picotool" || $err "Can't remove picotool builddir"
 	(
 	x_ cd src/picotool
-	cmake -DCMAKE_INSTALL_PREFIX=xbmkbin -DPICOTOOL_FLAT_INSTALL=1 \
-	    -DPICO_SDK_PATH=../pico-sdk || \
-	    $err "Can't prep picotool"
+	x_ cmake -DCMAKE_INSTALL_PREFIX=xbmkbin -DPICOTOOL_FLAT_INSTALL=1 \
+	    -DPICO_SDK_PATH=../pico-sdk
 	make install || $err "Can't build picotool"; :
 	) || $err "Can't build picotool"; :
 }
@@ -160,7 +159,8 @@ mkcorebootbin()
 		    $dry add_seabios
 		[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
 	else
-		pname="custom" && $dry cprom; :
+		pname="custom"
+		$dry cprom
 	fi; :
 }
 
@@ -212,11 +212,9 @@ add_grub()
 
 mkseagrub()
 {
-	if [ "$payload_grubsea" = "y" ]; then
-		pname="grub"
-	else
-		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	fi
+	[ "$payload_grubsea" = "y" ] && pname="grub"
+	[ "$payload_grubsea" = "y" ] || \
+	    cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	for keymap in config/data/grub/keymap/*.gkb; do
 		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
 	done; :
@@ -288,6 +286,5 @@ mkcoreboottar()
 	[ "$release" != "n" ] || return 0
 	$dry mkrom_tarball "bin/$target"
 	$dry ./mk inject "bin/${relname}_${target}.tar.xz" nuke || \
-	    $err "Can't delete vendorfiles in 'bin/${relname}_$target.tar.xz'"
-	return 0
+	    $err "Can't nuke vendorfiles in 'bin/${relname}_$target.tar.xz'"; :
 }
