@@ -290,14 +290,13 @@ build_dependencies()
 		bd_t="${bd##*/}"
 		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
-		[ -z "$bd_p" ] || $dry ./mk -b $bd_p $bd_t \
-		    || $err "!mk $project/$tree $bd_p/$bd_t"; :
+		[ -z "$bd_p" ] || $dry x_ ./mk -b $bd_p $bd_t; :
 	done; :
 }
 
 check_project_hashes()
 {
-	mkdir -p "$XBMK_CACHE/hash" || $err "!mkdir '$XBMK_CACHE/hash'"
+	x_ mkdir -p "$XBMK_CACHE/hash"
 	old_pjhash=""
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
@@ -348,8 +347,7 @@ check_cross_compiler()
 		xfix="${_xarch%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
 
 		# match gnat-X to gcc
-		check_gnu_path gcc gnat || check_gnu_path gnat gcc || \
-		    $err "Cannot match host GCC/GNAT versions"
+		check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 
 		# sometimes buildgcc fails for like no reason. try twice.
 		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
@@ -455,7 +453,7 @@ run_make_command()
 	    $dry check_autoconf "$srcdir"
 	$dry check_makefile "$srcdir" || return 1
 
-	$dry make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs || $err "!$mode"
+	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 	mkhelp "$mkhelper"
 
 	[ "$mode" != "clean" ] || \
@@ -465,10 +463,8 @@ run_make_command()
 check_cmake()
 {
 	[ -z "$cmakedir" ] || $dry check_makefile "$1" || cmake -B "$1" \
-	    "$1/$cmakedir" || $dry check_makefile "$1" || $err \
-	    "$1: !cmk $cmakedir"
-	[ -z "$cmakedir" ] || $dry check_makefile "$1" || \
-	    $err "check_cmake $1: can't generate Makefile"; :
+	    "$1/$cmakedir" || $dry x_ check_makefile "$1"
+	[ -z "$cmakedir" ] || $dry x_ check_makefile "$1"; :
 }
 
 check_autoconf()
