@@ -230,8 +230,7 @@ decat_fspfd()
 	_fspdir="$2"
 	_fspsplit="$cbdir/3rdparty/fsp/Tools/SplitFspBin.py"
 
-	$python "$_fspsplit" split -f "$_fspfd" -o "$_fspdir" -n "Fsp.fd" || \
-	    $err "decat_fspfd '$1' '$2': Can't de-concatenate; $dontflash"; :
+	x_ $python "$_fspsplit" split -f "$_fspfd" -o "$_fspdir" -n "Fsp.fd"
 }
 
 extract_kbc1126ec()
