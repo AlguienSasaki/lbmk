@@ -35,7 +35,7 @@ main()
 
 		case "$_f" in
 		-d) dry=":" ;;
-		-b) mode="" ;;
+		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
