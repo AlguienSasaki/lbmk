@@ -566,18 +566,16 @@ process_release_rom()
 	_xrom="$1"
 	_xromname="${1##*/}"
 
-	[ -L "$_xrom" ] && \
-	    $err "$archive -> '${_xrom#"tmp/DO_NOT_FLASH/"}' is a symlink"
-	[ -f "$_xrom" ] || return 0
+	e "$_xrom" f missing && return 0
 
 	[ -z "${_xromname#"$vfix"}" ] && \
 	    $err "'$_xromname'->'"${_xromname#"$vfix"}"' empty. $dontflash"
+
 	# Remove the prefix and 1-byte pad
 	if [ "$nukemode" != "nuke" ] && \
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
 		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
 
-		# Remove the 1-byte padding
 		stat -c '%s' "$_xrom" > "tmp/rom.size" || \
 		    $err "$_xrom: Can't get rom size. $dontflash"
 		read -r xromsize < "tmp/rom.size" || \
@@ -588,8 +586,6 @@ process_release_rom()
 		[ $xromsize -lt 2 ] && $err \
 		    "$_xrom: Will not create empty file. $dontflash"
 
-		# TODO: check whether the size would be a multiple of 64KB
-		# the smallest rom images we do are 512kb	
 		xromsize="`expr $xromsize - 1`"
 		[ $xromsize -lt 524288 ] && \
 		    $err "$_xrom size too small; likely not a rom. $dontflash"
@@ -608,9 +604,6 @@ process_release_rom()
 	[ "$nukemode" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
-	# the target image, which now has vendor files removed. Also
-	# pad it so that flashprog returns an error if the user tries
-	# to flash it, due to mismatching ROM size vs chip size
 	cat "$_xrom" tmp/zero.1b > "${_xrom%/*}/$vfix${_xrom##*/}" || \
 	    $err "'$archive' -> can't pad/rename '$_xrom'. $dontflash"
 	rm -f "$_xrom" || $err "'$archive' -> can't rm '$_xrom'. $dontflash"
