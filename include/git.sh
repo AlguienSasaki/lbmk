@@ -34,8 +34,8 @@ fetch_project()
 	clone_project
 
 	for x in config/git/*; do
-		[ -d "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null
-	done; return 0
+		[ -d "$x" ] && nuke "${x##*/}" "src/${x##*/}" 2>/dev/null; :
+	done; :
 }
 
 clone_project()
