@@ -63,13 +63,12 @@ mkpayload_grub()
 	eval "`setvars "" grub_modules grub_install_modules`"
 	$dry eval "`setcfg "$grubdata/module/$tree"`"
 	$dry x_ rm -f "$srcdir/grub.elf"; $dry \
-	"$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
+	x_ "$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
 	    "/boot/grub/grub_default.cfg=${srcdir}/.config" \
-	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg" || \
-	    $err "$tree: cannot build grub.elf"; :
+	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 
 mkvendorfiles()
@@ -285,6 +284,5 @@ mkcoreboottar()
 	[ "$XBMK_RELEASE" = "y" ] || return 0
 	[ "$release" != "n" ] || return 0
 	$dry mkrom_tarball "bin/$target"
-	$dry ./mk inject "bin/${relname}_${target}.tar.xz" nuke || \
-	    $err "Can't nuke vendorfiles in 'bin/${relname}_$target.tar.xz'"; :
+	$dry x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke; :
 }
