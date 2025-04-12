@@ -491,13 +491,10 @@ patch_release_roms()
 
 	tmpromdir="tmp/DO_NOT_FLASH/bin/$board"
 	remkdir "${tmpromdir%"/bin/$board"}"
-	tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}" || \
-		$err "Can't extract '$archive'"
+	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in $hashfiles; do
-		[ -L "$tmpromdir/$_hashes" ] && \
-		    $err "'$archive' -> the hashfile is a symlink. $dontflash"
-		[ -f "$tmpromdir/$_hashes" ] && has_hashes="y" && \
+		e "$tmpromdir/$_hashes" f && has_hashes="y" && \
 		    hashfile="$_hashes" && break; :
 	done
 
@@ -534,31 +531,19 @@ patch_release_roms()
 	fi
 	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
-	if [ -n "$new_mac" ]; then
-		if ! modify_mac_addresses; then
-			printf "\nNo GbE region defined for '%s'\n" "$board" \
-			    1>&2
-			printf "Therefore, changing the MAC is impossible.\n" \
-			    1>&2
-			printf "This board probably lacks Intel ethernet.\n" \
-			    1>&2
-			printf "(or it's pre-IFD Intel with Intel GbE NIC)\n" \
-			    1>&2
-		fi
-	fi
+	[ -z "$new_mac" ] || modify_mac_addresses || printf \
+	    "\nNo GbE region defined for '%s'\n" "$board" 1>&2
 
 	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
 	[ "$xchanged" = "y" ] || return 0
 	(
 		cd "${tmpromdir%"/bin/$board"}" || \
 		    $err "Can't cd '${tmpromdir%"/bin/$board"}'; $dontflash"
-		# ../../ is the root of lbmk
 		mkrom_tarball "bin/$board"
 	) || $err "Cannot re-generate '$archive' - $dontflash"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
-	    "$archive" || \
-	    $err "'$archive' -> Cannot overwrite - $dontflash"; :
+	    "$archive" || $err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
 process_release_rom()
