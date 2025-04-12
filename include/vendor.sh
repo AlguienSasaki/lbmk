@@ -678,13 +678,14 @@ patch_rom()
 
 inject()
 {
-	[ $# -lt 3 ] && $err "$*, $rom: usage: inject name path type (offset)"
+	[ $# -lt 3 ] && $err "bad command: $*, $rom"
 	[ "$2" = "/dev/null" ] && return 0
 
-	eval "`setvars "" cbfsname _dest _t _offset`"
 	cbfsname="$1"
 	_dest="${2##*../}"
 	_t="$3"
+
+	_offset=""
 
 	if [ "$_t" = "fsp" ]; then
 		[ $# -gt 3 ] && _offset="$4"
@@ -693,7 +694,7 @@ inject()
 		    $err "inject $*, $rom: offset given but empty (undefined)"
 	fi
 
-	e "$_dest" f n && [ "$nukemode" != "nuke" ] && $err "!inject $dl_type"
+	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
 
 	if [ "$cbfsname" = "IFD" ]; then
 		[ "$nukemode" = "nuke" ] || "$ifdtool" $ifdprefix -i \
@@ -708,8 +709,7 @@ inject()
 		    $err "inject $rom: can't remove $cbfsname"
 		xchanged="y"
 		return 0
-	fi
-	if [ "$_t" = "stage" ]; then # the only stage we handle is refcode
+	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ mkdir -p tmp
 		x_ rm -f "tmp/refcode"
 		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
