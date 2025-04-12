@@ -15,6 +15,7 @@ dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$xbmkpwd/tmp/DO_NOT_FLASH"
+nvm="util/nvmutil/nvm"
 
 cvchk="CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \
@@ -723,43 +724,29 @@ inject()
 
 modify_mac_addresses()
 {
-	[ "$nukemode" = "nuke" ] && \
-	    $err "Cannot modify MAC addresses while nuking vendor files"
-
-	# chkvars CONFIG_GBE_BIN_PATH
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
-	e "${CONFIG_GBE_BIN_PATH##*../}" f n && $err "missing gbe file"
-
-	[ "$new_mac" != "restore" ] && \
-	    x_ make -C util/nvmutil
 
 	x_ mkdir -p tmp
-	[ -L "tmp/gbe" ] && $err "tmp/gbe exists but is a symlink"
-	[ -d "tmp/gbe" ] && $err "tmp/gbe exists but is a directory"
-	if [ -e "tmp/gbe" ]; then
-		[ -f "tmp/gbe" ] || $err "tmp/gbe exists and is not a file"
-	fi
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "tmp/gbe"
+	e tmp/gbe && x_ e tmp/gbe f
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
 
-	[ "$new_mac" != "restore" ] && \
-	    x_ "util/nvmutil/nvm" "tmp/gbe" setmac "$new_mac"
+	if [ "$new_mac" != "restore" ]; then
+		x_ make -C util/nvmutil
+		x_ "$nvm" tmp/gbe setmac "$new_mac"
+	fi
 
 	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
 	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
 
 	while read -r _xrom; do
-		[ -L "$_xrom" ] && continue
-		[ -f "$_xrom" ] || continue
-		"$ifdtool" $ifdprefix -i GbE:"tmp/gbe" "$_xrom" -O \
-		    "$_xrom" || $err "'$_xrom': Can't insert new GbE file"
-		xchanged="y"
+		e "$_xrom" f && xchanged="y" && x_ \
+		    "$ifdtool" $ifdprefix -i GbE:tmp/gbe "$_xrom" -O "$_xrom"
 	done < "tmp/rom.list"
-	printf "\nThe following GbE NVM words were written in '%s':\n" \
-	    "$archive"
-	x_ util/nvmutil/nvm tmp/gbe dump | grep -v "bytes read from file" || :
+
+	printf "\nGbE NVM written to '%s':\n" "$archive"
+	x_ "$nvm" tmp/gbe dump | grep -v "bytes read from file" || :
 
 	[ "$new_mac" = "restore" ] && \
-	    printf "\nNOTE: User specified setmac 'restore' argument.\n" && \
-	    printf "Default GbE file '%s' written without running nvmutil.\n" \
-	    "${CONFIG_GBE_BIN_PATH##*../}"; :
+		printf "\nDefault GbE file '%s' written, unmodified.\n" \
+		    "${CONFIG_GBE_BIN_PATH##*../}"; :
 }
