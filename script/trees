@@ -17,7 +17,6 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
 
 # ./mk -f will set this to "n"
 do_make="y"
-mode="all" # make all
 
 # badhash changes to "y" when sources change
 badhash="n"
