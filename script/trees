@@ -160,7 +160,7 @@ configure_project()
 	done
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
 	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
-	[ -z "$mode" ] && build_dependencies
+	[ -z "$mode" ] && $dry build_dependencies
 
 	mdir="$xbmkpwd/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
