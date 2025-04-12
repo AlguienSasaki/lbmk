@@ -26,6 +26,9 @@ err_()
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
 	exit 1
 }
+x_() {
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
+}
 
 xbmkpwd="`pwd`" || $err "Cannot generate PWD"
 export PWD="$xbmkpwd"
@@ -148,10 +151,6 @@ fi
 [ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
 expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || export XBMK_THREADS=1 # user gave a non-integer
-
-x_() {
-	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
-}
 
 [ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version || \
     $err "Cannot generate unknown .version file"
