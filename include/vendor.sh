@@ -620,20 +620,11 @@ patch_rom()
 {
 	rom="$1"
 
-	# regarding ifs below:
-	# if a hash file exists, we only want to allow inject.
-	# if a hash file is missing, we only want to allow nuke.
-	# this logical rule prevents double-nuke and double-inject
-
-	# if injecting without a hash file i.e. inject what was injected
-	# (or inject where no vendor files are needed, covered previously)
 	if [ "$has_hashes" != "y" ] && [ "$nukemode" != "nuke" ]; then
 		printf "inject: '%s' has no hash file. Skipping.\n" \
 		    "$archive" 1>&2
 		return 1
-	fi
-	# nuking *with* a hash file, i.e. nuking what was nuked before
-	if [ "$has_hashes" = "y" ] && [ "$nukemode" = "nuke" ]; then
+	elif [ "$has_hashes" = "y" ] && [ "$nukemode" = "nuke" ]; then
 		printf "inject nuke: '%s' has a hash file. Skipping nuke.\n" \
 		    "$archive" 1>&2
 		return 1
@@ -652,25 +643,12 @@ patch_rom()
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		inject sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	#
-	# coreboot adds FSP-M first. so we shall add it first, then S:
-	# NOTE:
-	# We skip the fetch if CONFIG_FSP_USE_REPO or CONFIG_FSP_FULL_FD is set
-	# but only for inject/nuke. we still run fetch (see above) because on
-	# _fsp targets, coreboot still needs them, but coreboot Kconfig uses
-	# makefile syntax and puts $(obj) in the path, which makes no sense
-	# in sh. So we modify the path there, but lbmk only uses the file
-	# in vendorfiles/ if neither CONFIG_FSP_USE_REPO nor CONFIG_FSP_FULL_FD
-	# are set
-	#
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_M_FILE" ] && \
 		inject "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_S_FILE" ] && \
 		inject "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
-	# TODO: modify gbe *after checksum verification only*
-	# TODO: insert default gbe if doing -n nuke
 
 	printf "ROM image successfully patched: %s\n" "$rom"
 	xchanged="y"
