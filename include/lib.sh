@@ -6,6 +6,9 @@
 export LC_COLLATE=C
 export LC_ALL=C
 
+projectname="libreboot"
+projectsite="https://libreboot.org/"
+
 [ -z "${PATH+x}" ] && \
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 xbmkpath="$PATH"
@@ -43,13 +46,12 @@ chkvars()
 	done; :
 }
 
-eval "`setvars "" _nogit board reinstall versiondate projectsite projectname \
-    aur_notice configdir datadir version relname xbmk_parent`"
+eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
+    datadir version relname xbmk_parent`"
 
-for fv in projectname projectsite version versiondate; do
+for fv in version versiondate; do
 	eval "[ ! -f \"$fv\" ] || read -r $fv < \"$fv\" || :"
 done
-chkvars projectname projectsite
 
 setcfg()
 {
@@ -164,7 +166,7 @@ version_="$version"
 versiondate_="$versiondate"
 [ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-for p in projectname version versiondate projectsite; do
+for p in version versiondate; do
 	chkvars "$p"
 	eval "x_ printf \"%s\\n\" \"\$$p\" > $p"
 done
@@ -189,7 +191,6 @@ mkrom_tarball()
 {
 	printf "%s\n" "$version" > "$1/version" || $err "$1 !version"
 	printf "%s\n" "$versiondate" > "$1/versiondate" || $err "$1 !vdate"
-	printf "%s\n" "$projectname" > "$1/projectname" || $err "$1 !pname"
 
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
