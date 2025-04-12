@@ -13,13 +13,7 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull gccdir cmakedir`"
-
-# ./mk -f will set this to "n"
-do_make="y"
-
-# badhash changes to "y" when sources change
-badhash="n"
+    gnatver gnatfull gccdir cmakedir do_make badhash`"
 
 flags="-m/-u/-b/-c/-x/-f/-s/-l/-n/-d"
 
@@ -145,9 +139,8 @@ configure_project()
 {
 	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
-	    xarch xlang`"
+	    xarch xlang badhash`"
 	_tcfg="$1/target.cfg"
-	badhash="n"
 	[ -f "$_tcfg" ] || btype="auto"
 	[ -f "$datadir/mkhelper.cfg" ] && \
 	    eval "`setcfg "$datadir/mkhelper.cfg"`"
@@ -159,7 +152,7 @@ configure_project()
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
 		[ "$cmd" = "build_project" ] && break
-		[ "$do_make" = "y" ] && break
+		[ "$do_make" != "n" ] && break
 
 		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
 		    && break
@@ -173,7 +166,7 @@ configure_project()
 	[ -n "$tree" ] && mdir="$mdir/$tree"
 	[ -f "CHANGELOG" ] || check_project_hashes
 
-	if [ "$do_make" = "y" ]; then
+	if [ "$do_make" != "n" ]; then
 		x_ ./mk -f "$project" "$target"
 		return 0
 	fi
@@ -219,13 +212,13 @@ check_project_hashes()
 	done < "$TMPDIR/project.list"
 
 	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
-	badhash="y" && [ "$pjhash" = "$old_pjhash" ] && badhash="n"
+	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
 	printf "%s\n" "$pjhash" > "$XBMK_CACHE/hash/$project$tree" || \
 	    $err "!mk $XBMK_CACHE/hash/$project$tree"
 
-	[ "$badhash" = "n" ] || rm -Rf "src/$project/$tree" \
+	[ "$badhash" != "y" ] || rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target" || \
 	    $err "!rm $project $tree"; :
 }
