@@ -128,12 +128,9 @@ if [ -z "${TMPDIR+x}" ]; then
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	touch lock || $err "cannot create 'lock' file"
-	rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath" || \
-	    $err "cannot remove xbmkpath"
-	mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath" || \
-	    $err "cannot create gnupath"
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH" || \
-	    $err "Can't create gnupath/xbmkpath"
+	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
+	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
@@ -241,8 +238,7 @@ download()
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
 	vendor_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
-	mkdir -p "${3%/*}" "$XBMK_CACHE/file" || \
-	    $err "!mkdir '$3' '$XBMK_CACHE/file'"
+	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
 	for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
