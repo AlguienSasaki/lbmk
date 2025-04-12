@@ -134,10 +134,6 @@ trees()
 {
 	flags="f:b:m:u:c:x:s:l:n:d:"
 
-	[ $# -lt 1 ] && $err "No argument provided"
-	[ "${1%-*}" = "$1" ] && $err \
-	    "First argument must be a flag ($flags)"
-
 	while getopts $flags option; do
 		[ -n "$_f" ] && $err "only one flag is permitted"
 		_f="$1"
