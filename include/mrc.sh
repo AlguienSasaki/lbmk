@@ -50,12 +50,10 @@ extract_refcode()
 	chkvars cbfstoolref
 	mkdir -p "${_refdest%/*}" || $err "ref: !mkdir -p ${_refdest%/*}"
 
-	"$cbfstoolref" "$appdir/bios.bin" extract \
-	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION \
-	    || $err "extract_refcode $board: !cbfstoolref $_refdest"
+	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
+	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
-	[ -z "$MRC_refcode_gbe" ] || dd if="config/ifd/hp820g2/1.bin" \
-	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc || \
-	    $err "extract_refcode $_refdest: byte $MRC_refcode_gbe"; :
+	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
+	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 }
