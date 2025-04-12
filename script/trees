@@ -34,9 +34,7 @@ main()
 		_f="$1"
 
 		case "$_f" in
-		-d)
-			mode=""
-			dry=":" ;;
+		-d) dry=":" ;;
 		-b) mode="" ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
