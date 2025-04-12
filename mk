@@ -30,18 +30,12 @@ main()
 
 	case "$1" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release)
+	release|download|inject)
+		cmd="vendor_$1" && [ "$1" = "release" ] && cmd="mkrelease"
 		shift 1
-		mkrelease "$@" ;;
-	inject)
-		shift 1
-		vendor_inject "$@" ;;
-	download)
-		shift 1
-		vendor_download "$@" ;;
-	-*)
-		rval=1 ;;
-	*) $err "bad command"
+		$cmd "$@" ;;
+	-*) rval=1 ;;
+	*) $err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 	return $rval
