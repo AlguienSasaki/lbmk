@@ -135,8 +135,7 @@ if [ -z "${TMPDIR+x}" ]; then
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
 	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
-	ln -s "`command -v "$python"`" python || \
-	    $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
+	x_ ln -s "`command -v "$python"`" python
 	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
 	xbmk_parent="y"
 fi
@@ -151,8 +150,7 @@ expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
     1>/dev/null 2>/dev/null || export XBMK_THREADS=1 # user gave a non-integer
 
 x_() {
-	[ $# -lt 1 ] || "$@" || \
-	    $err "Unhandled non-zero exit: $(echo "$@")"; :
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
 }
 
 [ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version || \
@@ -227,7 +225,7 @@ singletree()
 {
 	for targetfile in "config/${1}/"*/target.cfg; do
 		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
-	done; return 0
+	done; :
 }
 
 # can grab from the internet, or copy locally.
@@ -263,7 +261,7 @@ download()
 		vendor_checksum "$4" "$cached" || dl_fail="n"
 	done
 	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
-	[ "$cached" = "$3" ] || cp "$cached" "$3" || $err "!d cp $cached $3"; :
+	[ "$cached" = "$3" ] || x_ cp "$cached" "$3"; :
 }
 
 vendor_checksum()
@@ -290,8 +288,7 @@ cbfs()
 		fi
 	fi
 
-	"$cbfstool" "$fRom" $ccmd -f "$fAdd" -n "$fName" $lzma || \
-	    $err "CBFS fail: $fRom $ccmd -f '$fAdd' -n '$fName' $lzma"; :
+	x_ "$cbfstool" "$fRom" $ccmd -f "$fAdd" -n "$fName" $lzma
 }
 
 mk()
