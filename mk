@@ -348,9 +348,8 @@ check_project_hashes()
 	printf "%s\n" "$pjhash" > "$XBMK_CACHE/hash/$project$tree" || \
 	    $err "!mk $XBMK_CACHE/hash/$project$tree"
 
-	[ "$badhash" != "y" ] || rm -Rf "src/$project/$tree" \
-	    "elf/$project/$tree" "elf/$project/$target" || \
-	    $err "!rm $project $tree"; :
+	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
+	    "elf/$project/$tree" "elf/$project/$target"; :
 }
 
 check_cross_compiler()
@@ -375,8 +374,7 @@ check_cross_compiler()
 
 		# sometimes buildgcc fails for like no reason. try twice.
 		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
-		    make -C "$cbdir" crossgcc-$xfix $xgccargs || \
-		    $err "!mkxgcc $project/$xtree '$xfix' '$xgccargs'"
+		    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
 
 		# we only want to mess with hostcc to build xgcc
 		rm -f "$XBMK_CACHE/gnupath/"* || \
