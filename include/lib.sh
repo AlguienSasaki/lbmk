@@ -50,7 +50,7 @@ chkvars()
 }
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version relname xbmk_parent`"
+    datadir version relname`"
 
 for fv in version versiondate; do
 	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
@@ -140,7 +140,12 @@ if [ -z "${TMPDIR+x}" ]; then
 	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
 	x_ ln -s "`command -v "$python"`" python
 	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
-	xbmk_parent="y"
+
+	xbmk_rval=0
+	./mk "$@" || xbmk_rval=1
+	rm -Rf "$TMPDIR" || xbmk_rval=1
+	rm -f lock || xbmk_rval=1
+	exit $xbmk_rval
 fi
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"

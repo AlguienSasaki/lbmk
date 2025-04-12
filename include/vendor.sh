@@ -337,7 +337,7 @@ fail_inject()
 	printf "\n\n%s\n\n" "$dontflash" 1>&2
 	printf "WARNING: File '%s' was NOT modified.\n\n" "$archive" 1>&2
 	printf "Please MAKE SURE vendor files are inserted before flashing\n\n"
-	fail "$1"
+	$err "$1"
 }
 
 vendor_inject()

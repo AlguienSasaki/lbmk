@@ -17,7 +17,6 @@ fi
 . "include/mrc.sh"
 
 eval "`setvars "" vdir src_dirname srcdir mode xp ser`"
-err="fail"
 
 main()
 {
@@ -119,23 +118,7 @@ build_release()
 	rm -Rf "$srcdir" || $err "!rm -Rf $srcdir"
 }
 
-fail()
-{
-	tmp_cleanup || printf "WARNING: can't rm tmpfiles: %s\n" "$TMPDIR" 1>&2
-	err_ "${1}"
-}
-
-tmp_cleanup()
-{
-	[ "$xbmk_parent" = "y" ] || return 0
-	[ "$TMPDIR" = "/tmp" ] || rm -Rf "$TMPDIR" || return 1
-	rm -f lock || return 1
-}
-
-if main "$@"; then
-	tmp_cleanup || err_ "can't rm TMPDIR upon non-zero exit: $TMPDIR"
-	exit 0
-fi
+main "$@" && exit 0
 
 # what follows was formerly script/trees, whose main() is now trees()
 
@@ -525,5 +508,3 @@ if trees "$@"; then
 	. "$mkhelpercfg"
 	$cmd
 fi
-
-tmp_cleanup || err_ "can't rm TMPDIR upon non-zero exit: $TMPDIR"
