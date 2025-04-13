@@ -626,12 +626,8 @@ inject()
 		    $err "failed: inject '$_t' '$_dest' on '$rom'"
 		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
 		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"
-		xchanged="y"
-		return 0
 	elif [ "$nukemode" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
-		xchanged="y"
-		return 0
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ mkdir -p tmp
 		x_ rm -f "tmp/refcode"
