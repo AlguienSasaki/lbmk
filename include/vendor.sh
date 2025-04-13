@@ -190,7 +190,7 @@ extract_intel_me_bruteforce()
 		cdir="$1"; [ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 		cd "$cdir" || :
 	done
-	)
+	) || :
 	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir - $dontflash"
 }
 
