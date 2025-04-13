@@ -167,7 +167,7 @@ versiondate_="$versiondate"
     --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 for p in version versiondate; do
 	chkvars "$p"
-	eval "x_ printf \"%s\\n\" \"\$$p\" > .$p"
+	eval "printf \"%s\\n\" \"\$$p\" > .$p || $err \"can't save $p\""
 done
 relname="$projectname-$version"
 export LOCALVERSION="-$projectname-${version%%-*}"
