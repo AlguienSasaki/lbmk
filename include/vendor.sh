@@ -525,7 +525,8 @@ process_release_rom()
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
 		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
 
-		x_ stat -c '%s' "$_xrom" > "tmp/rom.size"
+		stat -c '%s' "$_xrom" > "tmp/rom.size" || \
+		    $err "$_xrom: Can't resize '$_xrom' (out: tmp/rom.size)"
 		read -r xromsize < "tmp/rom.size" || \
 		    $err "$_xrom: Can't read rom size. $dontflash"
 
