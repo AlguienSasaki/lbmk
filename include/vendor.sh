@@ -486,6 +486,7 @@ patch_release_roms()
 		    "$vguide" > "$tmpromdir/README.md" || :
 	else
 		printf "Skipping vendorfiles on '%s'\n" "$archive" 1>&2
+		need_files="n"
 	fi
 
 	(
