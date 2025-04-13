@@ -27,7 +27,7 @@ err_()
 	exit 1
 }
 x_() {
-	[ $# -lt 1 ] || eval "$@" || $err "Unhandled error on: $(echo "$@")"; :
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
 }
 
 xbmkpwd="`pwd`" || $err "Cannot generate PWD"
