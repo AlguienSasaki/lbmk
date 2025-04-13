@@ -364,7 +364,9 @@ vendor_inject()
 
 	readcfg && need_files="y"
 	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
-		[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
+		if [ "$nukemode" != "nuke" ] && [ "$need_files" = "y" ]; then
+			x_ ./mk download "$board"
+		fi
 		patch_release_roms
 	fi
 	[ "$need_files" != "y" ] && printf \
@@ -460,6 +462,7 @@ patch_release_roms()
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in $hashfiles; do
+		[ "$need_files" = "y" ] || break
 		e "$tmpromdir/$_hashes" f && has_hashes="y" && \
 		    hashfile="$_hashes" && break; :
 	done
@@ -486,6 +489,7 @@ patch_release_roms()
 	fi
 
 	(
+	[ "$need_files" = "y" ] || exit 0
 	cd "$tmpromdir" || $err "patch '$archive': can't cd $tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
