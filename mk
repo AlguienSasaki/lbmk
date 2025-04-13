@@ -309,7 +309,7 @@ check_project_hashes()
 	    $err "!sort project tmp/list"
 
 	while read -r rmchk; do
-		[ ! -f "$rmchk" ] || sha512sum "$rmchk" | awk \
+		[ ! -f "$rmchk" ] || x_ sha512sum "$rmchk" | awk \
 		    '{print $1}' >> "$TMPDIR/project.hash" || $err "!h $rmchk"
 	done < "$TMPDIR/project.list"
 
