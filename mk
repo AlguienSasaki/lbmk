@@ -479,7 +479,7 @@ check_makefile()
 
 mkhelp()
 {
-	[ -z "$1" ] || [ -n "$mode" ] || "$1" || $err "mkhelp: !$1"; :
+	[ -z "$1" ] || [ -n "$mode" ] || eval "$1" || $err "mkhelp: !$1"; :
 }
 
 copy_elf()
