@@ -200,7 +200,7 @@ mktarball()
 	if [ "${2%/*}" != "$2" ]; then
 		mkdir -p "${2%/*}" || $err "mk, !mkdir -p \"${2%/*}\""
 	fi
-	tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball 2, $1"
+	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball2, $1"
 }
 
 mksha512sum()
