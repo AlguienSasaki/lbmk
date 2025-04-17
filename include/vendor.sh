@@ -127,8 +127,7 @@ fetch()
 	x_ mkdir -p "${_dest%/*}"
 	remkdir "$appdir"
 	extract_archive "$_dl" "$appdir" "$dl_type" || \
-	    [ "$dl_type" = "e6400vga" ] || \
-	    $err "mkd $_dest $dl_type: !extract. $dontflash"
+	    [ "$dl_type" = "e6400vga" ] || $err "$_dest $dl_type: !extract"
 
 	eval "extract_$dl_type"
 	set -u -e
@@ -323,7 +322,6 @@ fail_inject()
 vendor_inject()
 {
 	need_files="n"
-	_olderr="$err"
 	err="fail_inject"
 	remkdir "$tmpromdel"
 
@@ -355,17 +353,8 @@ vendor_inject()
 	fi
 
 	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
-	[ "$xchanged" != "y" ] && \
-		printf "\nArchive '%s' was *NOT* modified.\n" "$archive"
-	[ "$xchanged" = "y" ] && \
-		printf "\nArchive '%s' successfully %s.\n" "$archive" "$xtype"
-	[ "$xchanged" = "y" ] && [ "$nukemode" = "nuke" ] && \
-		printf "WARNING! Vendorfiles *removed*. DO NOT FLASH.\n" 1>&2
-
-	[ "$need_files" = "n" ] && printf \
-	    "Board '%s' doesn't use vendorfiles.\n" "$board"
-
-	err="$_olderr"; :
+	[ "$xchanged" != "y" ] && printf "\n'%s' *NOT* modified.\n" "$archive"
+	[ "$xchanged" = "y" ] && printf "\n'%s' %s.\n" "$archive" "$xtype"; :
 }
 
 check_release()
@@ -430,8 +419,6 @@ patch_release_roms()
 
 	x_ mkdir -p "tmp" && [ -L "tmp/rom.list" ] && \
 	    $err "'$archive' -> tmp/rom.list is a symlink - $dontflash"
-	x_ rm -f "tmp/rom.list" "tmp/zero.1b"
-	x_ dd if=/dev/zero of=tmp/zero.1b bs=1 count=1
 
 	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
 	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
@@ -440,10 +427,9 @@ patch_release_roms()
 		while read -r _xrom ; do
 			process_release_rom "$_xrom" || break
 		done < "tmp/rom.list"
-		rm -f "$tmpromdir/README.md" || :
 		[ "$nukemode" != "nuke" ] || \
-		    printf "Make sure you inserted vendor files: %s\n" \
-		    "$vguide" > "$tmpromdir/README.md" || :
+			printf "Make sure you inserted vendor files: %s\n" \
+			    "$vguide" > "$tmpromdir/README.md" || :
 	else
 		printf "Skipping vendorfiles on '%s'\n" "$archive" 1>&2
 		need_files="n"
@@ -460,14 +446,14 @@ patch_release_roms()
 	fi
 	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
-	[ -z "$new_mac" ] || modify_mac_addresses || printf \
-	    "\nNo GbE region defined for '%s'\n" "$board" 1>&2
+	[ -z "$new_mac" ] || modify_mac || printf "\nGbE not defined\n" 1>&2
 
 	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
 	[ "$xchanged" = "y" ] || return 0
+
 	(
-		x_ cd "${tmpromdir%"/bin/$board"}"
-		mkrom_tarball "bin/$board"
+	x_ cd "${tmpromdir%"/bin/$board"}"
+	mkrom_tarball "bin/$board"
 	) || $err "Cannot re-generate '$archive' - $dontflash"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
@@ -502,7 +488,7 @@ process_release_rom()
 	[ "$nukemode" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
-	cat "$_xrom" tmp/zero.1b > "$_xromnew" || $err "$archive: !pad $_xrom"
+	cat "$_xrom" config/data/coreboot/0 > "$_xromnew" || $err "!pad $_xrom"
 	x_ rm -f "$_xrom"
 }
 
@@ -544,7 +530,6 @@ patch_rom()
 
 inject()
 {
-	[ $# -lt 3 ] && $err "bad command: $*, $rom"
 	[ "$2" = "/dev/null" ] && return 0
 
 	cbfsname="$1"
@@ -583,7 +568,7 @@ inject()
 	xchanged="y"; :
 }
 
-modify_mac_addresses()
+modify_mac()
 {
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
