@@ -160,7 +160,6 @@ extract_intel_me()
 extract_intel_me_bruteforce()
 {
 	[ $# -gt 0 ] && cdir="$1"
-
 	e "$_metmp" f && return 0
 
 	[ -z "$sdir" ] && sdir="$(mktemp -d)"
@@ -537,8 +536,8 @@ process_release_rom()
 
 		expr "X$xromsize" : "X-\{0,1\}[0123456789][0123456789]*$" \
 		    1>/dev/null 2>/dev/null || $err "$_xrom size non-integer"
-		[ $xromsize -lt 2 ] && $err \
-		    "$_xrom: Will not create empty file. $dontflash"
+		[ $xromsize -lt 2 ] && \
+		    $err "$_xrom: Will not create empty file. $dontflash"
 
 		xromsize="`expr $xromsize - 1`"
 		[ $xromsize -lt 524288 ] && \

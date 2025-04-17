@@ -283,6 +283,7 @@ mkcoreboottar()
 	[ "$target" = "$tree" ] && return 0
 	[ "$XBMK_RELEASE" = "y" ] || return 0
 	[ "$release" != "n" ] || return 0
+
 	$dry mkrom_tarball "bin/$target"
 	$dry x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke; :
 }

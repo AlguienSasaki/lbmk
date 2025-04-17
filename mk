@@ -86,6 +86,7 @@ build_release()
 {
 	(
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
+
 	./mk -f
 	x_ rm -Rf tmp
 	rmgit .
@@ -206,9 +207,11 @@ build_targets()
 		export PATH="$xbmkpath"
 		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
 		    listfile="" && break
+
 		target="$x"
 		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$target"
 		x_ handle_defconfig
+
 		mkhelp "$postmake"
 	done; :
 }
@@ -348,8 +351,7 @@ check_cross_compiler()
 		    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
 
 		# we only want to mess with hostcc to build xgcc
-		rm -f "$XBMK_CACHE/gnupath/"* || \
-		    $err "Cannot clear gnupath/"; :
+		rm -f "$XBMK_CACHE/gnupath/"* || $err "Can't clear gnupath/"; :
 	done; :
 }
 
@@ -425,6 +427,7 @@ elfcheck()
 handle_makefile()
 {
 	$dry check_makefile "$srcdir" && x_ make -C "$srcdir" $cleanargs clean
+
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
 	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
@@ -443,6 +446,7 @@ handle_makefile()
 run_make_command()
 {
 	mkhelp "$premake"
+
 	$dry check_cmake "$srcdir" && [ -z "$mode" ] && \
 	    $dry check_autoconf "$srcdir"
 	$dry check_makefile "$srcdir" || return 1

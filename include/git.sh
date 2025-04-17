@@ -61,9 +61,8 @@ git_prep()
 
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
 	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
-	[ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
-	    rmgit "$tmpgit"
+	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
+	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
 	move_repo "$_loc"
 }
@@ -77,9 +76,8 @@ prep_submodules()
 
 fetch_submodule()
 {
-	mcfgdir="$mdir/${1##*/}"
-	eval "`setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup \
-	    st`"
+	mcfgdir="$mdir/${1##*/}"; eval \
+	    "`setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st`"
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    $err "! . $mcfgdir/module.cfg"
 
