@@ -527,8 +527,6 @@ process_release_rom()
 
 		expr "X$xromsize" : "X-\{0,1\}[0123456789][0123456789]*$" \
 		    1>/dev/null 2>/dev/null || $err "$_xrom size non-integer"
-		[ $xromsize -lt 2 ] && \
-		    $err "$_xrom: Will not create empty file. $dontflash"
 
 		xromsize="`expr $xromsize - 1`"
 		[ $xromsize -lt 524288 ] && \
