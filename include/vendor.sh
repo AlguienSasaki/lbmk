@@ -343,66 +343,38 @@ vendor_inject()
 		    [ -z "$new_mac" ] && $err "Empty MAC address specified" ;;
 	*) $err "Unrecognised inject mode: '$2'"
 	esac
-
 	[ "$new_mac" = "keep" ] && new_mac=""
 
-	check_release "$archive" || \
-	    $err "You must run this script on a release archive. - $dontflash"
-
-	[ "$new_mac" = "restore" ] && \
-	    printf "Restoring default GbE for '$archive', board '$board'\n"
+	check_release "$archive" || $err "'$archive' is not a release archive"
 
 	readcfg && need_files="y"
 	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
-		if [ "$nukemode" != "nuke" ] && [ "$need_files" = "y" ]; then
-			x_ ./mk download "$board"
-		fi
+		[ "$nukemode" != "nuke" ] && [ "$need_files" = "y" ] && \
+		    x_ ./mk download "$board"
 		patch_release_roms
 	fi
-	[ "$need_files" != "y" ] && printf \
-	    "\nTarball '%s' (board '%s) doesn't need vendorfiles.\n" \
-	    "$archive" "$board" 1>&2
 
 	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
 	[ "$xchanged" != "y" ] && \
-		printf "\nRelease archive '%s' was *NOT* modified.\n" \
-		    "$archive" && [ "$has_hashes" = "y" ] && \
-		    printf "WARNING: '%s' contains '%s'. DO NOT FLASH!\n" \
-		    "$archive" "$hashfile" 1>&2 && \
-		    printf "(vendorfiles may be needed and aren't there)\n" \
-		    1>&2
+		printf "\nArchive '%s' was *NOT* modified.\n" "$archive"
 	[ "$xchanged" = "y" ] && \
-		printf "\nRelease archive '%s' successfully %s.\n" \
-		    "$archive" "$xtype" && [ "$nukemode" != "nuke" ] && \
-		printf "You may now extract '%s' and flash images from it.\n" \
-		    "$archive"
+		printf "\nArchive '%s' successfully %s.\n" "$archive" "$xtype"
 	[ "$xchanged" = "y" ] && [ "$nukemode" = "nuke" ] && \
-		printf "WARNING! Vendorfiles *removed*. DO NOT FLASH.\n" 1>&2 \
-		    && printf "DO NOT flash images from '%s'\n" \
-		    "$archive" 1>&2
+		printf "WARNING! Vendorfiles *removed*. DO NOT FLASH.\n" 1>&2
 
 	[ "$need_files" = "n" ] && printf \
-	    "Board '%s' doesn't use vendorfiles, so none were inserted.\n" \
-	    "$board"
-
-	if [ "$xchanged" != "y" ] && [ "$need_files" = "y" ] && \
-	    [ "$nukemode" = "nuke" ] && [ "$has_hashes" != "y" ]; then
-		printf "FAILED NUKE: tarball '$archive', board '$board'\n" 1>&2
-		$err "Unhandled vendorfile deletion: DO NOT RELEASE TO RSYNC"
-	fi
+	    "Board '%s' doesn't use vendorfiles.\n" "$board"
 
 	err="$_olderr"; :
 }
 
 check_release()
 {
-	[ -L "$archive" ] && \
-	    $err "'$archive' is a symlink, not a file - $dontflash"
+	[ -L "$archive" ] && $err "'$archive' is a symlink. $dontflash"
 	e "$archive" f missing && return 1
 
 	archivename="`basename "$archive"`"
-	[ -z "$archivename" ] && \
-	    $err "Cannot determine archive file name - $dontflash"
+	[ -z "$archivename" ] && $err "Can't determine archive name. $dontflash"
 
 	case "$archivename" in
 	*_src.tar.xz)
@@ -424,8 +396,7 @@ readcfg()
 	boarddir="$cbcfgsdir/$board"
 
 	eval "`setcfg "$boarddir/target.cfg"`"
-	chkvars tree
-	x_ ./mk -d coreboot "$tree" # even if vendorfiles not used, see: setmac
+	chkvars tree && x_ ./mk -d coreboot "$tree"
 
 	[ -z "$vcfg" ] && return 1
 
@@ -446,8 +417,8 @@ readcfg()
 patch_release_roms()
 {
 	has_hashes="n"
-
 	tmpromdir="tmp/DO_NOT_FLASH/bin/$board"
+
 	remkdir "${tmpromdir%"/bin/$board"}"
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
@@ -484,8 +455,7 @@ patch_release_roms()
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
 		sha512sum --status -c "$hashfile" || \
-		    sha1sum --status -c "$hashfile" || \
-		    $err "'$archive' -> Can't verify vendor hashes. $dontflash"
+		    x_ sha1sum --status -c "$hashfile"
 		x_ rm -f "$hashfile"
 	fi
 	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
@@ -508,21 +478,16 @@ process_release_rom()
 {
 	_xrom="$1"
 	_xromname="${1##*/}"
+	_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
+	[ "$nukemode" = "nuke" ] && _xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
 
 	e "$_xrom" f missing && return 0
-
-	[ -z "${_xromname#"$vfix"}" ] && \
-	    $err "'$_xromname'->'"${_xromname#"$vfix"}"' empty. $dontflash"
+	[ -z "${_xromname#"$vfix"}" ] && $err "$_xromname / $vfix: name match"
 
 	# Remove the prefix and 1-byte pad
 	if [ "$nukemode" != "nuke" ] && \
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
-		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
-
-		stat -c '%s' "$_xrom" > "tmp/rom.size" || $err "!resize $_xrom"
-		read -r xromsize < "tmp/rom.size" || $err "!readsize $_xrom"
-
-		xromsize="`expr $xromsize - 1`" || $err "!integer, $_xrom"
+		xromsize="$(expr $(stat -c '%s' "$_xrom") - 1)" || $err "!int"
 		[ $xromsize -lt 524288 ] && $err "too small, $xromsize: $_xrom"
 
 		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
@@ -537,8 +502,7 @@ process_release_rom()
 	[ "$nukemode" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
-	cat "$_xrom" tmp/zero.1b > "${_xrom%/*}/$vfix${_xrom##*/}" || \
-	    $err "'$archive' -> can't pad/rename '$_xrom'. $dontflash"
+	cat "$_xrom" tmp/zero.1b > "$_xromnew" || $err "$archive: !pad $_xrom"
 	x_ rm -f "$_xrom"
 }
 
