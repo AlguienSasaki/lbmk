@@ -15,7 +15,7 @@ fetch_targets()
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
 	git_prep "$loc" "$loc" "$xbmkpwd/$configdir/$tree/patches" \
-	    "src/$project/$tree" u
+	    "src/$project/$tree" with_submodules
 	nuke "$project/$tree" "$project/$tree"
 }
 
