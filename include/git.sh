@@ -66,7 +66,8 @@ git_prep()
 	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
-	move_repo "$_loc"
+	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
+	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
 }
 
 fetch_submodule()
@@ -136,12 +137,6 @@ link_crossgcc()
 	x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
 	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
 	) || $err "$1: !xgcc link"; :
-}
-
-move_repo()
-{
-	[ "$1" = "${1%/*}" ] || x_ mkdir -p "${1%/*}"
-	mv "$tmpgit" "$1" || $err "git_prep: !mv $tmpgit $1"
 }
 
 # can delete from multi- and single-tree projects.
