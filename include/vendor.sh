@@ -457,8 +457,7 @@ patch_release_roms()
 		    hashfile="$_hashes" && break; :
 	done
 
-	x_ mkdir -p "tmp"
-	[ -L "tmp/rom.list" ] && \
+	x_ mkdir -p "tmp" && [ -L "tmp/rom.list" ] && \
 	    $err "'$archive' -> tmp/rom.list is a symlink - $dontflash"
 	x_ rm -f "tmp/rom.list" "tmp/zero.1b"
 	x_ dd if=/dev/zero of=tmp/zero.1b bs=1 count=1
@@ -522,10 +521,8 @@ process_release_rom()
 
 		stat -c '%s' "$_xrom" > "tmp/rom.size" || $err "!resize $_xrom"
 		read -r xromsize < "tmp/rom.size" || $err "!readsize $_xrom"
-		expr "X$xromsize" : "X-\{0,1\}[0123456789][0123456789]*$" \
-		    1>/dev/null 2>/dev/null || $err "$_xrom size non-integer"
 
-		xromsize="`expr $xromsize - 1`"
+		xromsize="`expr $xromsize - 1`" || $err "!integer, $_xrom"
 		[ $xromsize -lt 524288 ] && $err "too small, $xromsize: $_xrom"
 
 		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
@@ -534,8 +531,7 @@ process_release_rom()
 		_xrom="$_xromnew"
 	fi
 
-	[ "$nukemode" = "nuke" ] && \
-		mksha512sum "$_xrom" "vendorhashes"
+	[ "$nukemode" = "nuke" ] && mksha512sum "$_xrom" "vendorhashes"
 
 	patch_rom "$_xrom" || return 1 # if break return, can still change MAC
 	[ "$nukemode" != "nuke" ] && return 0
@@ -628,11 +624,8 @@ modify_mac_addresses()
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
 	x_ mkdir -p tmp && x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
-
-	if [ "$new_mac" != "restore" ]; then
-		x_ make -C util/nvmutil
-		x_ "$nvm" tmp/gbe setmac "$new_mac"
-	fi
+	[ "$new_mac" != "restore" ] && x_ make -C util/nvmutil && \
+	    x_ "$nvm" tmp/gbe setmac "$new_mac"
 
 	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
 	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
