@@ -56,7 +56,9 @@ git_prep()
 	chkvars rev
 	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
-		prep_submodules "$_loc"
+		[ -f "$mdir/module.list" ] && while read -r msrcdir; do
+			fetch_submodule "$msrcdir"
+		done < "$mdir/module.list"; :
 	fi
 
 	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
@@ -65,13 +67,6 @@ git_prep()
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
 	move_repo "$_loc"
-}
-
-prep_submodules()
-{
-	[ -f "$mdir/module.list" ] && while read -r msrcdir; do
-		fetch_submodule "$msrcdir"
-	done < "$mdir/module.list"; :
 }
 
 fetch_submodule()
