@@ -12,7 +12,8 @@ mkserprog()
 
 	[ "$1" = "pico" ] && mkpicotool
 
-	basename -as .h "$serdir/"*.h > "$TMPDIR/ser" || $err "!mk $1 $TMPDIR"
+	basename -as .h "$serdir/"*.h > "$xbmktmp/ser" || \
+	    $err "!mk $1 $xbmktmp"
 
 	while read -r sertarget; do
 		[ "$1" = "pico" ] &&
@@ -31,7 +32,7 @@ mkserprog()
 		    "$sersrc" BOARD=$sertarget
 		x_ mkdir -p "bin/serprog_$1"
 		x_ mv "$serx" "bin/serprog_$1/serprog_$sertarget.${serx##*.}"
-	done < "$TMPDIR/ser"
+	done < "$xbmktmp/ser"
 
 	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; :
 }
@@ -115,7 +116,7 @@ mkcorebootbin()
 {
 	[ "$target" = "$tree" ] && return 0
 
-	tmprom="$TMPDIR/coreboot.rom"
+	tmprom="$xbmktmp/coreboot.rom"
 	$dry x_ cp "$srcdir/build/coreboot.rom" "$tmprom"
 
 	initmode="${defconfig##*/}"
@@ -201,8 +202,8 @@ add_grub()
 	    _grubname="fallback/payload"
 	cbfs "$tmprom" "$grubelf" "$_grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$TMPDIR/tmpcfg" || $err "$target: !insert scandisk"
-	cbfs "$tmprom" "$TMPDIR/tmpcfg" scan.cfg raw
+	    > "$xbmktmp/tmpcfg" || $err "$target: !insert scandisk"
+	cbfs "$tmprom" "$xbmktmp/tmpcfg" scan.cfg raw
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 	    cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 	    "background.png" raw; :

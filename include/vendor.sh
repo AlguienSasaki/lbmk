@@ -48,11 +48,11 @@ vendor_download()
 
 readkconfig()
 {
-	x_ rm -f "$TMPDIR/cbcfg"
+	x_ rm -f "$xbmktmp/cbcfg"
 	cbcfg="`check_defconfig "$boarddir"`" || for cbc in $cv; do
-		grep "$cbc" "$cbcfg" 1>>"$TMPDIR/cbcfg" 2>/dev/null || :
+		grep "$cbc" "$cbcfg" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
 	done
-	eval "`setcfg "$TMPDIR/cbcfg" 1`"
+	eval "`setcfg "$xbmktmp/cbcfg" 1`"
 
 	for c in $cvchk; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"

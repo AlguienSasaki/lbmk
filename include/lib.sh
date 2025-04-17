@@ -50,7 +50,7 @@ chkvars()
 }
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version relname`"
+    datadir version relname xbmktmp`"
 
 for fv in version versiondate; do
 	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
@@ -127,6 +127,7 @@ if [ -z "${TMPDIR+x}" ]; then
 	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	xbmktmp="$TMPDIR"
 	touch lock || $err "cannot create 'lock' file"
 	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
 	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
@@ -144,6 +145,7 @@ if [ -z "${TMPDIR+x}" ]; then
 	rm -f lock || xbmk_rval=1
 	exit $xbmk_rval
 fi
+xbmktmp="$TMPDIR"
 
 # if "y": a coreboot target won't be built if target.cfg says release="n"
 # (this is used to exclude certain build targets from releases)

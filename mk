@@ -175,7 +175,7 @@ trees()
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
 	if e "$mkhelpercfg" f missing; then
-		mkhelpercfg="$TMPDIR/mkhelper.cfg"
+		mkhelpercfg="$xbmktmp/mkhelper.cfg"
 		x_ touch "$mkhelpercfg"
 	fi
 
@@ -297,25 +297,25 @@ check_project_hashes()
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
-	x_ rm -f "$TMPDIR/project.list" "$TMPDIR/project.hash" \
-	    "$TMPDIR/project.tmp"
-	x_ touch "$TMPDIR/project.tmp"
-	x_ touch "$TMPDIR/project.hash"
+	x_ rm -f "$xbmktmp/project.list" "$xbmktmp/project.hash" \
+	    "$xbmktmp/project.tmp"
+	x_ touch "$xbmktmp/project.tmp"
+	x_ touch "$xbmktmp/project.hash"
 
 	for rmchk in "$datadir" "$configdir/$tree" "$mdir"; do
 		[ -d "$rmchk" ] || continue
 		find "$rmchk" -type f -not -path "*/.git*/*" >> \
-		    "$TMPDIR/project.tmp" || $err "!find $rmchk > project.tmp"
+		    "$xbmktmp/project.tmp" || $err "!find $rmchk > project.tmp"
 	done
-	sort "$TMPDIR/project.tmp" > "$TMPDIR/project.list" || \
+	sort "$xbmktmp/project.tmp" > "$xbmktmp/project.list" || \
 	    $err "!sort project tmp/list"
 
 	while read -r rmchk; do
 		[ ! -f "$rmchk" ] || x_ sha512sum "$rmchk" | awk \
-		    '{print $1}' >> "$TMPDIR/project.hash" || $err "!h $rmchk"
-	done < "$TMPDIR/project.list"
+		    '{print $1}' >> "$xbmktmp/project.hash" || $err "!h $rmchk"
+	done < "$xbmktmp/project.list"
 
-	pjhash="$(sha512sum "$TMPDIR/project.hash" | awk '{print $1}')" || :
+	pjhash="$(sha512sum "$xbmktmp/project.hash" | awk '{print $1}')" || :
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
