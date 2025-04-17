@@ -42,8 +42,7 @@ vendor_download()
 {
 	[ $# -gt 0 ] || $err "No argument given"
 	export PATH="$PATH:/sbin"
-	board="$1"
-	readcfg && readkconfig && bootstrap && getfiles; :
+	board="$1" && readcfg && readkconfig && bootstrap && getfiles; :
 }
 
 readkconfig()
