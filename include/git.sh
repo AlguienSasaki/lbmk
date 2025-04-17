@@ -61,8 +61,12 @@ git_prep()
 		done < "$mdir/module.list"; :
 	fi
 
-	[ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
-	    [ "$xtree" != "$tree" ] && link_crossgcc "$_loc"
+	if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
+	    [ "$xtree" != "$tree" ]; then (
+		x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
+		x_ ln -s "../../$xtree/util/crossgcc" crossgcc
+	) || $err "$_loc: !xgcc link"; fi
+
 	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
@@ -129,14 +133,6 @@ git_am_patches()
 		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
 		[ ! -f "$p" ] || git -C "$1" am "$p" || $err "$1 $2: !am $p"
 	done; :
-}
-
-link_crossgcc()
-{
-	(
-	x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
-	ln -s "../../$xtree/util/crossgcc" crossgcc || $err "$1: !xgcc link"
-	) || $err "$1: !xgcc link"; :
 }
 
 # can delete from multi- and single-tree projects.
