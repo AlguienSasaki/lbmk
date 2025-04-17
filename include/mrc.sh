@@ -35,8 +35,8 @@ extract_partition()
 	dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \
 	    count=$(( $SIZE / 1024 )) || $err "ex dd ${1%.zip}, root-a.ext2"
 
-	printf "cd /usr/sbin\ndump chromeos-firmwareupdate $SHELLBALL\nquit" \
-	    | debugfs "root-a.ext2" || $err "can't extract shellball"
+	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
+	    "$SHELLBALL" | debugfs "root-a.ext2" || $err "!extract shellball"
 }
 
 extract_refcode()
