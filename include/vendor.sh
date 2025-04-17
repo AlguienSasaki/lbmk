@@ -551,12 +551,10 @@ patch_rom()
 	rom="$1"
 
 	if [ "$has_hashes" != "y" ] && [ "$nukemode" != "nuke" ]; then
-		printf "inject: '%s' has no hash file. Skipping.\n" \
-		    "$archive" 1>&2
+		printf "'%s' has no hash file. Skipping.\n" "$archive" 1>&2
 		return 1
 	elif [ "$has_hashes" = "y" ] && [ "$nukemode" = "nuke" ]; then
-		printf "inject nuke: '%s' has a hash file. Skipping nuke.\n" \
-		    "$archive" 1>&2
+		printf "'%s' has a hash file. Skipping nuke.\n" "$archive" 1>&2
 		return 1
 	fi
 
@@ -629,9 +627,7 @@ modify_mac_addresses()
 {
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
-	x_ mkdir -p tmp
-	e tmp/gbe && x_ e tmp/gbe f
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
+	x_ mkdir -p tmp && x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
 
 	if [ "$new_mac" != "restore" ]; then
 		x_ make -C util/nvmutil
