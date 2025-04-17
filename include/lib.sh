@@ -141,7 +141,7 @@ if [ -z "${TMPDIR+x}" ]; then
 
 	xbmk_rval=0
 	./mk "$@" || xbmk_rval=1
-	rm -Rf "$TMPDIR" || xbmk_rval=1
+	rm -Rf "$xbmktmp" || xbmk_rval=1
 	rm -f lock || xbmk_rval=1
 	exit $xbmk_rval
 fi
