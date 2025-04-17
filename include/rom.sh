@@ -259,7 +259,6 @@ add_uboot()
 	[ "$payload_uboot_amd64" = "y" ] && \
 	    ubootelf="$ubdir/u-boot-x86-with-spl.bin" # EFI-compatible
 
-	[ -f "$ubootelf" ] || $err "cb/$ubtarget: Can't find u-boot"
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
 	[ "$payload_seabios" = "y" ] || cprom; :
 }
