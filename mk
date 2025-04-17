@@ -292,23 +292,19 @@ build_dependencies()
 
 check_project_hashes()
 {
-	x_ mkdir -p "$XBMK_CACHE/hash"
-	old_pjhash=""
+	old_pjhash="" && x_ mkdir -p "$XBMK_CACHE/hash"
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
 	x_ rm -f "$xbmktmp/project.list" "$xbmktmp/project.hash" \
 	    "$xbmktmp/project.tmp"
-	x_ touch "$xbmktmp/project.tmp"
-	x_ touch "$xbmktmp/project.hash"
+	x_ touch "$xbmktmp/project.tmp" "$xbmktmp/project.hash"
 
 	for rmchk in "$datadir" "$configdir/$tree" "$mdir"; do
-		[ -d "$rmchk" ] || continue
-		find "$rmchk" -type f -not -path "*/.git*/*" >> \
-		    "$xbmktmp/project.tmp" || $err "!find $rmchk > project.tmp"
+		[ ! -d "$rmchk" ] || find "$rmchk" -type f -not -path \
+		    "*/.git*/*" >> "$xbmktmp/project.tmp" || $err "!fh $rmchk"
 	done
-	sort "$xbmktmp/project.tmp" > "$xbmktmp/project.list" || \
-	    $err "!sort project tmp/list"
+	sort "$xbmktmp/project.tmp" > "$xbmktmp/project.list" || $err "!pj srt"
 
 	while read -r rmchk; do
 		[ ! -f "$rmchk" ] || x_ sha512sum "$rmchk" | awk \
