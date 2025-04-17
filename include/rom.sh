@@ -43,7 +43,7 @@ mkpicotool()
 	x_ cd src/picotool
 	x_ cmake -DCMAKE_INSTALL_PREFIX=xbmkbin -DPICOTOOL_FLAT_INSTALL=1 \
 	    -DPICO_SDK_PATH=../pico-sdk
-	make install || $err "Can't build picotool"; :
+	x_ make install
 	) || $err "Can't build picotool"; :
 }
 
@@ -171,14 +171,13 @@ add_seabios()
 	fi
 
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
-
 	_seaname="fallback/payload" && [ "$payload_grubsea" = "y" ] && \
 	    _seaname="seabios.elf"
+
 	cbfs "$tmprom" "$_seabioself" "$_seaname"
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
-	_z="2"
-	[ "$initmode" = "vgarom" ] && _z="0"
+	_z="2" && [ "$initmode" = "vgarom" ] && _z="0"
 	x_ "$cbfstool" "$tmprom" add-int -i $_z -n etc/pci-optionrom-exec
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
 	[ "$initmode" = "libgfxinit" ] && \
