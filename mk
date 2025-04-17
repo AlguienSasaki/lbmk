@@ -386,9 +386,8 @@ check_gnu_path()
 	rm -f "$XBMK_CACHE/gnupath/"* || $err "Cannot clear gnupath/"
 	cd "$XBMK_CACHE/gnupath" || $err "Can't cd to gnupath/"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
-		[ -e "$_gnubin" ] || continue
-		_gnuutil="${_gnubin##*/}"
-		x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
+		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
+		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
 	done
 	) || $err "Cannot create $2-$_gnuver link in $_gnudir"; :
 }
