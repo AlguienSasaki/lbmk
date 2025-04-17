@@ -135,8 +135,6 @@ git_am_patches()
 	done; :
 }
 
-# can delete from multi- and single-tree projects.
-# called from script/trees when downloading sources.
 nuke()
 {
 	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
