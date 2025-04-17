@@ -163,7 +163,7 @@ trees()
 		return 1
 	fi
 
-	[ -f "config/git/$project/pkg.cfg" ] || $err "'$project' not defined"
+	x_ e "config/git/$project/pkg.cfg" f
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
@@ -249,10 +249,9 @@ configure_project()
 	    xarch xlang badhash`"
 	_tcfg="$1/target.cfg"
 	[ -f "$_tcfg" ] || btype="auto"
-	[ -f "$datadir/mkhelper.cfg" ] && \
-	    eval "`setcfg "$datadir/mkhelper.cfg"`"
+	e "$datadir/mkhelper.cfg" f && eval "`setcfg "$datadir/mkhelper.cfg"`"
 
-	while [ -f "$_tcfg" ] || [ "$cmd" != "build_project" ]; do
+	while e "$_tcfg" f || [ "$cmd" != "build_project" ]; do
 		eval "`setvars "" rev tree`"
 		eval "`setcfg "$_tcfg"`"
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"

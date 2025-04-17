@@ -170,7 +170,7 @@ extract_intel_me_bruteforce()
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\" - $dontflash"
 	for i in *; do
-		[ -f "$_metmp" ] && break
+		e "$_metmp" f && break
 		[ -L "$i" ] && continue
 		if [ -f "$i" ]; then
 			_r="-r" && [ -n "$mfs" ] && _r=""
@@ -231,27 +231,19 @@ decat_fspfd()
 
 extract_kbc1126ec()
 {
-	e "$kbc1126_ec_dump" f missing && \
-	    $err "$cbdir: kbc1126 util missing - $dontflash"
+	x_ e "$kbc1126_ec_dump" f
 	(
 	x_ cd "$appdir/"
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || \
-		    $err "can't extract Rom.bin - $dontflash"
+		    unar -D 68*.CAB Rom.bin || $err "kbc1126 unar failed"
 		x_ mv Rom.bin ec.bin
 	fi
-	[ -f ec.bin ] || \
-	    $err "extract_kbc1126_ec $board: can't extract - $dontflash"
-	"$kbc1126_ec_dump" ec.bin || \
-	    $err "!1126ec $board extract ecfw - $dontflash"
-	) || $err "can't extract kbc1126 ec firmware - $dontflash"
+	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
+	) || $err "$board: can't extract kbc1126 ec firmware - $dontflash"
 
-	e "$appdir/ec.bin.fw1" f not && \
-	    $err "$board: kbc1126ec fetch failed - $dontflash"
-	e "$appdir/ec.bin.fw2" f not && \
-	    $err "$board: kbc1126ec fetch failed - $dontflash"
+	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
 
 	cp "$appdir/"ec.bin.fw* "${_dest%/*}/" || \
 	    $err "!cp 1126ec $_dest - $dontflash"; :
@@ -264,8 +256,7 @@ extract_e6400vga()
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 	(
 	x_ cd "$appdir"
-	[ -f "bios.bin" ] || \
-	    $err "extract_e6400vga: can't extract bios.bin - $dontflash"
+	x_ e "bios.bin" f
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
 	) || $err "can't extract e6400 vga rom - $dontflosh"
 	x_ cp "$appdir/$E6400_VGA_romname" "$_dest"
