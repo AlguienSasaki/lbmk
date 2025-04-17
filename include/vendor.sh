@@ -520,17 +520,13 @@ process_release_rom()
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
 		_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
 
-		stat -c '%s' "$_xrom" > "tmp/rom.size" || \
-		    $err "$_xrom: Can't resize '$_xrom' (out: tmp/rom.size)"
-		read -r xromsize < "tmp/rom.size" || \
-		    $err "$_xrom: Can't read rom size. $dontflash"
-
+		stat -c '%s' "$_xrom" > "tmp/rom.size" || $err "!resize $_xrom"
+		read -r xromsize < "tmp/rom.size" || $err "!readsize $_xrom"
 		expr "X$xromsize" : "X-\{0,1\}[0123456789][0123456789]*$" \
 		    1>/dev/null 2>/dev/null || $err "$_xrom size non-integer"
 
 		xromsize="`expr $xromsize - 1`"
-		[ $xromsize -lt 524288 ] && \
-		    $err "$_xrom size too small; likely not a rom. $dontflash"
+		[ $xromsize -lt 524288 ] && $err "too small, $xromsize: $_xrom"
 
 		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
 		rm -f "$_xrom" || $err "Can't rm $_xrom - $dontflash"
