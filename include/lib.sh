@@ -30,9 +30,6 @@ x_() {
 	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
 }
 
-xbmkpwd="`pwd`" || $err "Cannot generate PWD"
-export PWD="$xbmkpwd"
-
 setvars()
 {
 	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
@@ -48,13 +45,6 @@ chkvars()
 		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
 	done; :
 }
-
-eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version relname xbmktmp`"
-
-for fv in version versiondate; do
-	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
-done
 
 setcfg()
 {
@@ -88,6 +78,17 @@ install_packages()
 	[ -n "$aur_notice" ] && \
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
+
+xbmkpwd="`pwd`" || $err "Cannot generate PWD"
+export PWD="$xbmkpwd"
+
+eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
+    datadir version relname xbmktmp`"
+
+for fv in version versiondate; do
+	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
+done
+
 if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 	install_packages "$@" || exit 1
 	exit 0
