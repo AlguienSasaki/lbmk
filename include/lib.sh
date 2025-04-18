@@ -79,15 +79,8 @@ install_packages()
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
 
-xbmkpwd="`pwd`" || $err "Cannot generate PWD"
-export PWD="$xbmkpwd"
-
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version relname xbmktmp`"
-
-for fv in version versiondate; do
-	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
-done
 
 if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 	install_packages "$@" || exit 1
@@ -96,6 +89,13 @@ fi
 
 id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 [ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
+
+xbmkpwd="`pwd`" || $err "Cannot generate PWD"
+export PWD="$xbmkpwd"
+
+for fv in version versiondate; do
+	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
+done
 
 pyver="2"
 python="python3"
