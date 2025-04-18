@@ -93,6 +93,9 @@ if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 	exit 0
 fi
 
+id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
+[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
+
 pyver="2"
 python="python3"
 command -v python3 1>/dev/null || python="python"
@@ -108,9 +111,6 @@ if [ "${pyver%%.*}" != "3" ]; then
 	printf "Wrong python version, or python missing. Must be v 3.x.\n" 1>&2
 	exit 1
 fi
-
-id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
-[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
 # XBMK_CACHE is a directory, for caching downloads and git repositories
 [ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
