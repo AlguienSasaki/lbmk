@@ -99,24 +99,21 @@ fetch_submodule()
 
 tmpclone()
 {
-	livepull="n" && [ "$repofail" = "y" ] && \
-	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
-
-	repofail="n"
+	eval "`setvars "n" livepull repofail`"
+	[ "$repofail" = "y" ] && livepull="y"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
 	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
 
 	if [ "$livepull" = "y" ] && [ ! -d "$repodir" ]; then
-		git clone "$1" "$repodir" || git clone $2 "$repodir" || \
-		    $err "!clone $1 $2 $repodir $4 $5" #
+		git clone "$1" "$repodir" || x_ git clone $2 "$repodir"
 	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
 		    || sleep 3 || git -C "$repodir" pull || :
 	fi
 	(
-	[ $# -gt 5 ] || git clone "$repodir" "$3" || $err "!clone $repodir $3"
+	[ $# -gt 5 ] || x_ git clone "$repodir" "$3"
 	git -C "$3" reset --hard "$4" || $err "!reset $1 $2 $3 $4 $5"
 	git_am_patches "$3" "$5"
 	) || repofail="y"
