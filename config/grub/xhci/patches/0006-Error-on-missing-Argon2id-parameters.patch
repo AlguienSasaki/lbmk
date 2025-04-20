@@ -1,7 +1,7 @@
-From c3a68f158725a858206c1fc91407b4993142a4a5 Mon Sep 17 00:00:00 2001
+From 0c0da88e7619e5424ef062ea6867dfe32f032164 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 06/26] Error on missing Argon2id parameters
+Subject: [PATCH 06/25] Error on missing Argon2id parameters
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---

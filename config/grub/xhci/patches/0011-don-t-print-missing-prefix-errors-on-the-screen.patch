@@ -1,7 +1,7 @@
-From 2ca7390361d1ff8ea18399b41e38436c8d506d60 Mon Sep 17 00:00:00 2001
+From b5693f53db4d337b4345192da08130b0f2f9bd08 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:14:58 +0000
-Subject: [PATCH 11/26] don't print missing prefix errors on the screen
+Subject: [PATCH 11/25] don't print missing prefix errors on the screen
 
 we do actually set the prefix. this patch modifies
 grub to still set grub_errno and return accordingly,

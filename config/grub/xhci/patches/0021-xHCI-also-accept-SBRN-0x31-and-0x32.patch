@@ -1,7 +1,7 @@
-From 8e6d5b598b3e21c905023b438110d71f487a2289 Mon Sep 17 00:00:00 2001
+From 0c58853bd1e4ca63cdeb5b5ef949d78cbd9028d0 Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Sat, 28 May 2022 21:39:23 +0200
-Subject: [PATCH 21/26] xHCI: also accept SBRN 0x31 and 0x32
+Subject: [PATCH 21/25] xHCI: also accept SBRN 0x31 and 0x32
 
 Signed-off-by: Sven Anderson <sven@anderson.de>
 ---

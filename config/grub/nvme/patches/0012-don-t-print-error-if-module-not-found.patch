@@ -1,4 +1,4 @@
-From 752ac0c09c7ac3f1ecc5d3d4d8410d424b433da2 Mon Sep 17 00:00:00 2001
+From aab095ed496aec3be4428b48a36a502426e0d275 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:36:22 +0000
 Subject: [PATCH 12/14] don't print error if module not found

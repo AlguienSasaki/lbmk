@@ -1,4 +1,4 @@
-From 6e3672bcba5075908f2a3b2ec235168bf2a4b1ed Mon Sep 17 00:00:00 2001
+From 1a3fdb4075f32eab6ebda0c813720f0336f1bde7 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 04/14] Define GRUB_UINT32_MAX

@@ -1,4 +1,4 @@
-From 8421c59fa62ce954dcba05ad04591c651d6dcf43 Mon Sep 17 00:00:00 2001
+From 3726c1e12b8896e4a77cc7a2b490e933dc2c08da Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:14:58 +0000
 Subject: [PATCH 11/13] don't print missing prefix errors on the screen

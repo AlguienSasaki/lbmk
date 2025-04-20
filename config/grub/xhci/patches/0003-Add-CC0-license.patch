@@ -1,7 +1,7 @@
-From 4e2ba04266f006369dc10b981803ba3a237f2ad8 Mon Sep 17 00:00:00 2001
+From ef94d2c0a9dab9cb1a6888b07893fa341c463649 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 03/26] Add CC0 license
+Subject: [PATCH 03/25] Add CC0 license
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---

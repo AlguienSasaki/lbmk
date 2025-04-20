@@ -1,4 +1,4 @@
-From c1617d04ac24544d578643863c545bb885444030 Mon Sep 17 00:00:00 2001
+From fce8730b8c20b7de0394976861b3d2ebcc21f425 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 19 Nov 2022 16:30:24 +0000
 Subject: [PATCH 02/14] say the name libreboot, in the grub menu
