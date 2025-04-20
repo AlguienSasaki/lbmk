@@ -1,4 +1,4 @@
-From 216e1351e5957e0589d488427a6dfee246705d0d Mon Sep 17 00:00:00 2001
+From 378aa081ac1211d0bf4043eeb0bb7d4aa534043f Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 05/13] Add Argon2 algorithm
@@ -30,7 +30,7 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  create mode 100644 grub-core/lib/argon2/ref.c
 
 diff --git a/docs/grub-dev.texi b/docs/grub-dev.texi
-index 3ad8e3efa..d7c6232af 100644
+index f4367f895..9d96cedf9 100644
 --- a/docs/grub-dev.texi
 +++ b/docs/grub-dev.texi
 @@ -503,12 +503,76 @@ GRUB includes some code from other projects, and it is sometimes necessary

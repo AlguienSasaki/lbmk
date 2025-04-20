@@ -1,4 +1,4 @@
-From dfd1639bb999e3dbbd346cc97f4bbaf32d129cd6 Mon Sep 17 00:00:00 2001
+From d86b69fa2c0d73440e5b990d8ab4b66c5c23fa46 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 31 Oct 2023 10:33:28 +0000
 Subject: [PATCH 10/13] keylayouts: don't print "Unknown key" message

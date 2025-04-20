@@ -1,4 +1,4 @@
-From a2687cc594714ff33a4c50d40222c113768ed826 Mon Sep 17 00:00:00 2001
+From febaf431d235f07b97f07f935611dc168b0b35bb Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 06/13] Error on missing Argon2id parameters

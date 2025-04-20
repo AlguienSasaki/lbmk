@@ -1,7 +1,7 @@
-From 233f7dd274ef2ccac7b1fc0f5cfdeb7c01aef58b Mon Sep 17 00:00:00 2001
+From fa9c2124b1ca476f8b2ce168d56527100757ef90 Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 20:26:32 +0100
-Subject: [PATCH 24/26] xhci: configure TT for non-root-hubs
+Subject: [PATCH 23/25] xhci: configure TT for non-root-hubs
 
 ---
  grub-core/bus/usb/usbhub.c |  6 +++++
@@ -24,7 +24,7 @@ index e96505aa9..629b3ed53 100644
 +  return grub_usb_devs[addr];
 +}
 diff --git a/grub-core/bus/usb/xhci.c b/grub-core/bus/usb/xhci.c
-index d13a7c39d..8ad2a10f9 100644
+index dc89b9619..88c9ac57f 100644
 --- a/grub-core/bus/usb/xhci.c
 +++ b/grub-core/bus/usb/xhci.c
 @@ -623,13 +623,46 @@ grub_xhci_alloc_inctx(struct grub_xhci *x, int maxepid,

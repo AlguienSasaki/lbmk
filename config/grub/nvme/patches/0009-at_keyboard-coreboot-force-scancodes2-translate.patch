@@ -1,4 +1,4 @@
-From 5b239742565ed20fce545aa32952a37bbb45beb8 Mon Sep 17 00:00:00 2001
+From 47ee3e0a5635e99d04fb1248a4896c24ff5bc746 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 30 Oct 2023 22:19:21 +0000
 Subject: [PATCH 09/14] at_keyboard coreboot: force scancodes2+translate

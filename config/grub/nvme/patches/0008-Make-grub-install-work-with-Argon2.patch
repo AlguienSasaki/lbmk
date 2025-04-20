@@ -1,4 +1,4 @@
-From de000f70873b61d62b0d561e0af5302e178c4e42 Mon Sep 17 00:00:00 2001
+From bc99124fb0de2e4b0407f5b8591306241ffc7dc1 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
 Subject: [PATCH 08/14] Make grub-install work with Argon2
@@ -9,7 +9,7 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  1 file changed, 2 insertions(+)
 
 diff --git a/util/grub-install.c b/util/grub-install.c
-index 7dc5657bb..cf7315891 100644
+index 060246589..059036d3c 100644
 --- a/util/grub-install.c
 +++ b/util/grub-install.c
 @@ -448,6 +448,8 @@ probe_mods (grub_disk_t disk)

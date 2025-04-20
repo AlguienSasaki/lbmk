@@ -1,7 +1,7 @@
-From 13f149fa5fe4e2ae0e95b3055584335beb9bdee8 Mon Sep 17 00:00:00 2001
+From 2a52c5c4f481469667c7c00e43befac28645d57f Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 07/26] Compile with Argon2id support
+Subject: [PATCH 07/25] Compile with Argon2id support
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---
