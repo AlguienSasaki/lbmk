@@ -18,7 +18,7 @@ index 84831915a2..8e26ec2aef 100644
  	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
  	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 -			     "U-Boot - Boot Menu", NULL);
-+	    "Libreboot 20241206, 10th revision (U-Boot menu): https://libreboot.org/", NULL);
++	    "Libreboot 20241206, 11th revision (U-Boot menu): https://libreboot.org/", NULL);
  	ret |= scene_menu_set_title(scn, OBJ_MENU, OBJ_PROMPT);
  
  	logo = video_get_u_boot_logo();
