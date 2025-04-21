@@ -1,7 +1,7 @@
-From a15b59616e00c43c05d7853080859d4aefe26c5d Mon Sep 17 00:00:00 2001
+From ef4f92299f18c5f28bfe8392cbc0e27d48c03415 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 11:41:41 +0000
-Subject: [PATCH 19/51] dell/e6430: use ME Soft Temporary Disable
+Subject: [PATCH 09/24] dell/e6430: use ME Soft Temporary Disable
 
 i overlooked this. it's set on other boards.
 

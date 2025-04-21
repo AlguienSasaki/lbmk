@@ -1,7 +1,7 @@
-From 1a342c20b8705bbea02d27a73e383ee2808f2558 Mon Sep 17 00:00:00 2001
+From 41fab69e70eb78b93e1998396bf85a5afbaa61ef Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Tue, 18 Jun 2024 21:31:08 -0600
-Subject: [PATCH 51/51] ec/dell/mec5035: Route power button event to host
+Subject: [PATCH 23/24] ec/dell/mec5035: Route power button event to host
 
 If command 0x3e with an argument of 1 isn't sent to the EC, pressing the
 power button results in the EC powering off the system without letting

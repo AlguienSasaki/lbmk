@@ -1,7 +1,7 @@
-From d2f579b82921c2c35e4cf756db0ca476fbadfac1 Mon Sep 17 00:00:00 2001
+From f6593dd2146657ee39e2ac3f4b4bac5e7569df67 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 05/51] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 05/24] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
@@ -20,10 +20,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 83 insertions(+), 31 deletions(-)
 
 diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
-index 32b2081d93..1473cf058b 100644
+index b21a89c0e1..fc91d4c239 100644
 --- a/util/ifdtool/ifdtool.c
 +++ b/util/ifdtool/ifdtool.c
-@@ -2204,6 +2204,7 @@ static void print_usage(const char *name)
+@@ -2230,6 +2230,7 @@ static void print_usage(const char *name)
  	       "                                         tgl    - Tiger Lake\n"
  	       "                                         wbg    - Wellsburg\n"
  	       "   -S | --setpchstrap                    Write a PCH strap\n"
@@ -31,7 +31,7 @@ index 32b2081d93..1473cf058b 100644
  	       "   -V | --newvalue                       The new value to write into PCH strap specified by -S\n"
  	       "   -v | --version:                       print the version\n"
  	       "   -h | --help:                          print this help\n\n"
-@@ -2212,6 +2213,60 @@ static void print_usage(const char *name)
+@@ -2238,6 +2239,60 @@ static void print_usage(const char *name)
  	       "\n");
  }
  
@@ -92,15 +92,15 @@ index 32b2081d93..1473cf058b 100644
  int main(int argc, char *argv[])
  {
  	int opt, option_index = 0;
-@@ -2219,6 +2274,7 @@ int main(int argc, char *argv[])
+@@ -2245,6 +2300,7 @@ int main(int argc, char *argv[])
  	int mode_em100 = 0, mode_locked = 0, mode_unlocked = 0, mode_validate = 0;
  	int mode_layout = 0, mode_newlayout = 0, mode_density = 0, mode_setstrap = 0;
  	int mode_read = 0, mode_altmedisable = 0, altmedisable = 0, mode_fmap_template = 0;
 +	int mode_nuke = 0;
  	int mode_gpr0_disable = 0, mode_gpr0_enable = 0, mode_gpr0_status = 0;
- 	char *region_type_string = NULL, *region_fname = NULL;
- 	const char *layout_fname = NULL;
-@@ -2254,6 +2310,7 @@ int main(int argc, char *argv[])
+ 	char *region_type_string = NULL, *region_fname = NULL, *layout_fname = NULL;
+ 	char *new_filename = NULL;
+@@ -2279,6 +2335,7 @@ int main(int argc, char *argv[])
  		{"validate", 0, NULL, 't'},
  		{"setpchstrap", 1, NULL, 'S'},
  		{"newvalue", 1, NULL, 'V'},
@@ -108,7 +108,7 @@ index 32b2081d93..1473cf058b 100644
  		{0, 0, 0, 0}
  	};
  
-@@ -2303,35 +2360,8 @@ int main(int argc, char *argv[])
+@@ -2328,35 +2385,8 @@ int main(int argc, char *argv[])
  			region_fname++;
  			// Descriptor, BIOS, ME, GbE, Platform
  			// valid type?
@@ -146,7 +146,7 @@ index 32b2081d93..1473cf058b 100644
  				fprintf(stderr, "No such region type: '%s'\n\n",
  					region_type_string);
  				fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
-@@ -2508,6 +2538,22 @@ int main(int argc, char *argv[])
+@@ -2533,6 +2563,22 @@ int main(int argc, char *argv[])
  		case 't':
  			mode_validate = 1;
  			break;
@@ -169,7 +169,7 @@ index 32b2081d93..1473cf058b 100644
  		case 'v':
  			print_version();
  			exit(EXIT_SUCCESS);
-@@ -2524,7 +2570,8 @@ int main(int argc, char *argv[])
+@@ -2552,7 +2598,8 @@ int main(int argc, char *argv[])
  	if ((mode_dump + mode_layout + mode_fmap_template + mode_extract + mode_inject +
  			mode_setstrap + mode_newlayout + (mode_spifreq | mode_em100 |
  			mode_unlocked | mode_locked) + mode_altmedisable + mode_validate +
@@ -179,7 +179,7 @@ index 32b2081d93..1473cf058b 100644
  		fprintf(stderr, "You may not specify more than one mode.\n\n");
  		fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
  		exit(EXIT_FAILURE);
-@@ -2533,7 +2580,8 @@ int main(int argc, char *argv[])
+@@ -2561,7 +2608,8 @@ int main(int argc, char *argv[])
  	if ((mode_dump + mode_layout + mode_fmap_template + mode_extract + mode_inject +
  			mode_setstrap + mode_newlayout + mode_spifreq + mode_em100 +
  			mode_locked + mode_unlocked + mode_density + mode_altmedisable +
@@ -189,7 +189,7 @@ index 32b2081d93..1473cf058b 100644
  		fprintf(stderr, "You need to specify a mode.\n\n");
  		fprintf(stderr, "run '%s -h' for usage\n", argv[0]);
  		exit(EXIT_FAILURE);
-@@ -2646,6 +2694,10 @@ int main(int argc, char *argv[])
+@@ -2674,6 +2722,10 @@ int main(int argc, char *argv[])
  		write_image(new_filename, image, size);
  	}
  
