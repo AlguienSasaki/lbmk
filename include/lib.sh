@@ -99,13 +99,17 @@ done
 
 pyver="2"
 python="python3"
-command -v python3 1>/dev/null || python="python"
+if command -v python3 1>/dev/null; then
+	pyver="3"
+else
+	python="python"
+fi
 command -v $python 1>/dev/null || pyver=""
 [ -z "$pyver" ] || \
-	python -c 'import sys; print(sys.version_info[:])' 1>/dev/null \
+	$python -c 'import sys; print(sys.version_info[:])' 1>/dev/null \
 	    2>/dev/null || $err "Cannot determine which Python version."
 [ -n "$pyver" ] && \
-	pyver="`python -c 'import sys; print(sys.version_info[:])' | \
+	pyver="`$python -c 'import sys; print(sys.version_info[:])' | \
 	    awk '{print $1}'`" && \
 	pyver="${pyver#(}" && pyver="${pyver%,}"
 if [ "${pyver%%.*}" != "3" ]; then
