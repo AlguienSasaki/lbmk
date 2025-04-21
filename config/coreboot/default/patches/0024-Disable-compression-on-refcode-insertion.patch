@@ -1,7 +1,7 @@
-From 1380f0f6f3c73bbd994228acdbcbbc06da7c6cb2 Mon Sep 17 00:00:00 2001
+From b6bd33b0430f72c2fce16a3b1e41927ef540923b Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 31 Dec 2024 14:42:24 +0000
-Subject: [PATCH 24/24] Disable compression on refcode insertion
+Subject: [PATCH 24/37] Disable compression on refcode insertion
 
 Compression is not reliably reproducible. In an lbmk release
 context, this means we cannot rely on vendorfile insertion.

@@ -1,7 +1,7 @@
-From 5671d54d347b110ffade5b8b6e2d052612a8716c Mon Sep 17 00:00:00 2001
+From 8dcd86c34d92b9b17bcfe4c7c61793042dc97268 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Jan 2025 01:53:53 +0000
-Subject: [PATCH 1/1] src/intel/x4x: Disable stack overflow debug
+Subject: [PATCH 36/37] src/intel/x4x: Disable stack overflow debug
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 9 insertions(+)
 
 diff --git a/src/northbridge/intel/x4x/Kconfig b/src/northbridge/intel/x4x/Kconfig
-index 097e11126c..7e4e14cf94 100644
+index 1803ef5733..7129aabf72 100644
 --- a/src/northbridge/intel/x4x/Kconfig
 +++ b/src/northbridge/intel/x4x/Kconfig
-@@ -28,6 +28,15 @@ config ECAM_MMCONF_BUS_NUMBER
+@@ -32,6 +32,15 @@ config ECAM_MMCONF_BUS_NUMBER
  	int
  	default 256
  

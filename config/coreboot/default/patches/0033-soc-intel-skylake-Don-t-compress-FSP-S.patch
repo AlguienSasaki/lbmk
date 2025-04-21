@@ -1,7 +1,7 @@
-From f08dbaacf747eb198bbc8f83e0220ca803f19116 Mon Sep 17 00:00:00 2001
+From 49cee334bc7fe9a78b9355b5256a37984bac385a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Thu, 26 Dec 2024 19:45:20 +0000
-Subject: [PATCH 10/11] soc/intel/skylake: Don't compress FSP-S
+Subject: [PATCH 33/37] soc/intel/skylake: Don't compress FSP-S
 
 Build systems like lbmk need to reproducibly insert
 certain vendor files on release images.
@@ -19,7 +19,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/soc/intel/skylake/Kconfig b/src/soc/intel/skylake/Kconfig
-index c24df2ef75..8e25f796ed 100644
+index 9191ed0ff8..d51ffaef7b 100644
 --- a/src/soc/intel/skylake/Kconfig
 +++ b/src/soc/intel/skylake/Kconfig
 @@ -12,7 +12,7 @@ config SOC_INTEL_COMMON_SKYLAKE_BASE

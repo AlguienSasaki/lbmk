@@ -1,7 +1,7 @@
-From 243d3b1892d33b4eccc9c48333fbc137c4294a73 Mon Sep 17 00:00:00 2001
+From 7f650a19d30fe6157b150c5248d6086007323d72 Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Thu, 22 Jun 2023 16:44:27 +0300
-Subject: [PATCH 08/24] HACK: Disable coreboot related BL31 features
+Subject: [PATCH 08/37] HACK: Disable coreboot related BL31 features
 
 I don't know why, but removing this BL31 make argument lets gru-kevin
 power off properly when shut down from Linux. Needs investigation.

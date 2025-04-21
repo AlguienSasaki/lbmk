@@ -1,7 +1,7 @@
-From 1652c22825d3001e77159aa539dfa49d2389c775 Mon Sep 17 00:00:00 2001
+From b515ba5b0cd02dc1771f27eaa716582b0827a638 Mon Sep 17 00:00:00 2001
 From: Mate Kukri <km@mkukri.xyz>
 Date: Tue, 31 Dec 2024 22:49:15 +0000
-Subject: [PATCH 03/11] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
+Subject: [PATCH 28/37] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
 
 These machine have BootGuard fused and requires deguard to
 boot coreboot.
@@ -117,11 +117,11 @@ Change-Id: I19d421412c771c1f242f6ff39453f824fa866163
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/spd/spd_9.bin
 
 diff --git a/src/device/pci_rom.c b/src/device/pci_rom.c
-index d60720eb49..cc6b9b068a 100644
+index dc41ef14ce..bba98d9dea 100644
 --- a/src/device/pci_rom.c
 +++ b/src/device/pci_rom.c
-@@ -304,11 +304,13 @@ void pci_rom_ssdt(const struct device *device)
- 		return;
+@@ -396,14 +396,16 @@ void pci_rom_ssdt(const struct device *device)
+ 		rom = cbrom;
  	}
  
 +#if 0
@@ -132,15 +132,10 @@ index d60720eb49..cc6b9b068a 100644
  	}
 +#endif
  
- 	/* Supports up to four devices. */
- 	if ((CBMEM_ID_ROM0 + ngfx) > CBMEM_ID_ROM3) {
-@@ -336,7 +338,7 @@ void pci_rom_ssdt(const struct device *device)
- 	memcpy(cbrom, rom, cbrom_length);
- 
  	/* write _ROM method */
 -	acpigen_write_scope(scope);
 +	acpigen_write_scope("\\_SB.PCI0.RP01.PEGP");
- 	acpigen_write_rom(cbrom, cbrom_length);
+ 	acpigen_write_rom((void *)rom, rom->size * 512);
  	acpigen_pop_len(); /* pop scope */
  }
 diff --git a/src/ec/lenovo/h8/acpi/ec.asl b/src/ec/lenovo/h8/acpi/ec.asl

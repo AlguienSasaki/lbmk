@@ -1,7 +1,7 @@
-From 12ff6e798d1cefc5b888e6035e52bf6d70c9ca47 Mon Sep 17 00:00:00 2001
+From 09740dc9d43a8dc24b7416b70476796515af6581 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 31 Dec 2024 01:40:42 +0000
-Subject: [PATCH 11/11] soc/intel/pmc: Hardcoded poweroff after power fail
+Subject: [PATCH 34/37] soc/intel/pmc: Hardcoded poweroff after power fail
 
 Coreboot can set the power state for power on after previous
 power failure, based on the option table. On the ThinkPad T480,
@@ -31,10 +31,10 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 4 insertions(+), 32 deletions(-)
 
 diff --git a/src/soc/intel/common/block/pmc/pmclib.c b/src/soc/intel/common/block/pmc/pmclib.c
-index 0fadd6e409..843581b285 100644
+index 64b9bb997c..7823775bcb 100644
 --- a/src/soc/intel/common/block/pmc/pmclib.c
 +++ b/src/soc/intel/common/block/pmc/pmclib.c
-@@ -760,38 +760,10 @@ void pmc_clear_pmcon_sts(void)
+@@ -776,38 +776,10 @@ void pmc_clear_pmcon_sts(void)
  
  void pmc_set_power_failure_state(const bool target_on)
  {

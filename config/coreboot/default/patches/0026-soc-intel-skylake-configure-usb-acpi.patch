@@ -1,7 +1,7 @@
-From 0a28ea805e3dddfaa89e6c4255506a390bc7ce04 Mon Sep 17 00:00:00 2001
+From 14002b2575d73d3edbc72584502a463e6802cba6 Mon Sep 17 00:00:00 2001
 From: Felix Singer <felixsinger@posteo.net>
 Date: Wed, 26 Jun 2024 04:24:31 +0200
-Subject: [PATCH 01/11] soc/intel/skylake: configure usb acpi
+Subject: [PATCH 26/37] soc/intel/skylake: configure usb acpi
 
 Change-Id: I53fc73046e4b107064fa8c3c617ba6d9b807b71d
 Signed-off-by: Felix Singer <felixsinger@posteo.net>
@@ -11,7 +11,7 @@ Signed-off-by: Felix Singer <felixsinger@posteo.net>
  2 files changed, 56 insertions(+), 1 deletion(-)
 
 diff --git a/src/soc/intel/skylake/Kconfig b/src/soc/intel/skylake/Kconfig
-index 22017c848b..c24df2ef75 100644
+index 4ad33496b2..9191ed0ff8 100644
 --- a/src/soc/intel/skylake/Kconfig
 +++ b/src/soc/intel/skylake/Kconfig
 @@ -10,6 +10,7 @@ config SOC_INTEL_COMMON_SKYLAKE_BASE

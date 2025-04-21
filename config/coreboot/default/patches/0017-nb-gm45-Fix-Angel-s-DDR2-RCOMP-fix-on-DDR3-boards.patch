@@ -1,7 +1,7 @@
-From b0ff2cc0470a44078e87bff6226d34b7ac652508 Mon Sep 17 00:00:00 2001
+From 6acc310c1d695d47c148296da9da189de21d58be Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 6 Aug 2024 00:50:24 +0100
-Subject: [PATCH 17/24] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
+Subject: [PATCH 17/37] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
 
 We add this patch:
 

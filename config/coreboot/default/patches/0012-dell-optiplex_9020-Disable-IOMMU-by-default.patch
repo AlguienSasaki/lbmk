@@ -1,7 +1,7 @@
-From bcb2017f4c583742bc60179e6f7c7381e1fa0a39 Mon Sep 17 00:00:00 2001
+From 4b0536ce7cd55eedc52d13497bea59d91e8924d8 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 23:00:09 +0000
-Subject: [PATCH 12/24] dell/optiplex_9020: Disable IOMMU by default
+Subject: [PATCH 12/37] dell/optiplex_9020: Disable IOMMU by default
 
 Needed to make graphics cards work. Turning it on is
 recommended if only using iGPU, otherwise leave it off

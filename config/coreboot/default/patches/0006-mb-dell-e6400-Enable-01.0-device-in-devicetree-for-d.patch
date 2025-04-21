@@ -1,7 +1,7 @@
-From c730bc21c276376baa36956548af1e8412325a9e Mon Sep 17 00:00:00 2001
+From 18069af7c0c6beedfadb615cca9127e82a0d8007 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sat, 6 May 2023 15:53:41 -0600
-Subject: [PATCH 06/24] mb/dell/e6400: Enable 01.0 device in devicetree for
+Subject: [PATCH 06/37] mb/dell/e6400: Enable 01.0 device in devicetree for
  dGPU models
 
 Change-Id: I9b8e5d3cd1e1f64dc87b682b1e045b6342924aed

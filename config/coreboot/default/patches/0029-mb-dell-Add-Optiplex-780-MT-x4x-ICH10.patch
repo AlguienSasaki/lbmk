@@ -1,7 +1,7 @@
-From 2527c4a5131d7b33e43bbc03a94921e7e59b4b02 Mon Sep 17 00:00:00 2001
+From 75cc0ea09234064318046624845b0afc5afb0ce5 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Mon, 30 Sep 2024 20:44:38 -0400
-Subject: [PATCH 04/11] mb/dell: Add Optiplex 780 MT (x4x/ICH10)
+Subject: [PATCH 29/37] mb/dell: Add Optiplex 780 MT (x4x/ICH10)
 
 Change-Id: Idb45737ce95bfd26e978323c650de7d308b5079c
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
