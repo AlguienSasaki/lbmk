@@ -163,7 +163,8 @@ trees()
 		return 1
 	fi
 
-	x_ e "config/git/$project/pkg.cfg" f
+	[ -f "config/git/$project/pkg.cfg" ] || \
+	    $err "config/git/$project/pkg.cfg missing"
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
