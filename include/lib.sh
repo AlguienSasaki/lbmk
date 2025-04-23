@@ -111,10 +111,8 @@ command -v $python 1>/dev/null || pyver=""
 	    2>/dev/null || $err "Cannot determine which Python version."
 [ -n "$pyver" ] && \
 	pyver="`$python -c 'import sys; print(sys.version_info[:])' | \
-	    awk '{print $1}'`" && \
-	pyver="${pyver#(}" && pyver="${pyver%,}"
-[ "${pyver%%.*}" = "3" ] || \
-	$err "Wrong python version, or python missing. Must be v 3.x."
+	    awk '{print $1}'`" && pyver="${pyver#(}" && pyver="${pyver%,}"
+[ "${pyver%%.*}" = "3" ] || $err "Wrong python version (must be v 3.x)"
 
 # XBMK_CACHE is a directory, for caching downloads and git repositories
 [ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
