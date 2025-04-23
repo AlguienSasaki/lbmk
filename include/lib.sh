@@ -98,13 +98,9 @@ for fv in version versiondate; do
 	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 done
 
-pyver="2"
 python="python3"
-if command -v python3 1>/dev/null; then
-	pyver="3"
-else
-	python="python"
-fi
+command -v python3 1>/dev/null || python="python"
+pyver="2" && [ "$python" = "python3" ] && pyver="3"
 command -v $python 1>/dev/null || pyver=""
 [ -z "$pyver" ] || \
 	$python -c 'import sys; print(sys.version_info[:])' 1>/dev/null \
