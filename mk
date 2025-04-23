@@ -213,7 +213,7 @@ build_targets()
 		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$target"
 		x_ handle_defconfig
 
-		mkhelp "$postmake"
+		x_ $postmake
 	done; :
 }
 
@@ -440,14 +440,14 @@ handle_makefile()
 
 run_make_command()
 {
-	mkhelp "$premake"
+	x_ $premake
 
 	$dry check_cmake "$srcdir" && [ -z "$mode" ] && \
 	    $dry check_autoconf "$srcdir"
 	$dry check_makefile "$srcdir" || return 1
 
 	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
-	mkhelp "$mkhelper"
+	x_ $mkhelper
 
 	[ "$mode" != "clean" ] || \
 	    $dry make -C "$srcdir" $cleanargs distclean || :; :
@@ -474,11 +474,6 @@ check_makefile()
 {
 	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
 	    [ -f "$1/GNUmakefile" ] || return 1; :
-}
-
-mkhelp()
-{
-	[ -z "$1" ] || [ -n "$mode" ] || eval "$1" || $err "mkhelp: !$1"; :
 }
 
 copy_elf()
