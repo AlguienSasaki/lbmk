@@ -113,10 +113,8 @@ command -v $python 1>/dev/null || pyver=""
 	pyver="`$python -c 'import sys; print(sys.version_info[:])' | \
 	    awk '{print $1}'`" && \
 	pyver="${pyver#(}" && pyver="${pyver%,}"
-if [ "${pyver%%.*}" != "3" ]; then
-	printf "Wrong python version, or python missing. Must be v 3.x.\n" 1>&2
-	exit 1
-fi
+[ "${pyver%%.*}" = "3" ] || \
+	$err "Wrong python version, or python missing. Must be v 3.x."
 
 # XBMK_CACHE is a directory, for caching downloads and git repositories
 [ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
