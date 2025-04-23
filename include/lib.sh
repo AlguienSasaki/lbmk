@@ -102,9 +102,8 @@ python="python3"
 command -v python3 1>/dev/null || python="python"
 pyver="2" && [ "$python" = "python3" ] && pyver="3"
 command -v $python 1>/dev/null || pyver=""
-[ -z "$pyver" ] || \
-	$python -c 'import sys; print(sys.version_info[:])' 1>/dev/null \
-	    2>/dev/null || $err "Cannot determine which Python version."
+[ -z "$pyver" ] || $python -c 'import sys; print(sys.version_info[:])' \
+    1>/dev/null 2>/dev/null || $err "Cannot detect host Python version."
 [ -n "$pyver" ] && \
 	pyver="`$python -c 'import sys; print(sys.version_info[:])' | \
 	    awk '{print $1}'`" && pyver="${pyver#(}" && pyver="${pyver%,}"
