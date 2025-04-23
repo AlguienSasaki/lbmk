@@ -290,6 +290,6 @@ mk()
 {
 	mk_flag="$1" || $err "No argument given"
 	shift 1 && for mk_arg in "$@"; do
-		./mk $mk_flag $mk_arg || $err "./mk $mk_flag $mk_arg"; :
+		x_ ./mk $mk_flag $mk_arg
 	done; :
 }
