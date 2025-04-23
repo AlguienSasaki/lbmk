@@ -1,4 +1,4 @@
-From ec8f5b8e949995eb34b7e54b9f06894eb38d02b4 Mon Sep 17 00:00:00 2001
+From faa87ed4d2ff07e9e8cc98cd08cbb34c905c1ac6 Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Wed, 10 Jul 2024 17:37:56 +0300
 Subject: [PATCH] HACK: Makefile: Ignore missing input files for binman images
@@ -17,18 +17,18 @@ Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index 34dd029d0cda..d5d89bd2e35c 100644
+index a7593e8a1680..30deb760bf8f 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1375,7 +1375,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
-                 --toolpath $(objtree)/tools \
+@@ -1410,7 +1410,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
  		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
- 		build -u -d u-boot.dtb -O . -m \
--		--allow-missing $(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
-+		--allow-missing --ignore-missing \
+ 		build -u -d $(binman_dtb) -O . -m \
+ 		--allow-missing --fake-ext-blobs \
+-		$(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
++		--ignore-missing \
  		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
- 		-I $(dt_dir) -a of-list=$(CONFIG_OF_LIST) \
+ 		$(foreach f,$(of_list_dirs),-I $(f)) -a of-list=$(of_list) \
  		$(foreach f,$(BINMAN_INDIRS),-I $(f)) \
 -- 
-2.45.2
+2.49.0
 
