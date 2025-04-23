@@ -1,5 +1,0 @@
--ENV_ADDR 0x4000000
--ENV_IS_IN_FLASH y
--ENV_SECT_SIZE 0x40000
-+BOOTCOMMAND "bootflow scan -l; if bootflow menu; then cls; bootflow boot; fi"
-+TEXT_BASE 0x50000000
