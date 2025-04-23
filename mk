@@ -489,7 +489,6 @@ copy_elf()
 	x_ make clean -C "$srcdir" $cleanargs
 }
 
-if trees "$@"; then
-	. "$mkhelpercfg"
-	$cmd
-fi
+trees "$@" || exit 0
+. "$mkhelpercfg"
+$cmd
