@@ -98,15 +98,41 @@ for fv in version versiondate; do
 	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 done
 
+# Use direct path, to prevent a hang if Python is using a virtual environment,
+# not command -v, to prevent a hang when checking python's version
+# See: https://docs.python.org/3/library/venv.html#how-venvs-work
+pybin()
+{
+	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
+
+	venv=1
+	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
+	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
+
+	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
+		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
+		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
+		    return 0
+	done
+	[ $venv -gt 0 ] && return 1
+
+	# Defer to normal command -v if not a venv
+	command -v "$1" 2>/dev/null || return 1
+}
+
 python="python3"
-command -v python3 1>/dev/null || python="python"
+pybin python3 1>/dev/null || python="python"
 pyver="2" && [ "$python" = "python3" ] && pyver="3"
-command -v $python 1>/dev/null || pyver=""
-[ -z "$pyver" ] || $python -c 'import sys; print(sys.version_info[:])' \
-    1>/dev/null 2>/dev/null || $err "Cannot detect host Python version."
-[ -n "$pyver" ] && \
-	pyver="`$python -c 'import sys; print(sys.version_info[:])' | \
-	    awk '{print $1}'`" && pyver="${pyver#(}" && pyver="${pyver%,}"
+pybin "$python" 1>/dev/null || pyver=""
+[ -z "$pyver" ] || "`pybin "$python"`" -c \
+    'import sys; print(sys.version_info[:])' 1>/dev/null 2>/dev/null || \
+    $err "Cannot detect host Python version."
+if [ -n "$pyver" ]; then
+	pyver="$("$(pybin "$python")" -c \
+	    'import sys; print(sys.version_info[:])' | awk '{print $1}')"
+	pyver="${pyver#(}"
+	pyver="${pyver%,}"
+fi
 [ "${pyver%%.*}" = "3" ] || $err "Wrong python version (must be v 3.x)"
 
 # XBMK_CACHE is a directory, for caching downloads and git repositories
@@ -133,7 +159,7 @@ if [ -z "${TMPDIR+x}" ]; then
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
 	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
-	x_ ln -s "`command -v "$python"`" python
+	x_ ln -s "`pybin "$python"`" python
 	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
 
 	xbmk_rval=0
