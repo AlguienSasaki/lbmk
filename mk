@@ -23,11 +23,6 @@ main()
 {
 	cmd="" && [ $# -gt 0 ] && cmd="$1" && shift 1
 
-	for g in "command -v git" "git config --global user.name" \
-	    "git config --global user.email"; do
-		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
-	done
-
 	case "$cmd" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release|download|inject) $cmd "$@" ;;

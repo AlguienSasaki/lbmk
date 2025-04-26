@@ -165,6 +165,11 @@ xbmk_set_version()
 		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 	done
 
+	for g in "command -v git" "git config --global user.name" \
+	    "git config --global user.email"; do
+		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
+	done
+
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
 	    || $err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
