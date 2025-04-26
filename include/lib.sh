@@ -49,7 +49,7 @@ xbmkget()
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
 	cached="$XBMK_CACHE/file/$4"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
-	vendor_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
+	bad_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
 	[ "$dl_fail" = "n" ] && e "$3" f && return 0
 	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
 	for url in "$1" "$2"; do
@@ -71,13 +71,13 @@ xbmkget()
 		else
 			$err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
 		fi
-		vendor_checksum "$4" "$cached" || dl_fail="n"
+		bad_checksum "$4" "$cached" || dl_fail="n"
 	done
 	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
 	[ "$cached" = "$3" ] || x_ cp "$cached" "$3"; :
 }
 
-vendor_checksum()
+bad_checksum()
 {
 	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
 	printf "Bad checksum for file: %s\n" "$2" 1>&2; rm -f "$2" || :; :
