@@ -116,9 +116,9 @@ main "$@" && exit 0
 
 eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
-    autoconfargs listfile autogenargs btype tree rev tree_depend build_depend \
+    autoconfargs listfile autogenargs btype rev build_depend gccdir cmakedir \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull gccdir cmakedir do_make badhash`"
+    gnatver gnatfull do_make badhash tree`"
 
 trees()
 {
@@ -241,8 +241,8 @@ handle_defconfig()
 configure_project()
 {
 	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
-	    tree_depend makeargs btype mkhelper bootstrapargs premake release \
-	    xarch xlang badhash`"
+	    makeargs btype mkhelper bootstrapargs premake release xlang xarch \
+	    badhash`"
 	_tcfg="$1/target.cfg"
 	[ -f "$_tcfg" ] || btype="auto"
 	e "$datadir/mkhelper.cfg" f && eval "`setcfg "$datadir/mkhelper.cfg"`"

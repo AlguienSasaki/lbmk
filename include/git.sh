@@ -9,8 +9,6 @@ tmpgit="$xbmkpwd/tmp/gitclone"
 
 fetch_targets()
 {
-	[ -n "$tree_depend" ] && [ "$tree_depend" != "$tree" ] && \
-		x_ ./mk -f "$project" "$tree_depend"
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
@@ -21,7 +19,7 @@ fetch_targets()
 
 fetch_project()
 {
-	eval "`setvars "" xtree tree_depend`"
+	eval "`setvars "" xtree`"
 	eval "`setcfg "config/git/$project/pkg.cfg"`"
 
 	chkvars url
