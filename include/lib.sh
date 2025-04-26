@@ -4,8 +4,6 @@
 # Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
-_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-
 cbfstool="elf/cbfstool/default/cbfstool"
 rmodtool="elf/cbfstool/default/rmodtool"
 
@@ -51,6 +49,8 @@ rmgit()
 # if copying locally, it can only copy a file.
 xbmkget()
 {
+	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
 	cached="$XBMK_CACHE/file/$4"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
