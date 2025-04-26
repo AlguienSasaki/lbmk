@@ -21,13 +21,21 @@ eval "`setvars "" vdir src_dirname srcdir mode`"
 
 main()
 {
-	cmd="" && [ $# -gt 0 ] && cmd="$1" && shift 1
+	cmd=""
+	if [ $# -gt 0 ]; then
+		cmd="$1"
+		shift 1
+	fi
 
 	case "$cmd" in
-	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release|download|inject) $cmd "$@" ;;
-	-*) return 1 ;;
-	*) $err "bad command" ;;
+	version)
+		printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
+	release|download|inject)
+		$cmd "$@" ;;
+	-*)
+		return 1 ;;
+	*)
+		$err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
