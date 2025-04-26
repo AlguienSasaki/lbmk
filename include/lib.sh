@@ -22,15 +22,6 @@ rmodtool="elf/cbfstool/default/rmodtool"
 grubdata="config/data/grub"
 err="err_"
 
-err_()
-{
-	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
-	exit 1
-}
-x_() {
-	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
-}
-
 setvars()
 {
 	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
@@ -39,6 +30,166 @@ setvars()
 	done
 	printf "%s\n" "${_setvars% }"
 }
+
+err_()
+{
+	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
+	exit 1
+}
+
+eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
+    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver`"
+
+xbmk_init()
+{
+	xbmkpwd="`pwd`" || $err "Cannot generate PWD"
+	export PWD="$xbmkpwd"
+
+	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
+		install_packages "$@" || exit 1
+		exit 0
+	fi
+
+	id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
+	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
+
+	for fv in version versiondate; do
+		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
+	done
+
+	for xbmk_cmd in x_python x_cache x_vars x_setver x_run_child; do
+		$xbmk_cmd "$@"
+	done
+}
+
+x_python()
+{
+	pyv="import sys; print(sys.version_info[:])"
+	python="python3"
+	pybin python3 1>/dev/null || python="python"
+	pyver="2" && [ "$python" = "python3" ] && pyver="3"
+	pybin "$python" 1>/dev/null || pyver=""
+	[ -z "$pyver" ] || "`pybin "$python"`" -c "$pyv" 1>/dev/null \
+	    2>/dev/null || $err "Cannot detect host Python version."
+	if [ -n "$pyver" ]; then
+		pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')"
+		pyver="${pyver#(}"
+		pyver="${pyver%,}"
+	fi
+	[ "${pyver%%.*}" = "3" ] || $err "Bad python version (must by 3.x)"; :
+}
+
+# Use direct path, to prevent a hang if Python is using a virtual environment,
+# not command -v, to prevent a hang when checking python's version
+# See: https://docs.python.org/3/library/venv.html#how-venvs-work
+pybin()
+{
+	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
+
+	venv=1
+	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
+	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
+
+	# ideally, don't rely on PATH or hardcoded paths if python venv.
+	# use the *real*, direct executable linked to by the venv symlink
+	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
+		# realpath isn't posix, but available mostly universally
+		pypath="$(realpath \
+		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
+		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
+		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
+	fi
+
+	# if python venv: fall back to common PATH directories for checking
+	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
+		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
+		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
+		    return 0
+	done
+	[ $venv -gt 0 ] && return 1
+
+	# Defer to normal command -v if not a venv
+	command -v "$1" 2>/dev/null || return 1
+}
+
+x_cache()
+{
+	# XBMK_CACHE is a directory, for caching downloads and git repon
+	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
+	    $err "cachedir '$xbmkpwd/cache' is a symlink"
+	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' is a file"; :
+}
+
+x_vars()
+{
+	# if "y": a coreboot target won't be built if target.cfg says release="n"
+	# (this is used to exclude certain build targets from releases)
+	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
+	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
+
+	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
+	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
+	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1
+
+	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
+	    || $err "Cannot generate unknown .version file"
+	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
+	    .versiondate || $err "Cannot generate unknown .versiondate file"
+}
+
+x_setver()
+{
+	version_="$version"
+	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
+	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
+	versiondate_="$versiondate"
+	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
+	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+
+	chkvars version versiondate
+	printf "%s\n" "$version" > .version || $err "can't save version"
+	printf "%s\n" "$versiondate" > .versiondate || $err "can't save date"
+
+	relname="$projectname-$version"
+	export LOCALVERSION="-$projectname-${version%%-*}"
+}
+
+# if this instance is the main parent, re-run as a child process and exit.
+x_run_child()
+{
+	# unify all temporary files/directories in a single TMPDIR
+	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
+	    unset TMPDIR
+	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
+	[ -z "${TMPDIR+x}" ] || return 0 # this is a child instance, so return
+
+	# parent instance of xbmk, so don't return. set up TMPDIR
+	# and re-run as a child instance:
+	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
+	export TMPDIR="/tmp"
+	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	xbmktmp="$TMPDIR"
+	touch lock || $err "cannot create 'lock' file"
+	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
+	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
+	(
+	# set up python v3.x in PATH, in case it's not set up correctly.
+	# see code above that detected the correct python3 command.
+	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
+	x_ ln -s "`pybin "$python"`" python
+	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
+
+	xbmk_rval=0
+	./mk "$@" || xbmk_rval=1
+	rm -Rf "$xbmktmp" || xbmk_rval=1
+	rm -f lock || xbmk_rval=1
+	exit $xbmk_rval
+}
+
 chkvars()
 {
 	for var in "$@"; do
@@ -79,134 +230,6 @@ install_packages()
 	[ -n "$aur_notice" ] && \
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
-
-eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version relname xbmktmp`"
-
-if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
-	install_packages "$@" || exit 1
-	exit 0
-fi
-
-id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
-[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
-
-xbmkpwd="`pwd`" || $err "Cannot generate PWD"
-export PWD="$xbmkpwd"
-
-for fv in version versiondate; do
-	eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
-done
-
-# Use direct path, to prevent a hang if Python is using a virtual environment,
-# not command -v, to prevent a hang when checking python's version
-# See: https://docs.python.org/3/library/venv.html#how-venvs-work
-pybin()
-{
-	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
-
-	venv=1
-	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
-	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
-
-	# ideally, don't rely on PATH or hardcoded paths if python venv.
-	# use the *real*, direct executable linked to by the venv symlink
-	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
-		# realpath isn't posix, but available mostly universally
-		pypath="$(realpath \
-		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
-		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
-		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
-	fi
-
-	# if python venv: fall back to common PATH directories for checking
-	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
-		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
-		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
-		    return 0
-	done
-	[ $venv -gt 0 ] && return 1
-
-	# Defer to normal command -v if not a venv
-	command -v "$1" 2>/dev/null || return 1
-}
-
-python="python3"
-pybin python3 1>/dev/null || python="python"
-pyver="2" && [ "$python" = "python3" ] && pyver="3"
-pybin "$python" 1>/dev/null || pyver=""
-[ -z "$pyver" ] || "`pybin "$python"`" -c \
-    'import sys; print(sys.version_info[:])' 1>/dev/null 2>/dev/null || \
-    $err "Cannot detect host Python version."
-if [ -n "$pyver" ]; then
-	pyver="$("$(pybin "$python")" -c \
-	    'import sys; print(sys.version_info[:])' | awk '{print $1}')"
-	pyver="${pyver#(}"
-	pyver="${pyver%,}"
-fi
-[ "${pyver%%.*}" = "3" ] || $err "Wrong python version (must be v 3.x)"
-
-# XBMK_CACHE is a directory, for caching downloads and git repositories
-[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
-[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
-    $err "cachedir is default, $xbmkpwd/cache, but it exists and is a symlink"
-[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-[ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' exists but it's a file"
-
-# unify all temporary files/directories in a single TMPDIR
-[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || unset TMPDIR
-[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR"
-if [ -z "${TMPDIR+x}" ]; then
-	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
-	export TMPDIR="/tmp"
-	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
-	xbmktmp="$TMPDIR"
-	touch lock || $err "cannot create 'lock' file"
-	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
-	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
-	(
-	# set up python v3.x in PATH, in case it's not set up correctly.
-	# see code above that detected the correct python3 command.
-	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
-	x_ ln -s "`pybin "$python"`" python
-	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
-
-	xbmk_rval=0
-	./mk "$@" || xbmk_rval=1
-	rm -Rf "$xbmktmp" || xbmk_rval=1
-	rm -f lock || xbmk_rval=1
-	exit $xbmk_rval
-fi
-xbmktmp="$TMPDIR"
-
-# if "y": a coreboot target won't be built if target.cfg says release="n"
-# (this is used to exclude certain build targets from releases)
-[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
-[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
-
-[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
-expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
-    1>/dev/null 2>/dev/null || export XBMK_THREADS=1 # user gave a non-integer
-
-[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version || \
-    $err "Cannot generate unknown .version file"
-[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
-    .versiondate || $err "Cannot generate unknown .versiondate file"
-
-version_="$version"
-[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
-versiondate_="$versiondate"
-[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-for p in version versiondate; do
-	chkvars "$p"
-	eval "printf \"%s\\n\" \"\$$p\" > .$p || $err \"can't save $p\""
-done
-relname="$projectname-$version"
-export LOCALVERSION="-$projectname-${version%%-*}"
 
 check_defconfig()
 {
@@ -323,3 +346,10 @@ mk()
 		x_ ./mk $mk_flag $mk_arg
 	done; :
 }
+
+x_()
+{
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
+}
+
+xbmk_init "$@"
