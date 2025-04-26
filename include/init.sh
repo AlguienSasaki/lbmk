@@ -18,7 +18,11 @@ err="err_"
 
 setvars()
 {
-	_setvars="" && [ $# -lt 2 ] && $err "setvars: too few arguments"
+	_setvars=""
+	if [ $# -lt 2 ]; then
+		printf "\$err \"setvars: too few args\""
+		return 0
+	fi
 	val="$1" && shift 1 && for var in "$@"; do
 		_setvars="$var=\"$val\"; $_setvars"
 	done
