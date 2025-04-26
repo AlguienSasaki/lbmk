@@ -20,10 +20,12 @@ setvars()
 {
 	_setvars=""
 	if [ $# -lt 2 ]; then
-		printf "\$err \"setvars: too few args\""
+		printf "\$err \"setvars: too few args\\n\""
 		return 0
 	fi
-	val="$1" && shift 1 && for var in "$@"; do
+	val="$1"
+	shift 1
+	for var in "$@"; do
 		_setvars="$var=\"$val\"; $_setvars"
 	done
 	printf "%s\n" "${_setvars% }"
