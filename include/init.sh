@@ -57,12 +57,42 @@ xbmk_init()
 		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 	done
 
-	for xbmk_cmd in x_python x_cache x_vars x_setver x_run_child; do
+	for xbmk_cmd in setpyver init_vars init_ver xbmk_child_init; do
 		$xbmk_cmd "$@"
 	done
 }
 
-x_python()
+install_packages()
+{
+	[ $# -lt 2 ] && $err "fewer than two arguments"
+	[ $# -gt 2 ] && reinstall="$3"
+
+	eval "`setcfg "config/dependencies/$2"`"
+
+	chkvars pkg_add pkglist
+	$pkg_add $pkglist || $err "Cannot install packages"
+
+	[ -n "$aur_notice" ] && \
+	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
+}
+
+setcfg()
+{
+	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
+	[ $# -gt 1 ] || \
+		printf "e \"%s\" f not && %s \"Missing config\";\n" "$1" "$err"
+	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
+}
+
+chkvars()
+{
+	for var in "$@"; do
+		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
+		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
+	done; :
+}
+
+setpyver()
 {
 	pyv="import sys; print(sys.version_info[:])"
 	python="python3"
@@ -112,7 +142,7 @@ pybin()
 	command -v "$1" 2>/dev/null || return 1
 }
 
-x_cache()
+init_vars()
 {
 	# XBMK_CACHE is a directory, for caching downloads and git repon
 	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
@@ -121,10 +151,7 @@ x_cache()
 	    $err "cachedir '$xbmkpwd/cache' is a symlink"
 	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
 	[ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' is a file"; :
-}
 
-x_vars()
-{
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
 	# (this is used to exclude certain build targets from releases)
 	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
@@ -140,7 +167,7 @@ x_vars()
 	    .versiondate || $err "Cannot generate unknown .versiondate file"
 }
 
-x_setver()
+init_ver()
 {
 	version_="$version"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
@@ -158,7 +185,7 @@ x_setver()
 }
 
 # if this instance is the main parent, re-run as a child process and exit.
-x_run_child()
+xbmk_child_init()
 {
 	# unify all temporary files/directories in a single TMPDIR
 	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
@@ -190,53 +217,9 @@ x_run_child()
 	exit $xbmk_rval
 }
 
-chkvars()
+x_()
 {
-	for var in "$@"; do
-		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
-		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
-	done; :
-}
-
-setcfg()
-{
-	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	[ $# -gt 1 ] || \
-		printf "e \"%s\" f not && %s \"Missing config\";\n" "$1" "$err"
-	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
-}
-
-e()
-{
-	es_t="e" && [ $# -gt 1 ] && es_t="$2"
-	es2="already exists"
-	estr="[ -$es_t \"\$1\" ] || return 1"
-	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
-
-	eval "$estr"
-	printf "%s %s\n" "$1" "$es2" 1>&2
-}
-
-install_packages()
-{
-	[ $# -lt 2 ] && $err "fewer than two arguments"
-	[ $# -gt 2 ] && reinstall="$3"
-
-	eval "`setcfg "config/dependencies/$2"`"
-
-	chkvars pkg_add pkglist
-	$pkg_add $pkglist || $err "Cannot install packages"
-
-	[ -n "$aur_notice" ] && \
-	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
-}
-
-check_defconfig()
-{
-	[ -d "$1" ] || $err "Target '$1' not defined."
-	for x in "$1"/config/*; do
-		[ -f "$x" ] && printf "%s\n" "$x" && return 1
-	done; :
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
 }
 
 remkdir()
@@ -327,16 +310,15 @@ vendor_checksum()
 	printf "Bad checksum for file: %s\n" "$2" 1>&2; rm -f "$2" || :; :
 }
 
-cbfs()
+e()
 {
-	ccmd="add-payload" && [ $# -gt 3 ] && [ $# -lt 5 ] && ccmd="add"
-	lzma="-c lzma" && [ $# -gt 3 ] && [ $# -lt 5 ] && lzma="-t $4"
+	es_t="e" && [ $# -gt 1 ] && es_t="$2"
+	es2="already exists"
+	estr="[ -$es_t \"\$1\" ] || return 1"
+	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
 
-	[ $# -gt 4 ] && [ "$5" = "0x1110000" ] && \
-	    ccmd="add-flat-binary" && \
-	    lzma="-c lzma -l 0x1110000 -e 0x1110000"
-
-	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
+	eval "$estr"
+	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
 mk()
@@ -347,9 +329,24 @@ mk()
 	done; :
 }
 
-x_()
+check_defconfig()
 {
-	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
+	[ -d "$1" ] || $err "Target '$1' not defined."
+	for x in "$1"/config/*; do
+		[ -f "$x" ] && printf "%s\n" "$x" && return 1
+	done; :
+}
+
+cbfs()
+{
+	ccmd="add-payload" && [ $# -gt 3 ] && [ $# -lt 5 ] && ccmd="add"
+	lzma="-c lzma" && [ $# -gt 3 ] && [ $# -lt 5 ] && lzma="-t $4"
+
+	[ $# -gt 4 ] && [ "$5" = "0x1110000" ] && \
+	    ccmd="add-flat-binary" && \
+	    lzma="-c lzma -l 0x1110000 -e 0x1110000"
+
+	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
 }
 
 xbmk_init "$@"
