@@ -109,6 +109,17 @@ pybin()
 	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
 	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
 
+	# ideally, don't rely on PATH or hardcoded paths if python venv.
+	# use the *real*, direct executable linked to by the venv symlink
+	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
+		# realpath isn't posix, but available mostly universally
+		pypath="$(realpath \
+		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
+		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
+		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
+	fi
+
+	# if python venv: fall back to common PATH directories for checking
 	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
 		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
 		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
