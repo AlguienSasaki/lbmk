@@ -42,15 +42,6 @@ rmgit()
 	) || $err "Cannot remove .git/.gitmodules in $1"
 }
 
-# return 0 if project is single-tree, otherwise 1
-# e.g. coreboot is multi-tree, so 1
-singletree()
-{
-	for targetfile in "config/${1}/"*/target.cfg; do
-		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
-	done; :
-}
-
 # can grab from the internet, or copy locally.
 # if copying locally, it can only copy a file.
 xbmkget()
