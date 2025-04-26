@@ -165,10 +165,6 @@ xbmk_set_version()
 		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 	done
 
-	x_ command -v git
-	x_ git config --global user.name
-	x_ git config --global user.email
-
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
 	    || $err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
@@ -200,7 +196,10 @@ xbmk_git_init()
 	x_ git commit -m "$projectname $version" --date "$cdate" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
 	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
-	    2>/dev/null; :
+	    2>/dev/null
+
+	x_ git config --global user.name
+	x_ git config --global user.email
 }
 
 xbmk_create_tmpdir()
