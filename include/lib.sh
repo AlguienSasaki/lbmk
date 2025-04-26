@@ -265,7 +265,7 @@ singletree()
 
 # can grab from the internet, or copy locally.
 # if copying locally, it can only copy a file.
-download()
+xbmkget()
 {
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
 	cached="$XBMK_CACHE/file/$4"

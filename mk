@@ -20,25 +20,20 @@ eval "`setvars "" vdir src_dirname srcdir mode xp ser`"
 
 main()
 {
-	[ $# -lt 1 ] && $err "bad command"
-	rval=0
+	cmd="" && [ $# -gt 0 ] && cmd="$1" && shift 1
 
 	for g in "command -v git" "git config --global user.name" \
 	    "git config --global user.email" "git_init"; do
 		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
 	done
 
-	case "$1" in
+	case "$cmd" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release|download|inject)
-		cmd="vendor_$1" && [ "$1" = "release" ] && cmd="mkrelease"
-		shift 1
-		$cmd "$@" ;;
-	-*) rval=1 ;;
+	release|download|inject) $cmd "$@" ;;
+	-*) return 1 ;;
 	*) $err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-	return $rval
 }
 
 git_init()
@@ -54,7 +49,7 @@ git_init()
 	git tag -a "$version" -m "$projectname $version" || return 1
 }
 
-mkrelease()
+release()
 {
 	export XBMK_RELEASE="y"
 

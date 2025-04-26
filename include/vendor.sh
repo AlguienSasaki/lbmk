@@ -38,7 +38,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
     vfile cbcfg $cv`"
 
-vendor_download()
+download()
 {
 	[ $# -gt 0 ] || $err "No argument given"
 	export PATH="$PATH:/sbin"
@@ -118,7 +118,7 @@ fetch()
 	fi
 
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
-	download "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
+	xbmkget "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
 
 	rm -Rf "${_dl}_extracted" || $err "!rm ${_ul}_extracted. $dontflash"
 	e "$_dest" f && return 0
@@ -318,7 +318,7 @@ fail_inject()
 	err_ "$1"
 }
 
-vendor_inject()
+inject()
 {
 	need_files="n"
 	err="fail_inject"
@@ -503,31 +503,31 @@ patch_rom()
 		return 1
 	fi
 
-	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && inject "fallback/refcode" \
+	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && insert "fallback/refcode" \
 	    "$CONFIG_REFCODE_BLOB_FILE" "stage"
-	[ "$CONFIG_HAVE_MRC" = "y" ] && inject "mrc.bin" "$CONFIG_MRC_FILE" \
+	[ "$CONFIG_HAVE_MRC" = "y" ] && insert "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
-	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && inject IFD "$CONFIG_ME_BIN_PATH" me
-	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && inject ecfw1.bin \
-	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && inject \
+	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && insert IFD "$CONFIG_ME_BIN_PATH" me
+	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && insert ecfw1.bin \
+	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && insert \
 	    ecfw2.bin "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
 	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
-	  inject "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
+	  insert "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
-		inject sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
+		insert sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_M_FILE" ] && \
-		inject "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
+		insert "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_S_FILE" ] && \
-		inject "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
+		insert "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
 
 	printf "ROM image successfully patched: %s\n" "$rom"
 	xchanged="y"
 }
 
-inject()
+insert()
 {
 	[ "$2" = "/dev/null" ] && return 0
 
@@ -541,7 +541,7 @@ inject()
 		[ $# -gt 3 ] && _offset="$4"
 	else
 		[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
-		    $err "inject $*, $rom: offset given but empty (undefined)"
+		    $err "insert $*, $rom: offset given but empty (undefined)"
 	fi
 
 	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
@@ -549,7 +549,7 @@ inject()
 	if [ "$cbfsname" = "IFD" ]; then
 		[ "$nukemode" = "nuke" ] || "$ifdtool" $ifdprefix -i \
 		    $_t:$_dest "$rom" -O "$rom" || \
-		    $err "failed: inject '$_t' '$_dest' on '$rom'"
+		    $err "failed: insert '$_t' '$_dest' on '$rom'"
 		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
 		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"
 	elif [ "$nukemode" = "nuke" ]; then

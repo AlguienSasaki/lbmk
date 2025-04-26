@@ -90,7 +90,7 @@ fetch_submodule()
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-	[ "$st" = "file" ] && download "$subfile" "$subfile_bkup" \
+	[ "$st" = "file" ] && xbmkget "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
 	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
