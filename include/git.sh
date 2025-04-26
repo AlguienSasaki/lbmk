@@ -61,12 +61,6 @@ git_prep()
 		done < "$mdir/module.list"; :
 	fi
 
-	if [ "$project" = "coreboot" ] && [ -n "$xtree" ] && [ $# -gt 2 ] && \
-	    [ "$xtree" != "$tree" ]; then (
-		x_ cd "$tmpgit/util" && x_ rm -Rf crossgcc
-		x_ ln -s "../../$xtree/util/crossgcc" crossgcc
-	) || $err "$_loc: !xgcc link"; fi
-
 	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
