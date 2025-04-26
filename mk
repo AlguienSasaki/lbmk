@@ -16,7 +16,7 @@ fi
 . "include/vendor.sh"
 . "include/mrc.sh"
 
-eval "`setvars "" vdir src_dirname srcdir mode xp ser`"
+eval "`setvars "" vdir src_dirname srcdir mode`"
 
 main()
 {
