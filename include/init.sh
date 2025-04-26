@@ -51,8 +51,9 @@ xbmk_init()
 		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 	done
 
-	for xbmk_cmd in setpyver init_vars init_ver xbmk_child_init; do
-		$xbmk_cmd "$@"
+	for init_cmd in set_pyver init_vars init_ver create_tmpdir lock \
+	    create_pathdirs child_exec; do
+		xbmk_$init_cmd "$@" || break
 	done
 }
 
@@ -86,7 +87,7 @@ chkvars()
 	done; :
 }
 
-setpyver()
+xbmk_set_pyver()
 {
 	pyv="import sys; print(sys.version_info[:])"
 	python="python3"
@@ -136,7 +137,7 @@ pybin()
 	command -v "$1" 2>/dev/null || return 1
 }
 
-init_vars()
+xbmk_init_vars()
 {
 	# XBMK_CACHE is a directory, for caching downloads and git repon
 	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
@@ -158,10 +159,10 @@ init_vars()
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
 	    || $err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
-	    .versiondate || $err "Cannot generate unknown .versiondate file"
+	    .versiondate || $err "Cannot generate unknown .versiondate file"; :
 }
 
-init_ver()
+xbmk_init_ver()
 {
 	version_="$version"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
@@ -176,13 +177,6 @@ init_ver()
 
 	relname="$projectname-$version"
 	export LOCALVERSION="-$projectname-${version%%-*}"
-}
-
-xbmk_child_init()
-{
-	for init_cmd in create_tmpdir lock create_pathdirs child_exec; do
-		xbmk_$init_cmd "$@" || return 0; :
-	done
 }
 
 xbmk_create_tmpdir()
