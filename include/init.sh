@@ -204,6 +204,11 @@ xbmk_child_init()
 	x_ ln -s "`pybin "$python"`" python
 	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
 
+	xbmk_child_exec "$@"
+}
+
+xbmk_child_exec()
+{
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
 	rm -Rf "$xbmktmp" || xbmk_rval=1
