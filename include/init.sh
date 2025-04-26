@@ -198,8 +198,10 @@ xbmk_git_init()
 	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
 	    2>/dev/null
 
-	x_ git config --global user.name
-	x_ git config --global user.email
+	for gitarg in "--global user.name" "--global user.email"; do
+		gitcmd="git config $gitarg"; $gitcmd || $err \
+		    "Please run this first: $gitcmd \"your ${gitcmd##*.}\""
+	done
 }
 
 xbmk_create_tmpdir()
