@@ -16,6 +16,7 @@ vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$xbmkpwd/tmp/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
+ifdtool="elf/ifdtool/default/ifdtool"
 
 cvchk="CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN CONFIG_KBC1126_FIRMWARE \
 	CONFIG_VGA_BIOS_FILE CONFIG_INCLUDE_SMSC_SCH5545_EC_FW \

@@ -5,6 +5,8 @@
 # Copyright (c) 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 # Copyright (c) 2023-2024 Riku Viitanen <riku.viitanen@protonmail.com>
 
+grubdata="config/data/grub"
+
 mkserprog()
 {
 	[ $# -lt 1 ] && $err "mkserprog: no arguments provided"

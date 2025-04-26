@@ -4,6 +4,11 @@
 # Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
+_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+
+cbfstool="elf/cbfstool/default/cbfstool"
+rmodtool="elf/cbfstool/default/rmodtool"
+
 remkdir()
 {
 	rm -Rf "$1" || $err "remkdir: !rm -Rf \"$1\""

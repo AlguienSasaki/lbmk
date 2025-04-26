@@ -14,12 +14,6 @@ projectsite="https://libreboot.org/"
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 xbmkpath="$PATH"
 
-_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-
-ifdtool="elf/ifdtool/default/ifdtool"
-cbfstool="elf/cbfstool/default/cbfstool"
-rmodtool="elf/cbfstool/default/rmodtool"
-grubdata="config/data/grub"
 err="err_"
 
 setvars()
