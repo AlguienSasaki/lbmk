@@ -178,22 +178,35 @@ init_ver()
 	export LOCALVERSION="-$projectname-${version%%-*}"
 }
 
-# if this instance is the main parent, re-run as a child process and exit.
 xbmk_child_init()
+{
+	for init_cmd in create_tmpdir lock create_pathdirs child_exec; do
+		xbmk_$init_cmd "$@" || return 0; :
+	done
+}
+
+xbmk_create_tmpdir()
 {
 	# unify all temporary files/directories in a single TMPDIR
 	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
 	    unset TMPDIR
 	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
-	[ -z "${TMPDIR+x}" ] || return 0 # this is a child instance, so return
+	[ -z "${TMPDIR+x}" ] || return 1 # child instance, so return
 
 	# parent instance of xbmk, so don't return. set up TMPDIR
-	# and re-run as a child instance:
-	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	xbmktmp="$TMPDIR"
-	touch lock || $err "cannot create 'lock' file"
+}
+
+xbmk_lock()
+{
+	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
+	touch lock || $err "cannot create 'lock' file"; :
+}
+
+xbmk_create_pathdirs()
+{
 	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
 	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
@@ -202,9 +215,7 @@ xbmk_child_init()
 	# see code above that detected the correct python3 command.
 	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
 	x_ ln -s "`pybin "$python"`" python
-	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"
-
-	xbmk_child_exec "$@"
+	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
 }
 
 xbmk_child_exec()
