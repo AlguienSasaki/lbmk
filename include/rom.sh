@@ -277,6 +277,18 @@ cprom()
 	    cbfs "$newrom" "config/data/grub/bootorder_uboot" bootorder raw; :
 }
 
+cbfs()
+{
+	ccmd="add-payload" && [ $# -gt 3 ] && [ $# -lt 5 ] && ccmd="add"
+	lzma="-c lzma" && [ $# -gt 3 ] && [ $# -lt 5 ] && lzma="-t $4"
+
+	[ $# -gt 4 ] && [ "$5" = "0x1110000" ] && \
+	    ccmd="add-flat-binary" && \
+	    lzma="-c lzma -l 0x1110000 -e 0x1110000"
+
+	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
+}
+
 mkcoreboottar()
 {
 	[ "$target" = "$tree" ] && return 0
