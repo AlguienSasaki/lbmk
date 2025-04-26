@@ -53,10 +53,6 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
 
-	for fv in version versiondate; do
-		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
-	done
-
 	for init_cmd in set_pyver set_env set_version git_init create_tmpdir \
 	    lock create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
@@ -165,6 +161,10 @@ xbmk_set_env()
 
 xbmk_set_version()
 {
+	for fv in version versiondate; do
+		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
+	done
+
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
 	    || $err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
