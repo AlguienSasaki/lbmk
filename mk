@@ -24,7 +24,7 @@ main()
 	cmd="" && [ $# -gt 0 ] && cmd="$1" && shift 1
 
 	for g in "command -v git" "git config --global user.name" \
-	    "git config --global user.email" "git_init"; do
+	    "git config --global user.email"; do
 		eval "$g 1>/dev/null 2>/dev/null || $err \"Unconfigured: $g\""
 	done
 
@@ -35,19 +35,6 @@ main()
 	*) $err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-}
-
-git_init()
-{
-	[ -L ".git" ] && return 1
-	[ -e ".git" ] && return 0
-	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
-
-	git init || return 1
-	git add -A . || return 1
-	git commit -m "$projectname $version" --date "$cdate" \
-	    --author="xbmk <xbmk@example.com>" || return 1
-	git tag -a "$version" -m "$projectname $version" || return 1
 }
 
 release()

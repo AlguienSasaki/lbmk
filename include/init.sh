@@ -57,8 +57,8 @@ xbmk_init()
 		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
 	done
 
-	for init_cmd in set_pyver set_env set_version create_tmpdir lock \
-	    create_pathdirs child_exec; do
+	for init_cmd in set_pyver set_env set_version git_init create_tmpdir \
+	    lock create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -183,6 +183,20 @@ xbmk_set_version()
 
 	relname="$projectname-$version"
 	export LOCALVERSION="-$projectname-${version%%-*}"
+}
+
+xbmk_git_init()
+{
+	[ -L ".git" ] && return 1
+	[ -e ".git" ] && return 0
+	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
+
+	x_ git init 1>/dev/null 2>/dev/null
+	x_ git add -A . 1>/dev/null 2>/dev/null
+	x_ git commit -m "$projectname $version" --date "$cdate" \
+	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
+	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
+	    2>/dev/null; :
 }
 
 xbmk_create_tmpdir()
