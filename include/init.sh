@@ -162,10 +162,10 @@ xbmk_set_env()
 xbmk_set_version()
 {
 	for fv in version versiondate; do
-		eval "[ ! -f \".$fv\" ] || read -r $fv < \".$fv\" || :"
+		eval "[ ! -f \"\.$fv\" ] || read -r $fv < \"\.$fv\" || :"
 	done
 
-	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > .version \
+	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > ".version" \
 	    || $err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
 	    .versiondate || $err "Cannot generate unknown .versiondate file"; :
@@ -178,8 +178,8 @@ xbmk_set_version()
 	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 
 	chkvars version versiondate
-	printf "%s\n" "$version" > .version || $err "can't save version"
-	printf "%s\n" "$versiondate" > .versiondate || $err "can't save date"
+	printf "%s\n" "$version" > ".version" || $err "can't save version"
+	printf "%s\n" "$versiondate" > ".versiondate" || $err "can't save date"
 
 	relname="$projectname-$version"
 	export LOCALVERSION="-$projectname-${version%%-*}"
