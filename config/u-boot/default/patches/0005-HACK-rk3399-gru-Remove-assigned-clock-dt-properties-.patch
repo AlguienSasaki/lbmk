@@ -1,4 +1,4 @@
-From 9685041c19bcc61ca847a59e93c716d23df51898 Mon Sep 17 00:00:00 2001
+From d02163324baeb817ed55df41fac863cab4be038c Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Wed, 10 Jul 2024 14:32:19 +0300
 Subject: [PATCH] HACK: rk3399: gru: Remove assigned clock dt properties for
@@ -18,7 +18,7 @@ Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm/dts/rk3399-gru-u-boot.dtsi b/arch/arm/dts/rk3399-gru-u-boot.dtsi
-index 6bdc892bd913..f4457c1b9b48 100644
+index 5517176aa4a0..9f40cf1e0208 100644
 --- a/arch/arm/dts/rk3399-gru-u-boot.dtsi
 +++ b/arch/arm/dts/rk3399-gru-u-boot.dtsi
 @@ -27,6 +27,9 @@ &cros_ec {
@@ -30,7 +30,7 @@ index 6bdc892bd913..f4457c1b9b48 100644
 +	/delete-property/ assigned-clock-rates;
  };
  
- &pp1800_audio {
+ &emmc_phy {
 -- 
-2.45.2
+2.49.0
 

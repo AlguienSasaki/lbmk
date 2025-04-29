@@ -1,4 +1,4 @@
-From 03750188cbe305cd8383178a1ee476de2aa5953e Mon Sep 17 00:00:00 2001
+From 780d8ffe985441824a242e5b853721dfe14435dd Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:31 +0000
 Subject: [PATCH 1/3] video: Add cursor support for video consoles
@@ -36,7 +36,7 @@ index 939363653f6c..6b531718276f 100644
  	vc_priv->y_charsize = fontdata->height;
  	if (vid_priv->rot % 2) {
 diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
-index 80e7adf6a1a4..8b2ef51f1b3b 100644
+index ebe96bf0c2f3..8613c464040f 100644
 --- a/drivers/video/vidconsole-uclass.c
 +++ b/drivers/video/vidconsole-uclass.c
 @@ -57,6 +57,26 @@ int vidconsole_entry_start(struct udevice *dev)
@@ -84,7 +84,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  	priv->xcur_frac = priv->xstart_frac;
  	priv->ycur += priv->y_charsize;
  
-@@ -284,6 +308,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
+@@ -286,6 +310,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
  
  		break;
  	}
@@ -99,7 +99,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  	case 'J': {
  		int mode;
  
-@@ -458,6 +490,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -460,6 +492,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
  	int cp, ret;
  
@@ -111,7 +111,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  	if (priv->escape) {
  		vidconsole_escape_char(dev, ch);
  		return 0;
-@@ -472,6 +509,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -474,6 +511,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		/* beep */
  		break;
  	case '\r':
@@ -119,7 +119,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  		priv->xcur_frac = priv->xstart_frac;
  		break;
  	case '\n':
-@@ -479,6 +517,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -481,6 +519,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		vidconsole_entry_start(dev);
  		break;
  	case '\t':	/* Tab (8 chars alignment) */
@@ -127,7 +127,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  		priv->xcur_frac = ((priv->xcur_frac / priv->tab_width_frac)
  				+ 1) * priv->tab_width_frac;
  
-@@ -503,6 +542,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+@@ -505,6 +544,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
  		break;
  	}
  
@@ -136,7 +136,7 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  	return 0;
  }
  
-@@ -723,6 +764,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
+@@ -725,6 +766,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
  	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
  
  	priv->xsize_frac = VID_TO_POS(vid_priv->xsize);
@@ -145,10 +145,10 @@ index 80e7adf6a1a4..8b2ef51f1b3b 100644
  	return 0;
  }
 diff --git a/include/video_console.h b/include/video_console.h
-index 8b5928dc5ebb..00c5ecb664b9 100644
+index 723d2315606d..17a9aa3f9295 100644
 --- a/include/video_console.h
 +++ b/include/video_console.h
-@@ -66,6 +66,7 @@ struct vidconsole_priv {
+@@ -74,6 +74,7 @@ struct vidconsole_priv {
  	int escape_len;
  	int row_saved;
  	int col_saved;
@@ -157,10 +157,10 @@ index 8b5928dc5ebb..00c5ecb664b9 100644
  	char utf8_buf[5];
  };
 -- 
-2.45.2
+2.49.0
 
 
-From f63a54996fdaac7ff995e26fd4318a09a9c14dff Mon Sep 17 00:00:00 2001
+From b2b921d7bc69b505562cf02d1b4c6f6d4325c7d5 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:36 +0000
 Subject: [PATCH 2/3] efi-selftest: Add international characters test
@@ -196,10 +196,10 @@ index a3023c82567c..2f8d8d323c2b 100644
  	ret = con_out->output_string(con_out, text);
  	if (ret != EFI_ST_SUCCESS) {
 -- 
-2.45.2
+2.49.0
 
 
-From cc05aa26c43c35e9155d958400532005ae7eeede Mon Sep 17 00:00:00 2001
+From 082422499a5f2689e715df68bfd025a5cc15cc64 Mon Sep 17 00:00:00 2001
 From: Andre Przywara <andre.przywara@arm.com>
 Date: Mon, 10 Jan 2022 00:56:37 +0000
 Subject: [PATCH 3/3] efi_selftest: Add box drawing character selftest
@@ -242,5 +242,5 @@ index 2f8d8d323c2b..02209a5bf224 100644
  	ret = con_out->output_string(con_out, text);
  	if (ret != EFI_ST_SUCCESS) {
 -- 
-2.45.2
+2.49.0
 
