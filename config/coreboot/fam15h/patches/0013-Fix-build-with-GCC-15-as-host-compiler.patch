@@ -1,0 +1,39 @@
+From 281151d85240bd8a60545b6415e0f44ce6a2af33 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Tue, 29 Apr 2025 17:31:13 +0300
+Subject: [PATCH] WIP: Fix build with GCC 15 as host compiler
+
+GCC 15 now considers the unterminated-string-initialization warning as
+part of -Werror by default. Coreboot compiles host utilities with the
+system compiler, which results in getting this error in some files.
+
+Mark a hexadecimal translation table in cbfstool code as "nonstring" to
+avoid the warning-turned-error.
+
+The bios log prefixes are non-null-terminated as well, but I couldn't
+figure out how to mark them as non-strings. Temporarily disable the
+warning with a pragma to avoid the error. That pragma causes an error on
+GCC 14, so disable pragma warnings along with it to avoid that as well.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ util/cbfstool/common.c                     | 2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/cbfstool/common.c b/util/cbfstool/common.c
+index 7154bc9d5425..cb08c9e8ec11 100644
+--- a/util/cbfstool/common.c
++++ b/util/cbfstool/common.c
+@@ -192,7 +192,7 @@ uint64_t intfiletype(const char *name)
+ 
+ char *bintohex(uint8_t *data, size_t len)
+ {
+-	static const char translate[16] = "0123456789abcdef";
++	static const char translate[16] __attribute__((__nonstring__)) = "0123456789abcdef";
+ 
+ 	char *result = malloc(len * 2 + 1);
+ 	if (result == NULL)
+
+-- 
+2.49.0
+

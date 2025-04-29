@@ -1,0 +1,119 @@
+From 74dc3c0a4603bc635c8bc5e95490cdf168af5f41 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Tue, 29 Apr 2025 19:46:14 +0300
+Subject: [PATCH] util/romcc: Fix build with GCC 15
+
+With GCC 15, we get build errors complaining bool is a reserved keyword,
+so cannot be used as a function name. Rename our bool() to bool_().
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ util/romcc/romcc.c | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/util/romcc/romcc.c b/util/romcc/romcc.c
+index 378bfc50f290..b375e0fc83cb 100644
+--- a/util/romcc/romcc.c
++++ b/util/romcc/romcc.c
+@@ -7137,7 +7137,7 @@ static void integral(struct compile_state *state, struct triple *def)
+ }
+ 
+ 
+-static void bool(struct compile_state *state, struct triple *def)
++static void bool_(struct compile_state *state, struct triple *def)
+ {
+ 	if (!TYPE_ARITHMETIC(def->type->type) &&
+ 		((def->type->type & TYPE_MASK) != TYPE_POINTER)) {
+@@ -7705,7 +7705,7 @@ static struct triple *mkcond_expr(
+ 	struct triple *def, *val, *var, *jmp1, *jmp2, *top, *mid, *end;
+ 	struct type *result_type;
+ 	unsigned int left_type, right_type;
+-	bool(state, test);
++	bool_(state, test);
+ 	left_type = left->type->type;
+ 	right_type = right->type->type;
+ 	result_type = 0;
+@@ -11036,7 +11036,7 @@ static struct triple *unary_expr(struct compile_state *state)
+ 	case TOK_BANG:
+ 		eat(state, TOK_BANG);
+ 		right = read_expr(state, cast_expr(state));
+-		bool(state, right);
++		bool_(state, right);
+ 		def = lfalse_expr(state, right);
+ 		break;
+ 	case TOK_SIZEOF:
+@@ -11363,10 +11363,10 @@ static struct triple *land_expr(struct compile_state *state)
+ 	while(peek(state) == TOK_LOGAND) {
+ 		struct triple *left, *right;
+ 		left = read_expr(state, def);
+-		bool(state, left);
++		bool_(state, left);
+ 		eat(state, TOK_LOGAND);
+ 		right = read_expr(state, or_expr(state));
+-		bool(state, right);
++		bool_(state, right);
+ 
+ 		def = mkland_expr(state,
+ 			ltrue_expr(state, left),
+@@ -11382,10 +11382,10 @@ static struct triple *lor_expr(struct compile_state *state)
+ 	while(peek(state) == TOK_LOGOR) {
+ 		struct triple *left, *right;
+ 		left = read_expr(state, def);
+-		bool(state, left);
++		bool_(state, left);
+ 		eat(state, TOK_LOGOR);
+ 		right = read_expr(state, land_expr(state));
+-		bool(state, right);
++		bool_(state, right);
+ 
+ 		def = mklor_expr(state,
+ 			ltrue_expr(state, left),
+@@ -11400,7 +11400,7 @@ static struct triple *conditional_expr(struct compile_state *state)
+ 	def = lor_expr(state);
+ 	if (peek(state) == TOK_QUEST) {
+ 		struct triple *test, *left, *right;
+-		bool(state, def);
++		bool_(state, def);
+ 		test = ltrue_expr(state, read_expr(state, def));
+ 		eat(state, TOK_QUEST);
+ 		left = read_expr(state, expr(state));
+@@ -11676,7 +11676,7 @@ static void if_statement(struct compile_state *state, struct triple *first)
+ 	eat(state, TOK_IF);
+ 	eat(state, TOK_LPAREN);
+ 	test = expr(state);
+-	bool(state, test);
++	bool_(state, test);
+ 	/* Cleanup and invert the test */
+ 	test = lfalse_expr(state, read_expr(state, test));
+ 	eat(state, TOK_RPAREN);
+@@ -11719,7 +11719,7 @@ static void for_statement(struct compile_state *state, struct triple *first)
+ 	eat(state, TOK_SEMI);
+ 	if (peek(state) != TOK_SEMI) {
+ 		test = expr(state);
+-		bool(state, test);
++		bool_(state, test);
+ 		test = ltrue_expr(state, read_expr(state, test));
+ 	}
+ 	eat(state, TOK_SEMI);
+@@ -11767,7 +11767,7 @@ static void while_statement(struct compile_state *state, struct triple *first)
+ 	eat(state, TOK_WHILE);
+ 	eat(state, TOK_LPAREN);
+ 	test = expr(state);
+-	bool(state, test);
++	bool_(state, test);
+ 	test = ltrue_expr(state, read_expr(state, test));
+ 	eat(state, TOK_RPAREN);
+ 	/* Generate the needed pieces */
+@@ -11818,7 +11818,7 @@ static void do_statement(struct compile_state *state, struct triple *first)
+ 	eat(state, TOK_WHILE);
+ 	eat(state, TOK_LPAREN);
+ 	test = read_expr(state, expr(state));
+-	bool(state, test);
++	bool_(state, test);
+ 	eat(state, TOK_RPAREN);
+ 	eat(state, TOK_SEMI);
+ 	/* Thread the pieces together */
+
+-- 
+2.49.0
+
