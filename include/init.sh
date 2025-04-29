@@ -161,9 +161,8 @@ xbmk_set_env()
 
 xbmk_set_version()
 {
-	for fv in version versiondate; do
-		eval "[ ! -f \"\.$fv\" ] || read -r $fv < \"\.$fv\" || :"
-	done
+	[ ! -f ".version" ] || read -r version < ".version" || :; :
+	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || :; :
 
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > ".version" \
 	    || $err "Cannot generate unknown .version file"
