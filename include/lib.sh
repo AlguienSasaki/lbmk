@@ -24,6 +24,7 @@ mkrom_tarball()
 
 mktarball()
 {
+	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 	[ "${2%/*}" = "$2" ] || x_ mkdir -p "${2%/*}"
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball2, $1"
 }
