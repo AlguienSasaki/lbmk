@@ -1,0 +1,33 @@
+From 06e8d7a9db4efe1dc2b7e5865b801a5518b38fbd Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Tue, 29 Apr 2025 17:31:13 +0300
+Subject: [PATCH 1/1] Fix cbfstool build error on GCC 15 host compiler
+
+GCC 15 now considers the unterminated-string-initialization warning as
+part of -Werror by default. Coreboot compiles host utilities with the
+system compiler, which results in getting this error in some files.
+
+Mark a hexadecimal translation table in cbfstool code as "nonstring" to
+avoid the warning-turned-error.
+
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ util/cbfstool/common.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/cbfstool/common.c b/util/cbfstool/common.c
+index 539d0baccf..f6fe647503 100644
+--- a/util/cbfstool/common.c
++++ b/util/cbfstool/common.c
+@@ -188,7 +188,7 @@ uint64_t intfiletype(const char *name)
+ 
+ char *bintohex(uint8_t *data, size_t len)
+ {
+-	static const char translate[16] = "0123456789abcdef";
++	static const char translate[16] __attribute__((__nonstring__)) = "0123456789abcdef";
+ 
+ 	char *result = malloc(len * 2 + 1);
+ 	if (result == NULL)
+-- 
+2.39.5
+
