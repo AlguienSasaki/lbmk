@@ -1,0 +1,44 @@
+From 0d639c485bdf136e4c5ac7af81fc12da3f21bc46 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 30 Apr 2025 04:07:31 +0100
+Subject: [PATCH 1/1] xgcc: update nasm to 2.16.03
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/crossgcc/buildgcc                       | 2 +-
+ util/crossgcc/sum/nasm-2.14.02.tar.bz2.cksum | 1 -
+ util/crossgcc/sum/nasm-2.16.03.tar.bz2.cksum | 1 +
+ 3 files changed, 2 insertions(+), 2 deletions(-)
+ delete mode 100644 util/crossgcc/sum/nasm-2.14.02.tar.bz2.cksum
+ create mode 100644 util/crossgcc/sum/nasm-2.16.03.tar.bz2.cksum
+
+diff --git a/util/crossgcc/buildgcc b/util/crossgcc/buildgcc
+index 0ad1980104..2d48ff038e 100755
+--- a/util/crossgcc/buildgcc
++++ b/util/crossgcc/buildgcc
+@@ -61,7 +61,7 @@ EXPAT_VERSION=2.2.7
+ CLANG_VERSION=8.0.0
+ MAKE_VERSION=4.2.1
+ CMAKE_VERSION=3.15.3
+-NASM_VERSION=2.14.02
++NASM_VERSION=2.16.03
+ 
+ # GCC toolchain archive locations
+ # These are sanitized by the jenkins toolchain test builder, so if
+diff --git a/util/crossgcc/sum/nasm-2.14.02.tar.bz2.cksum b/util/crossgcc/sum/nasm-2.14.02.tar.bz2.cksum
+deleted file mode 100644
+index f3b9de9d29..0000000000
+--- a/util/crossgcc/sum/nasm-2.14.02.tar.bz2.cksum
++++ /dev/null
+@@ -1 +0,0 @@
+-fe098ee4dc9c4c983696c4948e64b23e4098b92b  tarballs/nasm-2.14.02.tar.bz2
+diff --git a/util/crossgcc/sum/nasm-2.16.03.tar.bz2.cksum b/util/crossgcc/sum/nasm-2.16.03.tar.bz2.cksum
+new file mode 100644
+index 0000000000..9ca23fb0c4
+--- /dev/null
++++ b/util/crossgcc/sum/nasm-2.16.03.tar.bz2.cksum
+@@ -0,0 +1 @@
++c63080347a5c1c8904456fe6c680b722558383b4  tarballs/nasm-2.16.03.tar.bz2
+-- 
+2.39.5
+
