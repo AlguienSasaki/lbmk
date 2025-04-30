@@ -9,25 +9,13 @@ grubdata="config/data/grub"
 
 mkserprog()
 {
-	[ $# -lt 1 ] && $err "mkserprog: no arguments provided"
 	[ "$_f" = "-d" ] && return 0 # dry run
-
-	[ "$1" = "pico" ] && mkpicotool
-
 	basename -as .h "$serdir/"*.h > "$xbmktmp/ser" || \
 	    $err "!mk $1 $xbmktmp"
 
 	while read -r sertarget; do
-		[ "$1" = "pico" ] &&
-		    x_ rm -rf "$sersrc/build" \
-		    && (pt=$(x_ grep "pico_cmake_set" \
-		          "$picosdk/src/boards/include/boards/$sertarget.h" \
-		        | grep "PICO_PLATFORM" | cut -d= -f2 | tr -d [:blank:])
-		        mkdir -p "$sersrc/build_$pt"
-			ln -srf "$sersrc/build_$pt/" "$sersrc/build") \
-		    && x_ cmake -DPICO_BOARD="$sertarget" \
+		[ "$1" = "pico" ] && x_ cmake -DPICO_BOARD="$sertarget" \
 		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" \
-		    -Dpicotool_DIR="$picotool/picotool" \
 		    && x_ cmake --build "$sersrc/build"
 		[ "$1" = "stm32" ] && x_ make -C "$sersrc" \
 		    libopencm3-just-make BOARD=$sertarget && x_ make -C \
@@ -37,17 +25,6 @@ mkserprog()
 	done < "$xbmktmp/ser"
 
 	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; :
-}
-
-mkpicotool()
-{
-	rm -Rf "$picotool" || $err "Can't remove picotool builddir"
-	(
-	x_ cd src/picotool
-	x_ cmake -DCMAKE_INSTALL_PREFIX=xbmkbin -DPICOTOOL_FLAT_INSTALL=1 \
-	    -DPICO_SDK_PATH=../pico-sdk
-	x_ make install
-	) || $err "Can't build picotool"; :
 }
 
 copyps1bios()
