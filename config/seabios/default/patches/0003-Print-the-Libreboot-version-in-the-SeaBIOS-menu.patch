@@ -1,7 +1,7 @@
-From 55344b6c79b4c3a89558d1338169c920d1d49d18 Mon Sep 17 00:00:00 2001
+From ebd8293eb1af20c204beb3aa1394865185e2f3f0 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Jan 2025 18:49:58 +0000
-Subject: [PATCH 3/3] Print the Libreboot version in the SeaBIOS menu
+Subject: [PATCH 1/1] Print the Libreboot version in the SeaBIOS menu
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/bootsplash.c b/src/bootsplash.c
-index 538b316d..f18d41c7 100644
+index 538b316d..8746098c 100644
 --- a/src/bootsplash.c
 +++ b/src/bootsplash.c
 @@ -48,7 +48,7 @@ enable_vga_console(void)
