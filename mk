@@ -12,8 +12,9 @@ if [ "./${0##*/}" != "${0}" ] || [ ! -f "mk" ] || [ -L "mk" ]; then
 	exit 1
 fi
 
-. "include/init.sh"
 . "include/lib.sh"
+
+. "include/init.sh"
 . "include/inject.sh"
 . "include/mrc.sh"
 
