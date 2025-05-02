@@ -224,9 +224,4 @@ xbmk_child_exec()
 	exit $xbmk_rval
 }
 
-x_()
-{
-	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
-}
-
 xbmk_init "$@"

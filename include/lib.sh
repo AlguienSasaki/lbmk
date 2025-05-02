@@ -131,6 +131,11 @@ setvars()
 	printf "%s\n" "${_setvars% }"
 }
 
+x_()
+{
+	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
+}
+
 err_()
 {
 	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
