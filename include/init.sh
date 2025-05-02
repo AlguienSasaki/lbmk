@@ -16,27 +16,6 @@ xbmkpath="$PATH"
 
 err="err_"
 
-setvars()
-{
-	_setvars=""
-	if [ $# -lt 2 ]; then
-		printf "\$err \"setvars: too few args\\n\""
-		return 0
-	fi
-	val="$1"
-	shift 1
-	for var in "$@"; do
-		_setvars="$var=\"$val\"; $_setvars"
-	done
-	printf "%s\n" "${_setvars% }"
-}
-
-err_()
-{
-	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
-	exit 1
-}
-
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver`"
 
