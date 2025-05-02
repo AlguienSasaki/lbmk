@@ -39,11 +39,8 @@ mksha512sum()
 
 rmgit()
 {
-	(
-	cd "$1" || $err "!cd gitrepo $1"
-	find . -name ".git" -exec rm -Rf {} + || $err "!rm .git $1"
-	find . -name ".gitmodules" -exec rm -Rf {} + || $err "!rm .gitmod $1"
-	) || $err "Cannot remove .git/.gitmodules in $1"
+	x_ find "$1" -name ".git" -exec rm -Rf {} +
+	x_ find "$1" -name ".gitmodules" -exec rm -Rf {} +
 }
 
 # can grab from the internet, or copy locally.
