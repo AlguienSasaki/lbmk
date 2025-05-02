@@ -17,6 +17,7 @@ fi
 . "include/init.sh"
 . "include/inject.sh"
 . "include/mrc.sh"
+. "include/rom.sh"
 
 eval "`setvars "" vdir src_dirname srcdir mode`"
 
