@@ -9,8 +9,8 @@ rmodtool="elf/cbfstool/default/rmodtool"
 
 remkdir()
 {
-	x_ rm -Rf "$1"
-	x_ mkdir -p "$1"
+	x_ rm -Rf "$@"
+	x_ mkdir -p "$@"
 }
 
 mkrom_tarball()
