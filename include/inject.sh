@@ -86,6 +86,8 @@ getfiles()
 	  "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
 	    "$MRC_hash" "$CONFIG_MRC_FILE"
+	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && fetch "refcode" "$MRC_url" \
+	    "$MRC_url_bkup" "$MRC_hash" "$CONFIG_REFCODE_BLOB_FILE"
 	[ -z "$CONFIG_LENOVO_TBFW_BIN" ] || fetch "tbfw" "$TBFW_url" \
 	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN"
 	#

@@ -8,6 +8,37 @@ eval "`setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL`"
 
 extract_mrc()
 {
+	extract_shellball
+
+	"$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
+	    -f "$_dest" -r RO_SECTION || $err "extract_mrc: !$cbfstool $_dest"
+
+	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode extra; :
+}
+
+extract_refcode()
+{
+	_refdest="${CONFIG_REFCODE_BLOB_FILE##*../}"
+	e "$_refdest" f && return 0
+
+	[ $# -lt 1 ] && extract_shellball
+
+	# cbfstool changed the attributes scheme for stage files,
+	# incompatible with older versions before coreboot 4.14,
+	# so we need coreboot 4.13 cbfstool for certain refcode files
+	chkvars cbfstoolref
+	mkdir -p "${_refdest%/*}" || $err "ref: !mkdir -p ${_refdest%/*}"
+
+	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
+	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION
+
+	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
+	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
+	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
+}
+
+extract_shellball()
+{
 	chkvars "MRC_board" "CONFIG_MRC_FILE"
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 
@@ -15,12 +46,7 @@ extract_mrc()
 	x_ cd "$appdir"
 	extract_partition "${MRC_url##*/}"
 	extract_archive "$SHELLBALL" .
-	) || $err "mrc download/extract failure"
-
-	"$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
-	    -f "$_dest" -r RO_SECTION || $err "extract_mrc: !$cbfstool $_dest"
-
-	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode; :
+	) || $err "mrc download/extract failure"; :
 }
 
 extract_partition()
@@ -37,23 +63,4 @@ extract_partition()
 
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
 	    "$SHELLBALL" | debugfs "root-a.ext2" || $err "!extract shellball"
-}
-
-extract_refcode()
-{
-	_refdest="${CONFIG_REFCODE_BLOB_FILE##*../}"
-	e "$_refdest" f && return 0
-
-	# cbfstool changed the attributes scheme for stage files,
-	# incompatible with older versions before coreboot 4.14,
-	# so we need coreboot 4.13 cbfstool for certain refcode files
-	chkvars cbfstoolref
-	mkdir -p "${_refdest%/*}" || $err "ref: !mkdir -p ${_refdest%/*}"
-
-	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
-	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION
-
-	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
-	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
-	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 }
