@@ -9,8 +9,8 @@ rmodtool="elf/cbfstool/default/rmodtool"
 
 remkdir()
 {
-	rm -Rf "$1" || $err "remkdir: !rm -Rf \"$1\""
-	mkdir -p "$1" || $err "remkdir: !mkdir -p \"$1\""
+	x_ rm -Rf "$1"
+	x_ mkdir -p "$1"
 }
 
 mkrom_tarball()
