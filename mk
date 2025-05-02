@@ -85,6 +85,7 @@ build_release()
 	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
 	(
 	cd "$srcdir" || $err "$vdir: 2 !cd \"$srcdir\""
+	x_ ./mk -d coreboot
 	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
 	x_ mv bin ../roms
 	) || $err "can't build rom images"
