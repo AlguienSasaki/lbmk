@@ -128,11 +128,22 @@ setvars()
 	printf "%s\n" "${_setvars% }"
 }
 
+fe_()
+{
+	find_ex "x_" "$@"
+}
+
 fx_()
 {
+	find_ex "" "$@"
+}
+
+find_ex()
+{
+	errx="$1" && shift 1
 	fd="`mktemp`"
 	xx="$1" && shift 1
-	find "$@" | sort > "$fd" || $err "!find $(echo "$@") > \"$fd\""
+	$errx find "$@" | sort > "$fd" || $err "!find $(echo "$@") > \"$fd\""
 	while read -r fx; do
 		"$xx" "$fx" || break; :
 	done < "$fd"

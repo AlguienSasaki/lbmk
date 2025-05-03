@@ -283,7 +283,7 @@ extract_tbfw()
 	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
 	x_ mkdir -p tmp
 
-	x_ rm -f tmp/tb.bin && fx_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+	x_ rm -f tmp/tb.bin && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
 
 	x_ dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size
 	x_ cp "tmp/tb.bin" "$_dest"
@@ -421,7 +421,7 @@ patch_release_roms()
 	x_ mkdir -p "tmp"
 
 	if readkconfig; then
-		fx_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+		fe_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 		[ "$nukemode" != "nuke" ] || \
 			printf "Make sure you inserted vendor files: %s\n" \
 			    "$vguide" > "$tmpromdir/README.md" || :
@@ -571,7 +571,7 @@ modify_mac()
 	[ "$new_mac" != "restore" ] && x_ make -C util/nvmutil && \
 	    x_ "$nvm" tmp/gbe setmac "$new_mac"
 
-	fx_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+	fe_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nGbE NVM written to '%s':\n" "$archive"
 	x_ "$nvm" tmp/gbe dump | grep -v "bytes read from file" || :
