@@ -278,20 +278,9 @@ check_project_hashes()
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
-	x_ rm -f "$xbmktmp/project.list" "$xbmktmp/project.hash" \
-	    "$xbmktmp/project.tmp"
-	x_ touch "$xbmktmp/project.tmp" "$xbmktmp/project.hash"
-
-	for rmchk in "$datadir" "$configdir/$tree" "$mdir"; do
-		[ ! -d "$rmchk" ] || find "$rmchk" -type f -not -path \
-		    "*/.git*/*" >> "$xbmktmp/project.tmp" || $err "!fh $rmchk"
-	done
-	sort "$xbmktmp/project.tmp" > "$xbmktmp/project.list" || $err "!pj srt"
-
-	while read -r rmchk; do
-		[ ! -f "$rmchk" ] || x_ sha512sum "$rmchk" | awk \
-		    '{print $1}' >> "$xbmktmp/project.hash" || $err "!h $rmchk"
-	done < "$xbmktmp/project.list"
+	x_ rm -f "$xbmktmp/project.hash"
+	fx_ create_project_hash "$datadir" "$configdir/$tree" "$mdir" \
+	    -type f -not -path "*/.git*/*"
 
 	pjhash="$(sha512sum "$xbmktmp/project.hash" | awk '{print $1}')" || :
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
@@ -302,6 +291,12 @@ check_project_hashes()
 
 	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target"; :
+}
+
+create_project_hash()
+{
+	[ ! -f "$1" ] || x_ sha512sum "$1" | awk \
+	    '{print $1}' >> "$xbmktmp/project.hash" || $err "!h $1"; :
 }
 
 check_cross_compiler()
