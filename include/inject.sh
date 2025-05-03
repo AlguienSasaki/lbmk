@@ -95,9 +95,9 @@ getfiles()
 	# therefore, handle them separately, in case one of them is libre; if
 	# one of them was, the path wouldn't be set.
 	#
-	[ -z "$CONFIG_FSP_M_FILE" ] || fetch "fspm" "$CONFIG_FSP_FD_PATH" \
+	[ -z "$CONFIG_FSP_M_FILE" ] || fetch "fsp" "$CONFIG_FSP_FD_PATH" \
 	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_M_FILE" copy
-	[ -z "$CONFIG_FSP_S_FILE" ] || fetch "fsps" "$CONFIG_FSP_FD_PATH" \
+	[ -z "$CONFIG_FSP_S_FILE" ] || fetch "fsp" "$CONFIG_FSP_FD_PATH" \
 	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_S_FILE" copy; :
 }
 
@@ -111,14 +111,12 @@ fetch()
 
 	[ "$5" = "/dev/null" ] && return 0
 	_dl="$XBMK_CACHE/file/$dlsum"
-	if [ "$dl_type" = "fspm" ] || [ "$dl_type" = "fsps" ]; then
-		# HACK: if grabbing fsp from coreboot, fix the path for lbmk
-		for _cdl in dl dl_bkup; do
-			eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
-			[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"
-			[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""
-		done
-	fi
+	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
+	[ "$dl_type" = "fsp" ] && for _cdl in dl dl_bkup; do
+		eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
+		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"
+		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""
+	done; :
 
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
 	xbmkget "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
@@ -205,27 +203,15 @@ apply_me11_deguard_mod()
 
 extract_archive()
 {
-	if [ $# -gt 2 ]; then
-		if [ "$3" = "fspm" ] || [ "$3" = "fsps" ]; then
-			decat_fspfd "$1" "$2"
-			return 0
-		fi
-	fi
+	[ $# -gt 2 ] && [ "$3" = "fsp" ] && x_ python \
+	    "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" -o "$2" \
+	    -n "Fsp.fd" && return 0
 
 	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
 
 	[ ! -d "${_dl}_extracted" ] || cp -R "${_dl}_extracted" "$2" || \
 	    $err "!mv '${_dl}_extracted' '$2' - $dontflash"; :
-}
-
-decat_fspfd()
-{
-	_fspfd="$1"
-	_fspdir="$2"
-	_fspsplit="$cbdir/3rdparty/fsp/Tools/SplitFspBin.py"
-
-	x_ $python "$_fspsplit" split -f "$_fspfd" -o "$_fspdir" -n "Fsp.fd"
 }
 
 extract_kbc1126ec()
@@ -294,20 +280,9 @@ copy_tbfw()
 	return 1
 }
 
-extract_fspm()
+extract_fsp()
 {
-	copy_fsp M; :
-}
-
-extract_fsps()
-{
-	copy_fsp S; :
-}
-
-# this copies the fsp s/m; re-base is handled by ./mk inject
-copy_fsp()
-{
-	x_ cp "$appdir/Fsp_$1.fd" "$_dest"
+	x_ cp "$appdir/"Fsp_*.fd "${_dest%/*}"
 }
 
 fail_inject()
