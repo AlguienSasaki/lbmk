@@ -228,9 +228,7 @@ extract_kbc1126ec()
 	) || $err "$board: can't extract kbc1126 ec firmware - $dontflash"
 
 	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
-
-	cp "$appdir/"ec.bin.fw* "${_dest%/*}/" || \
-	    $err "!cp 1126ec $_dest - $dontflash"; :
+	x_ cp "$appdir/"ec.bin.fw* "${_dest%/*}/"
 }
 
 extract_e6400vga()
@@ -318,10 +316,8 @@ inject()
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
-	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
-		x_ make -C util/nvmutil clean
-		x_ make -C util/nvmutil
-	fi
+	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
+		x_ make -C util/nvmutil clean && x_ make -C util/nvmutil
 
 	check_release "$archive" || $err "'$archive' is not a release archive"
 
@@ -510,11 +506,10 @@ insert()
 
 	_offset=""
 
-	if [ "$_t" = "fsp" ]; then
-		[ $# -gt 3 ] && _offset="$4"
-	else
-		[ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ] && \
-		    $err "insert $*, $rom: offset given but empty (undefined)"
+	if [ "$_t" = "fsp" ] && [ $# -gt 3 ]; then
+		_offset="$4"
+	elif [ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ]; then
+		$err "insert $*, $rom: offset given but empty (undefined)"
 	fi
 
 	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
@@ -551,10 +546,6 @@ modify_mac()
 
 	printf "\nGbE NVM written to '%s':\n" "$archive"
 	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
-
-	[ "$new_mac" = "restore" ] && \
-		printf "\nDefault GbE file '%s' written, unmodified.\n" \
-		    "${CONFIG_GBE_BIN_PATH##*../}"; :
 }
 
 newmac()
