@@ -332,35 +332,25 @@ check_cross_compiler()
 # gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
 check_gnu_path()
 {
-	[ $# -lt 2 ] && $err "check_gnu_path: Too few arguments"
-	[ "$1" = "$2" ] && $err "check_gnu_path: Both arguments identical"
-	for _gnuarg in 1 2; do
-		eval "[ \"\$$_gnuarg\" = \"gcc\" ] && continue"
-		eval "[ \"\$$_gnuarg\" = \"gnat\" ] && continue"
-		$err "check_gnu_path: Invalid argument \"$_gnuarg\""
-	done
 	command -v "$1" 1>/dev/null || $err "Host '$1' unavailable"
 
 	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
-	gnu_setver "$1" "$1" || $err "Command '$1' unavailable."
-	gnu_setver "$2" "$2" || :
+	x_ gnu_setver "$1" "$1" && gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && $err \"Cannot detect host '$1' version\""
 	[ "$gnatfull" = "$gccfull" ] && return 0
 
 	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
 	eval "_gnudir=\"\$$1dir\"; _gnuver=\"\$$1ver\""
-	for _gnubin in "$_gnudir/$2-"*; do
-		[ -f "$_gnubin" ] || continue
-		[ "${_gnubin#"$_gnudir/$2-"}" = "$_gnuver" ] || continue
-		_gnuver="${_gnubin#"$_gnudir/$2-"}"; break
+	for _bin in "$_gnudir/$2-"*; do
+		[ "${_bin#"$_gnudir/$2-"}" = "$_gnuver" ] && [ -x "$_bin" ] \
+		    && _gnuver="${_bin#"$_gnudir/$2-"}" && break; :
 	done
 	gnu_setver "$2" "$_gnudir/$2-$_gnuver" || return 1
 	[ "$gnatfull" = "$gccfull" ] || return 1
 
 	(
-	rm -f "$XBMK_CACHE/gnupath/"* || $err "Cannot clear gnupath/"
-	cd "$XBMK_CACHE/gnupath" || $err "Can't cd to gnupath/"
+	remkdir "$XBMK_CACHE/gnupath" && x_ cd "$XBMK_CACHE/gnupath"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
 		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
 		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
