@@ -146,7 +146,7 @@ find_ex()
 	$errx find "$@" 2>/dev/null | sort > "$fd" || \
 	    $err "!find $(echo "$@") > \"$fd\""
 	while read -r fx; do
-		"$xx" "$fx" || break; :
+		$xx "$fx" || break; :
 	done < "$fd"
 	x_ rm -f "$fd"
 }
