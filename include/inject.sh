@@ -14,7 +14,7 @@ hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 vguide="https://libreboot.org/docs/install/ivy_has_common.html"
-tmpromdel="$xbmkpwd/tmp/DO_NOT_FLASH"
+tmpromdel="$xbmklocal/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/ifdtool/default/ifdtool"
 
@@ -142,7 +142,7 @@ extract_intel_me()
 
 	cdir="$xbmkpwd/$appdir"
 	_me="$xbmkpwd/$_dest"
-	_metmp="$xbmkpwd/tmp/me.bin"
+	_metmp="$xbmklocal/me.bin"
 
 	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
 	    chkvars ME11delta ME11version ME11sku ME11pch
@@ -280,15 +280,17 @@ extract_tbfw()
 {
 	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
 
-	x_ rm -f tmp/tb.bin && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+	tbtmp="$xbmklocal/tb.bin"
+	x_ rm -f "$tbtmp" && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
 
-	x_ dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size
-	x_ cp "tmp/tb.bin" "$_dest"
+	x_ dd if=/dev/null of="$tbtmp" bs=1 seek=$TBFW_size
+	x_ cp "$tbtmp" "$_dest"
 }
 
 copy_tbfw()
 {
-	[ -f "$1" ] && [ ! -L "$1" ] && x_ cp "$1" "tmp/tb.bin" && return 1; :
+	[ -f "$1" ] && [ ! -L "$1" ] && x_ cp "$1" "$xbmklocal/tb.bin" && \
+	    return 1; :
 }
 
 extract_fspm()
@@ -409,7 +411,7 @@ readcfg()
 patch_release_roms()
 {
 	has_hashes="n"
-	tmpromdir="tmp/DO_NOT_FLASH/bin/$board"
+	tmpromdir="$xbmklocal/DO_NOT_FLASH/bin/$board"
 
 	remkdir "${tmpromdir%"/bin/$board"}"
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
@@ -551,10 +553,10 @@ insert()
 	elif [ "$nukemode" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
-		x_ rm -f "tmp/refcode"
-		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
-		"$cbfstool" "$rom" add-stage -f "tmp/refcode" -n "$cbfsname" \
-		    -t stage || $err "$rom: !add ref"
+		x_ rm -f "$xbmklocal/refcode"
+		"$rmodtool" -i "$_dest" -o "$xbmklocal/refcode" || "!reloc ref"
+		"$cbfstool" "$rom" add-stage -f "$xbmklocal/refcode" \
+		    -n "$cbfsname" -t stage || $err "$rom: !add ref"
 	else
 		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
 		    -t $_t $_offset || $err "$rom !add $_t ($_dest)"
@@ -566,14 +568,14 @@ modify_mac()
 {
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
-	    x_ "$nvm" tmp/gbe setmac "$new_mac"
+	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
 
 	fe_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nGbE NVM written to '%s':\n" "$archive"
-	x_ "$nvm" tmp/gbe dump | grep -v "bytes read from file" || :
+	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
 
 	[ "$new_mac" = "restore" ] && \
 		printf "\nDefault GbE file '%s' written, unmodified.\n" \
@@ -583,5 +585,5 @@ modify_mac()
 newmac()
 {
 	e "$1" f && xchanged="y" && x_ \
-	    "$ifdtool" $ifdprefix -i GbE:tmp/gbe "$1" -O "$1"; :
+	    "$ifdtool" $ifdprefix -i GbE:"$xbmklocal/gbe" "$1" -O "$1"; :
 }

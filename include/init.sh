@@ -17,11 +17,13 @@ xbmkpath="$PATH"
 err="err_"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver`"
+    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal`"
 
 xbmk_init()
 {
 	xbmkpwd="`pwd`" || $err "Cannot generate PWD"
+	xbmklocal="$xbmkpwd/tmp"
+
 	export PWD="$xbmkpwd"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
@@ -197,7 +199,7 @@ xbmk_create_tmpdir()
 
 	# /tmp might be a tmpfs, so for large files we use ./tmp,
 	# not to be confused with xbmktmp (xbmktmp points to /tmp)
-	x_ mkdir -p "$xbmktmp" tmp
+	x_ mkdir -p "$xbmktmp" "$xbmklocal"
 }
 
 xbmk_lock()
@@ -223,7 +225,7 @@ xbmk_child_exec()
 {
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
-	rm -Rf tmp "$xbmktmp" || xbmk_rval=1
+	rm -Rf "$xbmklocal" "$xbmktmp" || xbmk_rval=1
 	rm -f lock || xbmk_rval=1
 	exit $xbmk_rval
 }

@@ -68,7 +68,6 @@ build_release()
 	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
 
 	./mk -f
-	x_ rm -Rf tmp
 	rmgit .
 	x_ mv src/docs docs
 	) || $err "can't create release files"
