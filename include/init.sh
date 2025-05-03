@@ -194,6 +194,10 @@ xbmk_create_tmpdir()
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	xbmktmp="$TMPDIR"
+
+	# /tmp might be a tmpfs, so for large files we use ./tmp,
+	# not to be confused with xbmktmp (xbmktmp points to /tmp)
+	x_ mkdir -p tmp
 }
 
 xbmk_lock()
@@ -219,7 +223,7 @@ xbmk_child_exec()
 {
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
-	rm -Rf "$xbmktmp" || xbmk_rval=1
+	rm -Rf tmp "$xbmktmp" || xbmk_rval=1
 	rm -f lock || xbmk_rval=1
 	exit $xbmk_rval
 }
