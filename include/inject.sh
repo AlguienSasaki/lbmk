@@ -278,19 +278,23 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
-
-	tbtmp="$xbmklocal/tb.bin"
-	x_ rm -f "$tbtmp" && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
-
-	x_ dd if=/dev/null of="$tbtmp" bs=1 seek=$TBFW_size
-	x_ cp "$tbtmp" "$_dest"
+	chkvars TBFW_size
+	fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+	[ -f "$_dest" ] || $err "$board: Could not extract tbfw"; :
 }
 
 copy_tbfw()
 {
-	[ -f "$1" ] && [ ! -L "$1" ] && x_ cp "$1" "$xbmklocal/tb.bin" && \
-	    return 1; :
+	[ -f "$1" ] || return 0
+	[ -L "$1" ] && return 0
+
+	tbtmp="$xbmklocal/tb.bin"
+	x_ rm -f "$tbtmp"
+
+	x_ dd if=/dev/null of="$1" bs=1 seek=$TBFW_size
+	x_ mv "$1" "$_dest"
+
+	return 1
 }
 
 extract_fspm()
