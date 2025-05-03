@@ -277,7 +277,7 @@ check_project_hashes()
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
-	fx_ sha512sum "$datadir" "$configdir/$tree" "$mdir" \
+	fx_ "x_ sha512sum" "$datadir" "$configdir/$tree" "$mdir" \
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
 	    "$xbmktmp/project.hash" || $err "!h $project $tree"
 
