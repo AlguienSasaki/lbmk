@@ -282,17 +282,16 @@ extract_tbfw()
 {
 	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
 	x_ mkdir -p tmp
-	x_ rm -f tmp/tb.bin
-	find "$appdir" -type f -name "TBT.bin" > "tmp/tb.txt" || \
-	    $err "extract_tbfw $_dest: Can't extract TBT.bin - $dontflash"
-	while read -r f; do
-		[ -f "$f" ] || continue
-		[ -L "$f" ] && continue
-		x_ cp "$f" "tmp/tb.bin"
-		break
-	done < "tmp/tb.txt"
+
+	x_ rm -f tmp/tb.bin && fx_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+
 	x_ dd if=/dev/null of=tmp/tb.bin bs=1 seek=$TBFW_size
 	x_ cp "tmp/tb.bin" "$_dest"
+}
+
+copy_tbfw()
+{
+	[ -f "$1" ] && [ ! -L "$1" ] && x_ cp "$1" "tmp/tb.bin" && return 1; :
 }
 
 extract_fspm()
@@ -419,16 +418,10 @@ patch_release_roms()
 		    hashfile="$_hashes" && break; :
 	done
 
-	x_ mkdir -p "tmp" && [ -L "tmp/rom.list" ] && \
-	    $err "'$archive' -> tmp/rom.list is a symlink - $dontflash"
-
-	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
-	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
+	x_ mkdir -p "tmp"
 
 	if readkconfig; then
-		while read -r _xrom ; do
-			process_release_rom "$_xrom" || break
-		done < "tmp/rom.list"
+		fx_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 		[ "$nukemode" != "nuke" ] || \
 			printf "Make sure you inserted vendor files: %s\n" \
 			    "$vguide" > "$tmpromdir/README.md" || :
@@ -462,7 +455,7 @@ patch_release_roms()
 	    "$archive" || $err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
-process_release_rom()
+prep_rom()
 {
 	_xrom="$1"
 	_xromname="${1##*/}"
@@ -578,13 +571,7 @@ modify_mac()
 	[ "$new_mac" != "restore" ] && x_ make -C util/nvmutil && \
 	    x_ "$nvm" tmp/gbe setmac "$new_mac"
 
-	find "$tmpromdir" -maxdepth 1 -type f -name "*.rom" > "tmp/rom.list" \
-	    || $err "'$archive' -> Can't make tmp/rom.list - $dontflash"
-
-	while read -r _xrom; do
-		e "$_xrom" f && xchanged="y" && x_ \
-		    "$ifdtool" $ifdprefix -i GbE:tmp/gbe "$_xrom" -O "$_xrom"
-	done < "tmp/rom.list"
+	fx_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nGbE NVM written to '%s':\n" "$archive"
 	x_ "$nvm" tmp/gbe dump | grep -v "bytes read from file" || :
@@ -592,4 +579,10 @@ modify_mac()
 	[ "$new_mac" = "restore" ] && \
 		printf "\nDefault GbE file '%s' written, unmodified.\n" \
 		    "${CONFIG_GBE_BIN_PATH##*../}"; :
+}
+
+newmac()
+{
+	e "$1" f && xchanged="y" && x_ \
+	    "$ifdtool" $ifdprefix -i GbE:tmp/gbe "$1" -O "$1"; :
 }

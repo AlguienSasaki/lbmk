@@ -128,6 +128,17 @@ setvars()
 	printf "%s\n" "${_setvars% }"
 }
 
+fx_()
+{
+	fd="`mktemp`"
+	xx="$1" && shift 1
+	find "$@" | sort > "$fd" || $err "!find $(echo "$@") > \"$fd\""
+	while read -r fx; do
+		"$xx" "$fx" || break; :
+	done < "$fd"
+	x_ rm -f "$fd"
+}
+
 x_()
 {
 	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
