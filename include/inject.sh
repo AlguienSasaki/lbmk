@@ -328,7 +328,7 @@ inject()
 	eval "`setvars "" nukemode new_mac xchanged`"
 
 	archive="$1";
-	new_mac="??:??:??:??:??:??"
+	new_mac="xx:xx:xx:xx:xx:xx"
 
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
