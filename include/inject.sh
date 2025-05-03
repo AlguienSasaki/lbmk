@@ -148,8 +148,6 @@ extract_intel_me()
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	x_ mkdir -p tmp
-
 	extract_intel_me_bruteforce
 	if [ "$ME11bootguard" = "y" ]; then
 		apply_me11_deguard_mod
@@ -281,7 +279,6 @@ extract_sch5545ec()
 extract_tbfw()
 {
 	chkvars TBFW_size # size in bytes, matching TBFW's flash IC
-	x_ mkdir -p tmp
 
 	x_ rm -f tmp/tb.bin && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
 
@@ -418,8 +415,6 @@ patch_release_roms()
 		    hashfile="$_hashes" && break; :
 	done
 
-	x_ mkdir -p "tmp"
-
 	if readkconfig; then
 		fe_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 		[ "$nukemode" != "nuke" ] || \
@@ -551,7 +546,6 @@ insert()
 	elif [ "$nukemode" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
-		x_ mkdir -p tmp
 		x_ rm -f "tmp/refcode"
 		"$rmodtool" -i "$_dest" -o "tmp/refcode" || "!reloc refcode"
 		"$cbfstool" "$rom" add-stage -f "tmp/refcode" -n "$cbfsname" \
@@ -567,7 +561,7 @@ modify_mac()
 {
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
-	x_ mkdir -p tmp && x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
 	[ "$new_mac" != "restore" ] && x_ make -C util/nvmutil && \
 	    x_ "$nvm" tmp/gbe setmac "$new_mac"
 
