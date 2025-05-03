@@ -341,6 +341,11 @@ inject()
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
+	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
+		x_ make -C util/nvmutil clean
+		x_ make -C util/nvmutil
+	fi
+
 	check_release "$archive" || $err "'$archive' is not a release archive"
 
 	readcfg && need_files="y"
@@ -562,8 +567,7 @@ modify_mac()
 	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
 
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" tmp/gbe
-	[ "$new_mac" != "restore" ] && x_ make -C util/nvmutil clean && \
-	    x_ make -C util/nvmutil && \
+	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ "$nvm" tmp/gbe setmac "$new_mac"
 
 	fe_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
