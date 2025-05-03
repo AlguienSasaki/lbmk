@@ -40,7 +40,7 @@ size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part;
 
-const char *strMac = NULL, *strRMac = "??:??:??:??:??:??", *filename = NULL;
+const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *filename = NULL;
 
 typedef struct op {
 	char *str;
@@ -278,8 +278,11 @@ parseMacString(const char *strMac, uint16_t *mac)
 				err(errno = EINVAL, "Invalid character '%c'",
 				    strMac[i + nib]);
 
+			/* If random, ensure that local/unicast bits are set */
 			if ((byte == 0) && (nib == 1))
-				if (strMac[i + nib] == '?') /* ?=random */
+				if ((strMac[i + nib] == '?') ||
+				    (strMac[i + nib] == 'x') ||
+				    (strMac[i + nib] == 'X')) /* random */
 					h = (h & 0xE) | 2; /* local, unicast */
 
 			mac[byte >> 1] |= ((uint16_t ) h)
@@ -302,7 +305,10 @@ hextonum(char ch)
 		return ch - 'A' + 10;
 	else if ((ch >= 'a') && (ch <= 'f'))
 		return ch - 'a' + 10;
-	return (ch == '?') ? rhex() : 16;
+	else if ((ch == '?') || (ch == 'x') || (ch == 'X'))
+		return rhex(); /* random hex value */
+	else
+		return 16; /* error: invalid character */
 }
 
 uint8_t
