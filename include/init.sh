@@ -197,7 +197,7 @@ xbmk_create_tmpdir()
 
 	# /tmp might be a tmpfs, so for large files we use ./tmp,
 	# not to be confused with xbmktmp (xbmktmp points to /tmp)
-	x_ mkdir -p tmp
+	x_ mkdir -p "$xbmktmp" tmp
 }
 
 xbmk_lock()
