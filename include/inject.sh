@@ -288,9 +288,6 @@ copy_tbfw()
 	[ -f "$1" ] || return 0
 	[ -L "$1" ] && return 0
 
-	tbtmp="$xbmklocal/tb.bin"
-	x_ rm -f "$tbtmp"
-
 	x_ dd if=/dev/null of="$1" bs=1 seek=$TBFW_size
 	x_ mv "$1" "$_dest"
 
