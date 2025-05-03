@@ -186,6 +186,8 @@ xbmk_git_init()
 
 xbmk_create_tmpdir()
 {
+	x_ mkdir -p "$xbmklocal"
+
 	# unify all temporary files/directories in a single TMPDIR
 	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
 	    unset TMPDIR
