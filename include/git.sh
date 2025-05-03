@@ -5,7 +5,7 @@
 eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
     depend subfile_bkup repofail`"
 
-tmpgit="$xbmkpwd/tmp/gitclone"
+tmpgit="$xbmklocal/gitclone"
 
 fetch_targets()
 {
