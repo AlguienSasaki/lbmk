@@ -310,9 +310,8 @@ check_cross_compiler()
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 
 	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
-	xgccargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
-	make -C "$cbdir" crossgcc-$xfix $xgccargs || \
-	    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
+	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
+	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 
 	# we only want to mess with hostcc to build xgcc
 	remkdir "$XBMK_CACHE/gnupath"
