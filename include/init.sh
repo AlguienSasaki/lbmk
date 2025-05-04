@@ -147,6 +147,11 @@ xbmk_set_version()
 
 xbmk_git_init()
 {
+	for gitarg in "--global user.name" "--global user.email"; do
+		gitcmd="git config $gitarg"; $gitcmd || err \
+		    "Please run this first: $gitcmd \"your ${gitcmd##*.}\""
+	done
+
 	[ -L ".git" ] && return 1
 	[ -e ".git" ] && return 0
 	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
@@ -156,12 +161,7 @@ xbmk_git_init()
 	x_ git commit -m "$projectname $version" --date "$cdate" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
 	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
-	    2>/dev/null
-
-	for gitarg in "--global user.name" "--global user.email"; do
-		gitcmd="git config $gitarg"; $gitcmd || err \
-		    "Please run this first: $gitcmd \"your ${gitcmd##*.}\""
-	done
+	    2>/dev/null; :
 }
 
 xbmk_create_tmpdir()
