@@ -296,6 +296,7 @@ check_project_hashes()
 
 check_cross_compiler()
 {
+	remkdir "$XBMK_CACHE/gnupath"
 	xgccargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	cbdir="src/coreboot/$tree"
