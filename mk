@@ -211,7 +211,9 @@ handle_defconfig()
 	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
 		[ -d "$srcdir" ] || return 0
 	fi
-	[ -z "$mode" ] && $dry check_cross_compiler
+	[ -z "$mode" ] && for _xarch in $xarch; do
+		$dry check_cross_compiler "$_xarch"
+	done; :
 
 	for y in "$target_dir/config"/*; do
 		[ "$_f" = "-d" ] || [ -f "$y" ] || continue
@@ -295,29 +297,28 @@ check_project_hashes()
 check_cross_compiler()
 {
 	xgccargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
-	for _xarch in $xarch; do
-		cbdir="src/coreboot/$tree"
-		[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
-		[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
-		x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
+	cbdir="src/coreboot/$tree"
+	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
+	[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
-		export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
-		export CROSS_COMPILE="${xarch% *}-"
-		[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
+	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
 
-		xfix="${_xarch%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
+	export CROSS_COMPILE="${xarch% *}-"
+	[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
-		# match gnat-X to gcc
-		check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
+	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
 
-		# sometimes buildgcc fails for like no reason. try twice.
-		make -C "$cbdir" crossgcc-$xfix $xgccargs || \
-		    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
+	# match gnat-X to gcc
+	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 
-		# we only want to mess with hostcc to build xgcc
-		rm -f "$XBMK_CACHE/gnupath/"* || $err "Can't clear gnupath/"; :
-	done; :
+	# sometimes buildgcc fails for like no reason. try twice.
+	make -C "$cbdir" crossgcc-$xfix $xgccargs || \
+	    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
+
+	# we only want to mess with hostcc to build xgcc
+	rm -f "$XBMK_CACHE/gnupath/"* || $err "Can't clear gnupath/"; :
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
