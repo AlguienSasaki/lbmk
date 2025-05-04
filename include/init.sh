@@ -148,8 +148,8 @@ xbmk_set_version()
 xbmk_git_init()
 {
 	for gitarg in "--global user.name" "--global user.email"; do
-		gitcmd="git config $gitarg"; $gitcmd || err \
-		    "Please run this first: $gitcmd \"your ${gitcmd##*.}\""
+		gitcmd="git config $gitarg"; $gitcmd 1>/dev/null 2>/dev/null \
+		    || err "Run this first: $gitcmd \"your ${gitcmd##*.}\""
 	done
 
 	[ -L ".git" ] && return 1
