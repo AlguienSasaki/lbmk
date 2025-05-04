@@ -186,7 +186,7 @@ xbmk_create_tmpdir()
 
 xbmk_lock()
 {
-	[ -f "$xbmklock" ] && err "$xbmklock exists. Is a build running?"
+	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
 }
 
