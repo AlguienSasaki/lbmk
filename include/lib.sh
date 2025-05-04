@@ -180,8 +180,7 @@ err()
 
 	real_err="$xbmk_err"
 	if [ -z "$xbmk_err" ]; then
-		printf "WARNING: err not set. Args: %s\n" "$(echo "$@")" 1>&2
-		printf "REMARK: Setting err to default 'err_' value\n" 1>&2
+		printf "WARNING: err not set. Defaulting to 'err_'\n" 1>&2
 		real_err="err_"
 	fi
 
