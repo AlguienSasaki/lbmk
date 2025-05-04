@@ -212,8 +212,7 @@ xbmk_lock()
 
 xbmk_create_pathdirs()
 {
-	x_ rm -Rf "$XBMK_CACHE/xbmkpath" "$XBMK_CACHE/gnupath"
-	x_ mkdir -p "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
