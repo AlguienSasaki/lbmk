@@ -174,6 +174,6 @@ x_()
 
 err_()
 {
-	printf "ERROR %s: %s\n" "$0" "$1" 1>&2
+	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	exit 1
 }
