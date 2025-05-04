@@ -177,9 +177,9 @@ x_()
 err()
 {
 	xbmk_err_val=0
+	real_err="" && [ -n "${xbmk_err+x}" ] && real_err="$xbmk_err"
 
-	real_err="$xbmk_err"
-	if [ -z "$xbmk_err" ]; then
+	if [ -z "$real_err" ]; then
 		printf "WARNING: err not set. Defaulting to 'err_'\n" 1>&2
 		real_err="err_"
 	fi
