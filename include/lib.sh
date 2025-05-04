@@ -196,6 +196,7 @@ err()
 
 err_()
 {
+	[ $# -lt 1 ] && printf "ERROR (but no error message provided)\n" 1>&2
 	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	exit 1
 }
