@@ -29,8 +29,7 @@ mkserprog()
 
 copyps1bios()
 {
-	x_ rm -Rf bin/playstation
-	x_ mkdir -p bin/playstation
+	remkdir "bin/playstation"
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
 
 	printf "MIT License\n\nCopyright (c) 2019-2024 PCSX-Redux authors\n\n" \
