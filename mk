@@ -317,7 +317,7 @@ check_cross_compiler()
 	    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
 
 	# we only want to mess with hostcc to build xgcc
-	rm -f "$XBMK_CACHE/gnupath/"* || $err "Can't clear gnupath/"; :
+	remkdir "$XBMK_CACHE/gnupath"
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
