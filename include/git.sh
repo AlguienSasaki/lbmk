@@ -63,7 +63,7 @@ git_prep()
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
-	mv "$tmpgit" "$_loc" || $err "git_prep: !mv $tmpgit $_loc"
+	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
 }
 
 # return 0 if project is single-tree, otherwise 1
@@ -80,20 +80,20 @@ fetch_submodule()
 	mcfgdir="$mdir/${1##*/}"; eval \
 	    "`setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st`"
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
-	    $err "! . $mcfgdir/module.cfg"
+	    err "! . $mcfgdir/module.cfg"
 
 	for xt in repo file; do
 		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
 		eval "$_seval; then st=\"\$st \$xt\"; fi"
 	done
-	st="${st# }" && [ "$st" = "repo file" ] && $err "$mdir: repo+file"
+	st="${st# }" && [ "$st" = "repo file" ] && err "$mdir: repo+file"
 
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
 	[ "$st" = "file" ] && xbmkget "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
-	rm -Rf "$tmpgit/$1" || $err "!rm '$mdir' '$1'"
+	rm -Rf "$tmpgit/$1" || err "!rm '$mdir' '$1'"
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
 	    "$mdir/${1##*/}/patches"
 }
@@ -105,25 +105,25 @@ tmpclone()
 
 	repofail="n"
 
-	[ $# -lt 6 ] || rm -Rf "$3" || $err "git retry: !rm $3 ($1)"
+	[ $# -lt 6 ] || rm -Rf "$3" || err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
-	mkdir -p "$XBMK_CACHE/repo" || $err "!rmdir $XBMK_CACHE/repo"
+	mkdir -p "$XBMK_CACHE/repo" || err "!rmdir $XBMK_CACHE/repo"
 
 	if [ "$livepull" = "y" ] && [ ! -d "$repodir" ]; then
 		git clone "$1" "$repodir" || git clone $2 "$repodir" || \
-		    $err "!clone $1 $2 $repodir $4 $5" #
+		    err "!clone $1 $2 $repodir $4 $5" #
 	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
 		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
 		    || sleep 3 || git -C "$repodir" pull || :
 	fi
 	(
-	[ $# -gt 5 ] || git clone "$repodir" "$3" || $err "!clone $repodir $3"
-	git -C "$3" reset --hard "$4" || $err "!reset $1 $2 $3 $4 $5"
+	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
+	git -C "$3" reset --hard "$4" || err "!reset $1 $2 $3 $4 $5"
 	git_am_patches "$3" "$5"
 	) || repofail="y"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
-	[ "$repofail" = "y" ] && $err "!clone $1 $2 $3 $4 $5"; :
+	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
 }
 
 git_am_patches()
@@ -132,7 +132,7 @@ git_am_patches()
 		[ -L "$p" ] && continue
 		[ -e "$p" ] || continue
 		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
-		[ ! -f "$p" ] || git -C "$1" am "$p" || $err "$1 $2: !am $p"
+		[ ! -f "$p" ] || git -C "$1" am "$p" || err "$1 $2: !am $p"
 	done; :
 }
 
@@ -140,6 +140,6 @@ nuke()
 {
 	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
 		rmf="src/${2%/}/$nukefile" && [ -L "$rmf" ] && continue
-		e "$rmf" e missing || rm -Rf "$rmf" || $err "!rm $rmf, ${2%/}"
+		e "$rmf" e missing || rm -Rf "$rmf" || err "!rm $rmf, ${2%/}"
 	done < "config/${1%/}/nuke.list"; :
 }

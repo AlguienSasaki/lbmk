@@ -11,7 +11,7 @@ mkserprog()
 {
 	[ "$_f" = "-d" ] && return 0 # dry run
 	basename -as .h "$serdir/"*.h > "$xbmktmp/ser" || \
-	    $err "!mk $1 $xbmktmp"
+	    err "!mk $1 $xbmktmp"
 
 	while read -r sertarget; do
 		[ "$1" = "pico" ] && x_ cmake -DPICO_BOARD="$sertarget" \
@@ -33,8 +33,8 @@ copyps1bios()
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
 
 	printf "MIT License\n\nCopyright (c) 2019-2024 PCSX-Redux authors\n\n" \
-	    > bin/playstation/COPYING.txt || $err "!pcsx-redux copyright"
-	cat config/snippet/mit >>bin/playstation/COPYING.txt || $err "!pcsx MIT"
+	    > bin/playstation/COPYING.txt || err "!pcsx-redux copyright"
+	cat config/snippet/mit >>bin/playstation/COPYING.txt || err "!pcsx MIT"
 }
 
 mkpayload_grub()
@@ -55,7 +55,7 @@ mkvendorfiles()
 	[ -z "$mode" ] && $dry cook_coreboot_config
 	check_coreboot_utils "$tree"
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
-	    $err "!mk $srcdir .coreboot-version"
+	    err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 	    x_ ./mk download "$target"; :
 }
@@ -64,8 +64,8 @@ cook_coreboot_config()
 {
 	[ -f "$srcdir/.config" ] || return 0
 	printf "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || \
-	    $err "$srcdir/.config: Could not enable ccache"
-	make -C "$srcdir" oldconfig || $err "Could not cook $srcdir/.config"; :
+	    err "$srcdir/.config: Could not enable ccache"
+	make -C "$srcdir" oldconfig || err "Could not cook $srcdir/.config"; :
 }
 
 check_coreboot_utils()
@@ -105,7 +105,7 @@ mkcorebootbin()
 
 	[ "$payload_uboot_i386" = "y" ] && \
 	    [ "$payload_uboot_amd64" = "y" ] && \
-		$err "'$target' enables 32- and 64-bit x86 U-Boot"
+		err "'$target' enables 32- and 64-bit x86 U-Boot"
 
 	if [ "$payload_uboot_i386" = "y" ] || \
 	    [ "$payload_uboot_amd64" = "y" ]; then
@@ -118,7 +118,7 @@ mkcorebootbin()
 	[ "$payload_uboot" = "y" ] || payload_seabios="y"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "y" ] && \
-	    $dry $err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled."
+	    $dry err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled."
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
@@ -180,7 +180,7 @@ add_grub()
 	    _grubname="fallback/payload"
 	cbfs "$tmprom" "$grubelf" "$_grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$xbmktmp/tmpcfg" || $err "$target: !insert scandisk"
+	    > "$xbmktmp/tmpcfg" || err "$target: !insert scandisk"
 	cbfs "$tmprom" "$xbmktmp/tmpcfg" scan.cfg raw
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 	    cbfs "$tmprom" "$grubdata/background/background1280x800.png" \

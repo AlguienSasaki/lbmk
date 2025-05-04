@@ -15,8 +15,8 @@ remkdir()
 
 mkrom_tarball()
 {
-	printf "%s\n" "$version" > "$1/.version" || $err "$1 !version"
-	printf "%s\n" "$versiondate" > "$1/.versiondate" || $err "$1 !vdate"
+	printf "%s\n" "$version" > "$1/.version" || err "$1 !version"
+	printf "%s\n" "$versiondate" > "$1/.versiondate" || err "$1 !vdate"
 
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
@@ -26,15 +26,15 @@ mktarball()
 {
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 	[ "${2%/*}" = "$2" ] || x_ mkdir -p "${2%/*}"
-	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || $err "mktarball2, $1"
+	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || err "mktarball2, $1"
 }
 
 mksha512sum()
 {
 	(
 	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
-	sha512sum ./"${1##*/}" >> "$2" || $err "!sha512sum \"$1\" > \"$2\""
-	) || $err "failed to create tarball checksum"
+	sha512sum ./"${1##*/}" >> "$2" || err "!sha512sum \"$1\" > \"$2\""
+	) || err "failed to create tarball checksum"
 }
 
 rmgit()
@@ -58,7 +58,7 @@ xbmkget()
 	for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
-		rm -f "$cached" || $err "!rm -f '$cached'"
+		rm -f "$cached" || err "!rm -f '$cached'"
 		if [ "$_dlop" = "curl" ]; then
 			curl --location --retry 3 -A "$_ua" "$url" \
 			    -o "$cached" || wget --tries 3 -U "$_ua" "$url" \
@@ -72,11 +72,11 @@ xbmkget()
 				    "$1" "$2" "$3" "$4" "$url" 1>&2 && continue
 			cp "$url" "$cached" || continue
 		else
-			$err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
+			err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
 		fi
 		bad_checksum "$4" "$cached" || dl_fail="n"
 	done
-	[ "$dl_fail" = "y" ] && $err "$1 $2 $3 $4: not downloaded"
+	[ "$dl_fail" = "y" ] && err "$1 $2 $3 $4: not downloaded"
 	[ "$cached" = "$3" ] || x_ cp "$cached" "$3"; :
 }
 
@@ -99,7 +99,7 @@ e()
 
 mk()
 {
-	mk_flag="$1" || $err "No argument given"
+	mk_flag="$1" || err "No argument given"
 	shift 1 && for mk_arg in "$@"; do
 		x_ ./mk $mk_flag $mk_arg
 	done; :
@@ -107,7 +107,7 @@ mk()
 
 check_defconfig()
 {
-	[ -d "$1" ] || $err "Target '$1' not defined."
+	[ -d "$1" ] || err "Target '$1' not defined."
 	for x in "$1"/config/*; do
 		[ -f "$x" ] && printf "%s\n" "$x" && return 1
 	done; :
@@ -117,7 +117,7 @@ setvars()
 {
 	_setvars=""
 	if [ $# -lt 2 ]; then
-		printf "\$err \"setvars: too few args\\n\""
+		printf "err \"setvars: too few args\\n\""
 		return 0
 	fi
 	val="$1"
@@ -132,15 +132,15 @@ setcfg()
 {
 	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
 	[ $# -gt 1 ] || \
-		printf "e \"%s\" f not && %s \"Missing config\";\n" "$1" "$err"
-	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
+		printf "e \"%s\" f not && err \"Missing config\";\n" "$1"
+	printf ". \"%s\" || err \"Could not read config\";\n" "$1"
 }
 
 chkvars()
 {
 	for var in "$@"; do
-		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
-		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
+		eval "[ -n \"\${$var+x}\" ] || err \"$var unset\""
+		eval "[ -n \"\$$var\" ] || err \"$var unset\""
 	done; :
 }
 
@@ -160,7 +160,7 @@ find_ex()
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
 	$xmsg find "$@" 2>/dev/null | sort > "$fd" || \
-	    $err "!find $(echo "$@") > \"$fd\""
+	    err "!find $(echo "$@") > \"$fd\""
 	while read -r fx; do
 		$xx "$fx" || break; :
 	done < "$fd"
@@ -169,8 +169,35 @@ find_ex()
 
 x_()
 {
-	[ $# -lt 1 ] || [ -n "$1" ] || $err "Empty first arg: x_ $(echo "$@")"
-	[ $# -lt 1 ] || "$@" || $err "Unhandled error for: $(echo "$@")"; :
+	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg: x_ $(echo "$@")"
+	[ $# -lt 1 ] || "$@" || err "Unhandled error for: $(echo "$@")"; :
+}
+
+err()
+{
+	xbmk_err_val=0
+
+	real_err="$xbmk_err"
+	if [ -z "$xbmk_err" ]; then
+		printf "WARNING: err not set. Args: %s\n" "$(echo "$@")" 1>&2
+		printf "REMARK: Setting err to default 'err_' value\n" 1>&2
+		real_err="err_"
+	fi
+
+	(
+	$real_err "$@" || printf \
+	    "WARNING: Err function '%s' *returned* 1. Will exit 1 anyway\n" \
+	    "$real_err"
+	printf "WARNING: Err function '%s' didn't exit. Will exit 1 anyway\n" \
+	    "$real_err" 1>&2
+	exit 1
+	) || xbmk_err_val=1 # otherwise, it wrongly did exit 0, not exit 1
+
+	[ $xbmk_err_val -eq 0 ] && printf \
+	    "WARNING: Err function '%s' did exit 0. Will exit 1 anyway.\n" \
+	    "$real_err" 1>&2
+
+	exit 1
 }
 
 err_()
