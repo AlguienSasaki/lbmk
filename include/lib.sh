@@ -185,19 +185,13 @@ err()
 	fi
 
 	(
-	$real_err "$@" || printf \
-	    "WARNING: Err function '%s' *returned* 1. Will exit 1 anyway\n" \
-	    "$real_err" 1>&2
-	printf "WARNING: Err function '%s' didn't exit. Will exit 1 anyway\n" \
-	    "$real_err" 1>&2
-	exit 1
+	$real_err "$@" || err_ "Error function '$real_err' *returned* 1"
+	err_ "Error function '$real_err' didn't exit"
+	exit 1 # just in case!
 	) || xbmk_err_val=1 # otherwise, it wrongly did exit 0, not exit 1
 
-	[ $xbmk_err_val -eq 0 ] && printf \
-	    "WARNING: Err function '%s' did exit 0. Will exit 1 anyway.\n" \
-	    "$real_err" 1>&2
-
-	exit 1
+	[ $xbmk_err_val -eq 0 ] && err_ "Error function '$real_err' did exit 0"
+	exit 1 # just in case!
 }
 
 err_()
