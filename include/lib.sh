@@ -187,7 +187,7 @@ err()
 	(
 	$real_err "$@" || printf \
 	    "WARNING: Err function '%s' *returned* 1. Will exit 1 anyway\n" \
-	    "$real_err"
+	    "$real_err" 1>&2
 	printf "WARNING: Err function '%s' didn't exit. Will exit 1 anyway\n" \
 	    "$real_err" 1>&2
 	exit 1
