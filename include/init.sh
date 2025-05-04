@@ -17,12 +17,14 @@ xbmkpath="$PATH"
 xbmk_err="err_"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal`"
+    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal \
+    xbmklock`"
 
 xbmk_init()
 {
 	xbmkpwd="`pwd`" || err "Cannot generate PWD"
 	xbmklocal="$xbmkpwd/tmp"
+	xbmklock="$xbmkpwd/lock"
 
 	export PWD="$xbmkpwd"
 
@@ -184,8 +186,8 @@ xbmk_create_tmpdir()
 
 xbmk_lock()
 {
-	[ -f "lock" ] && err "$xbmkpwd/lock exists. Is a build running?"
-	touch lock || err "cannot create 'lock' file"; :
+	[ -f "$xbmklock" ] && err "$xbmklock exists. Is a build running?"
+	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
 }
 
 xbmk_create_pathdirs()
@@ -205,7 +207,7 @@ xbmk_child_exec()
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
 	( x_ rm -Rf "$xbmklocal" "$xbmktmp" ) || xbmk_rval=1
-	( x_ rm -f lock ) || xbmk_rval=1
+	( x_ rm -f "$xbmklock" ) || xbmk_rval=1
 	exit $xbmk_rval
 }
 
