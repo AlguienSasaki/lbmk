@@ -296,8 +296,6 @@ check_project_hashes()
 
 check_cross_compiler()
 {
-	remkdir "$XBMK_CACHE/gnupath"
-
 	cbdir="src/coreboot/$tree"
 	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 	[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
