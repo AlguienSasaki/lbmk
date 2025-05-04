@@ -41,7 +41,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
 
 download()
 {
-	[ $# -gt 0 ] || $err "No argument given"
+	[ $# -gt 0 ] || err "No argument given"
 	export PATH="$PATH:/sbin"
 	board="$1" && readcfg && readkconfig && bootstrap && getfiles; :
 }
@@ -116,22 +116,22 @@ fetch()
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
 	xbmkget "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
 
-	rm -Rf "${_dl}_extracted" || $err "!rm ${_ul}_extracted. $dontflash"
+	rm -Rf "${_dl}_extracted" || err "!rm ${_ul}_extracted. $dontflash"
 	e "$_dest" f && return 0
 
 	x_ mkdir -p "${_dest%/*}"
 	remkdir "$appdir"
 	extract_archive "$_dl" "$appdir" "$dl_type" || \
-	    [ "$dl_type" = "e6400vga" ] || $err "$_dest $dl_type: !extract"
+	    [ "$dl_type" = "e6400vga" ] || err "$_dest $dl_type: !extract"
 
 	eval "extract_$dl_type"
 	set -u -e
-	e "$_dest" f missing && $err "!extract_$dl_type. $dontflash"; :
+	e "$_dest" f missing && err "!extract_$dl_type. $dontflash"; :
 }
 
 extract_intel_me()
 {
-	e "$mecleaner" f not && $err "$cbdir: me_cleaner missing. $dontflash"
+	e "$mecleaner" f not && err "$cbdir: me_cleaner missing. $dontflash"
 
 	cdir="$xbmkpwd/$appdir"
 	_me="$xbmkpwd/$_dest"
@@ -145,7 +145,7 @@ extract_intel_me()
 	if [ "$ME11bootguard" = "y" ]; then
 		apply_me11_deguard_mod
 	else
-		mv "$_metmp" "$_me" || $err "!mv $_metmp $_me - $dontflash"
+		mv "$_metmp" "$_me" || err "!mv $_metmp $_me - $dontflash"
 	fi
 }
 
@@ -160,7 +160,7 @@ extract_intel_me_bruteforce()
 	set +u +e
 	(
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-	cd "$cdir" || $err "extract_intel_me: !cd \"$cdir\" - $dontflash"
+	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\" - $dontflash"
 	for i in *; do
 		e "$_metmp" f && break
 		[ -L "$i" ] && continue
@@ -182,7 +182,7 @@ extract_intel_me_bruteforce()
 		cd "$cdir" || :
 	done
 	) || :
-	rm -Rf "$sdir" || $err "extract_intel_me: !rm -Rf $sdir - $dontflash"
+	rm -Rf "$sdir" || err "extract_intel_me: !rm -Rf $sdir - $dontflash"
 }
 
 apply_me11_deguard_mod()
@@ -193,7 +193,7 @@ apply_me11_deguard_mod()
 	    --version "$ME11version" \
 	    --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs data/fpfs/zero \
 	    --input "$_metmp" --output "$_me"
-	) || $err "Error running deguard for $_me - $dontflash"
+	) || err "Error running deguard for $_me - $dontflash"
 }
 
 extract_archive()
@@ -216,11 +216,11 @@ extract_kbc1126ec()
 	mv Rompaq/68*.BIN ec.bin || :
 	if [ ! -f "ec.bin" ]; then
 		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || $err "kbc1126 unar failed"
+		    unar -D 68*.CAB Rom.bin || err "kbc1126 unar failed"
 		x_ mv Rom.bin ec.bin
 	fi
 	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
-	) || $err "$board: can't extract kbc1126 ec firmware - $dontflash"
+	) || err "$board: can't extract kbc1126 ec firmware - $dontflash"
 
 	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
 	x_ cp "$appdir/"ec.bin.fw* "${_dest%/*}/"
@@ -235,7 +235,7 @@ extract_e6400vga()
 	x_ cd "$appdir"
 	x_ e "bios.bin" f
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
-	) || $err "can't extract e6400 vga rom - $dontflosh"
+	) || err "can't extract e6400 vga rom - $dontflosh"
 	x_ cp "$appdir/$E6400_VGA_romname" "$_dest"
 }
 
@@ -248,7 +248,7 @@ extract_sch5545ec()
 	_sch5545ec_fw="$_sch5545ec_fw/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"
 	_sch5545ec_fw="$_sch5545ec_fw/0 Raw section/body.bin" # <-- this!
 
-	"$uefiextract" "$_bios" || $err "sch5545 !extract - $dontflash"
+	"$uefiextract" "$_bios" || err "sch5545 !extract - $dontflash"
 	x_ cp "$_sch5545ec_fw" "$_dest"
 }
 
@@ -257,7 +257,7 @@ extract_sch5545ec()
 extract_tbfw()
 {
 	chkvars TBFW_size && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
-	[ -f "$_dest" ] || $err "$board: Could not extract tbfw"; :
+	[ -f "$_dest" ] || err "$board: Could not extract tbfw"; :
 }
 
 copy_tbfw()
@@ -284,11 +284,11 @@ fail_inject()
 inject()
 {
 	need_files="n"
-	err="fail_inject"
+	xbmk_err="fail_inject"
 	remkdir "$tmpromdel"
 
 	set +u +e
-	[ $# -lt 1 ] && $err "No options specified. - $dontflash"
+	[ $# -lt 1 ] && err "No options specified. - $dontflash"
 	eval "`setvars "" nukemode new_mac xchanged`"
 
 	archive="$1";
@@ -300,15 +300,15 @@ inject()
 		nukemode="nuke" ;;
 	setmac)
 		[ $# -gt 2 ] && new_mac="$3" && \
-		    [ -z "$new_mac" ] && $err "Empty MAC address specified" ;;
-	*) $err "Unrecognised inject mode: '$2'"
+		    [ -z "$new_mac" ] && err "Empty MAC address specified" ;;
+	*) err "Unrecognised inject mode: '$2'"
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 		x_ make -C util/nvmutil clean && x_ make -C util/nvmutil
 
-	check_release "$archive" || $err "'$archive' is not a release archive"
+	check_release "$archive" || err "'$archive' is not a release archive"
 
 	readcfg && need_files="y"
 	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
@@ -324,20 +324,20 @@ inject()
 
 check_release()
 {
-	[ -L "$archive" ] && $err "'$archive' is a symlink. $dontflash"
+	[ -L "$archive" ] && err "'$archive' is a symlink. $dontflash"
 	e "$archive" f missing && return 1
 
 	archivename="`basename "$archive"`"
-	[ -z "$archivename" ] && $err "Can't determine archive name. $dontflash"
+	[ -z "$archivename" ] && err "Can't determine archive name. $dontflash"
 
 	case "$archivename" in
 	*_src.tar.xz)
-		$err "'$archive' is a src archive, silly!" ;;
+		err "'$archive' is a src archive, silly!" ;;
 	grub_*|seagrub_*|custom_*|seauboot_*|seabios_withgrub_*)
 		return 1 ;;
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
-	*) $err "'$archive': could not detect board type - $dontflash"
+	*) err "'$archive': could not detect board type - $dontflash"
 	esac; :
 }
 
@@ -355,8 +355,8 @@ readcfg()
 	[ -z "$vcfg" ] && return 1
 
 	vfile="config/vendor/$vcfg/pkg.cfg"
-	[ -L "$vfile" ] && $err "'$archive', '$board': $vfile is a symlink"
-	[ -f "$vfile" ] || $err "'$archive', '$board': $vfile doesn't exist"
+	[ -L "$vfile" ] && err "'$archive', '$board': $vfile is a symlink"
+	[ -f "$vfile" ] || err "'$archive', '$board': $vfile doesn't exist"
 
 	cbdir="src/coreboot/$tree"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
@@ -394,14 +394,14 @@ patch_release_roms()
 
 	(
 	[ "$need_files" = "y" ] || exit 0
-	cd "$tmpromdir" || $err "patch '$archive': can't cd $tmpromdir"
+	cd "$tmpromdir" || err "patch '$archive': can't cd $tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
 		sha512sum --status -c "$hashfile" || \
 		    x_ sha1sum --status -c "$hashfile"
 		x_ rm -f "$hashfile"
 	fi
-	) || $err "'$archive' -> Can't verify vendor hashes. $dontflash"
+	) || err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
 	[ -z "$new_mac" ] || modify_mac || printf "\nGbE not defined\n" 1>&2
 
@@ -411,10 +411,10 @@ patch_release_roms()
 	(
 	x_ cd "${tmpromdir%"/bin/$board"}"
 	mkrom_tarball "bin/$board"
-	) || $err "Cannot re-generate '$archive' - $dontflash"
+	) || err "Cannot re-generate '$archive' - $dontflash"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
-	    "$archive" || $err "'$archive' -> Can't overwrite - $dontflash"; :
+	    "$archive" || err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
 prep_rom()
@@ -425,16 +425,16 @@ prep_rom()
 	[ "$nukemode" = "nuke" ] && _xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
 
 	e "$_xrom" f missing && return 0
-	[ -z "${_xromname#"$vfix"}" ] && $err "$_xromname / $vfix: name match"
+	[ -z "${_xromname#"$vfix"}" ] && err "$_xromname / $vfix: name match"
 
 	# Remove the prefix and 1-byte pad
 	if [ "$nukemode" != "nuke" ] && \
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
-		xromsize="$(expr $(stat -c '%s' "$_xrom") - 1)" || $err "!int"
-		[ $xromsize -lt 524288 ] && $err "too small, $xromsize: $_xrom"
+		xromsize="$(expr $(stat -c '%s' "$_xrom") - 1)" || err "!int"
+		[ $xromsize -lt 524288 ] && err "too small, $xromsize: $_xrom"
 
 		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
-		rm -f "$_xrom" || $err "Can't rm $_xrom - $dontflash"
+		rm -f "$_xrom" || err "Can't rm $_xrom - $dontflash"
 
 		_xrom="$_xromnew"
 	fi
@@ -445,7 +445,7 @@ prep_rom()
 	[ "$nukemode" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
-	cat "$_xrom" config/data/coreboot/0 > "$_xromnew" || $err "!pad $_xrom"
+	cat "$_xrom" config/data/coreboot/0 > "$_xromnew" || err "!pad $_xrom"
 	x_ rm -f "$_xrom"
 }
 
@@ -498,7 +498,7 @@ insert()
 	if [ "$_t" = "fsp" ] && [ $# -gt 3 ]; then
 		_offset="$4"
 	elif [ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ]; then
-		$err "insert $*, $rom: offset given but empty (undefined)"
+		err "insert $*, $rom: offset given but empty (undefined)"
 	fi
 
 	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
@@ -506,19 +506,19 @@ insert()
 	if [ "$cbfsname" = "IFD" ]; then
 		[ "$nukemode" = "nuke" ] || "$ifdtool" $ifdprefix -i \
 		    $_t:$_dest "$rom" -O "$rom" || \
-		    $err "failed: insert '$_t' '$_dest' on '$rom'"
+		    err "failed: insert '$_t' '$_dest' on '$rom'"
 		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
-		    "$rom" -O "$rom" || $err "$rom: !nuke IFD/$_t"
+		    "$rom" -O "$rom" || err "$rom: !nuke IFD/$_t"
 	elif [ "$nukemode" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ rm -f "$xbmklocal/refcode"
 		"$rmodtool" -i "$_dest" -o "$xbmklocal/refcode" || "!reloc ref"
 		"$cbfstool" "$rom" add-stage -f "$xbmklocal/refcode" \
-		    -n "$cbfsname" -t stage || $err "$rom: !add ref"
+		    -n "$cbfsname" -t stage || err "$rom: !add ref"
 	else
 		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
-		    -t $_t $_offset || $err "$rom !add $_t ($_dest)"
+		    -t $_t $_offset || err "$rom !add $_t ($_dest)"
 	fi
 	xchanged="y"; :
 }

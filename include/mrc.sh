@@ -11,7 +11,7 @@ extract_mrc()
 	extract_shellball
 
 	"$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
-	    -f "$_dest" -r RO_SECTION || $err "extract_mrc: !$cbfstool $_dest"
+	    -f "$_dest" -r RO_SECTION || err "extract_mrc: !$cbfstool $_dest"
 
 	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode extra; :
 }
@@ -27,7 +27,7 @@ extract_refcode()
 	# incompatible with older versions before coreboot 4.14,
 	# so we need coreboot 4.13 cbfstool for certain refcode files
 	chkvars cbfstoolref
-	mkdir -p "${_refdest%/*}" || $err "ref: !mkdir -p ${_refdest%/*}"
+	mkdir -p "${_refdest%/*}" || err "ref: !mkdir -p ${_refdest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION
@@ -46,7 +46,7 @@ extract_shellball()
 	x_ cd "$appdir"
 	extract_partition "${MRC_url##*/}"
 	extract_archive "$SHELLBALL" .
-	) || $err "mrc download/extract failure"; :
+	) || err "mrc download/extract failure"; :
 }
 
 extract_partition()
@@ -59,8 +59,8 @@ extract_partition()
 	SIZE=$(( $( echo $ROOTP | cut -f4 -d\ | tr -d "B" ) ))
 
 	dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \
-	    count=$(( $SIZE / 1024 )) || $err "ex dd ${1%.zip}, root-a.ext2"
+	    count=$(( $SIZE / 1024 )) || err "ex dd ${1%.zip}, root-a.ext2"
 
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
-	    "$SHELLBALL" | debugfs "root-a.ext2" || $err "!extract shellball"
+	    "$SHELLBALL" | debugfs "root-a.ext2" || err "!extract shellball"
 }

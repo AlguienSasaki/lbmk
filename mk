@@ -29,7 +29,7 @@ main()
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release|download|inject) $cmd "$@" ;;
 	-*) return 1 ;;
-	*) $err "bad command" ;;
+	*) err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
@@ -40,11 +40,11 @@ release()
 
 	vdir="release"
 	while getopts d:m: option; do
-		[ -z "$OPTARG" ] && $err "empty argument not allowed"
+		[ -z "$OPTARG" ] && err "empty argument not allowed"
 		case "$option" in
 		d) vdir="$OPTARG" ;;
 		m) mode="$OPTARG" ;;
-		*) $err "invalid option '-$option'" ;;
+		*) err "invalid option '-$option'" ;;
 		esac
 	done
 
@@ -52,10 +52,10 @@ release()
 	src_dirname="${relname}_src"
 	srcdir="$vdir/$src_dirname"
 
-	[ -e "$vdir" ] && $err "already exists: \"$vdir\""
-	mkdir -p "$vdir" || $err "mkvdir: !mkdir -p \"$vdir\""
-	git clone . "$srcdir" || $err "mkdir: !gitclone \"$srcdir\""
-	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
+	[ -e "$vdir" ] && err "already exists: \"$vdir\""
+	mkdir -p "$vdir" || err "mkvdir: !mkdir -p \"$vdir\""
+	git clone . "$srcdir" || err "mkdir: !gitclone \"$srcdir\""
+	touch "$srcdir/lock" || err "can't make lock file in $srcdir/"
 
 	build_release
 
@@ -65,32 +65,32 @@ release()
 build_release()
 {
 	(
-	cd "$srcdir" || $err "$vdir: !cd \"$srcdir\""
+	cd "$srcdir" || err "$vdir: !cd \"$srcdir\""
 
 	./mk -f
 	rmgit .
 	x_ mv src/docs docs
-	) || $err "can't create release files"
+	) || err "can't create release files"
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "$srcdir/CHANGELOG" || $err "!gitlog $srcdir"
-	rm -f "$srcdir/lock" || $err "can't remove lock file in $srcdir"
+	    --abbrev-commit > "$srcdir/CHANGELOG" || err "!gitlog $srcdir"
+	rm -f "$srcdir/lock" || err "can't remove lock file in $srcdir"
 
 	(
-	cd "${srcdir%/*}" || $err "$vdir: mktarball \"$srcdir\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || $err "$vdir: mksrc"
-	) || $err "can't create src tarball"
+	cd "${srcdir%/*}" || err "$vdir: mktarball \"$srcdir\""
+	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "$vdir: mksrc"
+	) || err "can't create src tarball"
 	[ "$mode" = "src" ] && return 0
 
-	touch "$srcdir/lock" || $err "can't make lock file in $srcdir/"
+	touch "$srcdir/lock" || err "can't make lock file in $srcdir/"
 	(
-	cd "$srcdir" || $err "$vdir: 2 !cd \"$srcdir\""
+	cd "$srcdir" || err "$vdir: 2 !cd \"$srcdir\""
 	x_ ./mk -d coreboot
 	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
 	x_ mv bin ../roms
-	) || $err "can't build rom images"
+	) || err "can't build rom images"
 
-	rm -Rf "$srcdir" || $err "!rm -Rf $srcdir"
+	rm -Rf "$srcdir" || err "!rm -Rf $srcdir"
 }
 
 main "$@" && exit 0
@@ -110,7 +110,7 @@ trees()
 	flags="f:b:m:u:c:x:s:l:n:d:"
 
 	while getopts $flags option; do
-		[ -n "$_f" ] && $err "only one flag is permitted"
+		[ -n "$_f" ] && err "only one flag is permitted"
 		_f="$1"
 
 		case "$_f" in
@@ -126,7 +126,7 @@ trees()
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
-		*) $err "invalid option '-$option'" ;;
+		*) err "invalid option '-$option'" ;;
 		esac
 
 		if [ -z "${OPTARG+x}" ]; then
@@ -137,14 +137,14 @@ trees()
 		project="${OPTARG#src/}"
 		shift 2
 	done
-	[ -z "$_f" ] && $err "missing flag ($flags)"
+	[ -z "$_f" ] && err "missing flag ($flags)"
 	if [ -z "$project" ]; then
 		mk $_f $(ls -1 config/git)
 		return 1
 	fi
 
 	[ -f "config/git/$project/pkg.cfg" ] || \
-	    $err "config/git/$project/pkg.cfg missing"
+	    err "config/git/$project/pkg.cfg missing"
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
@@ -180,8 +180,8 @@ build_project()
 
 build_targets()
 {
-	[ -d "$configdir" ] || $err "directory, $configdir, does not exist"
-	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || $err "!o $configdir"
+	[ -d "$configdir" ] || err "directory, $configdir, does not exist"
+	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || err "!o $configdir"
 
 	for x in $targets; do
 		unset CROSS_COMPILE
@@ -267,7 +267,7 @@ build_dependencies()
 	for bd in $build_depend; do
 		bd_p="${bd%%/*}"
 		bd_t="${bd##*/}"
-		[ -z "$bd_p" ] && $dry $err "$project/$tree: !bd '$bd'"
+		[ -z "$bd_p" ] && $dry err "$project/$tree: !bd '$bd'"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
 		[ -z "$bd_p" ] || $dry x_ ./mk -b $bd_p $bd_t; :
 	done; :
@@ -281,14 +281,14 @@ check_project_hashes()
 
 	fx_ "x_ sha512sum" "$datadir" "$configdir/$tree" "$mdir" \
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
-	    "$xbmktmp/project.hash" || $err "!h $project $tree"
+	    "$xbmktmp/project.hash" || err "!h $project $tree"
 
 	pjhash="$(sha512sum "$xbmktmp/project.hash" | awk '{print $1}')" || :
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
 	printf "%s\n" "$pjhash" > "$XBMK_CACHE/hash/$project$tree" || \
-	    $err "!mk $XBMK_CACHE/hash/$project$tree"
+	    err "!mk $XBMK_CACHE/hash/$project$tree"
 
 	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree" "elf/$project/$target"; :
@@ -323,12 +323,12 @@ check_cross_compiler()
 # gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
 check_gnu_path()
 {
-	command -v "$1" 1>/dev/null || $err "Host '$1' unavailable"
+	command -v "$1" 1>/dev/null || err "Host '$1' unavailable"
 
 	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
 	x_ gnu_setver "$1" "$1" && gnu_setver "$2" "$2" || :
 
-	eval "[ -z \"\$$1ver\" ] && $err \"Cannot detect host '$1' version\""
+	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
 	[ "$gnatfull" = "$gccfull" ] && return 0
 
 	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
@@ -346,7 +346,7 @@ check_gnu_path()
 		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
 		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
 	done
-	) || $err "Cannot create $2-$_gnuver link in $_gnudir"; :
+	) || err "Cannot create $2-$_gnuver link in $_gnudir"; :
 }
 
 gnu_setver()
@@ -360,7 +360,7 @@ gnu_setver()
 
 check_defconfig()
 {
-	[ -f "$defconfig" ] || $dry $err "$project/$target: missing defconfig"
+	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig"
 	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
 
 	$dry elfcheck || return 1 # skip build if a previous one exists
@@ -383,7 +383,7 @@ handle_makefile()
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
 	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
 
-	run_make_command || $err "handle_makefile $srcdir: no makefile!"
+	run_make_command || err "handle_makefile $srcdir: no makefile!"
 
 	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
 	[ "${mode%config}" = "$mode" ] || \
@@ -419,11 +419,11 @@ check_cmake()
 check_autoconf()
 {
 	(
-	cd "$1" || $err "!cd $1"
+	cd "$1" || err "!cd $1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
 	[ -f "configure" ] && x_ ./configure $autoconfargs; :
-	) || $err "can't bootstrap project: $1"; :
+	) || err "can't bootstrap project: $1"; :
 }
 
 check_makefile()

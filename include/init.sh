@@ -14,22 +14,22 @@ projectsite="https://libreboot.org/"
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 xbmkpath="$PATH"
 
-err="err_"
+xbmk_err="err_"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal`"
 
 xbmk_init()
 {
-	xbmkpwd="`pwd`" || $err "Cannot generate PWD"
+	xbmkpwd="`pwd`" || err "Cannot generate PWD"
 	xbmklocal="$xbmkpwd/tmp"
 
 	export PWD="$xbmkpwd"
 
 	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
 
-	id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
-	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
+	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
+	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
 	for init_cmd in set_pyver set_env set_version git_init create_tmpdir \
 	    lock create_pathdirs child_exec; do
@@ -39,13 +39,13 @@ xbmk_init()
 
 xbmkpkg()
 {
-	[ $# -lt 2 ] && $err "fewer than two arguments"
+	[ $# -lt 2 ] && err "fewer than two arguments"
 	[ $# -gt 2 ] && reinstall="$3"
 
 	eval "`setcfg "config/dependencies/$2"`"
 
 	chkvars pkg_add pkglist
-	$pkg_add $pkglist || $err "Cannot install packages"
+	$pkg_add $pkglist || err "Cannot install packages"
 
 	[ -n "$aur_notice" ] && \
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
@@ -59,11 +59,11 @@ xbmk_set_pyver()
 	pyver="2" && [ "$python" = "python3" ] && pyver="3"
 	pybin "$python" 1>/dev/null || pyver=""
 	[ -z "$pyver" ] || "`pybin "$python"`" -c "$pyv" 1>/dev/null \
-	    2>/dev/null || $err "Cannot detect host Python version."
+	    2>/dev/null || err "Cannot detect host Python version."
 	[ -n "$pyver" ] && \
 	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
 	    pyver="${pyver#(}" && pyver="${pyver%,}"
-	[ "${pyver%%.*}" = "3" ] || $err "Bad python version (must by 3.x)"; :
+	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)"; :
 }
 
 # Use direct path, to prevent a hang if Python is using a virtual environment,
@@ -104,9 +104,9 @@ xbmk_set_env()
 	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
 	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
 	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
-	    $err "cachedir '$xbmkpwd/cache' is a symlink"
+	    err "cachedir '$xbmkpwd/cache' is a symlink"
 	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	[ -f "$XBMK_CACHE" ] && $err "cachedir '$XBMK_CACHE' is a file"; :
+	[ -f "$XBMK_CACHE" ] && err "cachedir '$XBMK_CACHE' is a file"; :
 
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
 	# (this is used to exclude certain build targets from releases)
@@ -124,9 +124,9 @@ xbmk_set_version()
 	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || :; :
 
 	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > ".version" \
-	    || $err "Cannot generate unknown .version file"
+	    || err "Cannot generate unknown .version file"
 	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
-	    ".versiondate" || $err "Can't generate unknown versiondate file"; :
+	    ".versiondate" || err "Can't generate unknown versiondate file"; :
 
 	version_="$version"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
@@ -136,8 +136,8 @@ xbmk_set_version()
 	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 
 	chkvars version versiondate
-	printf "%s\n" "$version" > ".version" || $err "can't save version"
-	printf "%s\n" "$versiondate" > ".versiondate" || $err "can't save date"
+	printf "%s\n" "$version" > ".version" || err "can't save version"
+	printf "%s\n" "$versiondate" > ".versiondate" || err "can't save date"
 
 	relname="$projectname-$version"
 	export LOCALVERSION="-$projectname-${version%%-*}"
@@ -157,7 +157,7 @@ xbmk_git_init()
 	    2>/dev/null
 
 	for gitarg in "--global user.name" "--global user.email"; do
-		gitcmd="git config $gitarg"; $gitcmd || $err \
+		gitcmd="git config $gitarg"; $gitcmd || err \
 		    "Please run this first: $gitcmd \"your ${gitcmd##*.}\""
 	done
 }
@@ -184,8 +184,8 @@ xbmk_create_tmpdir()
 
 xbmk_lock()
 {
-	[ -f "lock" ] && $err "$xbmkpwd/lock exists. Is a build running?"
-	touch lock || $err "cannot create 'lock' file"; :
+	[ -f "lock" ] && err "$xbmkpwd/lock exists. Is a build running?"
+	touch lock || err "cannot create 'lock' file"; :
 }
 
 xbmk_create_pathdirs()
@@ -195,9 +195,9 @@ xbmk_create_pathdirs()
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
-	cd "$XBMK_CACHE/xbmkpath" || $err "can't cd $XBMK_CACHE/xbmkpath"
+	cd "$XBMK_CACHE/xbmkpath" || err "can't cd $XBMK_CACHE/xbmkpath"
 	x_ ln -s "`pybin "$python"`" python
-	) || $err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
+	) || err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
 }
 
 xbmk_child_exec()
