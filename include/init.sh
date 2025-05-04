@@ -60,11 +60,9 @@ xbmk_set_pyver()
 	pybin "$python" 1>/dev/null || pyver=""
 	[ -z "$pyver" ] || "`pybin "$python"`" -c "$pyv" 1>/dev/null \
 	    2>/dev/null || $err "Cannot detect host Python version."
-	if [ -n "$pyver" ]; then
-		pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')"
-		pyver="${pyver#(}"
-		pyver="${pyver%,}"
-	fi
+	[ -n "$pyver" ] && \
+	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
+	    pyver="${pyver#(}" && pyver="${pyver%,}"
 	[ "${pyver%%.*}" = "3" ] || $err "Bad python version (must by 3.x)"; :
 }
 
@@ -94,8 +92,7 @@ pybin()
 		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
 		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
 		    return 0
-	done
-	[ $venv -gt 0 ] && return 1
+	done && return 1
 
 	# Defer to normal command -v if not a venv
 	command -v "$1" 2>/dev/null || return 1
