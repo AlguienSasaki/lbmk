@@ -51,22 +51,6 @@ xbmkpkg()
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
 
-setcfg()
-{
-	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	[ $# -gt 1 ] || \
-		printf "e \"%s\" f not && %s \"Missing config\";\n" "$1" "$err"
-	printf ". \"%s\" || %s \"Could not read config\";\n" "$1" "$err"
-}
-
-chkvars()
-{
-	for var in "$@"; do
-		eval "[ -n \"\${$var+x}\" ] || \$err \"$var unset\""
-		eval "[ -n \"\$$var\" ] || \$err \"$var unset\""
-	done; :
-}
-
 xbmk_set_pyver()
 {
 	pyv="import sys; print(sys.version_info[:])"
