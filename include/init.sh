@@ -26,10 +26,7 @@ xbmk_init()
 
 	export PWD="$xbmkpwd"
 
-	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
-		install_packages "$@" || exit 1
-		exit 0
-	fi
+	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
 
 	id -u 1>/dev/null 2>/dev/null || $err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || $err "this command as root is not permitted"
@@ -40,7 +37,7 @@ xbmk_init()
 	done
 }
 
-install_packages()
+xbmkpkg()
 {
 	[ $# -lt 2 ] && $err "fewer than two arguments"
 	[ $# -gt 2 ] && reinstall="$3"
