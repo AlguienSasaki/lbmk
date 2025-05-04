@@ -156,10 +156,10 @@ fx_()
 
 find_ex()
 {
-	errx="$1" && shift 1
+	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$errx find "$@" 2>/dev/null | sort > "$fd" || \
+	$xmsg find "$@" 2>/dev/null | sort > "$fd" || \
 	    $err "!find $(echo "$@") > \"$fd\""
 	while read -r fx; do
 		$xx "$fx" || break; :
