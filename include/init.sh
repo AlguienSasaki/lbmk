@@ -204,8 +204,8 @@ xbmk_child_exec()
 {
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
-	rm -Rf "$xbmklocal" "$xbmktmp" || xbmk_rval=1
-	rm -f lock || xbmk_rval=1
+	( x_ rm -Rf "$xbmklocal" "$xbmktmp" ) || xbmk_rval=1
+	( x_ rm -f lock ) || xbmk_rval=1
 	exit $xbmk_rval
 }
 
