@@ -297,7 +297,6 @@ check_project_hashes()
 check_cross_compiler()
 {
 	remkdir "$XBMK_CACHE/gnupath"
-	xgccargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	cbdir="src/coreboot/$tree"
 	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
@@ -309,12 +308,11 @@ check_cross_compiler()
 	export CROSS_COMPILE="${xarch% *}-"
 	[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
-	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
-
 	# match gnat-X to gcc
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 
-	# sometimes buildgcc fails for like no reason. try twice.
+	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+	xgccargs="UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 	make -C "$cbdir" crossgcc-$xfix $xgccargs || \
 	    x_ make -C "$cbdir" crossgcc-$xfix $xgccargs
 
