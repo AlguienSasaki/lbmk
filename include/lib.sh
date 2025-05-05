@@ -148,7 +148,7 @@ chkvars()
 # e.g. coreboot is multi-tree, so 1
 singletree()
 {
-	( fe_ "exit 1" "config/$1/"*/ -type f -name "target.cfg" ) || return 1
+	( fx_ "exit 1" "config/$1/"*/ -type f -name "target.cfg" ) || return 1
 }
 
 fe_()
