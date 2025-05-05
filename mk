@@ -326,7 +326,8 @@ check_gnu_path()
 	command -v "$1" 1>/dev/null || err "Host '$1' unavailable"
 
 	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
-	x_ gnu_setver "$1" "$1" && gnu_setver "$2" "$2" || :
+	x_ gnu_setver "$1" "$1" || err "Command '$1' unavailable."
+	gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
 	[ "$gnatfull" = "$gccfull" ] && return 0
