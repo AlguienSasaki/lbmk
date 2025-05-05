@@ -121,10 +121,10 @@ fetch()
 
 	x_ mkdir -p "${_dest%/*}"
 	remkdir "$appdir"
-	extract_archive "$_dl" "$appdir" "$dl_type" || \
+	[ "$dl_type" = "fsp" ] || extract_archive "$_dl" "$appdir" || \
 	    [ "$dl_type" = "e6400vga" ] || err "$_dest $dl_type: !extract"
 
-	eval "extract_$dl_type"
+	x_ extract_$dl_type "$_dl" "$appdir"
 	set -u -e
 	e "$_dest" f missing && err "!extract_$dl_type. $dontflash"; :
 }
@@ -191,10 +191,6 @@ extract_intel_me_bruteforce()
 
 extract_archive()
 {
-	[ $# -gt 2 ] && [ "$3" = "fsp" ] && x_ python \
-	    "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" -o "$2" \
-	    -n "Fsp.fd" && return 0
-
 	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
 	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
 
@@ -261,7 +257,8 @@ copy_tbfw()
 
 extract_fsp()
 {
-	x_ cp "$appdir/"Fsp_*.fd "${_dest%/*}"
+	x_ python "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" \
+	    -o "$2" -n "Fsp.fd" && x_ cp "$appdir/"Fsp_*.fd "${_dest%/*}"
 }
 
 fail_inject()
