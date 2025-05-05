@@ -257,6 +257,7 @@ cprom()
 	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
 	    cbfs "$irom" "$grubdata/bootorder_uboot" bootorder raw; :
 
+	printf "Creating new %s image: '%s'\n" "$projectname" "$newrom"
 	x_ mkdir -p "bin/$target"
 	x_ $cpcmd "$irom" "$newrom"
 }
