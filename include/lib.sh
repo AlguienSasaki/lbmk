@@ -166,7 +166,7 @@ find_ex()
 	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$xmsg find "$@" 2>/dev/null | sort > "$fd" || \
+	$xmsg find "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
 	    err "!find $(echo "$@") > \"$fd\""
 	while read -r fx; do
 		$xx "$fx" || break; :
