@@ -66,15 +66,6 @@ git_prep()
 	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
 }
 
-# return 0 if project is single-tree, otherwise 1
-# e.g. coreboot is multi-tree, so 1
-singletree()
-{
-	for targetfile in "config/${1}/"*/target.cfg; do
-		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
-	done; :
-}
-
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"; eval \

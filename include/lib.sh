@@ -144,6 +144,15 @@ chkvars()
 	done; :
 }
 
+# return 0 if project is single-tree, otherwise 1
+# e.g. coreboot is multi-tree, so 1
+singletree()
+{
+	for targetfile in "config/${1}/"*/target.cfg; do
+		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
+	done; :
+}
+
 fe_()
 {
 	find_ex "x_" "$@"
