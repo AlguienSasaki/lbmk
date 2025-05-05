@@ -189,10 +189,9 @@ apply_me11_deguard_mod()
 {
 	(
 	x_ cd src/deguard/
-	x_ ./finalimage.py --delta "data/delta/$ME11delta" \
-	    --version "$ME11version" \
-	    --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs data/fpfs/zero \
-	    --input "$_metmp" --output "$_me"
+	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
+	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs \
+	    data/fpfs/zero --input "$_metmp" --output "$_me"
 	) || err "Error running deguard for $_me - $dontflash"
 }
 
