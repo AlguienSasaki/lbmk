@@ -370,10 +370,8 @@ check_defconfig()
 
 elfcheck()
 {
-	# TODO: very hacky check. do it properly (based on build.list)
-	for elftest in "$dest_dir"/*; do
-		[ -e "$elftest" ] && e "$elftest" f && return 1
-	done; :
+	# TODO: *STILL* very hacky check. do it properly (based on build.list)
+	( fe_ "exit 1" "$dest_dir" -type f ) || return 1; :
 }
 
 handle_makefile()
