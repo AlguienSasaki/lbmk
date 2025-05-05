@@ -14,8 +14,6 @@ projectsite="https://libreboot.org/"
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 xbmkpath="$PATH"
 
-xbmk_err="err_"
-
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal \
     xbmklock`"

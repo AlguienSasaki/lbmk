@@ -270,7 +270,6 @@ fail_inject()
 inject()
 {
 	need_files="n"
-	xbmk_err="fail_inject"
 	remkdir "$tmpromdel"
 
 	set +u +e
