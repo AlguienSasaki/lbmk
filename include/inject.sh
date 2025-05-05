@@ -260,7 +260,7 @@ copy_tbfw()
 extract_fsp()
 {
 	x_ python "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" \
-	    -o "$2" -n "Fsp.fd" && x_ cp "$appdir/"Fsp_*.fd "${_dest%/*}"
+	    -o "${_dest%/*}" -n "Fsp.fd"
 }
 
 fail_inject()
