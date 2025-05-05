@@ -245,7 +245,6 @@ extract_sch5545ec()
 extract_tbfw()
 {
 	chkvars TBFW_size && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
-	[ -f "$_dest" ] || err "$board: Could not extract tbfw"; :
 }
 
 copy_tbfw()
