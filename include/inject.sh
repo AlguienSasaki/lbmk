@@ -49,9 +49,8 @@ download()
 readkconfig()
 {
 	x_ rm -f "$xbmktmp/cbcfg"
-	cbcfg="`check_defconfig "$boarddir"`" || for cbc in $cv; do
-		grep "$cbc" "$cbcfg" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
-	done
+	fe_ scankconfig "$boarddir/config" -type f
+
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
 
 	for c in $cvchk; do
@@ -61,6 +60,13 @@ readkconfig()
 		return 0
 	done
 	return 1
+}
+
+scankconfig()
+{
+	for cbc in $cv; do
+		grep "$cbc" "$1" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
+	done
 }
 
 bootstrap()

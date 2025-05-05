@@ -105,14 +105,6 @@ mk()
 	done; :
 }
 
-check_defconfig()
-{
-	[ -d "$1" ] || err "Target '$1' not defined."
-	for x in "$1"/config/*; do
-		[ -f "$x" ] && printf "%s\n" "$x" && return 1
-	done; :
-}
-
 setvars()
 {
 	_setvars=""
