@@ -243,11 +243,11 @@ cprom()
 {
 	tmpnew=""; newrom="bin/$target/${pname}_${target}_$initmode.rom"
 	[ -n "$displaymode" ] && newrom="${newrom%.rom}_$displaymode.rom"
-	[ $# -gt 0 ] && [ "$1" != "seauboot" ] && tmpnew="${1##*/}" && \
+	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && tmpnew="${1##*/}" && \
 	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 
 	x_ mkdir -p "bin/$target"
-	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "$1" != "seauboot" ] \
+	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] \
 	    && cbfs "$newrom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
 	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
 	    cbfs "$newrom" "$grubdata/bootorder_uboot" bootorder raw; :
