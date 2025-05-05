@@ -54,9 +54,7 @@ git_prep()
 	chkvars rev
 	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
-		[ -f "$mdir/module.list" ] && while read -r msrcdir; do
-			fetch_submodule "$msrcdir"
-		done < "$mdir/module.list"; :
+		dx_ fetch_submodule "$mdir/module.list"
 	fi
 
 	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
