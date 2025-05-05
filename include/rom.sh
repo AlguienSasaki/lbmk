@@ -241,16 +241,24 @@ add_uboot()
 
 cprom()
 {
+	cpcmd="cp"
+
 	tmpnew=""; newrom="bin/$target/${pname}_${target}_$initmode.rom"
 	[ -n "$displaymode" ] && newrom="${newrom%.rom}_$displaymode.rom"
 	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && tmpnew="${1##*/}" && \
 	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 
-	x_ mkdir -p "bin/$target"
-	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] \
-	    && cbfs "$newrom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
+	irom="$tmprom"
+	[ $# -lt 1 ] || irom="`mktemp`" || err "!mk irom, $(echo "$@")"
+	[ $# -gt 0 ] && x_ cp "$tmprom" "$irom" && cpcmd="mv"
+
+	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && \
+	    cbfs "$irom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
 	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
-	    cbfs "$newrom" "$grubdata/bootorder_uboot" bootorder raw; :
+	    cbfs "$irom" "$grubdata/bootorder_uboot" bootorder raw; :
+
+	x_ mkdir -p "bin/$target"
+	x_ $cpcmd "$irom" "$newrom"
 }
 
 cbfs()
