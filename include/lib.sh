@@ -176,7 +176,6 @@ find_ex()
 
 x_()
 {
-	[ $# -lt 1 ] && printf "WARNING: x_ called without arguments\n" 1>&2
 	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg: x_ $(echo "$@")"
 	[ $# -lt 1 ] || "$@" || err "Unhandled error for: $(echo "$@")"; :
 }
