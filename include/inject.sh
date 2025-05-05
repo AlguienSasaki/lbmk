@@ -142,8 +142,12 @@ extract_intel_me()
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
 	extract_intel_me_bruteforce
-	if [ "$ME11bootguard" = "y" ]; then
-		apply_me11_deguard_mod
+	if [ "$ME11bootguard" = "y" ]; then (
+		x_ cd src/deguard/
+		x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
+		    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
+		    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_me"
+		) || err "Error running deguard for $_me - $dontflash"
 	else
 		mv "$_metmp" "$_me" || err "!mv $_metmp $_me - $dontflash"
 	fi
@@ -183,16 +187,6 @@ extract_intel_me_bruteforce()
 	done
 	) || :
 	rm -Rf "$sdir" || err "extract_intel_me: !rm -Rf $sdir - $dontflash"
-}
-
-apply_me11_deguard_mod()
-{
-	(
-	x_ cd src/deguard/
-	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
-	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" --fake-fpfs \
-	    data/fpfs/zero --input "$_metmp" --output "$_me"
-	) || err "Error running deguard for $_me - $dontflash"
 }
 
 extract_archive()
