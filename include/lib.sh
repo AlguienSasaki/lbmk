@@ -176,6 +176,8 @@ x_()
 
 err()
 {
+	set -u -e
+
 	xbmk_err_val=0
 	real_err="" && [ -n "${xbmk_err+x}" ] && real_err="$xbmk_err"
 
