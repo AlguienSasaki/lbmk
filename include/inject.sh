@@ -165,9 +165,11 @@ extract_intel_me_bruteforce()
 	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\" - $dontflash"
 	for i in *; do
-		e "$_metmp" f && break
+		c=0 && e "$_metmp" f && break
 		[ -L "$i" ] && continue
-		if [ -f "$i" ]; then
+		[ -e "$i" ] || continue
+		[ -d "$i" ] && extract_intel_me_bruteforce "$cdir/$i" && c=1
+		if [ $c -eq 0 ] && [ -f "$i" ]; then
 			_r="-r" && [ -n "$mfs" ] && _r=""
 			"$mecleaner" $mfs $_r -t -O "$sdir/vendorfile" \
 			    -M "$_metmp" "$i" && break
@@ -176,10 +178,6 @@ extract_intel_me_bruteforce()
 			_7ztest="${_7ztest}a"
 			extract_archive "$i" "$_7ztest" || continue
 			extract_intel_me_bruteforce "$cdir/$_7ztest"
-		elif [ -d "$i" ]; then
-			extract_intel_me_bruteforce "$cdir/$i"
-		else
-			continue
 		fi
 		cdir="$1"; [ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
 		cd "$cdir" || :
