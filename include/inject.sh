@@ -174,7 +174,7 @@ extract_intel_me_bruteforce()
 	"$me7updateparser" -O "$_metmp" "$1" && return 1
 
 	_7ztest="${_7ztest}a"
-	extract_archive "$i" "$_7ztest" || return 0
+	extract_archive "$1" "$_7ztest" || return 0
 
 	fe_ extract_intel_me_bruteforce "$_7ztest" -type f || return 1; :
 }
