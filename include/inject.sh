@@ -35,7 +35,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
-    IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
+    IFD_platform ifdprefix _me _metmp mfs TBFW_url_bkup TBFW_url \
     TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
     vfile cbcfg $cv`"
 
@@ -139,15 +139,19 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && err "$cbdir: me_cleaner missing. $dontflash"
 
-	cdir="$xbmkpwd/$appdir"
+	_7ztest="$xbmklocal/metmp/a"
 	_me="$xbmkpwd/$_dest"
 	_metmp="$xbmklocal/me.bin"
+	x_ rm -f "$_metmp"
 
 	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	extract_intel_me_bruteforce
+	set +u +e
+	( fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f ) || :
+	x_ rm -Rf "$xbmklocal/metmp"
+
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
 	(
@@ -160,36 +164,19 @@ extract_intel_me()
 
 extract_intel_me_bruteforce()
 {
-	[ $# -gt 0 ] && cdir="$1"
-	e "$_metmp" f && return 0
+	[ -L "$1" ] && return 0
+	e "$_metmp" f && x_ && exit 1
 
-	[ -z "$sdir" ] && sdir="$(mktemp -d)"
-	x_ mkdir -p "$sdir"
+	_r="-r" && [ -n "$mfs" ] && _r=""
+	
+	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" && exit 1
+	"$mecleaner" $mfs $_r -t -O "$_metmp" "$1" && exit 1
+	"$me7updateparser" -O "$_metmp" "$1" && exit 1
 
-	set +u +e
-	(
-	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\" - $dontflash"
-	for i in *; do
-		c=0 && e "$_metmp" f && break
-		[ -L "$i" ] && continue
-		[ -e "$i" ] || continue
-		[ -d "$i" ] && extract_intel_me_bruteforce "$cdir/$i" && c=1
-		if [ $c -eq 0 ] && [ -f "$i" ]; then
-			_r="-r" && [ -n "$mfs" ] && _r=""
-			"$mecleaner" $mfs $_r -t -O "$sdir/vendorfile" \
-			    -M "$_metmp" "$i" && break
-			"$mecleaner" $mfs $_r -t -O "$_metmp" "$i" && break
-			"$me7updateparser" -O "$_metmp" "$i" && break
-			_7ztest="${_7ztest}a"
-			extract_archive "$i" "$_7ztest" || continue
-			extract_intel_me_bruteforce "$cdir/$_7ztest"
-		fi
-		cdir="$1"; [ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-		cd "$cdir" || :
-	done
-	) || :
-	rm -Rf "$sdir" || err "extract_intel_me: !rm -Rf $sdir - $dontflash"
+	_7ztest="${_7ztest}a"
+	extract_archive "$i" "$_7ztest" || return 0
+
+	( fe_ extract_intel_me_bruteforce "$_7ztest" -type f ) || exit 1; :
 }
 
 extract_archive()
