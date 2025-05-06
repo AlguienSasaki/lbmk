@@ -160,14 +160,14 @@ find_ex()
 	xx="$1" && shift 1
 	$xmsg find "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
 	    err "!find $(echo "$@") > \"$fd\""
-	dx_ "$xx" "$fd"
+	dx_ "$xx" "$fd" || break
 	x_ rm -f "$fd"
 }
 
 dx_()
 {
 	[ -f "$2" ] && while read -r fx; do
-		$1 "$fx"
+		$1 "$fx" || return 1
 	done < "$2"; :
 }
 
