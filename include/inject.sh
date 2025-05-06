@@ -165,7 +165,6 @@ extract_intel_me()
 extract_intel_me_bruteforce()
 {
 	[ -L "$1" ] && return 0
-	e "$_metmp" f && x_ && return 1
 
 	_r="-r" && [ -n "$mfs" ] && _r=""
 	
