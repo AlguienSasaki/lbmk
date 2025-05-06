@@ -149,7 +149,7 @@ extract_intel_me()
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
 	set +u +e
-	( fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f ) || :
+	fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f || :
 	x_ rm -Rf "$xbmklocal/metmp"
 
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
@@ -165,18 +165,19 @@ extract_intel_me()
 extract_intel_me_bruteforce()
 {
 	[ -L "$1" ] && return 0
-	e "$_metmp" f && x_ && exit 1
+	e "$_metmp" f && x_ && return 1
 
 	_r="-r" && [ -n "$mfs" ] && _r=""
 	
-	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" && exit 1
-	"$mecleaner" $mfs $_r -t -O "$_metmp" "$1" && exit 1
-	"$me7updateparser" -O "$_metmp" "$1" && exit 1
+	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" && \
+	    return 1
+	"$mecleaner" $mfs $_r -t -O "$_metmp" "$1" && return 1
+	"$me7updateparser" -O "$_metmp" "$1" && return 1
 
 	_7ztest="${_7ztest}a"
 	extract_archive "$i" "$_7ztest" || return 0
 
-	( fe_ extract_intel_me_bruteforce "$_7ztest" -type f ) || exit 1; :
+	fe_ extract_intel_me_bruteforce "$_7ztest" -type f || return 1; :
 }
 
 extract_archive()
