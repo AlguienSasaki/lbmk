@@ -165,9 +165,8 @@ extract_intel_me()
 extract_intel_me_bruteforce()
 {
 	[ -L "$1" ] && return 0
-
 	_r="-r" && [ -n "$mfs" ] && _r=""
-	
+
 	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" && \
 	    return 1
 	"$mecleaner" $mfs $_r -t -O "$_metmp" "$1" && return 1
