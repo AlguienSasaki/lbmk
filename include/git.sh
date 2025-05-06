@@ -108,21 +108,11 @@ tmpclone()
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || err "!reset $1 $2 $3 $4 $5"
-	git_am_patches "$3" "$5"
+	fx_ "eval x_ git -C \"$3\" am" "$5" -type f
 	) || repofail="y"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
 	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
-}
-
-git_am_patches()
-{
-	for p in "$2/"*; do
-		[ -L "$p" ] && continue
-		[ -e "$p" ] || continue
-		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
-		[ ! -f "$p" ] || git -C "$1" am "$p" || err "$1 $2: !am $p"
-	done; :
 }
 
 nuke()
