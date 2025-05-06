@@ -49,9 +49,8 @@ download()
 readkconfig()
 {
 	x_ rm -f "$xbmktmp/cbcfg"
-	cbcfg="`check_defconfig "$boarddir"`" || for cbc in $cv; do
-		grep "$cbc" "$cbcfg" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
-	done
+	fe_ scankconfig "$boarddir/config" -type f
+
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
 
 	for c in $cvchk; do
@@ -61,6 +60,13 @@ readkconfig()
 		return 0
 	done
 	return 1
+}
+
+scankconfig()
+{
+	for cbc in $cv; do
+		grep "$cbc" "$1" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
+	done
 }
 
 bootstrap()
@@ -254,23 +260,12 @@ copy_tbfw()
 extract_fsp()
 {
 	x_ python "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" \
-	    -o "$2" -n "Fsp.fd" && x_ cp "$appdir/"Fsp_*.fd "${_dest%/*}"
-}
-
-fail_inject()
-{
-	[ -L "$tmpromdel" ] || [ ! -d "$tmpromdel" ] || \
-	    rm -Rf "$tmpromdel" || :
-	printf "\n\n%s\n\n" "$dontflash" 1>&2
-	printf "WARNING: File '%s' was NOT modified.\n\n" "$archive" 1>&2
-	printf "Please MAKE SURE vendor files are inserted before flashing\n\n"
-	err_ "$1"
+	    -o "${_dest%/*}" -n "Fsp.fd"
 }
 
 inject()
 {
 	need_files="n"
-	xbmk_err="fail_inject"
 	remkdir "$tmpromdel"
 
 	set +u +e

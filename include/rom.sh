@@ -192,9 +192,7 @@ mkseagrub()
 	[ "$payload_grubsea" = "y" ] && pname="grub"
 	[ "$payload_grubsea" = "y" ] || \
 	    cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	for keymap in config/data/grub/keymap/*.gkb; do
-		[ -f "$keymap" ] && cprom "${keymap##*/}"; :
-	done; :
+	fe_ "cprom" "$grubdata/keymap" -type f -name "*.gkb"
 }
 
 add_uboot()
@@ -243,16 +241,25 @@ add_uboot()
 
 cprom()
 {
-	newrom="bin/$target/${pname}_${target}_$initmode.rom"
-	[ -n "$displaymode" ] && newrom="${newrom%.rom}_$displaymode.rom"
-	[ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
-	    newrom="${newrom%.rom}_${1%.gkb}.rom"
+	cpcmd="cp"
 
-	x_ mkdir -p "bin/$target"
-	x_ cp "$tmprom" "$newrom" && [ $# -gt 0 ] && [ "$1" != "seauboot" ] && \
-	    cbfs "$newrom" "config/data/grub/keymap/$1" keymap.gkb raw
+	tmpnew=""; newrom="bin/$target/${pname}_${target}_$initmode.rom"
+	[ -n "$displaymode" ] && newrom="${newrom%.rom}_$displaymode.rom"
+	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && tmpnew="${1##*/}" && \
+	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
+
+	irom="$tmprom"
+	[ $# -lt 1 ] || irom="`mktemp`" || err "!mk irom, $(echo "$@")"
+	[ $# -gt 0 ] && x_ cp "$tmprom" "$irom" && cpcmd="mv"
+
+	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && \
+	    cbfs "$irom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
 	[ $# -gt 0 ] && [ "$1" = "seauboot" ] && \
-	    cbfs "$newrom" "config/data/grub/bootorder_uboot" bootorder raw; :
+	    cbfs "$irom" "$grubdata/bootorder_uboot" bootorder raw; :
+
+	printf "Creating new %s image: '%s'\n" "$projectname" "$newrom"
+	x_ mkdir -p "bin/$target"
+	x_ $cpcmd "$irom" "$newrom"
 }
 
 cbfs()

@@ -105,14 +105,6 @@ mk()
 	done; :
 }
 
-check_defconfig()
-{
-	[ -d "$1" ] || err "Target '$1' not defined."
-	for x in "$1"/config/*; do
-		[ -f "$x" ] && printf "%s\n" "$x" && return 1
-	done; :
-}
-
 setvars()
 {
 	_setvars=""
@@ -144,6 +136,13 @@ chkvars()
 	done; :
 }
 
+# return 0 if project is single-tree, otherwise 1
+# e.g. coreboot is multi-tree, so 1
+singletree()
+{
+	( fx_ "exit 1" "config/$1/"*/ -type f -name "target.cfg" ) || return 1
+}
+
 fe_()
 {
 	find_ex "x_" "$@"
@@ -159,17 +158,21 @@ find_ex()
 	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$xmsg find "$@" 2>/dev/null | sort > "$fd" || \
+	$xmsg find "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
 	    err "!find $(echo "$@") > \"$fd\""
-	while read -r fx; do
-		$xx "$fx" || break; :
-	done < "$fd"
+	dx_ "$xx" "$fd"
 	x_ rm -f "$fd"
+}
+
+dx_()
+{
+	[ -f "$2" ] && while read -r fx; do
+		$1 "$fx"
+	done < "$2"; :
 }
 
 x_()
 {
-	[ $# -lt 1 ] && printf "WARNING: x_ called without arguments\n" 1>&2
 	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg: x_ $(echo "$@")"
 	[ $# -lt 1 ] || "$@" || err "Unhandled error for: $(echo "$@")"; :
 }
@@ -177,28 +180,6 @@ x_()
 err()
 {
 	set -u -e
-
-	xbmk_err_val=0
-	real_err="" && [ -n "${xbmk_err+x}" ] && real_err="$xbmk_err"
-
-	if [ -z "$real_err" ]; then
-		printf "WARNING: err not set. Defaulting to 'err_'\n" 1>&2
-		real_err="err_"
-	fi
-
-	(
-	$real_err "$@" || err_ "Error function '$real_err' *returned* 1"
-	err_ "Error function '$real_err' didn't exit"
-	exit 1 # just in case!
-	) || xbmk_err_val=1 # otherwise, it wrongly did exit 0, not exit 1
-
-	[ $xbmk_err_val -eq 0 ] && err_ "Error function '$real_err' did exit 0"
-	exit 1 # just in case!
-}
-
-err_()
-{
-	[ $# -lt 1 ] && printf "ERROR (but no error message provided)\n" 1>&2
 	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	exit 1
 }

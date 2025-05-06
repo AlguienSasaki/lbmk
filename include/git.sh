@@ -54,9 +54,7 @@ git_prep()
 	chkvars rev
 	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
-		[ -f "$mdir/module.list" ] && while read -r msrcdir; do
-			fetch_submodule "$msrcdir"
-		done < "$mdir/module.list"; :
+		dx_ fetch_submodule "$mdir/module.list"
 	fi
 
 	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
@@ -64,15 +62,6 @@ git_prep()
 
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
-}
-
-# return 0 if project is single-tree, otherwise 1
-# e.g. coreboot is multi-tree, so 1
-singletree()
-{
-	for targetfile in "config/${1}/"*/target.cfg; do
-		[ -e "$targetfile" ] && [ -f "$targetfile" ] && return 1; :
-	done; :
 }
 
 fetch_submodule()
@@ -119,21 +108,11 @@ tmpclone()
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || err "!reset $1 $2 $3 $4 $5"
-	git_am_patches "$3" "$5"
+	fx_ "eval x_ git -C \"$3\" am" "$5" -type f
 	) || repofail="y"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
 	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
-}
-
-git_am_patches()
-{
-	for p in "$2/"*; do
-		[ -L "$p" ] && continue
-		[ -e "$p" ] || continue
-		[ -d "$p" ] && git_am_patches "$1" "$p" && continue
-		[ ! -f "$p" ] || git -C "$1" am "$p" || err "$1 $2: !am $p"
-	done; :
 }
 
 nuke()
