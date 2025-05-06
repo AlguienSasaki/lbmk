@@ -263,16 +263,6 @@ extract_fsp()
 	    -o "${_dest%/*}" -n "Fsp.fd"
 }
 
-fail_inject()
-{
-	[ -L "$tmpromdel" ] || [ ! -d "$tmpromdel" ] || \
-	    rm -Rf "$tmpromdel" || :
-	printf "\n\n%s\n\n" "$dontflash" 1>&2
-	printf "WARNING: File '%s' was NOT modified.\n\n" "$archive" 1>&2
-	printf "Please MAKE SURE vendor files are inserted before flashing\n\n"
-	err_ "$1"
-}
-
 inject()
 {
 	need_files="n"
