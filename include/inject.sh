@@ -142,7 +142,7 @@ extract_intel_me()
 	_7ztest="$xbmklocal/metmp/a"
 	_me="$xbmkpwd/$_dest"
 	_metmp="$xbmklocal/me.bin"
-	x_ rm -f "$_metmp"
+	x_ rm -f "$_metmp" "$xbmklocal/a"
 
 	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
 	    chkvars ME11delta ME11version ME11sku ME11pch
