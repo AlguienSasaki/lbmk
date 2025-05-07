@@ -148,14 +148,10 @@ extract_intel_me()
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	set +u +e
-	fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f || :
-	x_ rm -Rf "$xbmklocal/metmp"
-
+	set +u +e && fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
-	(
-	x_ cd src/deguard/
+	( x_ cd src/deguard/
 	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
 	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
 	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_me"
@@ -164,16 +160,14 @@ extract_intel_me()
 
 extract_intel_me_bruteforce()
 {
+	e "$_metmp" f && x_ rm -Rf "$xbmklocal/metmp" && return 1
 	[ -L "$1" ] && return 0
-	_r="-r" && [ -n "$mfs" ] && _r=""
 
-	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" && \
-	    return 1
-	"$mecleaner" $mfs $_r -t -O "$_metmp" "$1" && return 1
-	"$me7updateparser" -O "$_metmp" "$1" && return 1
+	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
 
-	_7ztest="${_7ztest}a"
-	extract_archive "$1" "$_7ztest" || return 0
+	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" || \
+	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
+	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
 
 	fe_ extract_intel_me_bruteforce "$_7ztest" -type f || return 1; :
 }
