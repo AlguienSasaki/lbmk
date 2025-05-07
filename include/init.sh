@@ -31,7 +31,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in set_pyver set_env set_version git_init create_tmpdir \
+	for init_cmd in set_pyver set_version set_env git_init create_tmpdir \
 	    lock create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
@@ -97,26 +97,6 @@ pybin()
 	command -v "$1" 2>/dev/null || return 1
 }
 
-xbmk_set_env()
-{
-	# XBMK_CACHE is a directory, for caching downloads and git repon
-	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
-	    err "cachedir '$xbmkpwd/cache' is a symlink"
-	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	[ -f "$XBMK_CACHE" ] && err "cachedir '$XBMK_CACHE' is a file"; :
-
-	# if "y": a coreboot target won't be built if target.cfg says release="n"
-	# (this is used to exclude certain build targets from releases)
-	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
-	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
-
-	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
-	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
-	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1; :
-}
-
 xbmk_set_version()
 {
 	[ ! -f ".version" ] || read -r version < ".version" || :; :
@@ -140,6 +120,26 @@ xbmk_set_version()
 
 	relname="$projectname-$version"
 	export LOCALVERSION="-$projectname-${version%%-*}"
+}
+
+xbmk_set_env()
+{
+	# XBMK_CACHE is a directory, for caching downloads and git repon
+	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
+	    err "cachedir '$xbmkpwd/cache' is a symlink"
+	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	[ -f "$XBMK_CACHE" ] && err "cachedir '$XBMK_CACHE' is a file"; :
+
+	# if "y": a coreboot target won't be built if target.cfg says release="n"
+	# (this is used to exclude certain build targets from releases)
+	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
+	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
+
+	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
+	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
+	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1; :
 }
 
 xbmk_git_init()
