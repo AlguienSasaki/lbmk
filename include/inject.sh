@@ -49,7 +49,7 @@ download()
 readkconfig()
 {
 	x_ rm -f "$xbmktmp/cbcfg"
-	fe_ scankconfig "$boarddir/config" -type f
+	fe_ scankconfig find "$boarddir/config" -type f
 
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
 
@@ -148,7 +148,7 @@ extract_intel_me()
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	set +u +e && fe_ extract_intel_me_bruteforce "$xbmkpwd/$appdir" -type f
+	set +u +e && fe_ find_me find "$xbmkpwd/$appdir" -type f
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
 	( x_ cd src/deguard/
@@ -158,7 +158,7 @@ extract_intel_me()
 	) || err "Error running deguard for $_me - $dontflash"; :
 }
 
-extract_intel_me_bruteforce()
+find_me()
 {
 	e "$_metmp" f && x_ rm -Rf "$xbmklocal/metmp" && return 1
 	[ -L "$1" ] && return 0
@@ -169,7 +169,7 @@ extract_intel_me_bruteforce()
 	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
 	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
 
-	fe_ extract_intel_me_bruteforce "$_7ztest" -type f || return 1; :
+	fe_ find_me find "$_7ztest" -type f || return 1; :
 }
 
 extract_archive()
@@ -228,7 +228,7 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+	chkvars TBFW_size; fe_ copy_tbfw find "$appdir" -type f -name "TBT.bin"
 }
 
 copy_tbfw()
@@ -344,7 +344,7 @@ patch_release_roms()
 	done
 
 	if readkconfig; then
-		fe_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+		fe_ preprom find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 		[ "$nukemode" != "nuke" ] || \
 			printf "Make sure you inserted vendor files: %s\n" \
 			    "$vguide" > "$tmpromdir/README.md" || :
@@ -378,7 +378,7 @@ patch_release_roms()
 	    "$archive" || err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
-prep_rom()
+preprom()
 {
 	_xrom="$1"
 	_xromname="${1##*/}"
@@ -492,7 +492,7 @@ modify_mac()
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
 
-	fe_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+	fe_ newmac find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nGbE NVM written to '%s':\n" "$archive"
 	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :

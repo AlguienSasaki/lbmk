@@ -108,7 +108,7 @@ tmpclone()
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || err "!reset $1 $2 $3 $4 $5"
-	fx_ "eval x_ git -C \"$3\" am" "$5" -type f
+	fx_ "eval x_ git -C \"$3\" am" find "$5" -type f
 	) || repofail="y"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry

@@ -140,7 +140,8 @@ chkvars()
 # e.g. coreboot is multi-tree, so 1
 singletree()
 {
-	( fx_ "exit 1" "config/$1/"*/ -type f -name "target.cfg" ) || return 1
+	( fx_ "exit 1" find "config/$1/"*/ -type f -name "target.cfg" ) || \
+	    return 1
 }
 
 fe_()
@@ -158,7 +159,7 @@ find_ex()
 	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$xmsg find "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
+	$xmsg "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
 	    err "!find $(echo "$@") > \"$fd\""
 	dx_ "$xx" "$fd" || break
 	x_ rm -f "$fd"
