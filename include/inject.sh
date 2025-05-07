@@ -228,11 +228,10 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size
-	fx_ copy_tbfw x_ find "$appdir" -type f -name "TBT.bin"
+	chkvars TBFW_size; fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
 
-copy_tbfw()
+copytb()
 {
 	[ -f "$1" ] && [ ! -L "$1" ] && x_ dd if=/dev/null of="$1" bs=1 \
 	    seek=$TBFW_size && x_ mv "$1" "$_dest" && return 1; :
@@ -345,8 +344,7 @@ patch_release_roms()
 	done
 
 	if readkconfig; then
-		fx_ preprom x_ find "$tmpromdir" -maxdepth 1 -type f \
-		    -name "*.rom"
+		fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 		[ "$nukemode" != "nuke" ] || \
 			printf "Make sure you inserted vendor files: %s\n" \
 			    "$vguide" > "$tmpromdir/README.md" || :
@@ -380,7 +378,7 @@ patch_release_roms()
 	    "$archive" || err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
-preprom()
+prep()
 {
 	_xrom="$1"
 	_xromname="${1##*/}"
