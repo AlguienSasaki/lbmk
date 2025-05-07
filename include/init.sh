@@ -80,8 +80,7 @@ pybin()
 	# ideally, don't rely on PATH or hardcoded paths if python venv.
 	# use the *real*, direct executable linked to by the venv symlink
 	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
-		# realpath isn't posix, but available mostly universally
-		pypath="$(realpath \
+		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
 		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
 		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :

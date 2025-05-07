@@ -144,6 +144,18 @@ singletree()
 	    return 1
 }
 
+findpath()
+{
+	[ $# -gt 0 ] || err "findpath: No arguments provided"
+	while [ $# -gt 0 ]; do
+		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
+		[ -n "$found" ] || found="`realpath "$1" 2>/dev/null`" || \
+		    return 1; :
+		printf "%s\n" "$found"
+		shift 1
+	done
+}
+
 fx_()
 {
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
