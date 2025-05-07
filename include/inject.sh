@@ -13,7 +13,6 @@ cbcfgsdir="config/coreboot"
 hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
-vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$xbmklocal/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/ifdtool/default/ifdtool"
@@ -338,23 +337,14 @@ patch_release_roms()
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in $hashfiles; do
-		[ "$need_files" = "y" ] || break
-		e "$tmpromdir/$_hashes" f && has_hashes="y" && \
-		    hashfile="$_hashes" && break; :
+		[ "$need_files" = "y" ] && e "$tmpromdir/$_hashes" f && \
+		    has_hashes="y" && hashfile="$_hashes" && break; :
 	done
 
-	if readkconfig; then
-		fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-		[ "$nukemode" != "nuke" ] || \
-			printf "Make sure you inserted vendor files: %s\n" \
-			    "$vguide" > "$tmpromdir/README.md" || :
-	else
-		printf "Skipping vendorfiles on '%s'\n" "$archive" 1>&2
-		need_files="n"
-	fi
+	readkconfig || exit 0; [ "$need_files" = "n" ] || \
+	    fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	(
-	[ "$need_files" = "y" ] || exit 0
 	cd "$tmpromdir" || err "patch '$archive': can't cd $tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
