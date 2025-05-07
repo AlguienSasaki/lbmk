@@ -183,7 +183,7 @@ mkseagrub()
 	[ "$payload_grubsea" = "y" ] && pname="grub"
 	[ "$payload_grubsea" = "y" ] || \
 	    cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	fe_ cprom find "$grubdata/keymap" -type f -name "*.gkb"
+	fx_ cprom x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
 add_uboot()

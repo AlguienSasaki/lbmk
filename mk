@@ -88,7 +88,7 @@ build_release()
 	x_ ./mk -d coreboot
 	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
 
-	fe_ mkrom_tarball find bin -maxdepth 1 -type d -name "serprog_*"
+	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
 	x_ mv bin ../roms
 	) || err "can't build rom images"
 

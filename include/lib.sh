@@ -144,23 +144,11 @@ singletree()
 	    return 1
 }
 
-fe_()
-{
-	find_ex "x_" "$@"
-}
-
 fx_()
 {
-	find_ex "" "$@"
-}
-
-find_ex()
-{
-	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$xmsg "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
-	    err "!find $(echo "$@") > \"$fd\""
+	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || err "FATAL: !sort fx_"
 	dx_ "$xx" "$fd" || break
 	x_ rm -f "$fd"
 }
