@@ -7,12 +7,6 @@
 
 grubdata="config/data/grub"
 
-mkserprog()
-{
-	$dry fe_ "eval buildser \"$1\"" basename -as .h "$serdir/"*.h
-	[ "$XBMK_RELEASE" = "y" ] && $dry mkrom_tarball "bin/serprog_$1"; :
-}
-
 buildser()
 {
 	[ "$1" = "pico" ] && x_ cmake -DPICO_BOARD="$2" \
