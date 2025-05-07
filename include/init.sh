@@ -131,6 +131,9 @@ xbmk_set_env()
 	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
 	    err "cachedir '$xbmkpwd/cache' is a symlink"
 	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	xbmkcache="`findpath "$XBMK_CACHE"`" || \
+	    err "Can't resolve cachedir: '$XBMK_CACHE'"
+	export XBMK_CACHE="$xbmkcache"
 	[ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
 
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
