@@ -150,7 +150,8 @@ extract_intel_me()
 	set +u +e && fx_ find_me x_ find "$xbmkpwd/$appdir" -type f
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
-	( x_ cd src/deguard/
+	(
+	x_ cd src/deguard/
 	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
 	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
 	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_me"
@@ -181,15 +182,11 @@ extract_archive()
 
 extract_kbc1126ec()
 {
-	x_ e "$kbc1126_ec_dump" f
 	(
 	x_ cd "$appdir/"
-	mv Rompaq/68*.BIN ec.bin || :
-	if [ ! -f "ec.bin" ]; then
-		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || err "kbc1126 unar failed"
-		x_ mv Rom.bin ec.bin
-	fi
+	mv Rompaq/68*.BIN ec.bin || unar -D ROM.CAB Rom.bin || unar -D \
+	    Rom.CAB Rom.bin || unar -D 68*.CAB Rom.bin || err "!kbc1126 unar"
+	[ -f "ec.bin" ] || x_ mv Rom.bin ec.bin
 	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
 	) || err "$board: can't extract kbc1126 ec firmware - $dontflash"
 
