@@ -168,7 +168,6 @@ x_()
 
 err()
 {
-	set -u -e
 	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	exit 1
 }
