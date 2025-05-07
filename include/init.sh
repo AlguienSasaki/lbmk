@@ -119,11 +119,12 @@ xbmk_set_version()
 	printf "%s\n" "$versiondate" > ".versiondate" || err "can't save date"
 
 	relname="$projectname-$version"
-	export LOCALVERSION="-$projectname-${version%%-*}"
 }
 
 xbmk_set_env()
 {
+	export LOCALVERSION="-$projectname-${version%%-*}"
+
 	# XBMK_CACHE is a directory, for caching downloads and git repon
 	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
 	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
