@@ -139,6 +139,8 @@ xbmk_set_env()
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
 	# (this is used to exclude certain build targets from releases)
 	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
+	[ "$XBMK_RELEASE" = "N" ] && export XBMK_RELEASE="n"
+	[ "$XBMK_RELEASE" = "Y" ] && export XBMK_RELEASE="y"
 	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
 
 	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
