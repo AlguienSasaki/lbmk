@@ -354,7 +354,7 @@ patch_release_roms()
 	fi
 	) || err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
-	[ -z "$new_mac" ] || modify_mac || printf "\nGbE not defined\n" 1>&2
+	[ -z "$new_mac" ] || [ -z "$CONFIG_GBE_BIN_PATH" ] || modify_mac
 
 	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
 	[ "$xchanged" = "y" ] || return 0
@@ -476,16 +476,11 @@ insert()
 
 modify_mac()
 {
-	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
-
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-
-	printf "\nGbE NVM written to '%s':\n" "$archive"
-	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
 }
 
 newmac()
