@@ -196,7 +196,7 @@ menuentry 'Load Operating System (incl. fully encrypted disks)  [o]' --hotkey='o
 	# using * is slow on some machines, but we use it here,
 	# just once. in so doing, we find every lvm volume
 	for vol in (*); do
-		if regexp ^lvm/ $vol; then
+		if regexp ^\\(lvm/ $vol; then
 			lvmvol="${lvmvol} ${vol}"
 			try_bootcfg "${vol}"
 		fi
