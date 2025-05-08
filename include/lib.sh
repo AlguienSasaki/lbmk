@@ -140,34 +140,35 @@ chkvars()
 # e.g. coreboot is multi-tree, so 1
 singletree()
 {
-	( fx_ "exit 1" "config/$1/"*/ -type f -name "target.cfg" ) || return 1
+	( fx_ "exit 1" find "config/$1/"*/ -type f -name "target.cfg" ) || \
+	    return 1
 }
 
-fe_()
+findpath()
 {
-	find_ex "x_" "$@"
+	[ $# -gt 0 ] || err "findpath: No arguments provided"
+	while [ $# -gt 0 ]; do
+		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
+		[ -n "$found" ] || found="`realpath "$1" 2>/dev/null`" || \
+		    return 1; :
+		printf "%s\n" "$found"
+		shift 1
+	done
 }
 
 fx_()
 {
-	find_ex "" "$@"
-}
-
-find_ex()
-{
-	xmsg="$1" && shift 1
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	$xmsg find "$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
-	    err "!find $(echo "$@") > \"$fd\""
-	dx_ "$xx" "$fd"
+	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || err "FATAL: !sort fx_"
+	dx_ "$xx" "$fd" || break
 	x_ rm -f "$fd"
 }
 
 dx_()
 {
 	[ -f "$2" ] && while read -r fx; do
-		$1 "$fx"
+		$1 "$fx" || return 1
 	done < "$2"; :
 }
 
@@ -179,7 +180,6 @@ x_()
 
 err()
 {
-	set -u -e
 	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	exit 1
 }

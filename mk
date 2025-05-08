@@ -87,6 +87,8 @@ build_release()
 	cd "$srcdir" || err "$vdir: 2 !cd \"$srcdir\""
 	x_ ./mk -d coreboot
 	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
+
+	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
 	x_ mv bin ../roms
 	) || err "can't build rom images"
 
@@ -279,7 +281,7 @@ check_project_hashes()
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
 
-	fx_ "x_ sha512sum" "$datadir" "$configdir/$tree" "$mdir" \
+	fx_ "x_ sha512sum" find "$datadir" "$configdir/$tree" "$mdir" \
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
 	    "$xbmktmp/project.hash" || err "!h $project $tree"
 
@@ -371,7 +373,7 @@ check_defconfig()
 elfcheck()
 {
 	# TODO: *STILL* very hacky check. do it properly (based on build.list)
-	( fx_ "exit 1" "$dest_dir" -type f ) || return 1; :
+	( fx_ "exit 1" find "$dest_dir" -type f ) || return 1; :
 }
 
 handle_makefile()

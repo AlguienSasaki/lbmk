@@ -13,7 +13,6 @@ cbcfgsdir="config/coreboot"
 hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
-vguide="https://libreboot.org/docs/install/ivy_has_common.html"
 tmpromdel="$xbmklocal/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/ifdtool/default/ifdtool"
@@ -35,7 +34,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
-    IFD_platform ifdprefix cdir sdir _me _metmp mfs TBFW_url_bkup TBFW_url \
+    IFD_platform ifdprefix _me _metmp mfs TBFW_url_bkup TBFW_url \
     TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
     vfile cbcfg $cv`"
 
@@ -49,7 +48,7 @@ download()
 readkconfig()
 {
 	x_ rm -f "$xbmktmp/cbcfg"
-	fe_ scankconfig "$boarddir/config" -type f
+	fx_ scankconfig x_ find "$boarddir/config" -type f
 
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
 
@@ -139,15 +138,16 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && err "$cbdir: me_cleaner missing. $dontflash"
 
-	cdir="$xbmkpwd/$appdir"
+	_7ztest="$xbmklocal/metmp/a"
 	_me="$xbmkpwd/$_dest"
 	_metmp="$xbmklocal/me.bin"
+	x_ rm -f "$_metmp" "$xbmklocal/a"
 
 	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	extract_intel_me_bruteforce
+	set +u +e && fx_ find_me x_ find "$xbmkpwd/$appdir" -type f
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
 	(
@@ -158,38 +158,18 @@ extract_intel_me()
 	) || err "Error running deguard for $_me - $dontflash"; :
 }
 
-extract_intel_me_bruteforce()
+find_me()
 {
-	[ $# -gt 0 ] && cdir="$1"
-	e "$_metmp" f && return 0
+	e "$_metmp" f && x_ rm -Rf "$xbmklocal/metmp" && return 1
+	[ -L "$1" ] && return 0
 
-	[ -z "$sdir" ] && sdir="$(mktemp -d)"
-	x_ mkdir -p "$sdir"
+	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
 
-	set +u +e
-	(
-	[ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-	cd "$cdir" || err "extract_intel_me: !cd \"$cdir\" - $dontflash"
-	for i in *; do
-		c=0 && e "$_metmp" f && break
-		[ -L "$i" ] && continue
-		[ -e "$i" ] || continue
-		[ -d "$i" ] && extract_intel_me_bruteforce "$cdir/$i" && c=1
-		if [ $c -eq 0 ] && [ -f "$i" ]; then
-			_r="-r" && [ -n "$mfs" ] && _r=""
-			"$mecleaner" $mfs $_r -t -O "$sdir/vendorfile" \
-			    -M "$_metmp" "$i" && break
-			"$mecleaner" $mfs $_r -t -O "$_metmp" "$i" && break
-			"$me7updateparser" -O "$_metmp" "$i" && break
-			_7ztest="${_7ztest}a"
-			extract_archive "$i" "$_7ztest" || continue
-			extract_intel_me_bruteforce "$cdir/$_7ztest"
-		fi
-		cdir="$1"; [ "${cdir#/a}" != "$cdir" ] && cdir="${cdir#/}"
-		cd "$cdir" || :
-	done
-	) || :
-	rm -Rf "$sdir" || err "extract_intel_me: !rm -Rf $sdir - $dontflash"
+	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" || \
+	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
+	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
+
+	fx_ find_me x_ find "$_7ztest" -type f || return 1; :
 }
 
 extract_archive()
@@ -202,15 +182,11 @@ extract_archive()
 
 extract_kbc1126ec()
 {
-	x_ e "$kbc1126_ec_dump" f
 	(
 	x_ cd "$appdir/"
-	mv Rompaq/68*.BIN ec.bin || :
-	if [ ! -f "ec.bin" ]; then
-		unar -D ROM.CAB Rom.bin || unar -D Rom.CAB Rom.bin || \
-		    unar -D 68*.CAB Rom.bin || err "kbc1126 unar failed"
-		x_ mv Rom.bin ec.bin
-	fi
+	mv Rompaq/68*.BIN ec.bin || unar -D ROM.CAB Rom.bin || unar -D \
+	    Rom.CAB Rom.bin || unar -D 68*.CAB Rom.bin || err "!kbc1126 unar"
+	[ -f "ec.bin" ] || x_ mv Rom.bin ec.bin
 	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
 	) || err "$board: can't extract kbc1126 ec firmware - $dontflash"
 
@@ -248,10 +224,10 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size && fe_ copy_tbfw "$appdir" -type f -name "TBT.bin"
+	chkvars TBFW_size; fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
 
-copy_tbfw()
+copytb()
 {
 	[ -f "$1" ] && [ ! -L "$1" ] && x_ dd if=/dev/null of="$1" bs=1 \
 	    seek=$TBFW_size && x_ mv "$1" "$_dest" && return 1; :
@@ -358,23 +334,14 @@ patch_release_roms()
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in $hashfiles; do
-		[ "$need_files" = "y" ] || break
-		e "$tmpromdir/$_hashes" f && has_hashes="y" && \
-		    hashfile="$_hashes" && break; :
+		[ "$need_files" = "y" ] && e "$tmpromdir/$_hashes" f && \
+		    has_hashes="y" && hashfile="$_hashes" && break; :
 	done
 
-	if readkconfig; then
-		fe_ prep_rom "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-		[ "$nukemode" != "nuke" ] || \
-			printf "Make sure you inserted vendor files: %s\n" \
-			    "$vguide" > "$tmpromdir/README.md" || :
-	else
-		printf "Skipping vendorfiles on '%s'\n" "$archive" 1>&2
-		need_files="n"
-	fi
+	readkconfig || exit 0; [ "$need_files" = "n" ] || \
+	    fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	(
-	[ "$need_files" = "y" ] || exit 0
 	cd "$tmpromdir" || err "patch '$archive': can't cd $tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
@@ -384,7 +351,7 @@ patch_release_roms()
 	fi
 	) || err "'$archive' -> Can't verify vendor hashes. $dontflash"
 
-	[ -z "$new_mac" ] || modify_mac || printf "\nGbE not defined\n" 1>&2
+	[ -z "$new_mac" ] || [ -z "$CONFIG_GBE_BIN_PATH" ] || modify_mac
 
 	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
 	[ "$xchanged" = "y" ] || return 0
@@ -398,7 +365,7 @@ patch_release_roms()
 	    "$archive" || err "'$archive' -> Can't overwrite - $dontflash"; :
 }
 
-prep_rom()
+prep()
 {
 	_xrom="$1"
 	_xromname="${1##*/}"
@@ -506,16 +473,11 @@ insert()
 
 modify_mac()
 {
-	[ -n "$CONFIG_GBE_BIN_PATH" ] || return 1
-
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
 
-	fe_ newmac "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-
-	printf "\nGbE NVM written to '%s':\n" "$archive"
-	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
+	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 }
 
 newmac()

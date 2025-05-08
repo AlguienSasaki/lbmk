@@ -7,24 +7,15 @@
 
 grubdata="config/data/grub"
 
-mkserprog()
+buildser()
 {
-	[ "$_f" = "-d" ] && return 0 # dry run
-	basename -as .h "$serdir/"*.h > "$xbmktmp/ser" || \
-	    err "!mk $1 $xbmktmp"
-
-	while read -r sertarget; do
-		[ "$1" = "pico" ] && x_ cmake -DPICO_BOARD="$sertarget" \
-		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" \
-		    && x_ cmake --build "$sersrc/build"
-		[ "$1" = "stm32" ] && x_ make -C "$sersrc" \
-		    libopencm3-just-make BOARD=$sertarget && x_ make -C \
-		    "$sersrc" BOARD=$sertarget
-		x_ mkdir -p "bin/serprog_$1"
-		x_ mv "$serx" "bin/serprog_$1/serprog_$sertarget.${serx##*.}"
-	done < "$xbmktmp/ser"
-
-	[ "$XBMK_RELEASE" = "y" ] && mkrom_tarball "bin/serprog_$1"; :
+	[ "$1" = "pico" ] && x_ cmake -DPICO_BOARD="$2" \
+	    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" && \
+	    x_ cmake --build "$sersrc/build"
+	[ "$1" = "stm32" ] && x_ make -C "$sersrc" libopencm3-just-make \
+	    BOARD=$2 && x_ make -C "$sersrc" BOARD=$2
+	x_ mkdir -p "bin/serprog_$1"
+	x_ mv "$serx" "bin/serprog_$1/serprog_$2.${serx##*.}"
 }
 
 copyps1bios()
@@ -192,7 +183,7 @@ mkseagrub()
 	[ "$payload_grubsea" = "y" ] && pname="grub"
 	[ "$payload_grubsea" = "y" ] || \
 	    cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	fe_ "cprom" "$grubdata/keymap" -type f -name "*.gkb"
+	fx_ cprom x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
 add_uboot()
