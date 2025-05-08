@@ -134,7 +134,8 @@ xbmk_set_env()
 	xbmkcache="`findpath "$XBMK_CACHE"`" || \
 	    err "Can't resolve cachedir: '$XBMK_CACHE'"
 	export XBMK_CACHE="$xbmkcache"
-	[ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
+	[ ! -e "$XBMK_CACHE" ] || \
+	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
 
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
 	# (this is used to exclude certain build targets from releases)
