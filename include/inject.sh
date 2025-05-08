@@ -162,7 +162,7 @@ extract_intel_me()
 
 find_me()
 {
-	e "$_metmp" f && exit 1
+	[ -f "$_metmp" ] && exit 1
 	[ -L "$1" ] && return 0
 
 	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
@@ -171,7 +171,7 @@ find_me()
 	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
 	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
 
-	e "$_metmp" f && exit 1
+	[ -f "$_metmp" ] && exit 1
 	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; :
 }
 
