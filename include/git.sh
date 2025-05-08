@@ -94,6 +94,7 @@ tmpclone()
 
 	resetfail="n"
 	repofail="n"
+	amfail="n"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
@@ -109,11 +110,12 @@ tmpclone()
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
 	git -C "$3" reset --hard "$4" || resetfail="y"
-	[ "$resetfail" = "y" ] && err "'$3': Cannot reset to rev '$4'"
-	fx_ "eval x_ git -C \"$3\" am" find "$5" -type f
+	[ "$resetfail" = "y" ] || ( fx_ "eval x_ git -C \"$3\" am" find "$5" \
+	    -type f ) || amfail="y"
 	) || repofail="y"
 
 	[ "$resetfail" = "y" ] && err "Cannot reset revisions"
+	[ "$amfail" = "y" ] && err "Cannot apply patches"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
 	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
