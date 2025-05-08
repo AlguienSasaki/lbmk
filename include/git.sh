@@ -92,9 +92,7 @@ tmpclone()
 	livepull="n" && [ "$repofail" = "y" ] && \
 	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
 
-	resetfail="n"
-	repofail="n"
-	amfail="n"
+	eval "`setvars "n" resetfail repofail amfail`"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || err "git retry: !rm $3 ($1)"
 	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
