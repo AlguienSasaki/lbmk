@@ -92,6 +92,7 @@ tmpclone()
 	livepull="n" && [ "$repofail" = "y" ] && \
 	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
 
+	resetfail="n"
 	repofail="n"
 
 	[ $# -lt 6 ] || rm -Rf "$3" || err "git retry: !rm $3 ($1)"
@@ -107,9 +108,12 @@ tmpclone()
 	fi
 	(
 	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
-	git -C "$3" reset --hard "$4" || err "!reset $1 $2 $3 $4 $5"
+	git -C "$3" reset --hard "$4" || resetfail="y"
+	[ "$resetfail" = "y" ] && err "'$3': Cannot reset to rev '$4'"
 	fx_ "eval x_ git -C \"$3\" am" find "$5" -type f
 	) || repofail="y"
+
+	[ "$resetfail" = "y" ] && err "Cannot reset revisions"
 
 	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
 	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
