@@ -89,34 +89,12 @@ fetch_submodule()
 
 tmpclone()
 {
-	livepull="n" && [ "$repofail" = "y" ] && \
-	    printf "Cached clone failed; trying online.\n" 1>&2 && livepull="y"
-
-	eval "`setvars "n" resetfail repofail amfail`"
-
-	[ $# -lt 6 ] || rm -Rf "$3" || err "git retry: !rm $3 ($1)"
-	repodir="$XBMK_CACHE/repo/${1##*/}" && [ $# -gt 5 ] && repodir="$3"
-	mkdir -p "$XBMK_CACHE/repo" || err "!rmdir $XBMK_CACHE/repo"
-
-	if [ "$livepull" = "y" ] && [ ! -d "$repodir" ]; then
-		git clone "$1" "$repodir" || git clone $2 "$repodir" || \
-		    err "!clone $1 $2 $repodir $4 $5" #
-	elif [ -d "$repodir" ] && [ $# -lt 6 ]; then
-		git -C "$repodir" pull || sleep 3 || git -C "$repodir" pull \
-		    || sleep 3 || git -C "$repodir" pull || :
-	fi
-	(
-	[ $# -gt 5 ] || git clone "$repodir" "$3" || err "!clone $repodir $3"
-	git -C "$3" reset --hard "$4" || resetfail="y"
-	[ "$resetfail" = "y" ] || ( fx_ "eval x_ git -C \"$3\" am" find "$5" \
-	    -type f ) || amfail="y"
-	) || repofail="y"
-
-	[ "$resetfail" = "y" ] && err "Cannot reset revisions"
-	[ "$amfail" = "y" ] && err "Cannot apply patches"
-
-	[ "$repofail" = "y" ] && [ $# -lt 6 ] && tmpclone "$@" retry
-	[ "$repofail" = "y" ] && err "!clone $1 $2 $3 $4 $5"; :
+	[ -d "$3" ] && return 0
+	printf "Creating git clone '%s' from '%s', '%s'\n" "$3" "$1" "$2"
+	git clone "$1" "$3" || x_ rm -Rf "$3"
+	[ -d "$3" ] || x_ git clone "$2" "$3"
+	x_ git -C "$3" reset --hard "$4"
+	fx_ "eval x_ git -C \"$3\" am" find "$5" -type f
 }
 
 nuke()
