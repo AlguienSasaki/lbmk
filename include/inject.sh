@@ -147,7 +147,9 @@ extract_intel_me()
 	    chkvars ME11delta ME11version ME11sku ME11pch
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
-	set +u +e && fx_ find_me x_ find "$xbmkpwd/$appdir" -type f
+	set +u +e
+	x_ rm -Rf "$xbmkpwd/metmp"
+	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
 
 	(
@@ -160,7 +162,7 @@ extract_intel_me()
 
 find_me()
 {
-	e "$_metmp" f && x_ rm -Rf "$xbmklocal/metmp" && return 1
+	e "$_metmp" f && exit 1
 	[ -L "$1" ] && return 0
 
 	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
@@ -169,7 +171,8 @@ find_me()
 	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
 	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
 
-	fx_ find_me x_ find "$_7ztest" -type f || return 1; :
+	e "$_metmp" f && exit 1
+	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; :
 }
 
 extract_archive()
