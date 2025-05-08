@@ -18,8 +18,7 @@ fi
 . "include/inject.sh"
 . "include/mrc.sh"
 . "include/rom.sh"
-
-eval "`setvars "" vdir src_dirname srcdir mode`"
+. "include/release.sh"
 
 main()
 {
@@ -32,67 +31,6 @@ main()
 	*) err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-}
-
-release()
-{
-	export XBMK_RELEASE="y"
-
-	vdir="release"
-	while getopts d:m: option; do
-		[ -z "$OPTARG" ] && err "empty argument not allowed"
-		case "$option" in
-		d) vdir="$OPTARG" ;;
-		m) mode="$OPTARG" ;;
-		*) err "invalid option '-$option'" ;;
-		esac
-	done
-
-	vdir="$vdir/$version"
-	src_dirname="${relname}_src"
-	srcdir="$vdir/$src_dirname"
-
-	[ -e "$vdir" ] && err "already exists: \"$vdir\""
-	mkdir -p "$vdir" || err "mkvdir: !mkdir -p \"$vdir\""
-	git clone . "$srcdir" || err "mkdir: !gitclone \"$srcdir\""
-	touch "$srcdir/lock" || err "can't make lock file in $srcdir/"
-
-	build_release
-
-	printf "\n\nDONE! Check release files under %s\n" "$vdir"
-}
-
-build_release()
-{
-	(
-	cd "$srcdir" || err "$vdir: !cd \"$srcdir\""
-
-	x_ ./mk -f
-	rmgit .
-	x_ mv src/docs docs
-	) || err "can't create release files"
-
-	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "$srcdir/CHANGELOG" || err "!gitlog $srcdir"
-	rm -f "$srcdir/lock" || err "can't remove lock file in $srcdir"
-
-	(
-	cd "${srcdir%/*}" || err "$vdir: mktarball \"$srcdir\""
-	mktarball "${srcdir##*/}" "${srcdir##*/}.tar.xz" || err "$vdir: mksrc"
-	) || err "can't create src tarball"
-	[ "$mode" = "src" ] && return 0
-
-	touch "$srcdir/lock" || err "can't make lock file in $srcdir/"
-	(
-	cd "$srcdir" || err "$vdir: 2 !cd \"$srcdir\""
-	x_ ./mk -d coreboot
-	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
-
-	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
-	x_ mv bin ../roms
-	) || err "can't build rom images"
-
-	rm -Rf "$srcdir" || err "!rm -Rf $srcdir"
 }
 
 main "$@" && exit 0
