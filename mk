@@ -32,8 +32,6 @@ main()
 
 main "$@" && exit 0
 
-# what follows was formerly script/trees, whose main() is now trees()
-
 . "include/git.sh"
 . "include/tree.sh"
 
