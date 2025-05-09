@@ -45,7 +45,7 @@ xbmkpkg()
 	eval "`setcfg "config/dependencies/$2"`"
 
 	chkvars pkg_add pkglist
-	$pkg_add $pkglist || err "Cannot install packages"
+	x_ $pkg_add $pkglist
 
 	[ -n "$aur_notice" ] && \
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
@@ -200,7 +200,7 @@ xbmk_create_pathdirs()
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
-	cd "$XBMK_CACHE/xbmkpath" || err "can't cd $XBMK_CACHE/xbmkpath"
+	x_ cd "$XBMK_CACHE/xbmkpath"
 	x_ ln -s "`pybin "$python"`" python
 	) || err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
 }

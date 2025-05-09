@@ -10,8 +10,8 @@ extract_mrc()
 {
 	extract_shellball
 
-	"$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
-	    -f "$_dest" -r RO_SECTION || err "extract_mrc: !$cbfstool $_dest"
+	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
+	    -f "$_dest" -r RO_SECTION
 
 	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode extra; :
 }
@@ -27,7 +27,7 @@ extract_refcode()
 	# and refcode is extracted from an image using the old scheme. we use
 	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16
 	chkvars cbfstoolref
-	mkdir -p "${_refdest%/*}" || err "ref: !mkdir -p ${_refdest%/*}"
+	x_ mkdir -p "${_refdest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
@@ -60,8 +60,8 @@ extract_partition()
 	START=$(( $( echo $ROOTP | cut -f2 -d\ | tr -d "B" ) ))
 	SIZE=$(( $( echo $ROOTP | cut -f4 -d\ | tr -d "B" ) ))
 
-	dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \
-	    count=$(( $SIZE / 1024 )) || err "ex dd ${1%.zip}, root-a.ext2"
+	x_ dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \
+	    count=$(( $SIZE / 1024 ))
 
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
 	    "$SHELLBALL" | debugfs "root-a.ext2" || err "!extract shellball"

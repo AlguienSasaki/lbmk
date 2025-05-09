@@ -322,7 +322,7 @@ check_cmake()
 check_autoconf()
 {
 	(
-	cd "$1" || err "!cd $1"
+	x_ cd "$1"
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
 	[ -f "configure" ] && x_ ./configure $autoconfargs; :

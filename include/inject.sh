@@ -121,7 +121,7 @@ fetch()
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
 	xbmkget "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
 
-	rm -Rf "${_dl}_extracted" || err "!rm ${_ul}_extracted. $dontflash"
+	x_ rm -Rf "${_dl}_extracted"
 	e "$_dest" f && return 0
 
 	x_ mkdir -p "${_dest%/*}"
@@ -219,7 +219,7 @@ extract_sch5545ec()
 	_sch5545ec_fw="$_sch5545ec_fw/54 D386BEB8-4B54-4E69-94F5-06091F67E0D3"
 	_sch5545ec_fw="$_sch5545ec_fw/0 Raw section/body.bin" # <-- this!
 
-	"$uefiextract" "$_bios" || err "sch5545 !extract - $dontflash"
+	x_ "$uefiextract" "$_bios"
 	x_ cp "$_sch5545ec_fw" "$_dest"
 }
 
@@ -345,7 +345,7 @@ patch_release_roms()
 	    fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	(
-	cd "$tmpromdir" || err "patch '$archive': can't cd $tmpromdir"
+	x_ cd "$tmpromdir"
 	# NOTE: For compatibility with older rom releases, defer to sha1
 	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
 		sha512sum --status -c "$hashfile" || \
@@ -385,7 +385,7 @@ prep()
 		[ $xromsize -lt 524288 ] && err "too small, $xromsize: $_xrom"
 
 		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
-		rm -f "$_xrom" || err "Can't rm $_xrom - $dontflash"
+		x_ rm -f "$_xrom"
 
 		_xrom="$_xromnew"
 	fi
@@ -455,21 +455,20 @@ insert()
 	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
 
 	if [ "$cbfsname" = "IFD" ]; then
-		[ "$nukemode" = "nuke" ] || "$ifdtool" $ifdprefix -i \
-		    $_t:$_dest "$rom" -O "$rom" || \
-		    err "failed: insert '$_t' '$_dest' on '$rom'"
-		[ "$nukemode" != "nuke" ] || "$ifdtool" $ifdprefix --nuke $_t \
-		    "$rom" -O "$rom" || err "$rom: !nuke IFD/$_t"
+		[ "$nukemode" = "nuke" ] || x_ "$ifdtool" $ifdprefix -i \
+		    $_t:$_dest "$rom" -O "$rom"
+		[ "$nukemode" != "nuke" ] || x_ "$ifdtool" $ifdprefix --nuke \
+		    $_t "$rom" -O "$rom"
 	elif [ "$nukemode" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ rm -f "$xbmklocal/refcode"
-		"$rmodtool" -i "$_dest" -o "$xbmklocal/refcode" || "!reloc ref"
-		"$cbfstool" "$rom" add-stage -f "$xbmklocal/refcode" \
-		    -n "$cbfsname" -t stage || err "$rom: !add ref"
+		x_ "$rmodtool" -i "$_dest" -o "$xbmklocal/refcode"
+		x_ "$cbfstool" "$rom" add-stage -f "$xbmklocal/refcode" \
+		    -n "$cbfsname" -t stage
 	else
-		"$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
-		    -t $_t $_offset || err "$rom !add $_t ($_dest)"
+		x_ "$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
+		    -t $_t $_offset
 	fi
 	xchanged="y"; :
 }

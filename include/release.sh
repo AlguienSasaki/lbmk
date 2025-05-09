@@ -22,9 +22,9 @@ release()
 	relsrcdir="$vdir/$src_dirname"
 
 	[ -e "$vdir" ] && err "already exists: \"$vdir\""
-	mkdir -p "$vdir" || err "mkvdir: !mkdir -p \"$vdir\""
-	git clone . "$relsrcdir" || err "mkdir: !gitclone \"$relsrcdir\""
-	touch "$relsrcdir/lock" || err "can't make lock file in $relsrcdir/"
+	x_ mkdir -p "$vdir"
+	x_ git clone . "$relsrcdir"
+	x_ touch "$relsrcdir/lock"
 
 	build_release
 
@@ -34,7 +34,7 @@ release()
 build_release()
 {
 	(
-	cd "$relsrcdir" || err "$vdir: !cd \"$relsrcdir\""
+	x_ cd "$relsrcdir"
 
 	x_ ./mk -f
 	rmgit .
@@ -43,17 +43,17 @@ build_release()
 
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$relsrcdir/CHANGELOG" || err "!log $relsrcdir"
-	rm -f "$relsrcdir/lock" || err "can't remove lock file in $relsrcdir"
+	x_ rm -f "$relsrcdir/lock"
 
 	(
-	cd "${relsrcdir%/*}" || err "$vdir: mktarball \"$relsrcdir\""
+	x_ cd "${relsrcdir%/*}"
 	x_ mktarball "${relsrcdir##*/}" "${relsrcdir##*/}.tar.xz"
 	) || err "can't create src tarball"
 	[ "$relmode" = "src" ] && return 0
 
-	touch "$relsrcdir/lock" || err "can't make lock file in $relsrcdir/"
+	x_ touch "$relsrcdir/lock"
 	(
-	cd "$relsrcdir" || err "$vdir: 2 !cd \"$relsrcdir\""
+	x_ cd "$relsrcdir"
 	x_ ./mk -d coreboot
 	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
 
@@ -61,5 +61,5 @@ build_release()
 	x_ mv bin ../roms
 	) || err "can't build rom images"
 
-	rm -Rf "$relsrcdir" || err "!rm -Rf $relsrcdir"
+	x_ rm -Rf "$relsrcdir"
 }

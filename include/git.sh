@@ -61,7 +61,7 @@ git_prep()
 	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
 
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
-	mv "$tmpgit" "$_loc" || err "git_prep: !mv $tmpgit $_loc"
+	x_ mv "$tmpgit" "$_loc"
 }
 
 fetch_submodule()
@@ -82,7 +82,7 @@ fetch_submodule()
 
 	[ "$st" = "file" ] && xbmkget "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
-	rm -Rf "$tmpgit/$1" || err "!rm '$mdir' '$1'"
+	x_ rm -Rf "$tmpgit/$1"
 	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
 	    "$mdir/${1##*/}/patches"
 }
@@ -101,6 +101,6 @@ nuke()
 {
 	e "config/${1%/}/nuke.list" f missing || while read -r nukefile; do
 		rmf="src/${2%/}/$nukefile" && [ -L "$rmf" ] && continue
-		e "$rmf" e missing || rm -Rf "$rmf" || err "!rm $rmf, ${2%/}"
+		e "$rmf" e missing || x_ rm -Rf "$rmf"
 	done < "config/${1%/}/nuke.list"; :
 }

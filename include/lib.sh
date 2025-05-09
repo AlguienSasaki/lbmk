@@ -58,7 +58,7 @@ xbmkget()
 	for url in "$1" "$2"; do
 		[ "$dl_fail" = "n" ] && break
 		[ -z "$url" ] && continue
-		rm -f "$cached" || err "!rm -f '$cached'"
+		x_ rm -f "$cached"
 		if [ "$_dlop" = "curl" ]; then
 			curl --location --retry 3 -A "$_ua" "$url" \
 			    -o "$cached" || wget --tries 3 -U "$_ua" "$url" \
