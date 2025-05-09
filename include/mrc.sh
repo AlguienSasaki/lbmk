@@ -23,9 +23,9 @@ extract_refcode()
 
 	[ $# -lt 1 ] && extract_shellball
 
-	# cbfstool changed the attributes scheme for stage files,
-	# incompatible with older versions before coreboot 4.14,
-	# so we need coreboot 4.13 cbfstool for certain refcode files
+	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
+	# and refcode is extracted from an image using the old scheme. we use
+	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16
 	chkvars cbfstoolref
 	mkdir -p "${_refdest%/*}" || err "ref: !mkdir -p ${_refdest%/*}"
 
