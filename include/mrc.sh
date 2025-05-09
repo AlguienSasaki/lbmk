@@ -30,11 +30,13 @@ extract_refcode()
 	mkdir -p "${_refdest%/*}" || err "ref: !mkdir -p ${_refdest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
-	    -m x86 -n fallback/refcode -f "$_refdest" -r RO_SECTION
+	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
 	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
-	    of="$_refdest" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
+	    of="$appdir/ref" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
+
+	x_ mv "$appdir/ref" "$_refdest"
 }
 
 extract_shellball()
