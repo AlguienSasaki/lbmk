@@ -30,18 +30,17 @@ cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FW1 \
     CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
     CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 CONFIG_FSP_S_CBFS \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_FSP_FD_PATH \
-    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS"
+    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS \
+    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD"
 
 # lbmk-specific extensions; mostly used for downloading vendor files
 eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
-    E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest \
-    mecleaner kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url \
-    EC_url rom DL_url nukemode cbfstoolref FSPFD_hash \
-    _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
-    _me _metmp mfs TBFW_url_bkup TBFW_url TBFW_hash \
-    TBFW_size hashfile xromsize xchanged EC_url_bkup vfile \
-    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD cbdir`"
+    E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
+    kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
+    nukemode cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
+    ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url vfile \
+    TBFW_hash TBFW_size hashfile xchanged EC_url_bkup cbdir`"
 
 download()
 {
