@@ -145,7 +145,8 @@ remktar()
 {
 	(
 	x_ cd "${tmpromdir%"/bin/$board"}"
-	mkrom_tarball "bin/$board"
+	printf "Re-building tar archive (please wait)\n"
+	mkrom_tarball "bin/$board" 1>/dev/null
 	) || err "Cannot re-generate '$archive'"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
