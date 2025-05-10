@@ -5,9 +5,7 @@
 
 cbcfgsdir="config/coreboot"
 hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
-dontflash="!!! AN ERROR OCCURED! Please DO NOT flash if injection failed. !!!"
-vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
-tmpromdel="$xbmklocal/DO_NOT_FLASH"
+tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/ifdtool/default/ifdtool"
 
@@ -15,15 +13,15 @@ cv="CONFIG_GBE_BIN_PATH"
 [ -n "$cvxbmk" ] && cv="$cv $cvxbmk"
 [ -n "$cvchk" ] && cv="$cv $cvchk"
 
-eval "`setvars "" archive boarddir cbdir IFD_platform ifdprefix tree new_mac \
-    tmpromdir $cv`"
+eval "`setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
+    tmpromdir board $cv`"
 
 inject()
 {
 	remkdir "$tmpromdel"
 
 	set +u +e
-	[ $# -lt 1 ] && err "No options specified. - $dontflash"
+	[ $# -lt 1 ] && err "No options specified"
 	eval "`setvars "" nukemode new_mac xchanged`"
 
 	archive="$1";
@@ -57,11 +55,11 @@ inject()
 
 check_release()
 {
-	[ -L "$archive" ] && err "'$archive' is a symlink. $dontflash"
+	[ -L "$archive" ] && err "'$archive' is a symlink"
 	e "$archive" f missing && err "'$archive' missing"
 
 	archivename="`basename "$archive"`" || err "Can't get '$archive' name"
-	[ -z "$archivename" ] && err "Can't determine archive name. $dontflash"
+	[ -z "$archivename" ] && err "Can't determine archive name"
 
 	case "$archivename" in
 	*_src.tar.xz)
@@ -71,7 +69,7 @@ check_release()
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		err "'$archive': could not detect board type - $dontflash"
+		err "'$archive': could not detect board type"
 	esac; :
 }
 
@@ -86,14 +84,6 @@ check_target()
 	eval "`setcfg "$boarddir/target.cfg"`"
 	chkvars tree && x_ ./mk -d coreboot "$tree"
 
-	[ -n "$vcfg" ] && check_vcfg
-
-	cbdir="src/coreboot/$tree"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
-	rmodtool="elf/cbfstool/$tree/rmodtool"
-	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
-	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
 	ifdtool="elf/ifdtool/$tree/ifdtool"
 	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :
 }
@@ -103,7 +93,7 @@ patch_release()
 	[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
 
 	has_hashes="n"
-	tmpromdir="$xbmklocal/DO_NOT_FLASH/bin/$board"
+	tmpromdir="$tmpromdel/bin/$board"
 
 	remkdir "${tmpromdir%"/bin/$board"}"
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
@@ -115,9 +105,6 @@ patch_release()
 
 	readkconfig || exit 0
 
-	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-	( check_vendor_hashes ) || err "Can't verify hashes for '$archive'"; :
-
 	[ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ] && modify_mac; :
 }
 
@@ -126,7 +113,7 @@ readkconfig()
 	x_ rm -f "$xbmktmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
-	setvfile && return 1; :
+	setvfile "$@" && return 1; :
 }
 
 scankconfig()
@@ -156,7 +143,7 @@ remktar()
 	(
 	x_ cd "${tmpromdir%"/bin/$board"}"
 	mkrom_tarball "bin/$board"
-	) || err "Cannot re-generate '$archive' - $dontflash"
+	) || err "Cannot re-generate '$archive'"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
 	    "$archive" || err "'$archive' -> Can't overwrite"; :

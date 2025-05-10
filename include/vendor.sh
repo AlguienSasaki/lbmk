@@ -18,6 +18,7 @@ pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
 vendir="vendorfiles"
 appdir="$vendir/app"
+vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 
 # lbmk-specific extension to the "cv" variable (not suitable for cbmk)
 cvchk="CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
@@ -40,23 +41,13 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch \
     _me _metmp mfs TBFW_url_bkup TBFW_url TBFW_hash \
     TBFW_size hashfile xromsize xchanged EC_url_bkup vfile \
-    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD`"
+    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD cbdir`"
 
 download()
 {
 	[ $# -gt 0 ] || err "No argument given"
 	export PATH="$PATH:/sbin"
-	board="$1" && check_target && readkconfig && bootstrap && getfiles; :
-}
-
-bootstrap()
-{
-	x_ ./mk -f coreboot ${cbdir##*/}
-	mk -b uefitool biosutilities bios_extract
-	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
-	[ -n "$MRC_refcode_cbtree" ] && \
-	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
-	    x_ ./mk -d coreboot "$MRC_refcode_cbtree"; :
+	board="$1" && check_target && readkconfig download
 }
 
 getfiles()
@@ -112,12 +103,12 @@ fetch()
 
 	x_ extract_$dl_type "$_dl" "$appdir"
 	set -u -e
-	e "$_dest" f missing && err "!extract_$dl_type. $dontflash"; :
+	e "$_dest" f missing && err "!extract_$dl_type"; :
 }
 
 extract_intel_me()
 {
-	e "$mecleaner" f not && err "$cbdir: me_cleaner missing. $dontflash"
+	e "$mecleaner" f not && err "$cbdir: me_cleaner missing"
 
 	_7ztest="$xbmklocal/metmp/a"
 	_me="$xbmkpwd/$_dest"
@@ -138,7 +129,7 @@ extract_intel_me()
 	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
 	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
 	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_me"
-	) || err "Error running deguard for $_me - $dontflash"; :
+	) || err "Error running deguard for $_me"; :
 }
 
 find_me()
@@ -172,7 +163,7 @@ extract_kbc1126ec()
 	    Rom.CAB Rom.bin || unar -D 68*.CAB Rom.bin || err "!kbc1126 unar"
 	[ -f "ec.bin" ] || x_ mv Rom.bin ec.bin
 	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
-	) || err "$board: can't extract kbc1126 ec firmware - $dontflash"
+	) || err "$board: can't extract kbc1126 ec firmware"
 
 	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
 	x_ cp "$appdir/"ec.bin.fw* "${_dest%/*}/"
@@ -187,7 +178,7 @@ extract_e6400vga()
 	x_ cd "$appdir"
 	x_ e "bios.bin" f
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
-	) || err "can't extract e6400 vga rom - $dontflosh"
+	) || err "can't extract e6400 vga rom"
 	x_ cp "$appdir/$E6400_VGA_romname" "$_dest"
 }
 
@@ -223,6 +214,27 @@ extract_fsp()
 	    -o "${_dest%/*}" -n "Fsp.fd"
 }
 
+setvfile()
+{
+	[ -n "$vcfg" ] && check_vcfg && for c in $cvchk; do
+		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
+		eval "[ -z \"\${$c}\" ] && continue"
+
+		# valid vcfg. proceed to download files
+		eval "`setcfg "$vfile"`"
+
+		bootstrap
+
+		[ $# -gt 0 ] && getfiles
+		[ $# -gt 0 ] && return 1 # download
+
+		fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+		( check_vendor_hashes ) || err "$archive: Can't verify hashes"
+
+		return 1
+	done && return 0; return 1
+}
+
 check_vcfg()
 {
 	vfile="config/vendor/$vcfg/pkg.cfg"
@@ -230,14 +242,20 @@ check_vcfg()
 	[ -f "$vfile" ] || err "'$archive', '$board': $vfile missing"; :
 }
 
-setvfile()
+bootstrap()
 {
-	[ -n "$vfile" ] && for c in $cvchk; do
-		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
-		eval "[ -z \"\${$c}\" ] && continue"
-		eval "`setcfg "$vfile"`"
-		return 1
-	done && return 0; return 1
+	cbdir="src/coreboot/$tree"
+	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
+	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
+	cbfstool="elf/cbfstool/$tree/cbfstool"
+	rmodtool="elf/cbfstool/$tree/rmodtool"
+
+	x_ ./mk -f coreboot "${cbdir##*/}"
+	mk -b uefitool biosutilities bios_extract
+	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
+	[ -n "$MRC_refcode_cbtree" ] && \
+	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \
+	    x_ ./mk -d coreboot "$MRC_refcode_cbtree"; :
 }
 
 prep()
