@@ -34,38 +34,14 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     mecleaner kbc1126_ec_dump MRC_refcode_cbtree new_mac _dl SCH5545EC_DL_url \
     archive EC_url boarddir rom cbdir DL_url nukemode cbfstoolref FSPFD_hash \
     _7ztest ME11bootguard ME11delta ME11version ME11sku ME11pch tmpromdir \
-    IFD_platform ifdprefix _me _metmp mfs TBFW_url_bkup TBFW_url \
-    TBFW_hash TBFW_size hashfile xromsize xchanged EC_url_bkup need_files \
-    vfile cbcfg $cv`"
+    IFD_platform ifdprefix _me _metmp mfs TBFW_url_bkup TBFW_url TBFW_hash \
+    TBFW_size hashfile xromsize xchanged EC_url_bkup vfile cbcfg $cv`"
 
 download()
 {
 	[ $# -gt 0 ] || err "No argument given"
 	export PATH="$PATH:/sbin"
-	board="$1" && readcfg && readkconfig && bootstrap && getfiles; :
-}
-
-readkconfig()
-{
-	x_ rm -f "$xbmktmp/cbcfg"
-	fx_ scankconfig x_ find "$boarddir/config" -type f
-
-	eval "`setcfg "$xbmktmp/cbcfg" 1`"
-
-	for c in $cvchk; do
-		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
-		eval "[ -z \"\${$c}\" ] && continue"
-		eval "`setcfg "$vfile"`"
-		return 0
-	done
-	return 1
-}
-
-scankconfig()
-{
-	for cbc in $cv; do
-		grep "$cbc" "$1" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
-	done
+	board="$1" && readvcfg && readkconfig && bootstrap && getfiles; :
 }
 
 bootstrap()
@@ -244,7 +220,6 @@ extract_fsp()
 
 inject()
 {
-	need_files="n"
 	remkdir "$tmpromdel"
 
 	set +u +e
@@ -261,47 +236,46 @@ inject()
 	setmac)
 		[ $# -gt 2 ] && new_mac="$3" && \
 		    [ -z "$new_mac" ] && err "Empty MAC address specified" ;;
-	*) err "Unrecognised inject mode: '$2'"
+	*)
+		err "Unrecognised inject mode: '$2'"
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 		x_ make -C util/nvmutil clean && x_ make -C util/nvmutil
 
-	check_release "$archive" || err "'$archive' is not a release archive"
+	check_release
+	readvcfg && patch_release
 
-	readcfg && need_files="y"
-	if [ "$need_files" = "y" ] || [ -n "$new_mac" ]; then
-		[ "$nukemode" != "nuke" ] && [ "$need_files" = "y" ] && \
-		    x_ ./mk download "$board"
-		patch_release_roms
-	fi
+	[ "$xchanged" = "y" ] && remktar
 
-	xtype="patched" && [ "$nukemode" = "nuke" ] && xtype="nuked"
-	[ "$xchanged" != "y" ] && printf "\n'%s' *NOT* modified.\n" "$archive"
-	[ "$xchanged" = "y" ] && printf "\n'%s' %s.\n" "$archive" "$xtype"; :
+	xnot=" NOT" && [ "$xchanged" = "y" ] && xnot=""
+	printf "\n'%s' was%s modified\n" "$archive" "$xnot" 1>&2
+
+	x_ rm -Rf "$tmpromdel"
 }
 
 check_release()
 {
 	[ -L "$archive" ] && err "'$archive' is a symlink. $dontflash"
-	e "$archive" f missing && return 1
+	e "$archive" f missing && err "'$archive' missing"
 
-	archivename="`basename "$archive"`"
+	archivename="`basename "$archive"`" || err "Can't get '$archive' name"
 	[ -z "$archivename" ] && err "Can't determine archive name. $dontflash"
 
 	case "$archivename" in
 	*_src.tar.xz)
 		err "'$archive' is a src archive, silly!" ;;
 	grub_*|seagrub_*|custom_*|seauboot_*|seabios_withgrub_*)
-		return 1 ;;
+		err "'$archive' is a ROM image (it must be a tarball)" ;;
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
-	*) err "'$archive': could not detect board type - $dontflash"
+	*)
+		err "'$archive': could not detect board type - $dontflash"
 	esac; :
 }
 
-readcfg()
+readvcfg()
 {
 	if [ "$board" = "serprog_rp2040" ] || [ "$board" = "serprog_stm32" ] \
 	    || [ "$board" = "serprog_pico" ]; then
@@ -328,8 +302,10 @@ readcfg()
 	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :
 }
 
-patch_release_roms()
+patch_release()
 {
+	[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
+
 	has_hashes="n"
 	tmpromdir="$xbmklocal/DO_NOT_FLASH/bin/$board"
 
@@ -337,35 +313,41 @@ patch_release_roms()
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in $hashfiles; do
-		[ "$need_files" = "y" ] && e "$tmpromdir/$_hashes" f && \
+		e "$tmpromdir/$_hashes" f && \
 		    has_hashes="y" && hashfile="$_hashes" && break; :
 	done
 
-	readkconfig || exit 0; [ "$need_files" = "n" ] || \
-	    fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+	readkconfig || exit 0
+	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
-	(
-	x_ cd "$tmpromdir"
-	# NOTE: For compatibility with older rom releases, defer to sha1
-	if [ "$has_hashes" = "y" ] && [ "$nukemode" != "nuke" ]; then
-		sha512sum --status -c "$hashfile" || \
-		    x_ sha1sum --status -c "$hashfile"
-		x_ rm -f "$hashfile"
-	fi
-	) || err "'$archive' -> Can't verify vendor hashes. $dontflash"
+	( check_vendor_hashes ) || err "Can't verify hashes for '$archive'"; :
 
-	[ -z "$new_mac" ] || [ -z "$CONFIG_GBE_BIN_PATH" ] || modify_mac
+	[ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ] && modify_mac; :
+}
 
-	[ "$xchanged" = "y" ] || rm -Rf "$tmpromdel" || :
-	[ "$xchanged" = "y" ] || return 0
+readkconfig()
+{
+	x_ rm -f "$xbmktmp/cbcfg"
+	fx_ scankconfig x_ find "$boarddir/config" -type f
+	eval "`setcfg "$xbmktmp/cbcfg" 1`"
+	setvfile_kconfig && return 1; :
+}
 
-	(
-	x_ cd "${tmpromdir%"/bin/$board"}"
-	mkrom_tarball "bin/$board"
-	) || err "Cannot re-generate '$archive' - $dontflash"
+setvfile_kconfig()
+{
+	for c in $cvchk; do
+		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
+		eval "[ -z \"\${$c}\" ] && continue"
+		eval "`setcfg "$vfile"`"
+		return 1
+	done
+}
 
-	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
-	    "$archive" || err "'$archive' -> Can't overwrite - $dontflash"; :
+scankconfig()
+{
+	for cbc in $cv; do
+		grep "$cbc" "$1" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
+	done
 }
 
 prep()
@@ -392,7 +374,7 @@ prep()
 
 	[ "$nukemode" = "nuke" ] && mksha512sum "$_xrom" "vendorhashes"
 
-	patch_rom "$_xrom" || return 1 # if break return, can still change MAC
+	add_vfiles "$_xrom" || return 1 # if break return, can still change MAC
 	[ "$nukemode" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
@@ -400,7 +382,7 @@ prep()
 	x_ rm -f "$_xrom"
 }
 
-patch_rom()
+add_vfiles()
 {
 	rom="$1"
 
@@ -412,31 +394,31 @@ patch_rom()
 		return 1
 	fi
 
-	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && insert "fallback/refcode" \
+	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && vfile "fallback/refcode" \
 	    "$CONFIG_REFCODE_BLOB_FILE" "stage"
-	[ "$CONFIG_HAVE_MRC" = "y" ] && insert "mrc.bin" "$CONFIG_MRC_FILE" \
+	[ "$CONFIG_HAVE_MRC" = "y" ] && vfile "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
-	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && insert IFD "$CONFIG_ME_BIN_PATH" me
-	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && insert ecfw1.bin \
-	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && insert \
+	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && vfile IFD "$CONFIG_ME_BIN_PATH" me
+	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && vfile ecfw1.bin \
+	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && vfile \
 	    ecfw2.bin "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
 	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
-	  insert "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
+	  vfile "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
 	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
-		insert sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
+		vfile sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_M_FILE" ] && \
-		insert "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
+		vfile "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
 	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
 	   [ -n "$CONFIG_FSP_S_FILE" ] && \
-		insert "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
+		vfile "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
 
 	printf "ROM image successfully patched: %s\n" "$rom"
 	xchanged="y"
 }
 
-insert()
+vfile()
 {
 	[ "$2" = "/dev/null" ] && return 0
 
@@ -449,7 +431,7 @@ insert()
 	if [ "$_t" = "fsp" ] && [ $# -gt 3 ]; then
 		_offset="$4"
 	elif [ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ]; then
-		err "insert $*, $rom: offset given but empty (undefined)"
+		err "vfile $*, $rom: offset given but empty (undefined)"
 	fi
 
 	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
@@ -473,6 +455,14 @@ insert()
 	xchanged="y"; :
 }
 
+check_vendor_hashes()
+{
+	x_ cd "$tmpromdir"
+	[ "$has_hashes" = "n" ] || [ "$nukemode" = "nuke" ] || sha512sum \
+	    --status -c "$hashfile" || x_ sha1sum --status -c "$hashfile"
+	x_ rm -f "$hashfile"
+}
+
 modify_mac()
 {
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
@@ -486,4 +476,15 @@ newmac()
 {
 	e "$1" f && xchanged="y" && x_ \
 	    "$ifdtool" $ifdprefix -i GbE:"$xbmklocal/gbe" "$1" -O "$1"; :
+}
+
+remktar()
+{
+	(
+	x_ cd "${tmpromdir%"/bin/$board"}"
+	mkrom_tarball "bin/$board"
+	) || err "Cannot re-generate '$archive' - $dontflash"
+
+	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
+	    "$archive" || err "'$archive' -> Can't overwrite"; :
 }
