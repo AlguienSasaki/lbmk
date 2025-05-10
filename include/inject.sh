@@ -75,10 +75,7 @@ check_release()
 
 check_target()
 {
-	if [ "$board" = "serprog_rp2040" ] || [ "$board" = "serprog_stm32" ] \
-	    || [ "$board" = "serprog_pico" ]; then
-		return 1
-	fi
+	[ "$board" = "${board#serprog_}" ] || return 1
 	boarddir="$cbcfgsdir/$board"
 
 	eval "`setcfg "$boarddir/target.cfg"`"
