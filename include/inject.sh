@@ -131,7 +131,7 @@ modify_mac()
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
-	printf "\nGbE NVM written to '%s':\n" "$archive"
+	printf "\nThe following GbE NVM data will be written:\n"
 	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
 }
 
