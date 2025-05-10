@@ -16,7 +16,7 @@ xbmkpath="$PATH"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal \
-    xbmklock`"
+    xbmklock cvxbmk cvchk`"
 
 xbmk_init()
 {

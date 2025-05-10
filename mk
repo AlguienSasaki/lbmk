@@ -12,6 +12,7 @@ fi
 
 . "include/lib.sh"
 . "include/init.sh"
+. "include/vendor.sh"
 . "include/inject.sh"
 . "include/mrc.sh"
 . "include/rom.sh"
