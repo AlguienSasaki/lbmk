@@ -112,9 +112,8 @@ handle_defconfig()
 	chkvars tree
 	srcdir="src/$project/$tree"
 
-	if [ "$mode" = "distclean" ] || [ "$mode" = "crossgcc-clean" ]; then
-		[ -d "$srcdir" ] || return 0
-	fi
+	[ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ] && return 0
+
 	[ -z "$mode" ] && for _xarch in $xarch; do
 		$dry check_cross_compiler "$_xarch"
 	done; :
