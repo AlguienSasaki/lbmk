@@ -39,9 +39,6 @@ inject()
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
-	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
-		x_ make -C util/nvmutil clean && x_ make -C util/nvmutil
-
 	check_release
 	check_target && patch_release
 
@@ -124,6 +121,7 @@ modify_mac()
 {
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
+	    x_ make -C util/nvmutil clean && x_ make -C util/nvmutil && \
 	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
