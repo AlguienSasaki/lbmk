@@ -107,7 +107,6 @@ handle_defconfig()
 
 	[ -f "CHANGELOG" ] || fetch_project "$project"
 	configure_project "$target_dir" || return 0
-	x_ mkdir -p "$elfdir/$target"
 
 	chkvars tree
 	srcdir="src/$project/$tree"
@@ -267,8 +266,7 @@ check_defconfig()
 	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig"
 	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
 
-	$dry elfcheck || return 1 # skip build if a previous one exists
-	$dry x_ mkdir -p "$dest_dir"
+	$dry elfcheck || return 1; : # skip build if a previous one exists
 }
 
 elfcheck()
