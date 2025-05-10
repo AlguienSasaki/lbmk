@@ -219,20 +219,8 @@ setvfile()
 	[ -n "$vcfg" ] && check_vcfg && for c in $cvchk; do
 		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
 		eval "[ -z \"\${$c}\" ] && continue"
-
-		# valid vcfg. proceed to download files
-		eval "`setcfg "$vfile"`"
-
-		bootstrap
-
-		[ $# -gt 0 ] && getfiles
-		[ $# -gt 0 ] && return 1 # download
-
-		fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-		( check_vendor_hashes ) || err "$archive: Can't verify hashes"
-
-		return 1
-	done && return 0; return 1
+		getvfile "$@" && return 0
+	done && return 1; :
 }
 
 check_vcfg()
@@ -240,6 +228,20 @@ check_vcfg()
 	vfile="config/vendor/$vcfg/pkg.cfg"
 	[ -L "$vfile" ] && err "'$archive', '$board': $vfile is a symlink"; :
 	[ -f "$vfile" ] || err "'$archive', '$board': $vfile missing"; :
+}
+
+getvfile()
+{
+	# valid vcfg. proceed to download files
+	eval "`setcfg "$vfile"`"
+
+	bootstrap
+
+	[ $# -gt 0 ] && getfiles
+	[ $# -gt 0 ] && return 0 # download
+
+	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+	( check_vendor_hashes ) || err "$archive: Can't verify hashes"; :
 }
 
 bootstrap()

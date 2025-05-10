@@ -113,7 +113,7 @@ readkconfig()
 	x_ rm -f "$xbmktmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 	eval "`setcfg "$xbmktmp/cbcfg" 1`"
-	setvfile "$@" && return 1; :
+	setvfile "$@" || return 1; :
 }
 
 scankconfig()
