@@ -56,28 +56,35 @@ xbmkget()
 
 try_file()
 {
-	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-
 	cached="$XBMK_CACHE/file/$6"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
 	bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
 	[ "$dl_fail" = "n" ] && e "$5" f && return 0
 
 	x_ rm -f "$cached"
-	if [ "$2" = "curl" ]; then
-		curl --location --retry 3 -A "$_ua" "$1" -o "$cached" || \
-		    wget --tries 3 -U "$_ua" "$1" -O "$cached" || return 1
-	elif [ "$2" = "copy" ]; then
-		[ -L "$1" ] && printf "dl %s %s %s %s: '%s' is a symlink\n" \
-		    "$3" "$4" "$5" "$6" "$1" 1>&2 && return 1
-		[ ! -f "$1" ] && printf "dl %s %s %s %s: '%s' not a file\n" \
-		    "$3" "$4" "$5" "$6" "$1" 1>&2 && return 1
-		cp "$1" "$cached" || return 1
-	else
-		err "$3 $4 $5 $6: Unsupported dlop type: '$2'"
-	fi
+	[ "$2" = "curl" ] || [ "$2" = "copy" ] || \
+	    err "$3 $4 $5 $6: Unsupported dlop type: '$2'"
+
+	try_$2 "$cached" "$@" || return 1
+
 	bad_checksum "$6" "$cached" && return 1
 	[ "$cached" = "$5" ] || x_ cp "$cached" "$5"; :
+}
+
+try_curl()
+{
+	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+	curl --location --retry 3 -A "$_ua" "$2" -o "$1" || \
+	    wget --tries 3 -U "$_ua" "$2" -O "$1" || return 1; :
+}
+
+try_copy()
+{
+	[ -L "$2" ] && printf "dl %s %s %s %s: '%s' is a symlink\n" \
+	    "$4" "$5" "$6" "$7" "$2" 1>&2 && return 1
+	[ ! -f "$2" ] && printf "dl %s %s %s %s: '%s' not a file\n" \
+	    "$4" "$5" "$6" "$7" "$2" 1>&2 && return 1
+	cp "$2" "$1" || return 1; :
 }
 
 bad_checksum()
