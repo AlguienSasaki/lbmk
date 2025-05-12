@@ -9,7 +9,6 @@ eval "`setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL`"
 extract_mrc()
 {
 	extract_shellball
-
 	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
 	    -f "$_dest" -r RO_SECTION
 
