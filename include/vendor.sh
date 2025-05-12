@@ -216,9 +216,8 @@ extract_fsp()
 setvfile()
 {
 	[ -n "$vcfg" ] && check_vcfg && for c in $cvchk; do
-		eval "[ \"\${$c}\" = \"/dev/null\" ] && continue"
-		eval "[ -z \"\${$c}\" ] && continue"
-		getvfile "$@" && return 0
+		vcmd="[ \"\${$c}\" != \"/dev/null\" ] && [ -n \"\${$c}\" ]"
+		eval "$vcmd && getvfile \"\$@\" && return 0"
 	done && return 1; :
 }
 
