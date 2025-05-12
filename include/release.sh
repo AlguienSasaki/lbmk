@@ -24,45 +24,50 @@ release()
 	[ -e "$vdir" ] && err "already exists: \"$vdir\""
 	x_ mkdir -p "$vdir"
 	x_ git clone . "$relsrcdir"
-	x_ touch "$relsrcdir/lock"
 
-	build_release
+	prep_release src
+	prep_release_tarball
+	[ "$relmode" = "src" ] || prep_release bin
+	x_ rm -Rf "$relsrcdir"
 
 	printf "\n\nDONE! Check release files under %s\n" "$vdir"
 }
 
-build_release()
+prep_release()
 {
+	x_ touch "$relsrcdir/lock"
 	(
 	x_ cd "$relsrcdir"
+	prep_release_$1
+	) || err "can't prep release $1"
+}
 
+prep_release_src()
+{
 	x_ ./mk -f
 	fx_ "x_ rm -Rf" x_ find . -name ".git"
 	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
 	x_ mv src/docs docs
-	) || err "can't create release files"
+}
 
+prep_release_tarball()
+{
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$relsrcdir/CHANGELOG" || err "!log $relsrcdir"
 	x_ rm -f "$relsrcdir/lock"
 	x_ rm -Rf "$relsrcdir/cache" "$relsrcdir/tmp"
-
 	(
 	x_ cd "${relsrcdir%/*}"
 	x_ mktarball "${relsrcdir##*/}" "${relsrcdir##*/}.tar.xz"
-	) || err "can't create src tarball"
-	[ "$relmode" = "src" ] && return 0
+	) || err "can't create src tarball"; :
+}
 
-	x_ touch "$relsrcdir/lock"
-	(
-	x_ cd "$relsrcdir"
+prep_release_bin()
+{
 	x_ ./mk -d coreboot
 	fx_ "x_ ./mk -b" printf \
 	    "coreboot\npico-serprog\nstm32-vserprog\npcsx-redux\n"
 
 	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
 	x_ mv bin ../roms
-	) || err "can't build rom images"
-
-	x_ rm -Rf "$relsrcdir"
 }
