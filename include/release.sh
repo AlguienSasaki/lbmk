@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" reldir reldest vdir src_dirname relsrcdir relmode`"
+eval "`setvars "" reldir reldest vdir relsrcdir relmode`"
 
 release()
 {
@@ -23,8 +23,7 @@ release()
 	    err "already exists: \"$reldest\""
 
 	vdir="$XBMK_CACHE/relpwd/${xbmktmp##*/}/$version"
-	src_dirname="${relname}_src"
-	relsrcdir="$vdir/$src_dirname"
+	relsrcdir="$vdir/${relname}_src"
 
 	remkdir "$vdir"
 	x_ git clone . "$relsrcdir"
