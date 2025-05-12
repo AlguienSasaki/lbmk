@@ -17,6 +17,7 @@ fi
 . "include/mrc.sh"
 . "include/rom.sh"
 . "include/release.sh"
+. "include/git.sh"
 
 main()
 {
@@ -34,7 +35,6 @@ main()
 
 main "$@" || exit 0
 
-. "include/git.sh"
 . "include/tree.sh"
 
 trees "$@" || exit 0

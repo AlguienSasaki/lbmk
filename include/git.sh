@@ -87,6 +87,56 @@ fetch_submodule()
 	    "$mdir/${1##*/}/patches"
 }
 
+# can grab from the internet, or copy locally.
+# if copying locally, it can only copy a file.
+xbmkget()
+{
+	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
+	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
+	for url in "$1" "$2"; do
+		[ -n "$url" ] && try_file "$url" "$_dlop" "$@" && return 0
+	done && err "$1 $2 $3 $4: not downloaded"; :
+}
+
+try_file()
+{
+	cached="$XBMK_CACHE/file/$6"
+	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
+	bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
+	[ "$dl_fail" = "n" ] && e "$5" f && return 0
+
+	x_ rm -f "$cached"
+	[ "$2" = "curl" ] || [ "$2" = "copy" ] || \
+	    err "$3 $4 $5 $6: Unsupported dlop type: '$2'"
+
+	try_$2 "$cached" "$@" || return 1
+
+	bad_checksum "$6" "$cached" && return 1
+	[ "$cached" = "$5" ] || x_ cp "$cached" "$5"; :
+}
+
+try_curl()
+{
+	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+	curl --location --retry 3 -A "$_ua" "$2" -o "$1" || \
+	    wget --tries 3 -U "$_ua" "$2" -O "$1" || return 1; :
+}
+
+try_copy()
+{
+	[ -L "$2" ] && printf "dl %s %s %s %s: '%s' is a symlink\n" \
+	    "$4" "$5" "$6" "$7" "$2" 1>&2 && return 1
+	[ ! -f "$2" ] && printf "dl %s %s %s %s: '%s' not a file\n" \
+	    "$4" "$5" "$6" "$7" "$2" 1>&2 && return 1
+	cp "$2" "$1" || return 1; :
+}
+
+bad_checksum()
+{
+	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
+	printf "Bad checksum for file: %s\n" "$2" 1>&2; rm -f "$2" || :; :
+}
+
 tmpclone()
 {
 	[ -d "$3" ] && return 0
