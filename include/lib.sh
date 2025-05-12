@@ -46,14 +46,6 @@ e()
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
-mk()
-{
-	mk_flag="$1" || err "No argument given"
-	shift 1 && for mk_arg in "$@"; do
-		x_ ./mk $mk_flag $mk_arg
-	done; :
-}
-
 setvars()
 {
 	_setvars=""

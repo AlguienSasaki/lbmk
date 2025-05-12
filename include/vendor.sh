@@ -238,7 +238,7 @@ bootstrap()
 	rmodtool="elf/cbfstool/$tree/rmodtool"
 
 	x_ ./mk -f coreboot "${cbdir##*/}"
-	mk -b uefitool biosutilities bios_extract
+	fx_ "x_ ./mk -b" printf "uefitool\nbiosutilities\nbios_extract\n"
 	[ -d "${kbc1126_ec_dump%/*}" ] && x_ make -C "$cbdir/util/kbc1126"
 	[ -n "$MRC_refcode_cbtree" ] && \
 	    cbfstoolref="elf/cbfstool/$MRC_refcode_cbtree/cbfstool" && \

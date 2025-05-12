@@ -55,7 +55,8 @@ build_release()
 	(
 	x_ cd "$relsrcdir"
 	x_ ./mk -d coreboot
-	mk -b coreboot pico-serprog stm32-vserprog pcsx-redux
+	fx_ "x_ ./mk -b" printf \
+	    "coreboot\npico-serprog\nstm32-vserprog\npcsx-redux\n"
 
 	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
 	x_ mv bin ../roms

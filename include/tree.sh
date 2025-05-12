@@ -39,13 +39,11 @@ trees()
 		fi
 
 		project="${OPTARG#src/}"
+		project="${project#config/git/}"
 		shift 2
 	done
 	[ -z "$_f" ] && err "missing flag ($flags)"
-	if [ -z "$project" ]; then
-		mk $_f $(ls -1 config/git)
-		return 1
-	fi
+	[ -z "$project" ] && fx_ "x_ ./mk $_f" x_ ls -1 config/git && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || \
 	    err "config/git/$project/pkg.cfg missing"
