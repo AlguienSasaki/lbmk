@@ -230,14 +230,8 @@ check_vcfg()
 
 getvfile()
 {
-	# valid vcfg. proceed to download files
 	eval "`setcfg "$vfile"`"
-
-	bootstrap
-
-	[ $# -gt 0 ] && getfiles
-	[ $# -gt 0 ] && return 0 # download
-
+	bootstrap && [ $# -gt 0 ] && getfiles && return 0 # download
 	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 	( check_vendor_hashes ) || err "$archive: Can't verify hashes"; :
 }
