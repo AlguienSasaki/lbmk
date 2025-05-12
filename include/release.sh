@@ -45,6 +45,7 @@ build_release()
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$relsrcdir/CHANGELOG" || err "!log $relsrcdir"
 	x_ rm -f "$relsrcdir/lock"
+	x_ rm -Rf "$relsrcdir/cache" "$relsrcdir/tmp"
 
 	(
 	x_ cd "${relsrcdir%/*}"
