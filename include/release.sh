@@ -22,7 +22,7 @@ release()
 	relsrcdir="$vdir/$src_dirname"
 
 	[ -e "$vdir" ] && err "already exists: \"$vdir\""
-	x_ mkdir -p "$vdir"
+
 	x_ git clone . "$relsrcdir"
 
 	prep_release src
