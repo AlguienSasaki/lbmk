@@ -50,34 +50,34 @@ xbmkget()
 	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
-	cached="$XBMK_CACHE/file/$4"
-	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
-	bad_checksum "$4" "$cached" 2>/dev/null && dl_fail="y"
-	[ "$dl_fail" = "n" ] && e "$3" f && return 0
 	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
 	for url in "$1" "$2"; do
-		[ "$dl_fail" = "n" ] && break
-		[ -z "$url" ] && continue
-		x_ rm -f "$cached"
-		if [ "$_dlop" = "curl" ]; then
-			curl --location --retry 3 -A "$_ua" "$url" \
-			    -o "$cached" || wget --tries 3 -U "$_ua" "$url" \
-			    -O "$cached" || continue
-		elif [ "$_dlop" = "copy" ]; then
-			[ -L "$url" ] && \
-				printf "dl %s %s %s %s: '%s' is a symlink\n" \
-				    "$1" "$2" "$3" "$4" "$url" 1>&2 && continue
-			[ ! -f "$url" ] && \
-				printf "dl %s %s %s %s: '%s' not a file\n" \
-				    "$1" "$2" "$3" "$4" "$url" 1>&2 && continue
-			cp "$url" "$cached" || continue
-		else
-			err "$1 $2 $3 $4: Unsupported dlop type: '$_dlop'"
-		fi
-		bad_checksum "$4" "$cached" || dl_fail="n"
-	done
-	[ "$dl_fail" = "y" ] && err "$1 $2 $3 $4: not downloaded"
-	[ "$cached" = "$3" ] || x_ cp "$cached" "$3"; :
+		[ -n "$url" ] && try_file "$url" "$_dlop" "$@" && return 0
+	done && err "$1 $2 $3 $4: not downloaded"; :
+}
+
+try_file()
+{
+	cached="$XBMK_CACHE/file/$6"
+	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
+	bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
+	[ "$dl_fail" = "n" ] && e "$5" f && return 0
+
+	x_ rm -f "$cached"
+	if [ "$2" = "curl" ]; then
+		curl --location --retry 3 -A "$_ua" "$1" -o "$cached" || \
+		    wget --tries 3 -U "$_ua" "$1" -O "$cached" || return 1
+	elif [ "$2" = "copy" ]; then
+		[ -L "$1" ] && printf "dl %s %s %s %s: '%s' is a symlink\n" \
+		    "$3" "$4" "$5" "$6" "$1" 1>&2 && return 1
+		[ ! -f "$1" ] && printf "dl %s %s %s %s: '%s' not a file\n" \
+		    "$3" "$4" "$5" "$6" "$1" 1>&2 && return 1
+		cp "$1" "$cached" || return 1
+	else
+		err "$3 $4 $5 $6: Unsupported dlop type: '$2'"
+	fi
+	bad_checksum "$6" "$cached" && return 1
+	[ "$cached" = "$5" ] || x_ cp "$cached" "$5"; :
 }
 
 bad_checksum()
