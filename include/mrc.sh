@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Logic based on util/chromeos/crosfirmware.sh in coreboot cfc26ce278.
-# Modifications in this version are Copyright 2021, 2023 and 2024 Leah Rowe.
+# Modifications in this version are Copyright 2021,2023-2025 Leah Rowe.
 # Original copyright detailed in repo: https://review.coreboot.org/coreboot/
 
 eval "`setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL`"
