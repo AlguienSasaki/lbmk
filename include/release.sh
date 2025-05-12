@@ -1,28 +1,32 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" vdir src_dirname relsrcdir relmode`"
+eval "`setvars "" reldir reldest vdir src_dirname relsrcdir relmode`"
 
 release()
 {
 	export XBMK_RELEASE="y"
 
-	vdir="release"
+	reldir="release"
+
 	while getopts d:m: option; do
 		[ -z "$OPTARG" ] && err "empty argument not allowed"
 		case "$option" in
-		d) vdir="$OPTARG" ;;
+		d) reldir="$OPTARG" ;;
 		m) relmode="$OPTARG" ;;
 		*) err "invalid option '-$option'" ;;
 		esac
 	done
 
-	vdir="$vdir/$version"
+	reldest="$reldir/$version"
+	[ -e "$reldest" ] && \
+	    err "already exists: \"$reldest\""
+
+	vdir="$XBMK_CACHE/relpwd/${xbmktmp##*/}/$version"
 	src_dirname="${relname}_src"
 	relsrcdir="$vdir/$src_dirname"
 
-	[ -e "$vdir" ] && err "already exists: \"$vdir\""
-
+	remkdir "$vdir"
 	x_ git clone . "$relsrcdir"
 
 	prep_release src
@@ -30,7 +34,10 @@ release()
 	[ "$relmode" = "src" ] || prep_release bin
 	x_ rm -Rf "$relsrcdir"
 
-	printf "\n\nDONE! Check release files under %s\n" "$vdir"
+	x_ mkdir -p "$reldir"
+	x_ mv "$vdir" "$reldir"
+
+	printf "\n\nDONE! Check release files under %s\n" "$reldest"
 }
 
 prep_release()
