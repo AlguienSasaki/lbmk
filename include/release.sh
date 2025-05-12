@@ -35,6 +35,7 @@ release()
 
 	x_ mkdir -p "$reldir"
 	x_ mv "$vdir" "$reldir"
+	x_ rm -Rf "${vdir%"/$version"}"
 
 	printf "\n\nDONE! Check release files under %s\n" "$reldest"
 }
