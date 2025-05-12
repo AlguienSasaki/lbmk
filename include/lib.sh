@@ -39,8 +39,8 @@ mksha512sum()
 
 rmgit()
 {
-	x_ find "$1" -name ".git" -exec rm -Rf {} +
-	x_ find "$1" -name ".gitmodules" -exec rm -Rf {} +
+	fx_ "x_ rm -Rf" x_ find "$1" -name ".git"
+	fx_ "x_ rm -Rf" x_ find "$1" -name ".gitmodules"
 }
 
 # can grab from the internet, or copy locally.
