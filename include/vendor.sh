@@ -40,7 +40,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
     nukemode cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
-    TBFW_hash TBFW_size hashfile xchanged EC_url_bkup`"
+    TBFW_hash TBFW_size hashfile EC_url_bkup`"
 
 download()
 {

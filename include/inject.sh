@@ -14,7 +14,7 @@ cv="CONFIG_GBE_BIN_PATH"
 [ -n "$cvchk" ] && cv="$cv $cvchk"
 
 eval "`setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
-    tmpromdir board $cv`"
+    tmpromdir board xchanged $cv`"
 
 inject()
 {
