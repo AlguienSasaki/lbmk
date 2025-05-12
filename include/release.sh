@@ -28,9 +28,7 @@ release()
 	remkdir "$vdir"
 	x_ git clone . "$relsrcdir"
 
-	prep_release src
-	prep_release_tarball
-	[ "$relmode" = "src" ] || prep_release bin
+	fx_ prep_release printf "src\ntarball\nbin\n"
 	x_ rm -Rf "$relsrcdir"
 
 	x_ mkdir -p "$reldir"
@@ -44,7 +42,7 @@ prep_release()
 {
 	x_ touch "$relsrcdir/lock"
 	(
-	x_ cd "$relsrcdir"
+	[ "$1" = "tarball" ] || x_ cd "$relsrcdir"
 	prep_release_$1
 	) || err "can't prep release $1"
 }
@@ -71,6 +69,7 @@ prep_release_tarball()
 
 prep_release_bin()
 {
+	[ "$relmode" = "src" ] && return 0
 	x_ ./mk -d coreboot
 	fx_ "x_ ./mk -b" printf \
 	    "coreboot\npico-serprog\nstm32-vserprog\npcsx-redux\n"
