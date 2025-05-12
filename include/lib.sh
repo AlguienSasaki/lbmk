@@ -47,8 +47,6 @@ rmgit()
 # if copying locally, it can only copy a file.
 xbmkget()
 {
-	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
 	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
 	for url in "$1" "$2"; do
@@ -58,6 +56,8 @@ xbmkget()
 
 try_file()
 {
+	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+
 	cached="$XBMK_CACHE/file/$6"
 	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
 	bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
