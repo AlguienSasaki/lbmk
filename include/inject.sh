@@ -4,7 +4,6 @@
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
 cbcfgsdir="config/coreboot"
-hashfiles="vendorhashes blobhashes" # blobhashes for backwards compatibility
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/ifdtool/default/ifdtool"
@@ -92,7 +91,7 @@ patch_release()
 	remkdir "${tmpromdir%"/bin/$board"}"
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
-	for _hashes in $hashfiles; do
+	for _hashes in "vendorhashes" "blobhashes"; do
 		e "$tmpromdir/$_hashes" f && \
 		    has_hashes="y" && hashfile="$_hashes" && break; :
 	done
