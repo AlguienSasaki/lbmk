@@ -39,8 +39,8 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
     nukemode cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
-    ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url vfile \
-    TBFW_hash TBFW_size hashfile xchanged EC_url_bkup cbdir`"
+    ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
+    TBFW_hash TBFW_size hashfile xchanged EC_url_bkup`"
 
 download()
 {
@@ -215,22 +215,15 @@ extract_fsp()
 
 setvfile()
 {
-	[ -n "$vcfg" ] && check_vcfg && for c in $cvchk; do
+	[ -n "$vcfg" ] && for c in $cvchk; do
 		vcmd="[ \"\${$c}\" != \"/dev/null\" ] && [ -n \"\${$c}\" ]"
 		eval "$vcmd && getvfile \"\$@\" && return 0"
 	done && return 1; :
 }
 
-check_vcfg()
-{
-	vfile="config/vendor/$vcfg/pkg.cfg"
-	[ -L "$vfile" ] && err "'$archive', '$board': $vfile is a symlink"; :
-	[ -f "$vfile" ] || err "'$archive', '$board': $vfile missing"; :
-}
-
 getvfile()
 {
-	eval "`setcfg "$vfile"`"
+	eval "`setcfg "config/vendor/$vcfg/pkg.cfg" 1`"
 	bootstrap && [ $# -gt 0 ] && getfiles && return 0 # download
 	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 	( check_vendor_hashes ) || err "$archive: Can't verify hashes"; :
