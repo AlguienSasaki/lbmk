@@ -44,7 +44,7 @@ mkpayload_grub()
 mkvendorfiles()
 {
 	[ -z "$mode" ] && $dry cook_coreboot_config
-	check_coreboot_utils "$tree"
+	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
@@ -59,26 +59,24 @@ cook_coreboot_config()
 	make -C "$srcdir" oldconfig || err "Could not cook $srcdir/.config"; :
 }
 
-check_coreboot_utils()
+check_coreboot_util()
 {
-	for util in cbfstool ifdtool; do
-		[ "$badhash" = "y" ] && x_ rm -f "elf/$util/$1/$util"
-		e "elf/$util/$1/$util" f && continue
+	[ "$badhash" = "y" ] && x_ rm -f "elf/$1/$tree/$1"
+	e "elf/$1/$tree/$1" f && return 0
 
-		utilelfdir="elf/$util/$1"
-		utilsrcdir="src/coreboot/$1/util/$util"
+	utilelfdir="elf/$1/$tree"
+	utilsrcdir="src/coreboot/$tree/util/$1"
 
-		utilmode="" && [ -n "$mode" ] && utilmode="clean"
-		x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
-		if [ -z "$mode" ] && [ ! -f "$utilelfdir/$util" ]; then
-			x_ mkdir -p "$utilelfdir"
-			x_ cp "$utilsrcdir/$util" "$utilelfdir"
-			[ "$util" = "cbfstool" ] || continue
-			x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
-		elif [ -n "$mode" ]; then
-			x_ rm -Rf "$utilelfdir"
-		fi; :
-	done; :
+	utilmode="" && [ -n "$mode" ] && utilmode="clean"
+	x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
+	[ -n "$mode" ] && x_ rm -Rf "$utilelfdir" && return 0
+	[ -z "$mode" ] || return 0
+	[ -f "$utilelfdir/$1" ] && return 0
+
+	x_ mkdir -p "$utilelfdir"
+	x_ cp "$utilsrcdir/$1" "$utilelfdir"
+	[ "$1" = "cbfstool" ] || return 0
+	x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
 }
 
 mkcorebootbin()
