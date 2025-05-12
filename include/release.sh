@@ -37,7 +37,8 @@ build_release()
 	x_ cd "$relsrcdir"
 
 	x_ ./mk -f
-	rmgit .
+	fx_ "x_ rm -Rf" x_ find . -name ".git"
+	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
 	x_ mv src/docs docs
 	) || err "can't create release files"
 

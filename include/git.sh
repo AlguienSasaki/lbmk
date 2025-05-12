@@ -57,9 +57,6 @@ git_prep()
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
 
-	[ "$_loc" != "$XBMK_CACHE/repo/$project" ] && \
-	    [ "$XBMK_RELEASE" = "y" ] && rmgit "$tmpgit"
-
 	[ "$_loc" = "${_loc%/*}" ] || x_ mkdir -p "${_loc%/*}"
 	x_ mv "$tmpgit" "$_loc"
 }

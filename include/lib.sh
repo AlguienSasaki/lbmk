@@ -29,12 +29,6 @@ mktarball()
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || err "mktarball2, $1"
 }
 
-rmgit()
-{
-	fx_ "x_ rm -Rf" x_ find "$1" -name ".git"
-	fx_ "x_ rm -Rf" x_ find "$1" -name ".gitmodules"
-}
-
 e()
 {
 	es_t="e" && [ $# -gt 1 ] && es_t="$2"
