@@ -29,14 +29,6 @@ mktarball()
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || err "mktarball2, $1"
 }
 
-mksha512sum()
-{
-	(
-	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
-	sha512sum ./"${1##*/}" >> "$2" || err "!sha512sum \"$1\" > \"$2\""
-	) || err "failed to create tarball checksum"
-}
-
 rmgit()
 {
 	fx_ "x_ rm -Rf" x_ find "$1" -name ".git"

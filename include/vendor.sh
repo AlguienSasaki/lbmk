@@ -277,6 +277,14 @@ prep()
 	x_ rm -f "$_xrom"
 }
 
+mksha512sum()
+{
+	(
+	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
+	sha512sum ./"${1##*/}" >> "$2" || err "!sha512sum \"$1\" > \"$2\""
+	) || err "failed to create tarball checksum"
+}
+
 add_vfiles()
 {
 	rom="$1"
