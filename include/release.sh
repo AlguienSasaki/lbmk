@@ -28,7 +28,9 @@ release()
 	remkdir "$vdir"
 	x_ git clone . "$relsrcdir"
 
-	fx_ prep_release printf "src\ntarball\nbin\n"
+	prep_release src
+	prep_release tarball
+	prep_release bin
 	x_ rm -Rf "$relsrcdir"
 
 	x_ mkdir -p "$reldir"
