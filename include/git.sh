@@ -6,6 +6,7 @@ eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
     depend subfile_bkup repofail`"
 
 tmpgit="$xbmklocal/gitclone"
+tmpgitcache="$XBMK_CACHE/tmpgit"
 
 fetch_targets()
 {
@@ -138,11 +139,17 @@ try_copy()
 
 try_git()
 {
-	[ -d "$1" ] || git clone "$2" "$1" || return 1
-	git -C "$1" remote add main "$4" 2>/dev/null || :
-	git -C "$1" remote add backup "$5" 2>/dev/null || :
-	git -C "$1" fetch --all || :
-	git -C "$1" pull --all || :
+	gitdest="`findpath "$1"`" || err "Can't get readpath for '$1'"
+	x_ rm -Rf "$tmpgitcache"
+
+	[ -d "$gitdest" ] || git clone "$2" "$tmpgitcache" || return 1
+	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest##*/}"
+	[ -d "$gitdest" ] || x_ mv "$tmpgitcache" "$gitdest"
+
+	git -C "$gitdest" remote add main "$4" 2>/dev/null || :
+	git -C "$gitdest" remote add backup "$5" 2>/dev/null || :
+	git -C "$gitdest" fetch --all || :
+	git -C "$gitdest" pull --all || :
 }
 
 bad_checksum()
