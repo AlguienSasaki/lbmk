@@ -38,11 +38,10 @@ fetch_project()
 
 clone_project()
 {
-	loc="$XBMK_CACHE/repo/$project" && singletree "$project" && \
+	loc="$XBMK_CACHE/clone/$project" && singletree "$project" && \
 	    loc="src/$project"
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 
-	singletree "$project" || x_ rm -Rf "$loc"
 	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
 	    "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"; :
 }
@@ -143,7 +142,6 @@ try_git()
 	git -C "$1" remote add main "$4" 2>/dev/null || :
 	git -C "$1" remote add backup "$5" 2>/dev/null || :
 	git -C "$1" fetch --all || :
-	git -C "$1" pull --all || :
 	git -C "$1" pull --all || :
 }
 
