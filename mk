@@ -17,7 +17,7 @@ fi
 . "include/mrc.sh"
 . "include/rom.sh"
 . "include/release.sh"
-. "include/git.sh"
+. "include/get.sh"
 
 main()
 {
