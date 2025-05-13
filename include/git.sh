@@ -12,7 +12,7 @@ fetch_targets()
 	e "src/$project/$tree" d && return 0
 
 	printf "Creating %s tree %s\n" "$project" "$tree"
-	git_prep "$loc" "$loc" "$xbmkpwd/$configdir/$tree/patches" \
+	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" with_submodules
 	nuke "$project/$tree" "$project/$tree"
 }
@@ -42,6 +42,7 @@ clone_project()
 	    loc="src/$project"
 	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 
+	singletree "$project" || x_ rm -Rf "$loc"
 	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
 	    "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"; :
 }
@@ -52,7 +53,7 @@ git_prep()
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
 	chkvars rev
-	tmpclone "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
+	xbmkget "$1" "$2" "$tmpgit" "$rev" git "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
@@ -80,7 +81,7 @@ fetch_submodule()
 	[ "$st" = "file" ] && xbmkget "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
 	x_ rm -Rf "$tmpgit/$1"
-	tmpclone "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
+	xbmkget "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" git \
 	    "$mdir/${1##*/}/patches"
 }
 
@@ -89,7 +90,9 @@ fetch_submodule()
 xbmkget()
 {
 	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
-	x_ mkdir -p "${3%/*}" "$XBMK_CACHE/file"
+	[ "$_dlop" = "curl" ] || [ "$_dlop" = "copy" ] || \
+	    [ "$_dlop" = "git" ] || err "$1 $2 $3 $4: Bad dlop type: '$_dlop'"
+
 	for url in "$1" "$2"; do
 		[ -n "$url" ] && try_file "$url" "$_dlop" "$@" && return 0
 	done && err "$1 $2 $3 $4: not downloaded"; :
@@ -97,19 +100,25 @@ xbmkget()
 
 try_file()
 {
-	cached="$XBMK_CACHE/file/$6"
-	dl_fail="n" # 1 url, 2 url backup, 3 destination, 4 checksum
-	bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
-	[ "$dl_fail" = "n" ] && e "$5" f && return 0
+	cached="file/$6" && [ "$2" = "git" ] && cached="clone/${3##*/}" && \
+	    cached="${cached%.git}"
+	cached="$XBMK_CACHE/$cached"
+	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
-	x_ rm -f "$cached"
-	[ "$2" = "curl" ] || [ "$2" = "copy" ] || \
-	    err "$3 $4 $5 $6: Unsupported dlop type: '$2'"
+	echk="d" && dl_fail="n" && [ "$2" != "git" ] && echk="f" && \
+	    bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
+	[ "$dl_fail" = "n" ] && e "$5" $echk && return 0
+
+	[ "$2" != "git" ] && x_ rm -f "$cached"
 
 	try_$2 "$cached" "$@" || return 1
 
-	bad_checksum "$6" "$cached" && return 1
-	[ "$cached" = "$5" ] || x_ cp "$cached" "$5"; :
+	if [ "$2" = "git" ]; then
+		tmpclone "$cached" "$5" "$6" "$8" || return 1
+	else
+		bad_checksum "$6" "$cached" && return 1
+		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
+	fi
 }
 
 try_curl()
@@ -128,6 +137,16 @@ try_copy()
 	cp "$2" "$1" || return 1; :
 }
 
+try_git()
+{
+	[ -d "$1" ] || git clone "$2" "$1" || return 1
+	git -C "$1" remote add main "$4" 2>/dev/null || :
+	git -C "$1" remote add backup "$5" 2>/dev/null || :
+	git -C "$1" fetch --all || :
+	git -C "$1" pull --all || :
+	git -C "$1" pull --all || :
+}
+
 bad_checksum()
 {
 	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
@@ -136,12 +155,11 @@ bad_checksum()
 
 tmpclone()
 {
-	[ -d "$3" ] && return 0
-	printf "Creating git clone '%s' from '%s', '%s'\n" "$3" "$1" "$2"
-	git clone "$1" "$3" || x_ rm -Rf "$3"
-	[ -d "$3" ] || x_ git clone "$2" "$3"
-	x_ git -C "$3" reset --hard "$4"
-	fx_ "eval x_ git -C \"$3\" am" find "$5" -type f
+	[ -d "$2" ] && return 0
+	printf "Creating git clone '%s' from '%s'\n" "$2" "$1"
+	( x_ git clone "$1" "$2" ) || return 1
+	( x_ git -C "$2" reset --hard "$3" ) || return 1
+	( fx_ "eval x_ git -C \"$2\" am" find "$4" -type f ) || return 1; :
 }
 
 nuke()
