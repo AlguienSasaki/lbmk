@@ -90,7 +90,7 @@ fetch()
 	done; :
 
 	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
-	xbmkget "$dl" "$dl_bkup" "$_dl" "$dlsum" "$dlop"
+	xbmkget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
 
 	x_ rm -Rf "${_dl}_extracted"
 	e "$_dest" f && return 0

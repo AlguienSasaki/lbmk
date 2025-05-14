@@ -53,7 +53,7 @@ git_prep()
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
 	chkvars rev
-	xbmkget "$1" "$2" "$tmpgit" "$rev" git "$_patchdir"
+	xbmkget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
@@ -78,46 +78,46 @@ fetch_submodule()
 	[ -z "$st" ] && return 0 # subrepo/subfile not defined
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-	[ "$st" = "file" ] && xbmkget "$subfile" "$subfile_bkup" \
+	[ "$st" = "file" ] && xbmkget curl "$subfile" "$subfile_bkup" \
 	    "$tmpgit/$1" "$subhash" && return 0
 	x_ rm -Rf "$tmpgit/$1"
-	xbmkget "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" git \
+	xbmkget git "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
 	    "$mdir/${1##*/}/patches"
 }
 
-# can grab from the internet, or copy locally.
-# if copying locally, it can only copy a file.
 xbmkget()
 {
-	_dlop="curl" && [ $# -gt 4 ] && _dlop="$5"
-	[ "$_dlop" = "curl" ] || [ "$_dlop" = "copy" ] || \
-	    [ "$_dlop" = "git" ] || err "$1 $2 $3 $4: Bad dlop type: '$_dlop'"
+	[ "$1" = "curl" ] || [ "$1" = "copy" ] || [ "$1" = "git" ] || \
+	    err "Bad dlop (arg 1): xbmkget $*"
 
-	for url in "$1" "$2"; do
-		[ -n "$url" ] && try_file "$url" "$_dlop" "$@" && return 0
+	for url in "$2" "$3"; do
+		[ -n "$url" ] && try_file "$url" "$@" && return 0
 	done && err "$1 $2 $3 $4: not downloaded"; :
 }
 
 try_file()
 {
 	cached="file/$6" && [ "$2" = "git" ] && cached="clone/${3##*/}" && \
-	    cached="${cached%.git}"
+	    cached="${cached%.git}" # always the main repo as basis for naming,
+					# in case the backup has another name
 	cached="$XBMK_CACHE/$cached"
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
-	echk="d" && dl_fail="n" && [ "$2" != "git" ] && echk="f" && \
-	    bad_checksum "$6" "$cached" 2>/dev/null && dl_fail="y"
-	[ "$dl_fail" = "n" ] && e "$5" $echk && return 0
+	echk="d" && [ "$2" != "git" ] && echk="f" && \
+	    bad_checksum "$6" "$cached" 2>/dev/null && x_ rm -f "$cached"
 
-	[ "$2" != "git" ] && x_ rm -f "$cached"
-
-	try_$2 "$cached" "$@" || return 1
+	e "$cached" $echk || try_$2 "$cached" "$@" || return 1
+	if e "$5" $echk && [ "$2" != "git" ]; then
+		bad_checksum "$6" "$5" 2>/dev/null && x_ cp "$cached" "$5"
+	fi
+	e "$cached" $echk missing && return 1
 
 	if [ "$2" = "git" ]; then
-		tmpclone "$cached" "$5" "$6" "$8" || return 1
+		tmpclone "$cached" "$5" "$6" "$7" || return 1
 	else
-		bad_checksum "$6" "$cached" && return 1
+		bad_checksum "$6" "$cached" && x_ rm -f "$cached" && return 1
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
+		bad_checksum "$6" "$5" && x_ rm -rf "$5" && return 1; :
 	fi
 }
 
@@ -154,8 +154,10 @@ try_git()
 
 bad_checksum()
 {
-	[ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] || return 1
-	printf "Bad checksum for file: %s\n" "$2" 1>&2; rm -f "$2" || :; :
+	[ ! -f "$2" ] || [ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] \
+	    || return 1
+	printf "Bad checksum for file: %s\n" "$2" 1>&2
+	x_ rm -f "$2"
 }
 
 tmpclone()
