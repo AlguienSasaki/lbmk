@@ -114,7 +114,7 @@ try_file()
 	else
 		bad_checksum "$6" "$cached" && x_ rm -f "$cached" && return 1
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
-		bad_checksum "$6" "$5" && x_ rm -rf "$5" && return 1; :
+		bad_checksum "$6" "$5" && x_ rm -f "$5" && return 1; :
 	fi
 }
 
