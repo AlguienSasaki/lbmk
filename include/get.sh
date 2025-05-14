@@ -127,8 +127,8 @@ try_curl()
 
 try_copy()
 {
-	[ -L "$2" ] && printf "symlink %s (try_cp %s)\n" "$2" "$*" && return 1
-	[ ! -f "$2" ] && "no such file %s (try_cp %s)\n" "$2" "$*" && return 1
+	[ -L "$2" ] && printf "symlink %s (trycp %s)\n" "$2" "$*" && return 1
+	[ ! -f "$2" ] && printf "%s missing (trycp %s)\n" "$2" "$*" && return 1
 	( x_ cp "$2" "$1" ) || return 1; :
 }
 
