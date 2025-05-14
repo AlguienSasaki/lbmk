@@ -121,15 +121,15 @@ try_file()
 try_curl()
 {
 	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-	curl --location --retry 3 -A "$_ua" "$2" -o "$1" || \
-	    wget --tries 3 -U "$_ua" "$2" -O "$1" || return 1; :
+	( x_ curl --location --retry 3 -A "$_ua" "$2" -o "$1" ) || \
+	    ( x_ wget --tries 3 -U "$_ua" "$2" -O "$1" ) || return 1; :
 }
 
 try_copy()
 {
 	[ -L "$2" ] && printf "symlink %s (try_cp %s)\n" "$2" "$*" && return 1
 	[ ! -f "$2" ] && "no such file %s (try_cp %s)\n" "$2" "$*" && return 1
-	cp "$2" "$1" || return 1; :
+	( x_ cp "$2" "$1" ) || return 1; :
 }
 
 try_git()
@@ -137,14 +137,14 @@ try_git()
 	gitdest="`findpath "$1"`" || err "Can't get readpath for '$1'"
 	x_ rm -Rf "$tmpgitcache"
 
-	[ -d "$gitdest" ] || git clone "$2" "$tmpgitcache" || return 1
+	[ -d "$gitdest" ] || ( x_ git clone "$2" "$tmpgitcache" ) || return 1
 	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest##*/}"
 	[ -d "$gitdest" ] || x_ mv "$tmpgitcache" "$gitdest"
 
-	git -C "$gitdest" remote add main "$4" 2>/dev/null || :
-	git -C "$gitdest" remote add backup "$5" 2>/dev/null || :
-	git -C "$gitdest" fetch --all || :
-	git -C "$gitdest" pull --all || :
+	( x_ git -C "$gitdest" remote add main "$4" 2>/dev/null ) || :
+	( x_ git -C "$gitdest" remote add backup "$5" 2>/dev/null ) || :
+	( x_ git -C "$gitdest" fetch --all ) || :
+	( x_ git -C "$gitdest" pull --all ) || :; :
 }
 
 bad_checksum()
