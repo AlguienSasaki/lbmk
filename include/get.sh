@@ -66,8 +66,7 @@ fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"; eval \
 	    "`setvars "" subhash subgit subgit_bkup subcurl subcurl_bkup st`"
-	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
-	    err "! . $mcfgdir/module.cfg"
+	eval "`setcfg "$mcfgdir/module.cfg" 0`"
 
 	for xt in git curl; do
 		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
