@@ -2,8 +2,8 @@
 # Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "`setvars "" loc url bkup_url subfile subhash subrepo subrepo_bkup \
-    depend subfile_bkup repofail`"
+eval "`setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
+    depend subcurl_bkup repofail`"
 
 tmpgit="$xbmklocal/gitclone"
 tmpgitcache="$XBMK_CACHE/tmpgit"
@@ -65,24 +65,22 @@ git_prep()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"; eval \
-	    "`setvars "" subhash subrepo subrepo_bkup subfile subfile_bkup st`"
+	    "`setvars "" subhash subgit subgit_bkup subcurl subcurl_bkup st`"
 	[ ! -f "$mcfgdir/module.cfg" ] || . "$mcfgdir/module.cfg" || \
 	    err "! . $mcfgdir/module.cfg"
 
-	for xt in repo file; do
+	for xt in git curl; do
 		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
 		eval "$_seval; then st=\"\$st \$xt\"; fi"
 	done
-	st="${st# }" && [ "$st" = "repo file" ] && err "$mdir: repo+file"
 
-	[ -z "$st" ] && return 0 # subrepo/subfile not defined
+	st="${st# }" && [ "$st" = "git curl" ] && err "$mdir: git+curl defined"
+	[ -z "$st" ] && return 0 # subgit/subcurl not defined
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-	[ "$st" = "file" ] && xbmkget curl "$subfile" "$subfile_bkup" \
-	    "$tmpgit/$1" "$subhash" && return 0
-	x_ rm -Rf "$tmpgit/$1"
-	xbmkget git "$subrepo" "$subrepo_bkup" "$tmpgit/$1" "$subhash" \
-	    "$mdir/${1##*/}/patches"
+	[ "$st" = "git" ] && x_ rm -Rf "$tmpgit/$1"
+	eval xbmkget "$st" "\$sub$st" "\$sub${st}_bkup" "$tmpgit/$1" \
+	    "$subhash" "$mdir/${1##*/}/patches"
 }
 
 xbmkget()
