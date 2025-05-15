@@ -75,8 +75,8 @@ chkvars()
 # e.g. coreboot is multi-tree, so 1
 singletree()
 {
-	( fx_ "exit 1" find "config/$1/"*/ -type f -name "target.cfg" ) || \
-	    return 1
+	( fx_ "eval exit 1 && err" find "config/$1/"*/ -type f \
+	    -name "target.cfg" ) || return 1; :
 }
 
 findpath()

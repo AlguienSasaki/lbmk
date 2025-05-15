@@ -270,7 +270,7 @@ check_defconfig()
 elfcheck()
 {
 	# TODO: *STILL* very hacky check. do it properly (based on build.list)
-	( fx_ "exit 1" find "$dest_dir" -type f ) || return 1; :
+	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1; :
 }
 
 handle_makefile()
