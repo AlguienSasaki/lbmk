@@ -165,5 +165,5 @@ nuke()
 {
 	rdir="${1#"$xbmkpwd/config/"}" && [ -d "$xbmkpwd/src/${rdir%/*}" ] && \
 	    x_ cd "$xbmkpwd/src/${rdir%/*}" && \
-	    dx_ "[ -L \"\$fx\" ] || x_ rm -Rf" "$1"; :
+	    dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$1"; :
 }
