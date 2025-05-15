@@ -10,23 +10,18 @@ extract_mrc()
 {
 	extract_shellball
 	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
-	    -f "$_dest" -r RO_SECTION
-
-	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && extract_refcode extra; :
+	    -f "$_pre_dest" -r RO_SECTION
 }
 
 extract_refcode()
 {
-	_refdest="${CONFIG_REFCODE_BLOB_FILE##*../}"
-	e "$_refdest" f && return 0
-
-	[ $# -lt 1 ] && extract_shellball
+	extract_shellball
 
 	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
 	# and refcode is extracted from an image using the old scheme. we use
 	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16
 	chkvars cbfstoolref
-	x_ mkdir -p "${_refdest%/*}"
+	x_ mkdir -p "${_pre_dest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
@@ -35,7 +30,7 @@ extract_refcode()
 	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
 	    of="$appdir/ref" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 
-	x_ mv "$appdir/ref" "$_refdest"
+	x_ mv "$appdir/ref" "$_pre_dest"
 }
 
 extract_shellball()

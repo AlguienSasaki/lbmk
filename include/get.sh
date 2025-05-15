@@ -84,8 +84,11 @@ xbmkget()
 	[ "$1" = "curl" ] || [ "$1" = "copy" ] || [ "$1" = "git" ] || \
 	    err "Bad dlop (arg 1): xbmkget $*"
 
+	echk="f" && [ "$1" = "git" ] && echk="d"
+
 	for url in "$2" "$3"; do
-		[ -n "$url" ] && try_file "$url" "$@" && return 0
+		[ -n "$url" ] && try_file "$url" "$@" && \
+		    eval "[ -$echk \"$4\" ] && return 0"
 	done && err "$1 $2 $3 $4: not downloaded"; :
 }
 
@@ -100,11 +103,10 @@ try_file()
 	echk="d" && [ "$2" != "git" ] && echk="f" && \
 	    bad_checksum "$6" "$cached" 2>/dev/null && x_ rm -f "$cached"
 
-	e "$cached" $echk || try_$2 "$cached" "$@" || return 1
-	if e "$5" $echk && [ "$2" != "git" ]; then
-		bad_checksum "$6" "$5" 2>/dev/null && x_ cp "$cached" "$5"
-	fi
-	e "$cached" $echk missing && return 1
+	eval "[ -$echk \"$cached\" ] || try_$2 \"\$cached\" \"\$@\" || return 1"
+	[ "$2" != "git" ] && [ -f "$5" ] && \
+	    bad_checksum "$6" "$5" 2>/dev/null && x_ cp "$cached" "$5"
+	eval "[ -$echk \"$cached\" ] || return 1"
 
 	if [ "$2" = "git" ]; then
 		tmpclone "$cached" "$5" "$6" "$7" || return 1
@@ -113,6 +115,8 @@ try_file()
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
 		bad_checksum "$6" "$5" && x_ rm -f "$5" && return 1; :
 	fi
+
+	eval "[ -$echk \"$5\" ] || return 1"
 }
 
 try_curl()
@@ -146,9 +150,13 @@ try_git()
 
 bad_checksum()
 {
-	[ ! -f "$2" ] || [ "$(sha512sum "$2" | awk '{print $1}')" != "$1" ] \
-	    || return 1
-	printf "Bad checksum for file: %s\n" "$2" 1>&2
+	[ ! -f "$2" ] && printf "File '%s' missing (sha512sum '%s')\n" \
+	    "$2" "$1" 1>&2 && return 0
+	fchksum="$(x_ sha512sum "$2" | awk '{print $1}')" || \
+	    err "Can't get sha512sum on '$2' (checking for sha512sum '$1')"
+	[ "$fchksum" != "$1" ] || return 1
+	printf "WARNING: BAD checksum for '%s' - expected '%s', got '%s'\n" \
+	    "$2" "$1" "$fchksum" 1>&2
 	x_ rm -f "$2"
 }
 

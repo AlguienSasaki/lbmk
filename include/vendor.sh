@@ -22,12 +22,12 @@ vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 
 # lbmk-specific extension to the "cv" variable (not suitable for cbmk)
 cvchk="CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
-    CONFIG_KBC1126_FIRMWARE CONFIG_LENOVO_TBFW_BIN CONFIG_VGA_BIOS_FILE \
-    CONFIG_FSP_M_FILE CONFIG_FSP_S_FILE"
+    CONFIG_LENOVO_TBFW_BIN CONFIG_VGA_BIOS_FILE CONFIG_FSP_M_FILE \
+    CONFIG_FSP_S_FILE CONFIG_KBC1126_FW1 CONFIG_KBC1126_FW2"
 
 # lbmk-specific extensions to the "cv" variable (not suitable for cbmk)
-cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_KBC1126_FW1 \
-    CONFIG_KBC1126_FW2 CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
+cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE \
+    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
     CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 CONFIG_FSP_S_CBFS \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_FSP_FD_PATH \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS \
@@ -40,7 +40,9 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
     nukemode cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
-    TBFW_hash TBFW_size hashfile EC_url_bkup`"
+    TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
+    EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
+    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash _pre_dest`"
 
 download()
 {
@@ -52,24 +54,34 @@ download()
 getfiles()
 {
 	[ -z "$CONFIG_HAVE_ME_BIN" ] || fetch intel_me "$DL_url" \
-	    "$DL_url_bkup" "$DL_hash" "$CONFIG_ME_BIN_PATH"
+	    "$DL_url_bkup" "$DL_hash" "$CONFIG_ME_BIN_PATH" "curl" \
+	    "$ME_bin_hash"
 	[ -z "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" ] || fetch sch5545ec \
 	    "$SCH5545EC_DL_url" "$SCH5545EC_DL_url_bkup" "$SCH5545EC_DL_hash" \
-	    "$CONFIG_SMSC_SCH5545_EC_FW_FILE"
-	[ -z "$CONFIG_KBC1126_FIRMWARE" ] || fetch kbc1126ec "$EC_url" \
-	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1"
+	    "$CONFIG_SMSC_SCH5545_EC_FW_FILE" "curl" "$SCH5545EC_bin_hash"
+	[ -z "$CONFIG_KBC1126_FW1" ] || fetch kbc1126ec "$EC_url" \
+	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1" "curl" \
+	    "$EC_FW1_hash"
+	[ -z "$CONFIG_KBC1126_FW2" ] || fetch kbc1126ec "$EC_url" \
+	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW2" "curl" \
+	    "$EC_FW2_hash"
 	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch e6400vga "$E6400_VGA_DL_url" \
-	  "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE"
+	    "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" \
+	    "$CONFIG_VGA_BIOS_FILE" "curl" "$E6400_VGA_bin_hash"
 	[ -z "$CONFIG_HAVE_MRC" ] || fetch "mrc" "$MRC_url" "$MRC_url_bkup" \
-	    "$MRC_hash" "$CONFIG_MRC_FILE"
-	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && fetch "refcode" "$MRC_url" \
-	    "$MRC_url_bkup" "$MRC_hash" "$CONFIG_REFCODE_BLOB_FILE"
+	    "$MRC_hash" "$CONFIG_MRC_FILE" "curl" "$MRC_bin_hash"
+	[ -z "$CONFIG_REFCODE_BLOB_FILE" ] || fetch "refcode" "$MRC_url" \
+	    "$MRC_url_bkup" "$MRC_hash" "$CONFIG_REFCODE_BLOB_FILE" "curl" \
+	    "$REF_bin_hash"
 	[ -z "$CONFIG_LENOVO_TBFW_BIN" ] || fetch "tbfw" "$TBFW_url" \
-	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN"
+	    "$TBFW_url_bkup" "$TBFW_hash" "$CONFIG_LENOVO_TBFW_BIN" "curl" \
+	    "$TBFW_bin_hash"
 	[ -z "$CONFIG_FSP_M_FILE" ] || fetch "fsp" "$CONFIG_FSP_FD_PATH" \
-	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_M_FILE" copy
+	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_M_FILE" "copy" \
+	    "$FSPM_bin_hash"
 	[ -z "$CONFIG_FSP_S_FILE" ] || fetch "fsp" "$CONFIG_FSP_FD_PATH" \
-	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_S_FILE" copy; :
+	    "$CONFIG_FSP_FD_PATH" "$FSPFD_hash" "$CONFIG_FSP_S_FILE" "copy" \
+	    "$FSPS_bin_hash"; :
 }
 
 fetch()
@@ -79,9 +91,18 @@ fetch()
 	dl_bkup="$3"
 	dlsum="$4"
 	_dest="${5##*../}"
+	_pre_dest="$XBMK_CACHE/tmpdl/check" || err "!fetch, mktemp, $*"
+	dlop="$6"
+	binsum="$7"
 
 	[ "$5" = "/dev/null" ] && return 0
-	_dl="$XBMK_CACHE/file/$dlsum"
+	_dl="$XBMK_CACHE/file/$dlsum" # internet file to extract from e.g. .exe
+	_dl_bin="$XBMK_CACHE/file/$binsum" # extracted file e.g. me.bin
+
+	# an extracted vendor file will be placed in pre_dest first, for
+	# verifying its checksum. if it matches, it is later moved to _dest
+	remkdir "${_pre_dest%/*}" "$appdir"
+
 	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
 	[ "$dl_type" = "fsp" ] && for _cdl in dl dl_bkup; do
 		eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
@@ -89,20 +110,43 @@ fetch()
 		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""
 	done; :
 
-	dlop="curl" && [ $# -gt 5 ] && dlop="$6"
+	# download the file (from the internet) to extract from
 	xbmkget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
-
 	x_ rm -Rf "${_dl}_extracted"
-	e "$_dest" f && return 0
+
+	# skip extraction if a cached extracted file exists
+	( xbmkget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) \
+	    || :
+	[ -f "$_dest" ] && return 0
 
 	x_ mkdir -p "${_dest%/*}"
-	remkdir "$appdir"
 	[ "$dl_type" = "fsp" ] || extract_archive "$_dl" "$appdir" || \
 	    [ "$dl_type" = "e6400vga" ] || err "$_dest $dl_type: !extract"
 
 	x_ extract_$dl_type "$_dl" "$appdir"
 	set -u -e
-	e "$_dest" f missing && err "!extract_$dl_type"; :
+
+	# some functions don't output directly to the given file, _pre_dest.
+	# instead, they put multiple files there, but we need the one matching
+	# the given hashsum. So, search for a matching file via bruteforce:
+	( fx_ "eval mkdst \"$binsum\"" x_ find "${_pre_dest%/*}" -type f ) || :
+
+	[ -f "$_dest" ] && return 0
+	[ -z "$binsum" ] && \
+	    printf "'%s', '%s': checksum undefined. Check files in '%s'\n" \
+	    "$board" "$_dest" "${_pre_dest%/*}" 1>&2
+	e "$_dest" f not && err "missing file '$_dest', !extract_$dl_type"; :
+	e "$_dest" f && printf "WARNING: '%s' exists but has bad checksum" \
+	    "$_dest"
+	err "Could not safely extract '$_dest', for board '$board'"
+}
+
+mkdst()
+{
+	bad_checksum "$1" "$2" && x_ rm -f "$2" && return 0
+	x_ mv "$2" "$_dl_bin"
+	x_ cp "$_dl_bin" "$_dest"
+	exit 1
 }
 
 extract_intel_me()
@@ -110,7 +154,6 @@ extract_intel_me()
 	e "$mecleaner" f not && err "$cbdir: me_cleaner missing"
 
 	_7ztest="$xbmklocal/metmp/a"
-	_me="$xbmkpwd/$_dest"
 	_metmp="$xbmklocal/me.bin"
 	x_ rm -f "$_metmp" "$xbmklocal/a"
 
@@ -121,14 +164,14 @@ extract_intel_me()
 	set +u +e
 	x_ rm -Rf "$xbmkpwd/metmp"
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :
-	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_me" && return 0
+	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_pre_dest" && return 0
 
 	(
 	x_ cd src/deguard/
 	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
 	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
-	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_me"
-	) || err "Error running deguard for $_me"; :
+	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_pre_dest"
+	) || err "Error running deguard for $_dest"; :
 }
 
 find_me()
@@ -165,7 +208,7 @@ extract_kbc1126ec()
 	) || err "$board: can't extract kbc1126 ec firmware"
 
 	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
-	x_ cp "$appdir/"ec.bin.fw* "${_dest%/*}/"
+	x_ cp "$appdir/"ec.bin.fw* "${_pre_dest%/*}/"
 }
 
 extract_e6400vga()
@@ -178,7 +221,7 @@ extract_e6400vga()
 	x_ e "bios.bin" f
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
 	) || err "can't extract e6400 vga rom"
-	x_ cp "$appdir/$E6400_VGA_romname" "$_dest"
+	x_ cp "$appdir/$E6400_VGA_romname" "$_pre_dest"
 }
 
 extract_sch5545ec()
@@ -191,26 +234,27 @@ extract_sch5545ec()
 	_sch5545ec_fw="$_sch5545ec_fw/0 Raw section/body.bin" # <-- this!
 
 	x_ "$uefiextract" "$_bios"
-	x_ cp "$_sch5545ec_fw" "$_dest"
+	x_ cp "$_sch5545ec_fw" "$_pre_dest"
 }
 
 # Lenovo ThunderBolt firmware updates:
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size; fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
+	chkvars TBFW_size
+	fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
 
 copytb()
 {
 	[ -f "$1" ] && [ ! -L "$1" ] && x_ dd if=/dev/null of="$1" bs=1 \
-	    seek=$TBFW_size && x_ mv "$1" "$_dest" && return 1; :
+	    seek=$TBFW_size && x_ mv "$1" "$_pre_dest" && return 1; :
 }
 
 extract_fsp()
 {
 	x_ python "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" \
-	    -o "${_dest%/*}" -n "Fsp.fd"
+	    -o "${_pre_dest%/*}" -n "Fsp.fd"
 }
 
 setvfile()
