@@ -131,7 +131,7 @@ fetch()
 	# the given hashsum. So, search for a matching file via bruteforce:
 	( fx_ "eval mkdst \"$binsum\"" x_ find "${_pre_dest%/*}" -type f ) || :
 
-	[ -f "$_dest" ] && return 0
+	bad_checksum "$binsum" "$_dest" || [ ! -f "$_dest" ] || return 0
 	[ -z "$binsum" ] && \
 	    printf "'%s', '%s': checksum undefined. Check files in '%s'\n" \
 	    "$board" "$_dest" "${_pre_dest%/*}" 1>&2
