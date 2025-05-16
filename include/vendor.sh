@@ -346,9 +346,10 @@ add_vfiles()
 	[ "$CONFIG_HAVE_MRC" = "y" ] && vfile "mrc.bin" "$CONFIG_MRC_FILE" \
 	    "mrc" "0xfffa0000"
 	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && vfile IFD "$CONFIG_ME_BIN_PATH" me
-	[ "$CONFIG_KBC1126_FIRMWARE" = "y" ] && vfile ecfw1.bin \
-	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET" && vfile \
-	    ecfw2.bin "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
+	[ -n "$CONFIG_KBC1126_FW1" ] && vfile ecfw1.bin \
+	    "$CONFIG_KBC1126_FW1" raw "$CONFIG_KBC1126_FW1_OFFSET"
+	[ -n "$CONFIG_KBC1126_FW2" ] && vfile ecfw2.bin \
+	    "$CONFIG_KBC1126_FW2" raw "$CONFIG_KBC1126_FW2_OFFSET"
 	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
 	  vfile "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" optionrom
 	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
