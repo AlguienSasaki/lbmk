@@ -15,7 +15,6 @@ fetch_targets()
 	printf "Creating %s tree %s\n" "$project" "$tree"
 	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" with_submodules
-	( fx_ nuke find config -type f -name "nuke.list" ) || err; :
 }
 
 fetch_project()
@@ -31,7 +30,6 @@ fetch_project()
 		x_ ./mk -f $d
 	done
 	clone_project
-	( fx_ nuke find config -type f -name "nuke.list" ) || err; :
 }
 
 clone_project()
@@ -166,10 +164,4 @@ tmpclone()
 	( x_ git clone "$1" "$2" ) || return 1
 	( x_ git -C "$2" reset --hard "$3" ) || return 1
 	( fx_ "eval x_ git -C \"$2\" am" find "$4" -type f ) || return 1; :
-}
-
-nuke()
-{
-	r="${1#config/}" && r="$xbmkpwd/src/${r%/*}" && [ -d "$r" ] && x_ cd \
-	    "$r" && dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$xbmkpwd/$1"; :
 }
