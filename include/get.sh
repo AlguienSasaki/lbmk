@@ -139,7 +139,7 @@ try_git()
 	x_ rm -Rf "$tmpgitcache"
 
 	[ -d "$gitdest" ] || ( x_ git clone "$2" "$tmpgitcache" ) || return 1
-	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest##*/}"
+	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest%/*}"
 	[ -d "$gitdest" ] || x_ mv "$tmpgitcache" "$gitdest"
 
 	( x_ git -C "$gitdest" remote add main "$4" 2>/dev/null ) || :
