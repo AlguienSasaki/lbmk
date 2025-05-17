@@ -109,7 +109,7 @@ try_file()
 	eval "[ -$echk \"$cached\" ] || return 1"
 
 	if [ "$2" = "git" ]; then
-		tmpclone "$cached" "$5" "$6" "$7" || return 1
+		[ -d "$5" ] || tmpclone "$cached" "$5" "$6" "$7" || return 1
 	else
 		bad_checksum "$6" "$cached" && x_ rm -f "$cached" && return 1
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
@@ -162,7 +162,6 @@ bad_checksum()
 
 tmpclone()
 {
-	[ -d "$2" ] && return 0
 	printf "Creating git clone '%s' from '%s'\n" "$2" "$1"
 	( x_ git clone "$1" "$2" ) || return 1
 	( x_ git -C "$2" reset --hard "$3" ) || return 1
