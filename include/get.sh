@@ -156,7 +156,6 @@ bad_checksum()
 
 tmpclone()
 {
-	printf "Creating git clone '%s' from '%s'\n" "$2" "$1"
 	( x_ git clone "$1" "$2" ) || return 1
 	( x_ git -C "$2" reset --hard "$3" ) || return 1
 	( fx_ "eval x_ git -C \"$2\" am" find "$4" -type f ) || return 1; :
