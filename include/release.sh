@@ -54,7 +54,6 @@ prep_release_src()
 	x_ ./mk -f
 	fx_ "x_ rm -Rf" x_ find . -name ".git"
 	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
-	x_ mv src/docs docs
 }
 
 prep_release_tarball()
