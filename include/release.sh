@@ -54,7 +54,7 @@ prep_release_src()
 	x_ ./mk -f
 	fx_ "x_ rm -Rf" x_ find . -name ".git"
 	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
-	( fx_ nuke find config -type f -name "nuke.list" ) || err; :
+	( fx_ nuke x_ find config -type f -name "nuke.list" ) || err; :
 }
 
 nuke()
