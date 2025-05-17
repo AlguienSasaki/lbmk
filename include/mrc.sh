@@ -6,16 +6,9 @@
 
 eval "`setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL`"
 
-extract_mrc()
-{
-	extract_shellball
-	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
-	    -f "$_pre_dest" -r RO_SECTION
-}
-
 extract_refcode()
 {
-	extract_shellball
+	extract_mrc
 
 	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
 	# and refcode is extracted from an image using the old scheme. we use
@@ -33,7 +26,7 @@ extract_refcode()
 	x_ mv "$appdir/ref" "$_pre_dest"
 }
 
-extract_shellball()
+extract_mrc()
 {
 	chkvars "MRC_board" "CONFIG_MRC_FILE"
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
@@ -42,7 +35,10 @@ extract_shellball()
 	x_ cd "$appdir"
 	extract_partition "${MRC_url##*/}"
 	extract_archive "$SHELLBALL" .
-	) || err "mrc download/extract failure"; :
+	) || err "mrc download/extract failure"
+
+	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
+	    -f "${_pre_dest%/*}/mrc.bin" -r RO_SECTION
 }
 
 extract_partition()
