@@ -30,7 +30,7 @@ release()
 
 	prep_release src
 	prep_release tarball
-	prep_release bin
+	[ "$relmode" = "src" ] || prep_release bin
 	x_ rm -Rf "$relsrcdir"
 
 	x_ mkdir -p "$reldir"
@@ -70,7 +70,6 @@ prep_release_tarball()
 
 prep_release_bin()
 {
-	[ "$relmode" = "src" ] && return 0
 	x_ ./mk -d coreboot
 	fx_ "x_ ./mk -b" printf \
 	    "coreboot\npico-serprog\nstm32-vserprog\npcsx-redux\n"
