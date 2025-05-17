@@ -148,14 +148,10 @@ try_git()
 
 bad_checksum()
 {
-	[ ! -f "$2" ] && printf "File '%s' missing (sha512sum '%s')\n" \
-	    "$2" "$1" 1>&2 && return 0
-	fchksum="$(x_ sha512sum "$2" | awk '{print $1}')" || \
-	    err "Can't get sha512sum on '$2' (checking for sha512sum '$1')"
-	[ "$fchksum" != "$1" ] || return 1
-	printf "WARNING: BAD checksum for '%s' - expected '%s', got '%s'\n" \
-	    "$2" "$1" "$fchksum" 1>&2
-	x_ rm -f "$2"
+	[ ! -f "$2" ] && printf "'%s' missing, %s\n" "$2" "$1" 1>&2 && return 0
+	csum="$(x_ sha512sum "$2" | awk '{print $1}')" || err "!sha512 '$2' $1"
+	[ "$csum" != "$1" ] && printf "BAD SHA512, '%s'; need '%s', got %s\n" \
+	    "$2" "$1" "$csum" 1>&2 && x_ rm -f "$2" && return 0; return 1
 }
 
 tmpclone()
