@@ -59,8 +59,9 @@ prep_release_src()
 
 nuke()
 {
-	r="$relsrc/src/${1#config/}"; [ -d "${r%/*}" ] && x_ cd "${r%/*}" && \
-	    dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$relsrc/$1"; :
+	r="$relsrc/src/${1#config/}"
+	[ -d "${r%/*}" ] && x_ cd "${r%/*}" && \
+	    dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$relsrc/$1"
 }
 
 prep_release_tarball()
