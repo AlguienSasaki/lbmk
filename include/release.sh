@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" reldir reldest vdir relsrc relmode`"
+eval "`setvars "" reldir reldest vdir rsrc relmode`"
 
 release()
 {
@@ -23,15 +23,15 @@ release()
 	    err "already exists: \"$reldest\""
 
 	vdir="$XBMK_CACHE/relpwd/${xbmktmp##*/}/$version"
-	relsrc="$vdir/${relname}_src"
+	rsrc="$vdir/${relname}_src"
 
 	remkdir "$vdir"
-	x_ git clone . "$relsrc"
+	x_ git clone . "$rsrc"
 
 	prep_release src
 	prep_release tarball
 	[ "$relmode" = "src" ] || prep_release bin
-	x_ rm -Rf "$relsrc"
+	x_ rm -Rf "$rsrc"
 
 	x_ mkdir -p "$reldir"
 	x_ mv "$vdir" "$reldir"
@@ -42,9 +42,9 @@ release()
 
 prep_release()
 {
-	x_ touch "$relsrc/lock"
+	x_ touch "$rsrc/lock"
 	(
-	[ "$1" = "tarball" ] || x_ cd "$relsrc"
+	[ "$1" = "tarball" ] || x_ cd "$rsrc"
 	prep_release_$1
 	) || err "can't prep release $1"
 }
@@ -59,20 +59,20 @@ prep_release_src()
 
 nuke()
 {
-	r="$relsrc/src/${1#config/}"
+	r="$rsrc/src/${1#config/}"
 	[ -d "${r%/*}" ] && x_ cd "${r%/*}" && \
-	    dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$relsrc/$1"
+	    dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$rsrc/$1"; :
 }
 
 prep_release_tarball()
 {
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "$relsrc/CHANGELOG" || err "!log $relsrc"
-	x_ rm -f "$relsrc/lock"
-	x_ rm -Rf "$relsrc/cache" "$relsrc/tmp"
+	    --abbrev-commit > "$rsrc/CHANGELOG" || err "!log $rsrc"
+	x_ rm -f "$rsrc/lock"
+	x_ rm -Rf "$rsrc/cache" "$rsrc/tmp"
 	(
-	x_ cd "${relsrc%/*}"
-	x_ mktarball "${relsrc##*/}" "${relsrc##*/}.tar.xz"
+	x_ cd "${rsrc%/*}"
+	x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
 	) || err "can't create src tarball"; :
 }
 
