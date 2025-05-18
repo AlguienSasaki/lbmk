@@ -194,11 +194,11 @@ xbmk_create_tmpdir()
 	# /tmp might be a tmpfs, so for large files we use ./tmp,
 	# not to be confused with xbmktmp (xbmktmp points to /tmp)
 	remkdir "$xbmktmp" "$xbmklocal"
+	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 }
 
 xbmk_create_pathdirs()
 {
-	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
