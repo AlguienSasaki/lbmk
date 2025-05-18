@@ -31,7 +31,7 @@ xbmk_init()
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
 	for init_cmd in set_version set_env lock git_init \
-	    mkdirs set_pyver create_pathdirs child_exec; do
+	    mkdirs set_pyver child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -159,7 +159,14 @@ xbmk_set_pyver()
 	[ -n "$pyver" ] && \
 	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
 	    pyver="${pyver#(}" && pyver="${pyver%,}"
-	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)"; :
+	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)"
+
+	(
+	# set up python v3.x in PATH, in case it's not set up correctly.
+	# see code above that detected the correct python3 command.
+	x_ cd "$XBMK_CACHE/xbmkpath"
+	x_ ln -s "`pybin "$python"`" python
+	) || err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
 }
 
 # Use direct path, to prevent a hang if Python is using a virtual environment,
@@ -191,16 +198,6 @@ pybin()
 
 	# Defer to normal command -v if not a venv
 	command -v "$1" 2>/dev/null || return 1
-}
-
-xbmk_create_pathdirs()
-{
-	(
-	# set up python v3.x in PATH, in case it's not set up correctly.
-	# see code above that detected the correct python3 command.
-	x_ cd "$XBMK_CACHE/xbmkpath"
-	x_ ln -s "`pybin "$python"`" python
-	) || err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
 }
 
 xbmk_child_exec()
