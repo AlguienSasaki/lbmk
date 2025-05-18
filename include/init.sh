@@ -30,8 +30,8 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in set_pyver set_version set_env lock git_init \
-	    mkdirs create_pathdirs child_exec; do
+	for init_cmd in set_version set_env lock git_init \
+	    mkdirs set_pyver create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -48,52 +48,6 @@ xbmkpkg()
 
 	[ -n "$aur_notice" ] && \
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
-}
-
-xbmk_set_pyver()
-{
-	pyv="import sys; print(sys.version_info[:])"
-	python="python3"
-	pybin python3 1>/dev/null || python="python"
-	pyver="2" && [ "$python" = "python3" ] && pyver="3"
-	pybin "$python" 1>/dev/null || pyver=""
-	[ -z "$pyver" ] || "`pybin "$python"`" -c "$pyv" 1>/dev/null \
-	    2>/dev/null || err "Cannot detect host Python version."
-	[ -n "$pyver" ] && \
-	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
-	    pyver="${pyver#(}" && pyver="${pyver%,}"
-	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)"; :
-}
-
-# Use direct path, to prevent a hang if Python is using a virtual environment,
-# not command -v, to prevent a hang when checking python's version
-# See: https://docs.python.org/3/library/venv.html#how-venvs-work
-pybin()
-{
-	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
-
-	venv=1
-	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
-	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
-
-	# ideally, don't rely on PATH or hardcoded paths if python venv.
-	# use the *real*, direct executable linked to by the venv symlink
-	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
-		pypath="$(findpath \
-		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
-		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
-		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
-	fi
-
-	# if python venv: fall back to common PATH directories for checking
-	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
-		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
-		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
-		    return 0
-	done && return 1
-
-	# Defer to normal command -v if not a venv
-	command -v "$1" 2>/dev/null || return 1
 }
 
 xbmk_set_version()
@@ -191,6 +145,52 @@ xbmk_mkdirs()
 {
 	remkdir "$xbmktmp" "$xbmklocal"
 	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+}
+
+xbmk_set_pyver()
+{
+	pyv="import sys; print(sys.version_info[:])"
+	python="python3"
+	pybin python3 1>/dev/null || python="python"
+	pyver="2" && [ "$python" = "python3" ] && pyver="3"
+	pybin "$python" 1>/dev/null || pyver=""
+	[ -z "$pyver" ] || "`pybin "$python"`" -c "$pyv" 1>/dev/null \
+	    2>/dev/null || err "Cannot detect host Python version."
+	[ -n "$pyver" ] && \
+	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
+	    pyver="${pyver#(}" && pyver="${pyver%,}"
+	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)"; :
+}
+
+# Use direct path, to prevent a hang if Python is using a virtual environment,
+# not command -v, to prevent a hang when checking python's version
+# See: https://docs.python.org/3/library/venv.html#how-venvs-work
+pybin()
+{
+	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
+
+	venv=1
+	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
+	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
+
+	# ideally, don't rely on PATH or hardcoded paths if python venv.
+	# use the *real*, direct executable linked to by the venv symlink
+	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
+		pypath="$(findpath \
+		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
+		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
+		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
+	fi
+
+	# if python venv: fall back to common PATH directories for checking
+	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
+		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
+		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
+		    return 0
+	done && return 1
+
+	# Defer to normal command -v if not a venv
+	command -v "$1" 2>/dev/null || return 1
 }
 
 xbmk_create_pathdirs()
