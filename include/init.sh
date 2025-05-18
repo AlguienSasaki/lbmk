@@ -30,7 +30,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in set_version set_env lock git_init \
+	for init_cmd in get_version set_env lock set_version git_init \
 	    mkdirs set_pyver child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
@@ -50,7 +50,7 @@ xbmkpkg()
 	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
 
-xbmk_set_version()
+xbmk_get_version()
 {
 	[ ! -f ".version" ] || read -r version < ".version" || :; :
 	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || :; :
@@ -68,9 +68,6 @@ xbmk_set_version()
 	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 
 	chkvars version versiondate
-	printf "%s\n" "$version" > ".version" || err "can't save version"
-	printf "%s\n" "$versiondate" > ".versiondate" || err "can't save date"
-
 	relname="$projectname-$version"
 }
 
@@ -129,6 +126,12 @@ xbmk_lock()
 {
 	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
+}
+
+xbmk_set_version()
+{
+	printf "%s\n" "$version" > ".version" || err "can't save version"
+	printf "%s\n" "$versiondate" > ".versiondate" || err "can't save date"
 }
 
 xbmk_git_init()
