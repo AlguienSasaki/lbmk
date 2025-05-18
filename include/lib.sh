@@ -15,11 +15,15 @@ remkdir()
 
 mkrom_tarball()
 {
-	printf "%s\n" "$version" > "$1/.version" || err "$1 !version"
-	printf "%s\n" "$versiondate" > "$1/.versiondate" || err "$1 !vdate"
-
+	update_xbmkver "$1"
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 	x_ rm -Rf "$1"
+}
+
+update_xbmkver()
+{
+	printf "%s\n" "$version" > "$1/.version" || err "$1 !version"; :
+	printf "%s\n" "$versiondate" > "$1/.versiondate" || err "$1 !vdate"; :
 }
 
 mktarball()

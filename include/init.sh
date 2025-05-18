@@ -30,7 +30,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in get_version set_env lock set_version git_init \
+	for init_cmd in get_version set_env lock git_init \
 	    mkdirs set_pyver child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
@@ -58,15 +58,7 @@ xbmk_get_version()
 	[ ! -e ".git" ] && [ ! -f ".version" ] && version="unknown"
 	[ ! -e ".git" ] && [ ! -f ".versiondate" ] && versiondate="1716415872"
 
-	version_="$version"
-	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
-	versiondate_="$versiondate"
-	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-
-	chkvars version versiondate
-	relname="$projectname-$version"
+	[ -n "$version" ] && relname="$projectname-$version"; :
 }
 
 xbmk_set_env()
@@ -74,7 +66,6 @@ xbmk_set_env()
 	is_child="n"
 
 	xbmkpath="$PATH"
-	export LOCALVERSION="-$projectname-${version%%-*}"
 
 	# unify all temporary files/directories in a single TMPDIR
 	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
@@ -117,7 +108,10 @@ xbmk_set_env()
 
 	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
 	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
-	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1; :
+	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1
+
+	xbmk_set_version
+	export LOCALVERSION="-$projectname-${version%%-*}"
 }
 
 xbmk_lock()
@@ -128,8 +122,17 @@ xbmk_lock()
 
 xbmk_set_version()
 {
-	printf "%s\n" "$version" > ".version" || err "can't save version"
-	printf "%s\n" "$versiondate" > ".versiondate" || err "can't save date"
+	version_="$version"
+	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
+	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
+	versiondate_="$versiondate"
+	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
+	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+
+	chkvars version versiondate
+	update_xbmkver "."
+
+	relname="$projectname-$version"
 }
 
 xbmk_git_init()
