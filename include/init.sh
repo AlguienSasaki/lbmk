@@ -30,7 +30,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in get_version set_env lock git_init set_pyver child_exec
+	for init_cmd in get_version set_env lock git_init child_exec
 	do
 		xbmk_$init_cmd "$@" || break
 	done
@@ -117,46 +117,8 @@ xbmk_set_env()
 
 	remkdir "$xbmktmp" "$xbmklocal"
 	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
-}
 
-xbmk_lock()
-{
-	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
-	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
-}
-
-xbmk_set_version()
-{
-	version_="$version"
-	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
-	versiondate_="$versiondate"
-	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-
-	chkvars version versiondate
-	update_xbmkver "."
-
-	relname="$projectname-$version"
-}
-
-xbmk_git_init()
-{
-	for gitarg in "--global user.name" "--global user.email"; do
-		gitcmd="git config $gitarg"; $gitcmd 1>/dev/null 2>/dev/null \
-		    || err "Run this first: $gitcmd \"your ${gitcmd##*.}\""
-	done
-
-	[ -L ".git" ] && return 1
-	[ -e ".git" ] && return 0
-	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
-
-	x_ git init 1>/dev/null 2>/dev/null
-	x_ git add -A . 1>/dev/null 2>/dev/null
-	x_ git commit -m "$projectname $version" --date "$cdate" \
-	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
-	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
-	    2>/dev/null; :
+	xbmk_set_pyver
 }
 
 xbmk_set_pyver()
@@ -210,6 +172,46 @@ pybin()
 
 	# Defer to normal command -v if not a venv
 	command -v "$1" 2>/dev/null || return 1
+}
+
+xbmk_lock()
+{
+	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
+	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
+}
+
+xbmk_set_version()
+{
+	version_="$version"
+	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
+	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
+	versiondate_="$versiondate"
+	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
+	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+
+	chkvars version versiondate
+	update_xbmkver "."
+
+	relname="$projectname-$version"
+}
+
+xbmk_git_init()
+{
+	for gitarg in "--global user.name" "--global user.email"; do
+		gitcmd="git config $gitarg"; $gitcmd 1>/dev/null 2>/dev/null \
+		    || err "Run this first: $gitcmd \"your ${gitcmd##*.}\""
+	done
+
+	[ -L ".git" ] && return 1
+	[ -e ".git" ] && return 0
+	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
+
+	x_ git init 1>/dev/null 2>/dev/null
+	x_ git add -A . 1>/dev/null 2>/dev/null
+	x_ git commit -m "$projectname $version" --date "$cdate" \
+	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
+	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
+	    2>/dev/null; :
 }
 
 xbmk_child_exec()
