@@ -31,8 +31,8 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in set_pyver set_version set_env git_init create_tmpdir \
-	    lock create_pathdirs child_exec; do
+	for init_cmd in set_pyver set_version set_env lock git_init \
+	    create_tmpdir create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -159,6 +159,12 @@ xbmk_set_env()
 	xbmktmp="$TMPDIR"
 }
 
+xbmk_lock()
+{
+	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
+	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
+}
+
 xbmk_git_init()
 {
 	for gitarg in "--global user.name" "--global user.email"; do
@@ -185,12 +191,6 @@ xbmk_create_tmpdir()
 	# /tmp might be a tmpfs, so for large files we use ./tmp,
 	# not to be confused with xbmktmp (xbmktmp points to /tmp)
 	remkdir "$xbmktmp" "$xbmklocal"
-}
-
-xbmk_lock()
-{
-	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
-	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
 }
 
 xbmk_create_pathdirs()
