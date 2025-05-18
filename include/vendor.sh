@@ -38,7 +38,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
-    nukemode cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
+    nuke cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
     TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
     EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
@@ -297,13 +297,13 @@ prep()
 	_xrom="$1"
 	_xromname="${1##*/}"
 	_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
-	[ "$nukemode" = "nuke" ] && _xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
+	[ "$nuke" = "nuke" ] && _xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
 
 	e "$_xrom" f missing && return 0
 	[ -z "${_xromname#"$vfix"}" ] && err "$_xromname / $vfix: name match"
 
 	# Remove the prefix and 1-byte pad
-	if [ "$nukemode" != "nuke" ] && \
+	if [ "$nuke" != "nuke" ] && \
 	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
 		xromsize="$(expr $(stat -c '%s' "$_xrom") - 1)" || err "!int"
 		[ $xromsize -lt 524288 ] && err "too small, $xromsize: $_xrom"
@@ -314,10 +314,10 @@ prep()
 		_xrom="$_xromnew"
 	fi
 
-	[ "$nukemode" != "nuke" ] || ( mksha512 "$_xrom" "vendorhashes" ) || err
+	[ "$nuke" != "nuke" ] || ( mksha512 "$_xrom" "vendorhashes" ) || err
 
 	add_vfiles "$_xrom" || return 1 # if break return, can still change MAC
-	[ "$nukemode" != "nuke" ] && return 0
+	[ "$nuke" != "nuke" ] && return 0
 
 	# Rename the file, prefixing a warning saying not to flash
 	cat "$_xrom" config/data/coreboot/0 > "$_xromnew" || err "!pad $_xrom"
@@ -334,10 +334,10 @@ add_vfiles()
 {
 	rom="$1"
 
-	if [ "$has_hashes" != "y" ] && [ "$nukemode" != "nuke" ]; then
+	if [ "$has_hashes" != "y" ] && [ "$nuke" != "nuke" ]; then
 		printf "'%s' has no hash file. Skipping.\n" "$archive" 1>&2
 		return 1
-	elif [ "$has_hashes" = "y" ] && [ "$nukemode" = "nuke" ]; then
+	elif [ "$has_hashes" = "y" ] && [ "$nuke" = "nuke" ]; then
 		printf "'%s' has a hash file. Skipping nuke.\n" "$archive" 1>&2
 		return 1
 	fi
@@ -383,14 +383,14 @@ vfile()
 		err "vfile $*, $rom: offset given but empty (undefined)"
 	fi
 
-	[ "$nukemode" = "nuke" ] || x_ e "$_dest" f
+	[ "$nuke" = "nuke" ] || x_ e "$_dest" f
 
 	if [ "$cbfsname" = "IFD" ]; then
-		[ "$nukemode" = "nuke" ] || x_ "$ifdtool" $ifdprefix -i \
+		[ "$nuke" = "nuke" ] || x_ "$ifdtool" $ifdprefix -i \
 		    $_t:$_dest "$rom" -O "$rom"
-		[ "$nukemode" != "nuke" ] || x_ "$ifdtool" $ifdprefix --nuke \
+		[ "$nuke" != "nuke" ] || x_ "$ifdtool" $ifdprefix --nuke \
 		    $_t "$rom" -O "$rom"
-	elif [ "$nukemode" = "nuke" ]; then
+	elif [ "$nuke" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
 		x_ rm -f "$xbmklocal/refcode"
@@ -407,7 +407,7 @@ vfile()
 check_vendor_hashes()
 {
 	x_ cd "$tmpromdir"
-	[ "$has_hashes" = "n" ] || [ "$nukemode" = "nuke" ] || sha512sum \
+	[ "$has_hashes" = "n" ] || [ "$nuke" = "nuke" ] || sha512sum \
 	    --status -c "$hashfile" || x_ sha1sum --status -c "$hashfile"
 	x_ rm -f "$hashfile"
 }

@@ -21,7 +21,7 @@ inject()
 
 	set +u +e
 	[ $# -lt 1 ] && err "No options specified"
-	eval "`setvars "" nukemode new_mac xchanged`"
+	eval "`setvars "" nuke new_mac xchanged`"
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
@@ -29,7 +29,7 @@ inject()
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
 		new_mac=""
-		nukemode="nuke" ;;
+		nuke="nuke" ;;
 	setmac)
 		[ $# -gt 2 ] && new_mac="$3" && \
 		    [ -z "$new_mac" ] && err "Empty MAC address specified" ;;
@@ -83,7 +83,7 @@ check_target()
 
 patch_release()
 {
-	[ "$nukemode" = "nuke" ] || x_ ./mk download "$board"
+	[ "$nuke" = "nuke" ] || x_ ./mk download "$board"
 
 	has_hashes="n"
 	tmpromdir="$tmpromdel/bin/$board"
