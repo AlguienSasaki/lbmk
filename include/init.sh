@@ -30,8 +30,8 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in get_version set_env lock git_init \
-	    mkdirs set_pyver child_exec; do
+	for init_cmd in get_version set_env lock git_init set_pyver child_exec
+	do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -114,6 +114,9 @@ xbmk_set_env()
 
 	xbmk_set_version
 	export LOCALVERSION="-$projectname-${version%%-*}"
+
+	remkdir "$xbmktmp" "$xbmklocal"
+	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 }
 
 xbmk_lock()
@@ -154,12 +157,6 @@ xbmk_git_init()
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
 	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
 	    2>/dev/null; :
-}
-
-xbmk_mkdirs()
-{
-	remkdir "$xbmktmp" "$xbmklocal"
-	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 }
 
 xbmk_set_pyver()
