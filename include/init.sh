@@ -121,6 +121,21 @@ xbmk_set_env()
 	xbmk_set_pyver
 }
 
+xbmk_set_version()
+{
+	version_="$version"
+	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
+	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
+	versiondate_="$versiondate"
+	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
+	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+
+	chkvars version versiondate
+	update_xbmkver "."
+
+	relname="$projectname-$version"
+}
+
 xbmk_set_pyver()
 {
 	pyv="import sys; print(sys.version_info[:])"
@@ -178,21 +193,6 @@ xbmk_lock()
 {
 	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
-}
-
-xbmk_set_version()
-{
-	version_="$version"
-	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
-	versiondate_="$versiondate"
-	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
-
-	chkvars version versiondate
-	update_xbmkver "."
-
-	relname="$projectname-$version"
 }
 
 xbmk_git_init()
