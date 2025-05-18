@@ -55,10 +55,8 @@ xbmk_get_version()
 	[ ! -f ".version" ] || read -r version < ".version" || :; :
 	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || :; :
 
-	[ -e ".git" ] || [ -f ".version" ] || printf "unknown\n" > ".version" \
-	    || err "Cannot generate unknown .version file"
-	[ -e ".git" ] || [ -f ".versiondate" ] || printf "1716415872\n" > \
-	    ".versiondate" || err "Can't generate unknown versiondate file"; :
+	[ ! -e ".git" ] && [ ! -f ".version" ] && version="unknown"
+	[ ! -e ".git" ] && [ ! -f ".versiondate" ] && versiondate="1716415872"
 
 	version_="$version"
 	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
