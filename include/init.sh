@@ -12,11 +12,10 @@ projectsite="https://libreboot.org/"
 
 [ -z "${PATH+x}" ] && \
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
-xbmkpath="$PATH"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal \
-    xbmklock cvxbmk cvchk`"
+    xbmklock cvxbmk cvchk xbmkpath`"
 
 xbmk_init()
 {
@@ -123,6 +122,7 @@ xbmk_set_version()
 
 xbmk_set_env()
 {
+	xbmkpath="$PATH"
 	export LOCALVERSION="-$projectname-${version%%-*}"
 
 	# XBMK_CACHE is a directory, for caching downloads and git repon
@@ -157,6 +157,9 @@ xbmk_set_env()
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	xbmktmp="$TMPDIR"
+
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
+	xbmkpath="$PATH"
 }
 
 xbmk_lock()
@@ -196,7 +199,6 @@ xbmk_create_tmpdir()
 xbmk_create_pathdirs()
 {
 	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
