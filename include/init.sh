@@ -52,8 +52,8 @@ xbmkpkg()
 
 xbmk_get_version()
 {
-	[ ! -f ".version" ] || read -r version < ".version" || :; :
-	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || :; :
+	[ ! -f ".version" ] || read -r version < ".version" || err
+	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || err
 
 	[ ! -e ".git" ] && [ ! -f ".version" ] && version="unknown"
 	[ ! -e ".git" ] && [ ! -f ".versiondate" ] && versiondate="1716415872"
