@@ -146,6 +146,17 @@ xbmk_set_env()
 	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
 	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
 	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1; :
+
+	# unify all temporary files/directories in a single TMPDIR
+	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
+	    unset TMPDIR
+	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
+	[ -z "${TMPDIR+x}" ] || return 1 # child instance, so return
+
+	# parent instance of xbmk, so don't return. set up TMPDIR
+	export TMPDIR="/tmp"
+	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	xbmktmp="$TMPDIR"
 }
 
 xbmk_git_init()
@@ -170,17 +181,6 @@ xbmk_git_init()
 xbmk_create_tmpdir()
 {
 	x_ mkdir -p "$xbmklocal"
-
-	# unify all temporary files/directories in a single TMPDIR
-	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
-	    unset TMPDIR
-	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
-	[ -z "${TMPDIR+x}" ] || return 1 # child instance, so return
-
-	# parent instance of xbmk, so don't return. set up TMPDIR
-	export TMPDIR="/tmp"
-	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
-	xbmktmp="$TMPDIR"
 
 	# /tmp might be a tmpfs, so for large files we use ./tmp,
 	# not to be confused with xbmktmp (xbmktmp points to /tmp)
