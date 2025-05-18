@@ -136,8 +136,11 @@ fetch()
 	    printf "'%s', '%s': checksum undefined. Check files in '%s'\n" \
 	    "$board" "$_dest" "${_pre_dest%/*}" 1>&2
 	e "$_dest" f not && err "missing file '$_dest', !extract_$dl_type"; :
-	e "$_dest" f && printf "WARNING: '%s' exists but has bad checksum" \
-	    "$_dest"
+	e "$_dest" f && printf "WARNING: '%s' made with bad hash (will rm)\n" \
+	    "$_dest" 1>&2
+	[ -L "$_dest" ] && printf "WARNING: '%s' is a link. Please delete!\n" \
+	    "$_dest" 1>&2
+	[ -L "$_dest" ] || x_ rm -f "$_dest"
 	err "Could not safely extract '$_dest', for board '$board'"
 }
 
