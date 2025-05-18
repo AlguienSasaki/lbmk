@@ -30,8 +30,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in get_version set_env lock git_init child_exec
-	do
+	for init_cmd in get_version set_env git_init child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -81,6 +80,9 @@ xbmk_set_env()
 		e "lock" f missing && err "lock file absent on child"
 		return 1
 	fi
+
+	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
+	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
 
 	# parent instance of xbmk, so don't return. set up TMPDIR
 	export TMPDIR="/tmp"
@@ -187,12 +189,6 @@ pybin()
 
 	# Defer to normal command -v if not a venv
 	command -v "$1" 2>/dev/null || return 1
-}
-
-xbmk_lock()
-{
-	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
-	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
 }
 
 xbmk_git_init()
