@@ -76,8 +76,28 @@ xbmk_set_version()
 
 xbmk_set_env()
 {
+	is_child="n"
+
 	xbmkpath="$PATH"
 	export LOCALVERSION="-$projectname-${version%%-*}"
+
+	# unify all temporary files/directories in a single TMPDIR
+	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
+	    unset TMPDIR
+	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
+	[ -z "${TMPDIR+x}" ] || is_child="y" # child instance, so return
+
+	if [ "$is_child" = "y" ]; then
+		[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
+		[ -z "${XBMK_THREADS+x}" ] && err "XBMK_THREADS unset on child"
+		e "lock" f missing && err "lock file absent on child"
+		return 1
+	fi
+
+	# parent instance of xbmk, so don't return. set up TMPDIR
+	export TMPDIR="/tmp"
+	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	xbmktmp="$TMPDIR"
 
 	# XBMK_CACHE is a directory, for caching downloads and git repon
 	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
@@ -91,6 +111,9 @@ xbmk_set_env()
 	[ ! -e "$XBMK_CACHE" ] || \
 	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
 
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
+	xbmkpath="$PATH"
+
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
 	# (this is used to exclude certain build targets from releases)
 	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
@@ -100,20 +123,6 @@ xbmk_set_env()
 	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
 	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
 	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1; :
-
-	# unify all temporary files/directories in a single TMPDIR
-	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
-	    unset TMPDIR
-	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
-	[ -z "${TMPDIR+x}" ] || return 1 # child instance, so return
-
-	# parent instance of xbmk, so don't return. set up TMPDIR
-	export TMPDIR="/tmp"
-	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
-	xbmktmp="$TMPDIR"
-
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
-	xbmkpath="$PATH"
 }
 
 xbmk_lock()
