@@ -189,8 +189,6 @@ xbmk_git_init()
 
 xbmk_mkdirs()
 {
-	x_ mkdir -p "$xbmklocal"
-
 	remkdir "$xbmktmp" "$xbmklocal"
 	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 }
