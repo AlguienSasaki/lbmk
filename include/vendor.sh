@@ -314,7 +314,7 @@ prep()
 		_xrom="$_xromnew"
 	fi
 
-	[ "$nukemode" = "nuke" ] && mksha512sum "$_xrom" "vendorhashes"
+	[ "$nukemode" != "nuke" ] || ( mksha512 "$_xrom" "vendorhashes" ) || err
 
 	add_vfiles "$_xrom" || return 1 # if break return, can still change MAC
 	[ "$nukemode" != "nuke" ] && return 0
@@ -324,12 +324,10 @@ prep()
 	x_ rm -f "$_xrom"
 }
 
-mksha512sum()
+mksha512()
 {
-	(
 	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
 	sha512sum ./"${1##*/}" >> "$2" || err "!sha512sum \"$1\" > \"$2\""
-	) || err "failed to create tarball checksum"
 }
 
 add_vfiles()
