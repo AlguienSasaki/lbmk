@@ -31,7 +31,7 @@ xbmk_init()
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
 	for init_cmd in set_pyver set_version set_env lock git_init \
-	    create_tmpdir create_pathdirs child_exec; do
+	    mkdirs create_pathdirs child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -187,7 +187,7 @@ xbmk_git_init()
 	    2>/dev/null; :
 }
 
-xbmk_create_tmpdir()
+xbmk_mkdirs()
 {
 	x_ mkdir -p "$xbmklocal"
 
