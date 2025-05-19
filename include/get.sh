@@ -85,8 +85,10 @@ xbmkget()
 	echk="f" && [ "$1" = "git" ] && echk="d"
 
 	for url in "$2" "$3"; do
-		[ -n "$url" ] && try_file "$url" "$@" && \
-		    eval "[ -$echk \"$4\" ] && return 0"
+		[ -n "$url" ] || continue
+		try_file "$url" "$@" || continue
+		eval "[ -$echk \"$4\" ] || continue"
+		return 0 # successful download/copy
 	done
 	err "$1 $2 $3 $4: not downloaded"; :
 }
