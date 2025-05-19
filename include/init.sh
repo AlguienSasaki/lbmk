@@ -30,7 +30,7 @@ xbmk_init()
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed (id -u)"
 	[ "$(id -u)" != "0" ] || err "this command as root is not permitted"
 
-	for init_cmd in get_version set_env git_init child_exec; do
+	for init_cmd in get_version set_env set_threads git_init child_exec; do
 		xbmk_$init_cmd "$@" || break
 	done
 }
@@ -76,7 +76,7 @@ xbmk_set_env()
 
 	if [ "$is_child" = "y" ]; then
 		[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
-		[ -z "${XBMK_THREADS+x}" ] && err "XBMK_THREADS unset on child"
+		[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads
 		e "lock" f missing && err "lock file absent on child"
 		return 1
 	fi
@@ -104,10 +104,6 @@ xbmk_set_env()
 	[ "$XBMK_RELEASE" = "Y" ] && export XBMK_RELEASE="y"
 	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
 
-	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
-	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
-	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1
-
 	xbmk_set_version
 	export LOCALVERSION="-$projectname-${version%%-*}"
 
@@ -115,6 +111,13 @@ xbmk_set_env()
 	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 
 	xbmk_set_pyver
+}
+
+xbmk_set_threads()
+{
+	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
+	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
+	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1
 }
 
 xbmk_set_version()
