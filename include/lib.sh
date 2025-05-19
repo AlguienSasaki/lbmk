@@ -53,8 +53,10 @@ setvars()
 	fi
 	val="$1"
 	shift 1
-	for var in "$@"; do
-		_setvars="$var=\"$val\"; $_setvars"
+	while true; do
+		[ $# -lt 1 ] && break
+		_setvars="$1=\"$val\"; $_setvars"
+		shift 1
 	done
 	printf "%s\n" "${_setvars% }"
 }
@@ -69,9 +71,11 @@ setcfg()
 
 chkvars()
 {
-	for var in "$@"; do
-		eval "[ -n \"\${$var+x}\" ] || err \"$var unset\""
-		eval "[ -n \"\$$var\" ] || err \"$var unset\""
+	while true; do
+		[ $# -lt 1 ] && break
+		eval "[ -n \"\${$1+x}\" ] || err \"$1 unset\""
+		eval "[ -n \"\$$1\" ] || err \"$1 unset\""
+		shift 1
 	done; :
 }
 
