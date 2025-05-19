@@ -334,7 +334,7 @@ copy_elf()
 {
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir"
 	[ ! -f "$listfile" ] || while read -r f; do
-		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"
-	done < "$listfile" || err "copy_elf $*: cannot read '$listfile'"
+		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"; :
+	done < "$listfile" || err "copy_elf $*: cannot read '$listfile'"; :
 	x_ make clean -C "$srcdir" $cleanargs
 }
