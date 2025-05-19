@@ -106,9 +106,9 @@ fx_()
 
 dx_()
 {
-	[ -f "$2" ] && while read -r fx; do
+	[ ! -f "$2" ] || while read -r fx; do
 		$1 "$fx" || return 1
-	done < "$2"; :
+	done < "$2" || err "dx_ $*: cannot read '$2'"; :
 }
 
 x_()
