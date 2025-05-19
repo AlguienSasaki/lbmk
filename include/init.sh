@@ -89,15 +89,9 @@ xbmk_set_env()
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
 	xbmktmp="$TMPDIR"
 
-	# XBMK_CACHE is a directory, for caching downloads and git repon
-	[ -z "${XBMK_CACHE+x}" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	[ -z "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
+	export XBMK_CACHE="$xbmkpwd/cache"
 	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
 	    err "cachedir '$xbmkpwd/cache' is a symlink"
-	[ -L "$XBMK_CACHE" ] && export XBMK_CACHE="$xbmkpwd/cache"
-	xbmkcache="`findpath "$XBMK_CACHE"`" || \
-	    err "Can't resolve cachedir: '$XBMK_CACHE'"
-	export XBMK_CACHE="$xbmkcache"
 	[ ! -e "$XBMK_CACHE" ] || \
 	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
 
