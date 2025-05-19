@@ -87,7 +87,8 @@ xbmkget()
 	for url in "$2" "$3"; do
 		[ -n "$url" ] && try_file "$url" "$@" && \
 		    eval "[ -$echk \"$4\" ] && return 0"
-	done && err "$1 $2 $3 $4: not downloaded"; :
+	done
+	err "$1 $2 $3 $4: not downloaded"; :
 }
 
 try_file()
