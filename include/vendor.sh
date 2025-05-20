@@ -38,7 +38,7 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
-    nuke cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
+    nuke cbfstoolref FSPFD_hash ME11bootguard ME11delta xromsize \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
     TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
     EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
@@ -156,7 +156,6 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && err "$cbdir: me_cleaner missing"
 
-	_7ztest="$xbmklocal/metmp/a"
 	_metmp="$xbmklocal/me.bin"
 	x_ rm -f "$_metmp" "$xbmklocal/a"
 
@@ -165,7 +164,7 @@ extract_intel_me()
 	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
 
 	set +u +e
-	x_ rm -Rf "$xbmkpwd/metmp"
+	x_ rm -Rf "$xbmklocal/metmp"
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_pre_dest" && return 0
 
@@ -182,14 +181,19 @@ find_me()
 	[ -f "$_metmp" ] && exit 1
 	[ -L "$1" ] && return 0
 
-	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
+	_7x="`mktemp`" || err "find_me: can't make tmp file"
+	x_ rm -f "$_7x"
+	_7x="$xbmklocal/metmp/${_7x##*/}"
+
+	_r="-r"
+	[ -n "$mfs" ] && _r=""
 
 	"$mecleaner" $mfs $_r -t -O "$xbmklocal/a" -M "$_metmp" "$1" || \
 	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
-	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
+	    -O "$_metmp" "$1" || extract_archive "$1" "$_7x" || return 0
 
 	[ -f "$_metmp" ] && exit 1
-	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; :
+	( fx_ find_me x_ find "$_7x" -type f ) || exit 1; :
 }
 
 extract_archive()

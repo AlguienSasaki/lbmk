@@ -181,7 +181,7 @@ pybin()
 	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
 		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
 		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
-		    return 0
+		    return 0; :
 	done && return 1
 
 	# Defer to normal command -v if not a venv
