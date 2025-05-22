@@ -16,3 +16,4 @@
 3rdparty/fsp/RaptorLakeFspBinPkg
 3rdparty/fsp/ApolloLakeFspBinPkg
 3rdparty/fsp/SkylakeFspBinPkg
+3rdparty/vboot/tests
