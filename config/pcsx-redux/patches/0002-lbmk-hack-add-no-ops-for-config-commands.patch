@@ -1,0 +1,43 @@
+From e4cd98fb5e3baf8260a3692cab745dea925b0764 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 22 May 2025 11:29:37 +0100
+Subject: [PATCH 1/1] lbmk hack: add no-ops for config commands
+
+./mk -u, -m, -s, -l and -n cause errors without
+arguments, because pcsx-redux's makefile doesn't
+have them. additionally, i use my own makefile here,
+so that only the openbios is compiled.
+
+add these so that lbmk doesn't crash during tests.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ lbmkbofhmakefile | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/lbmkbofhmakefile b/lbmkbofhmakefile
+index fe2e36d2..e0e2a11e 100644
+--- a/lbmkbofhmakefile
++++ b/lbmkbofhmakefile
+@@ -14,3 +14,18 @@ clean:
+ 
+ distclean:
+ 	make -C src/mips/openbios clean
++
++oldconfig:
++	:
++
++menuconfig:
++	:
++
++savedefconfig:
++	:
++
++olddefconfig:
++	:
++
++nconfig:
++	:
+-- 
+2.39.5
+

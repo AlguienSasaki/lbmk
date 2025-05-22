@@ -1,0 +1,48 @@
+From b7a4d2907d3358173510aa6e31af08afe4969b38 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 22 May 2025 11:25:42 +0100
+Subject: [PATCH 1/1] lbmk hack: add config Makefile options
+
+this prevents a build error when running the
+-u, -m, -s, -l and -n options in lbmk without
+argument.
+
+this makes no functional changes to flashprog.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 12adf61..701f842 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1113,7 +1113,23 @@ libpayload: clean
+ gitconfig:
+ 	./util/getrevision.sh -c 2>/dev/null && ./util/git-hooks/install.sh
+ 
+-.PHONY: all install clean distclean config branch tag versioninfo _export export tarball libpayload gitconfig
++oldconfig:
++	:
++
++menuconfig:
++	:
++
++savedefconfig:
++	:
++
++olddefconfig:
++	:
++
++nconfig:
++	:
++
++
++.PHONY: all install clean distclean config branch tag versioninfo _export export tarball libpayload gitconfig oldconfig menuconfig savedefconfig olddefconfig nconfig
+ 
+ # Disable implicit suffixes and built-in rules (for performance and profit)
+ .SUFFIXES:
+-- 
+2.39.5
+
