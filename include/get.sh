@@ -104,7 +104,8 @@ try_file()
 	echk="d" && [ "$2" != "git" ] && echk="f" && \
 	    bad_checksum "$6" "$cached" 2>/dev/null && x_ rm -f "$cached"
 
-	eval "[ -$echk \"$cached\" ] || try_$2 \"\$cached\" \"\$@\" || return 1"
+	evalchk="[ -$echk \"$cached\" ] || " && [ "$2" = "git" ] && evalchk=""
+	eval "${evalchk}try_$2 \"\$cached\" \"\$@\" || return 1"
 	[ "$2" != "git" ] && [ -f "$5" ] && \
 	    bad_checksum "$6" "$5" 2>/dev/null && x_ cp "$cached" "$5"
 	eval "[ -$echk \"$cached\" ] || return 1"
