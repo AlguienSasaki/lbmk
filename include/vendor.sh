@@ -107,7 +107,7 @@ fetch()
 	[ "$dl_type" = "fsp" ] && for _cdl in dl dl_bkup; do
 		eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
 		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"
-		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""
+		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""; :
 	done; :
 
 	# download the file (from the internet) to extract from
