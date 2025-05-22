@@ -275,7 +275,8 @@ elfcheck()
 
 handle_makefile()
 {
-	$dry check_makefile "$srcdir" && x_ make -C "$srcdir" $cleanargs clean
+	$dry check_makefile "$srcdir" && \
+	    $dry x_ make -C "$srcdir" $cleanargs clean
 
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
