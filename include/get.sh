@@ -143,8 +143,10 @@ try_git()
 	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest%/*}"
 	[ -d "$gitdest" ] || x_ mv "$tmpgitcache" "$gitdest"
 
-	( x_ git -C "$gitdest" remote add main "$4" 2>/dev/null ) || :
-	( x_ git -C "$gitdest" remote add backup "$5" 2>/dev/null ) || :
+	( x_ git -C "$gitdest" remote remove main ) || :
+	( x_ git -C "$gitdest" remote remove backup ) || :
+	x_ git -C "$gitdest" remote add main "$4"
+	x_ git -C "$gitdest" remote add backup "$5"
 	( x_ git -C "$gitdest" fetch --all ) || :
 	( x_ git -C "$gitdest" pull --all ) || :; :
 }
