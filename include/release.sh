@@ -27,6 +27,8 @@ release()
 
 	remkdir "$vdir"
 	x_ git clone . "$rsrc"
+	x_ cp ".version" "$rsrc/.version"
+	x_ cp ".versiondate" "$rsrc/.versiondate"
 
 	prep_release src
 	prep_release tarball
