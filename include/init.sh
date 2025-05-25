@@ -195,7 +195,7 @@ xbmk_git_init()
 		    || err "Run this first: $gitcmd \"your ${gitcmd##*.}\""
 	done
 
-	[ -L ".git" ] && return 1
+	[ -L ".git" ] && err "'$xbmkpwd/.git' is a symlink"
 	[ -e ".git" ] && return 0
 	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
 
