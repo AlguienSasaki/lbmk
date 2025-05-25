@@ -94,21 +94,16 @@ mkcorebootbin()
 	initmode="${initmode%%_*}"
 	cbfstool="elf/cbfstool/$tree/cbfstool"
 
-	[ "$payload_uboot_i386" = "y" ] && \
-	    [ "$payload_uboot_amd64" = "y" ] && \
-		err "'$target' enables 32- and 64-bit x86 U-Boot"
+	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "amd64" ] || \
+	    [ "$payload_uboot" = "i386" ] || [ "$payload_uboot" = "arm64" ] \
+		|| err "'$target' defines bad u-boot type '$payload_uboot'"
 
-	if [ "$payload_uboot_i386" = "y" ] || \
-	    [ "$payload_uboot_amd64" = "y" ]; then
-		printf "'%s' has x86 U-Boot; assuming SeaBIOS=y\n" \
-		    "$target" 1>&2
+	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "arm64" ] || \
 		payload_seabios="y"
-	fi
 
 	[ -n "$uboot_config" ] || uboot_config="default"
-	[ "$payload_uboot" = "y" ] || payload_seabios="y"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
-	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "y" ] && \
+	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ] && \
 	    $dry err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled."
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
@@ -126,7 +121,8 @@ mkcorebootbin()
 	if $dry grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		[ "$payload_seabios" = "y" ] && pname="seabios" && \
 		    $dry add_seabios
-		[ "$payload_uboot" = "y" ] && pname="uboot" && $dry add_uboot
+		[ "$payload_uboot" = "arm64" ] && pname="uboot" && \
+		    $dry add_uboot; :
 	else
 		pname="custom"
 		$dry cprom
@@ -135,10 +131,8 @@ mkcorebootbin()
 
 add_seabios()
 {
-	if [ "$payload_uboot_i386" = "y" ] || \
-	    [ "$payload_uboot_amd64" = "y" ]; then
-		$dry add_uboot
-	fi
+	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "arm64" ] || \
+	    $dry add_uboot
 
 	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
 	_seaname="fallback/payload" && [ "$payload_grubsea" = "y" ] && \
@@ -159,7 +153,7 @@ add_seabios()
 	[ "$payload_grub" = "y" ] && add_grub
 
 	[ "$payload_grubsea" != "y" ] && cprom
-	[ "$payload_uboot_amd64" = "y" ] && [ "$displaymode" != "txtmode" ] && \
+	[ "$payload_uboot" = "amd64" ] && [ "$displaymode" != "txtmode" ] && \
 	    [ "$initmode" != "normal" ] && [ "$payload_grubsea" != "y" ] && \
 	    pname="seauboot" && cprom "seauboot"
 	[ "$payload_grub" = "y" ] && pname="seagrub" && mkseagrub; :
@@ -206,14 +200,13 @@ add_uboot()
 	ubpath="fallback/payload"
 	ubtarget="$target"
 	# override for x86/x86_64 targets:
-	if [ "$payload_uboot_i386" = "y" ] || \
-	    [ "$payload_uboot_amd64" = "y" ]; then
+	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
 		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
 			# on 64-bit, 0x1120000 is the SPL, and stub before that
 		ubpath="img/u-boot" # 64-bit
 		ubtarget="amd64coreboot"
-		[ "$payload_uboot_i386" = "y" ] && ubpath="u-boot" # 32-bit
-		[ "$payload_uboot_i386" = "y" ] && ubtarget="i386coreboot"; :
+		[ "$payload_uboot" = "i386" ] && ubpath="u-boot" # 32-bit
+		[ "$payload_uboot" = "i386" ] && ubtarget="i386coreboot"; :
 	fi
 
 	ubdir="elf/u-boot/$ubtarget/$uboot_config"
@@ -222,8 +215,8 @@ add_uboot()
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \
 	    ubootelf="$ubdir/u-boot"
 	# override for x86/x86_64 targets:
-	[ "$payload_uboot_i386" = "y" ] && ubootelf="$ubdir/u-boot-dtb.bin"
-	[ "$payload_uboot_amd64" = "y" ] && \
+	[ "$payload_uboot" = "i386" ] && ubootelf="$ubdir/u-boot-dtb.bin"
+	[ "$payload_uboot" = "amd64" ] && \
 	    ubootelf="$ubdir/u-boot-x86-with-spl.bin" # EFI-compatible
 
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
