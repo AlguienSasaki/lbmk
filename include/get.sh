@@ -149,7 +149,6 @@ try_git()
 	( x_ git -C "$gitdest" remote remove backup ) || :
 	x_ git -C "$gitdest" remote add main "$4"
 	x_ git -C "$gitdest" remote add backup "$5"
-	( x_ git -C "$gitdest" fetch --all ) || :
 	( x_ git -C "$gitdest" pull --all ) || :; :
 }
 
