@@ -111,7 +111,8 @@ try_file()
 	eval "[ -$echk \"$cached\" ] || return 1"
 
 	if [ "$2" = "git" ]; then
-		[ -d "$5" ] || tmpclone "$cached" "$5" "$6" "$7" || return 1
+		[ -d "$5" ] || tmpclone "$cached" "$5" "$6" "$7" || \
+		    err "Can't clone final repo in command: try_file $*"; :
 	else
 		bad_checksum "$6" "$cached" && x_ rm -f "$cached" && return 1
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
