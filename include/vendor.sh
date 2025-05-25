@@ -132,14 +132,8 @@ fetch()
 	( fx_ "eval mkdst \"$binsum\"" x_ find "${_pre_dest%/*}" -type f ) || :
 
 	bad_checksum "$binsum" "$_dest" || [ ! -f "$_dest" ] || return 0
-	[ -z "$binsum" ] && \
-	    printf "'%s', '%s': checksum undefined. Check files in '%s'\n" \
-	    "$board" "$_dest" "${_pre_dest%/*}" 1>&2
-	e "$_dest" f not && err "missing file '$_dest', !extract_$dl_type"; :
-	e "$_dest" f && printf "WARNING: '%s' made with bad hash (will rm)\n" \
-	    "$_dest" 1>&2
-	[ -L "$_dest" ] && printf "WARNING: '%s' is a link. Please delete!\n" \
-	    "$_dest" 1>&2
+	[ -z "$binsum" ] && printf "'%s': checksum undefined\n" "$_dest" 1>&2
+	[ -L "$_dest" ] && printf "WARNING: '%s' is a link!\n" "$_dest" 1>&2
 	[ -L "$_dest" ] || x_ rm -f "$_dest"
 	err "Could not safely extract '$_dest', for board '$board'"
 }
