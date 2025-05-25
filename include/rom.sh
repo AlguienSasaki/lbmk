@@ -43,7 +43,7 @@ mkpayload_grub()
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 
-mkvendorfiles()
+corebootpremake()
 {
 	[ -n "$mode" ] || [ ! -f "$srcdir/.config" ] || $dry printf \
 	    "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || err "$srcdir: !cook"; :
