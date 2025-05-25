@@ -45,20 +45,13 @@ mkpayload_grub()
 
 mkvendorfiles()
 {
-	[ -z "$mode" ] && $dry cook_coreboot_config
+	[ -n "$mode" ] || [ ! -f "$srcdir/.config" ] || $dry printf \
+	    "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || err "$srcdir: !cook"; :
 	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 	    x_ ./mk download "$target"; :
-}
-
-cook_coreboot_config()
-{
-	[ -f "$srcdir/.config" ] || return 0
-	printf "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || \
-	    err "$srcdir/.config: Could not enable ccache"
-	make -C "$srcdir" oldconfig || err "Could not cook $srcdir/.config"; :
 }
 
 check_coreboot_util()
