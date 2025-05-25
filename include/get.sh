@@ -26,7 +26,6 @@ fetch_project()
 
 	[ -n "$xtree" ] && x_ ./mk -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
-		printf "'%s' needs '%s'; grabbing '%s'\n" "$project" "$d" "$d"
 		x_ ./mk -f $d
 	done
 	clone_project
