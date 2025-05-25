@@ -11,8 +11,6 @@ tmpgitcache="$XBMK_CACHE/tmpgit"
 fetch_targets()
 {
 	e "src/$project/$tree" d && return 0
-
-	printf "Creating %s tree %s\n" "$project" "$tree"
 	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" with_submodules
 }
@@ -35,7 +33,6 @@ clone_project()
 {
 	loc="$XBMK_CACHE/clone/$project" && singletree "$project" && \
 	    loc="src/$project"
-	printf "Downloading project '%s' to '%s'\n" "$project" "$loc"
 
 	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
 	    "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"; :
@@ -43,6 +40,8 @@ clone_project()
 
 git_prep()
 {
+	printf "Creating code directory, src/%s/%s\n" "$project" "$tree"
+
 	_patchdir="$3"
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
