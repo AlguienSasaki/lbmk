@@ -279,8 +279,6 @@ handle_makefile()
 	    $dry x_ make -C "$srcdir" $cleanargs clean
 
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
-	[ -n "$mode" ] || [ -n "$btype" ] || $dry make -C \
-	    "$srcdir" silentoldconfig || make -C "$srcdir" oldconfig || :
 
 	run_make_command || err "handle_makefile $srcdir: no makefile!"
 
