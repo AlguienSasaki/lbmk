@@ -103,36 +103,36 @@ patch_release()
 
 readkconfig()
 {
-	x_ rm -f "$xbmktmp/cbcfg"
+	x_ rm -f "$xbtmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
-	eval "`setcfg "$xbmktmp/cbcfg" 1`"
+	eval "`setcfg "$xbtmp/cbcfg" 1`"
 	setvfile "$@" || return 1; :
 }
 
 scankconfig()
 {
 	for cbc in $cv; do
-		grep "$cbc" "$1" 1>>"$xbmktmp/cbcfg" 2>/dev/null || :
+		grep "$cbc" "$1" 1>>"$xbtmp/cbcfg" 2>/dev/null || :
 	done
 }
 
 modify_mac()
 {
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbmklocal/gbe"
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbloc/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ make -C util/nvmutil clean && x_ make -C util/nvmutil && \
-	    x_ "$nvm" "$xbmklocal/gbe" setmac "$new_mac"
+	    x_ "$nvm" "$xbloc/gbe" setmac "$new_mac"
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nThe following GbE NVM data will be written:\n"
-	x_ "$nvm" "$xbmklocal/gbe" dump | grep -v "bytes read from file" || :
+	x_ "$nvm" "$xbloc/gbe" dump | grep -v "bytes read from file" || :
 }
 
 newmac()
 {
 	e "$1" f && xchanged="y" && x_ \
-	    "$ifdtool" $ifdprefix -i GbE:"$xbmklocal/gbe" "$1" -O "$1"; :
+	    "$ifdtool" $ifdprefix -i GbE:"$xbloc/gbe" "$1" -O "$1"; :
 }
 
 remktar()

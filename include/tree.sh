@@ -58,7 +58,7 @@ trees()
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
 	if e "$mkhelpercfg" f missing; then
-		mkhelpercfg="$xbmktmp/mkhelper.cfg"
+		mkhelpercfg="$xbtmp/mkhelper.cfg"
 		x_ touch "$mkhelpercfg"
 	fi
 
@@ -181,9 +181,9 @@ check_project_hashes()
 
 	fx_ "x_ sha512sum" find "$datadir" "$configdir/$tree" "$mdir" \
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
-	    "$xbmktmp/project.hash" || err "!h $project $tree"
+	    "$xbtmp/project.hash" || err "!h $project $tree"
 
-	pjhash="$(sha512sum "$xbmktmp/project.hash" | awk '{print $1}')" || :
+	pjhash="$(sha512sum "$xbtmp/project.hash" | awk '{print $1}')" || :
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 

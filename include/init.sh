@@ -14,13 +14,13 @@ projectsite="https://libreboot.org/"
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version xbmkpwd relname xbmkpwd xbmktmp python pyver xbmklocal \
+    datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbloc \
     xbmklock cvxbmk cvchk xbmkpath`"
 
 xbmk_init()
 {
 	xbmkpwd="`pwd`" || err "Cannot generate PWD"
-	xbmklocal="$xbmkpwd/tmp"
+	xbloc="$xbmkpwd/tmp"
 	xbmklock="$xbmkpwd/lock"
 
 	export PWD="$xbmkpwd"
@@ -71,7 +71,7 @@ xbmk_set_env()
 	# unify all temporary files/directories in a single TMPDIR
 	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
 	    unset TMPDIR
-	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbmktmp="$TMPDIR"
+	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbtmp="$TMPDIR"
 	[ -z "${TMPDIR+x}" ] || is_child="y" # child instance, so return
 
 	if [ "$is_child" = "y" ]; then
@@ -87,7 +87,7 @@ xbmk_set_env()
 	# parent instance of xbmk, so don't return. set up TMPDIR
 	export TMPDIR="/tmp"
 	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
-	xbmktmp="$TMPDIR"
+	xbtmp="$TMPDIR"
 
 	export XBMK_CACHE="$xbmkpwd/cache"
 	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
@@ -107,8 +107,7 @@ xbmk_set_env()
 	xbmk_set_version
 	export LOCALVERSION="-$projectname-${version%%-*}"
 
-	remkdir "$xbmktmp" "$xbmklocal"
-	remkdir "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	remkdir "$xbtmp" "$xbloc" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 
 	xbmk_set_pyver
 }
@@ -211,7 +210,7 @@ xbmk_child_exec()
 {
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
-	( x_ rm -Rf "$xbmklocal" "$xbmktmp" ) || xbmk_rval=1
+	( x_ rm -Rf "$xbloc" "$xbtmp" ) || xbmk_rval=1
 	( x_ rm -f "$xbmklock" ) || xbmk_rval=1
 	exit $xbmk_rval
 }

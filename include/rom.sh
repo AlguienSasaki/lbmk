@@ -78,7 +78,7 @@ mkcorebootbin()
 {
 	[ "$target" = "$tree" ] && return 0
 
-	tmprom="$xbmktmp/coreboot.rom"
+	tmprom="$xbtmp/coreboot.rom"
 	$dry x_ cp "$srcdir/build/coreboot.rom" "$tmprom"
 
 	initmode="${defconfig##*/}"
@@ -158,8 +158,8 @@ add_grub()
 	    _grubname="fallback/payload"
 	cbfs "$tmprom" "$grubelf" "$_grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$xbmktmp/tmpcfg" || err "$target: !insert scandisk"
-	cbfs "$tmprom" "$xbmktmp/tmpcfg" scan.cfg raw
+	    > "$xbtmp/tmpcfg" || err "$target: !insert scandisk"
+	cbfs "$tmprom" "$xbtmp/tmpcfg" scan.cfg raw
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 	    cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 	    "background.png" raw; :

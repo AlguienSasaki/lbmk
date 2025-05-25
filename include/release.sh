@@ -22,7 +22,7 @@ release()
 	[ -e "$reldest" ] && \
 	    err "already exists: \"$reldest\""
 
-	vdir="$XBMK_CACHE/relpwd/${xbmktmp##*/}/$version"
+	vdir="$XBMK_CACHE/relpwd/${xbtmp##*/}/$version"
 	rsrc="$vdir/${relname}_src"
 
 	remkdir "$vdir"
