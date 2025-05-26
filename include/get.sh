@@ -151,10 +151,10 @@ try_git()
 
 bad_checksum()
 {
-	[ ! -f "$2" ] && printf "'%s' missing, %s\n" "$2" "$1" 1>&2 && return 0
+	e "$2" f missing && return 0
 	csum="$(x_ sha512sum "$2" | awk '{print $1}')" || err "!sha512 '$2' $1"
-	[ "$csum" != "$1" ] && printf "BAD SHA512, '%s'; need '%s', got %s\n" \
-	    "$2" "$1" "$csum" 1>&2 && x_ rm -f "$2" && return 0; return 1
+	[ "$csum" = "$1" ] && return 1; x_ rm -f "$2"
+	printf "BAD SHA512 %s, '%s'; need '%s'\n" "$csum" "$2" "$1" 1>&2
 }
 
 tmpclone()
