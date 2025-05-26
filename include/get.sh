@@ -19,9 +19,7 @@ fetch_project()
 	eval "`setvars "" xtree`"
 	eval "`setcfg "config/git/$project/pkg.cfg"`"
 
-	chkvars url bkup_url
-
-	[ -n "$xtree" ] && x_ ./mk -f coreboot "$xtree"
+	chkvars url bkup_url && [ -n "$xtree" ] && x_ ./mk -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
 		x_ ./mk -f $d
 	done
