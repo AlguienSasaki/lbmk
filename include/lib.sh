@@ -71,11 +71,9 @@ setcfg()
 
 chkvars()
 {
-	while true; do
-		[ $# -lt 1 ] && break
+	while [ $# -gt 0 ]; do
 		eval "[ -n \"\${$1+x}\" ] || err \"$1 unset\""
-		eval "[ -n \"\$$1\" ] || err \"$1 unset\""
-		shift 1
+		eval "[ -n \"\$$1\" ] || err \"$1 unset\"; shift 1; :"
 	done; :
 }
 
