@@ -26,14 +26,13 @@ main()
 	case "$cmd" in
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release|download|inject) $cmd "$@" ;;
-	-*) return 0 ;;
+	-*) return 1 ;;
 	*) err "bad command" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
-	return 1
 }
 
-main "$@" || exit 0
+main "$@" && exit 0
 
 . "include/tree.sh"
 
