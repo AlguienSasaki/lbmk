@@ -53,12 +53,10 @@ setvars()
 	fi
 	val="$1"
 	shift 1
-	while true; do
-		[ $# -lt 1 ] && break
-		_setvars="$1=\"$val\"; $_setvars"
+	while [ $# -gt 0 ]; do
+		printf "%s=\"%s\"\n" "$1" "$val"
 		shift 1
 	done
-	printf "%s\n" "${_setvars% }"
 }
 
 setcfg()
