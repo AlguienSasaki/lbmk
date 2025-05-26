@@ -26,12 +26,11 @@ cvchk="CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_FSP_S_FILE CONFIG_KBC1126_FW1 CONFIG_KBC1126_FW2"
 
 # lbmk-specific extensions to the "cv" variable (not suitable for cbmk)
-cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE \
-    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET \
+cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_FSP_FULL_FD \
+    CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET CONFIG_FSP_USE_REPO \
     CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 CONFIG_FSP_S_CBFS \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_FSP_FD_PATH \
-    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS \
-    CONFIG_FSP_USE_REPO CONFIG_FSP_FULL_FD"
+    CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS"
 
 # lbmk-specific extensions; mostly used for downloading vendor files
 eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
@@ -54,17 +53,14 @@ download()
 getfiles()
 {
 	[ -z "$CONFIG_HAVE_ME_BIN" ] || fetch intel_me "$DL_url" \
-	    "$DL_url_bkup" "$DL_hash" "$CONFIG_ME_BIN_PATH" "curl" \
-	    "$ME_bin_hash"
+	    "$DL_url_bkup" "$DL_hash" "$CONFIG_ME_BIN_PATH" curl "$ME_bin_hash"
 	[ -z "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" ] || fetch sch5545ec \
 	    "$SCH5545EC_DL_url" "$SCH5545EC_DL_url_bkup" "$SCH5545EC_DL_hash" \
 	    "$CONFIG_SMSC_SCH5545_EC_FW_FILE" "curl" "$SCH5545EC_bin_hash"
 	[ -z "$CONFIG_KBC1126_FW1" ] || fetch kbc1126ec "$EC_url" \
-	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1" "curl" \
-	    "$EC_FW1_hash"
+	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW1" curl "$EC_FW1_hash"
 	[ -z "$CONFIG_KBC1126_FW2" ] || fetch kbc1126ec "$EC_url" \
-	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW2" "curl" \
-	    "$EC_FW2_hash"
+	    "$EC_url_bkup" "$EC_hash" "$CONFIG_KBC1126_FW2" curl "$EC_FW2_hash"
 	[ -z "$CONFIG_VGA_BIOS_FILE" ] || fetch e6400vga "$E6400_VGA_DL_url" \
 	    "$E6400_VGA_DL_url_bkup" "$E6400_VGA_DL_hash" \
 	    "$CONFIG_VGA_BIOS_FILE" "curl" "$E6400_VGA_bin_hash"
@@ -111,12 +107,11 @@ fetch()
 	done; :
 
 	# download the file (from the internet) to extract from
-	xbmkget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
+	xbget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
 	x_ rm -Rf "${_dl}_extracted"
 
 	# skip extraction if a cached extracted file exists
-	( xbmkget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) \
-	    || :
+	( xbget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) || :
 	[ -f "$_dest" ] && return 0
 
 	x_ mkdir -p "${_dest%/*}"

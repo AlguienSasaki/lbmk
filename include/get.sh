@@ -46,7 +46,7 @@ git_prep()
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
 	chkvars rev
-	xbmkget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
+	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
@@ -71,19 +71,19 @@ fetch_submodule()
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
 	[ "$st" = "git" ] && x_ rm -Rf "$tmpgit/$1"
-	eval xbmkget "$st" "\$sub$st" "\$sub${st}_bkup" "$tmpgit/$1" \
+	eval xbget "$st" "\$sub$st" "\$sub${st}_bkup" "$tmpgit/$1" \
 	    "$subhash" "$mdir/${1##*/}/patches"
 }
 
-xbmkget()
+xbget()
 {
 	[ "$1" = "curl" ] || [ "$1" = "copy" ] || [ "$1" = "git" ] || \
-	    err "Bad dlop (arg 1): xbmkget $*"
+	    err "Bad dlop (arg 1): xbget $*"
 
 	echk="f" && [ "$1" = "git" ] && echk="d"
 
 	for url in "$2" "$3"; do
-		[ -n "$url" ] || err "empty URL given in: xbmkget $*"
+		[ -n "$url" ] || err "empty URL given in: xbget $*"
 		try_file "$url" "$@" || continue
 		eval "[ -$echk \"$4\" ] || continue"
 		return 0 # successful download/copy
