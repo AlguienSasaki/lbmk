@@ -10,9 +10,8 @@ tmpgitcache="$XBMK_CACHE/tmpgit"
 
 fetch_targets()
 {
-	e "src/$project/$tree" d && return 0
-	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
-	    "src/$project/$tree" with_submodules
+	[ -d "src/$project/$tree" ] || git_prep "$url" "$bkup_url" \
+	    "$xbmkpwd/$configdir/$tree/patches" "src/$project/$tree" submod; :
 }
 
 fetch_project()
