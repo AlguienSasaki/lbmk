@@ -302,8 +302,10 @@ run_make_command()
 	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 	[ -n "$mode" ] || x_ $mkhelper
 
+	check_makefile "$srcdir" || return 0
 	[ "$mode" != "clean" ] || \
-	    $dry make -C "$srcdir" $cleanargs distclean || :; :
+	    $dry make -C "$srcdir" $cleanargs distclean || \
+	    $dry x_ make -C "$srcdir" $cleanargs clean; :
 }
 
 check_cmake()
