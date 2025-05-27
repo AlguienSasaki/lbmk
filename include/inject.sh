@@ -65,7 +65,7 @@ check_release()
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		err "'$archive': could not detect board type"
+		err "'$archive': could not detect board type" ;;
 	esac; :
 }
 
