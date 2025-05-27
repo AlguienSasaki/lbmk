@@ -4,8 +4,8 @@
 # Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
-cbfstool="elf/cbfstool/default/cbfstool"
-rmodtool="elf/cbfstool/default/rmodtool"
+cbfstool="elf/coreboot/default/cbfstool"
+rmodtool="elf/coreboot/default/rmodtool"
 
 remkdir()
 {

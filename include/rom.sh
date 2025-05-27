@@ -56,10 +56,10 @@ corebootpremake()
 
 check_coreboot_util()
 {
-	[ "$badhash" = "y" ] && x_ rm -f "elf/$1/$tree/$1"
-	e "elf/$1/$tree/$1" f && return 0
+	[ "$badhash" = "y" ] && x_ rm -f "elf/coreboot/$tree/$1"
+	e "elf/coreboot/$tree/$1" f && return 0
 
-	utilelfdir="elf/$1/$tree"
+	utilelfdir="elf/coreboot/$tree"
 	utilsrcdir="src/coreboot/$tree/util/$1"
 
 	utilmode="" && [ -n "$mode" ] && utilmode="clean"
@@ -85,7 +85,7 @@ mkcorebootbin()
 	displaymode="${initmode##*_}"
 	[ "$displaymode" = "$initmode" ] && displaymode="" # "normal" config
 	initmode="${initmode%%_*}"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
+	cbfstool="elf/coreboot/$tree/cbfstool"
 
 	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "amd64" ] || \
 	    [ "$payload_uboot" = "i386" ] || [ "$payload_uboot" = "arm64" ] \

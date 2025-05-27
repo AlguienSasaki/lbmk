@@ -270,8 +270,8 @@ bootstrap()
 	cbdir="src/coreboot/$tree"
 	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
 	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
-	cbfstool="elf/cbfstool/$tree/cbfstool"
-	rmodtool="elf/cbfstool/$tree/rmodtool"
+	cbfstool="elf/coreboot/$tree/cbfstool"
+	rmodtool="elf/coreboot/$tree/rmodtool"
 
 	x_ ./mk -f coreboot "${cbdir##*/}"
 	fx_ "x_ ./mk -b" printf "uefitool\nbiosutilities\nbios_extract\n"

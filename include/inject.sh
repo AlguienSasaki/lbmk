@@ -6,7 +6,7 @@
 cbcfgsdir="config/coreboot"
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
-ifdtool="elf/ifdtool/default/ifdtool"
+ifdtool="elf/coreboot/default/ifdtool"
 
 cv="CONFIG_GBE_BIN_PATH"
 [ -n "$cvxbmk" ] && cv="$cv $cvxbmk"
@@ -77,7 +77,7 @@ check_target()
 	eval "`setcfg "$boarddir/target.cfg"`"
 	chkvars tree && x_ ./mk -d coreboot "$tree"
 
-	ifdtool="elf/ifdtool/$tree/ifdtool"
+	ifdtool="elf/coreboot/$tree/ifdtool"
 	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :
 }
 
