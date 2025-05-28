@@ -184,7 +184,8 @@ check_project_hashes()
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
 	    "$xbtmp/project.hash" || err "!h $project $tree"
 
-	pjhash="$(sha512sum "$xbtmp/project.hash" | awk '{print $1}')" || :
+	pjhash="$(x_ sha512sum "$xbtmp/project.hash" | awk '{print $1}' || \
+	    err)" || err "pjhash: Can't read sha512 of '$xbtmp/project.hash'"
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
