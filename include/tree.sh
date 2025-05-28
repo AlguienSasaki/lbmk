@@ -177,7 +177,8 @@ check_project_hashes()
 {
 	old_pjhash="" && x_ mkdir -p "$XBMK_CACHE/hash"
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
-	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree"
+	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree" || \
+	    err "old_pjhash: Can't read '$XBMK_CACHE/hash/$project$tree'"
 
 	fx_ "x_ sha512sum" find "$datadir" "$configdir/$tree" "$mdir" \
 	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
