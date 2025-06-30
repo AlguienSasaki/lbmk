@@ -17,7 +17,7 @@ index 538b316d..9eed0b12 100644
  
      // Write to screen.
 -    printf("SeaBIOS (version %s)\n", VERSION);
-+    printf("Libreboot 25.04 Corny Calamity (SeaBIOS menu): https://libreboot.org/\n");
++    printf("Libreboot 25.06 Luminous Lemon (SeaBIOS menu): https://libreboot.org/\n");
      display_uuid();
  }
  
