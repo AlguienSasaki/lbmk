@@ -1,7 +1,7 @@
-From e2d0d0695ded985463aac53f6fec5ce945bd4893 Mon Sep 17 00:00:00 2001
+From c8d5481586133d7738a9e2d27b5554470bef719d Mon Sep 17 00:00:00 2001
 From: Mate Kukri <km@mkukri.xyz>
 Date: Mon, 20 May 2024 11:43:35 +0100
-Subject: [PATCH 14/14] Add native NVMe driver based on SeaBIOS
+Subject: [PATCH 14/15] Add native NVMe driver based on SeaBIOS
 
 Tested to successfully boot Debian on QEMU and OptiPlex 3050.
 
@@ -31,10 +31,10 @@ index 43635d5ff..2c86dbbf6 100644
  
  endif
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index f1f38d8d3..6f45989f8 100644
+index cd29a9df8..0034f8c61 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
-@@ -2677,3 +2677,9 @@ module = {
+@@ -2682,3 +2682,9 @@ module = {
    cflags = '-Wno-uninitialized';
    cppflags = '-I$(srcdir)/lib/libtasn1-grub -I$(srcdir)/tests/asn1/';
  };

@@ -1,7 +1,7 @@
-From 03998bc9b74366ecf64d5f76fe4b398ec7fc5d31 Mon Sep 17 00:00:00 2001
+From 6b34ac2449362da5139e702e484a432d828a505d Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Mon, 7 Dec 2020 08:41:26 +0100
-Subject: [PATCH 19/25] grub-core/bus/usb: Add xhci support
+Subject: [PATCH 19/26] grub-core/bus/usb: Add xhci support
 
 Add support for xHCI USB controllers.
 The code is based on seabios implementation, but has been heavily
@@ -67,7 +67,7 @@ index 43635d5ff..65016f856 100644
  
  endif
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index f1f38d8d3..fda723f0c 100644
+index cd29a9df8..d3947739f 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
 @@ -667,6 +667,13 @@ module = {

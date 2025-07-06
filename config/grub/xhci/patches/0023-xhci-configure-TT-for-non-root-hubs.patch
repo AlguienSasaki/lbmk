@@ -1,7 +1,7 @@
-From fa9c2124b1ca476f8b2ce168d56527100757ef90 Mon Sep 17 00:00:00 2001
+From 0a669ef9815267de4fb14f3c329431ac531755c9 Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 20:26:32 +0100
-Subject: [PATCH 23/25] xhci: configure TT for non-root-hubs
+Subject: [PATCH 23/26] xhci: configure TT for non-root-hubs
 
 ---
  grub-core/bus/usb/usbhub.c |  6 +++++

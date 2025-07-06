@@ -1,7 +1,7 @@
-From b049a11e2cf54e51b3a9fd4d3435089999e61702 Mon Sep 17 00:00:00 2001
+From 625fdcf42f2cf11a4bfe644412450c9e4f551d25 Mon Sep 17 00:00:00 2001
 From: Patrick Rudolph <patrick.rudolph@9elements.com>
 Date: Wed, 24 Feb 2021 08:25:41 +0100
-Subject: [PATCH 24/25] Fix compilation on x86_64
+Subject: [PATCH 24/26] Fix compilation on x86_64
 
 Signed-off-by: Patrick Rudolph <patrick.rudolph@9elements.com>
 ---

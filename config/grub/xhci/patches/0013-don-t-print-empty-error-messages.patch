@@ -1,7 +1,7 @@
-From 93210cf7c046c0c9c8c77ffde4397a25d391c64d Mon Sep 17 00:00:00 2001
+From 272c5f5724c0790aff48b0d6ba75928de2275b33 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 17:25:20 +0000
-Subject: [PATCH 13/25] don't print empty error messages
+Subject: [PATCH 13/26] don't print empty error messages
 
 this is part two of the quest to kill the prefix
 error message. after i disabled prefix-related

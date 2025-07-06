@@ -70,7 +70,6 @@ gcry_whirlpool \
 geli \
 gfxmenu \
 gfxterm_background \
-gfxterm_menu \
 gzio \
 hashsum \
 halt \

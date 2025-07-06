@@ -1,7 +1,7 @@
-From 0c0da88e7619e5424ef062ea6867dfe32f032164 Mon Sep 17 00:00:00 2001
+From c75424efa3a6357d4785c7a66721809a642b3968 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 06/25] Error on missing Argon2id parameters
+Subject: [PATCH 06/26] Error on missing Argon2id parameters
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
  1 file changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/grub-core/disk/luks2.c b/grub-core/disk/luks2.c
-index 8036d76ff..efae8ac65 100644
+index b17cd2115..bbd8f5579 100644
 --- a/grub-core/disk/luks2.c
 +++ b/grub-core/disk/luks2.c
 @@ -39,6 +39,7 @@ GRUB_MOD_LICENSE ("GPLv3+");

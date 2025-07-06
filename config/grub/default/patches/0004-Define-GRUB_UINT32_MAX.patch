@@ -1,7 +1,7 @@
-From 298eaaca770545e19dfacd47511c2081c1fece08 Mon Sep 17 00:00:00 2001
+From 421a44b2f8211fa46ea523fc0feeaba9940af0e7 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 04/13] Define GRUB_UINT32_MAX
+Subject: [PATCH 04/14] Define GRUB_UINT32_MAX
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---

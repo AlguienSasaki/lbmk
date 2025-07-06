@@ -1,7 +1,7 @@
-From 12d3e4dfff3f92daf2f3f73cc0797425f7bb9df6 Mon Sep 17 00:00:00 2001
+From 6a757a3cdf22e840162bb222a87446a32d9b94a2 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 07/13] Compile with Argon2id support
+Subject: [PATCH 07/14] Compile with Argon2id support
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---
@@ -35,7 +35,7 @@ index 038253b37..2f19569c9 100644
    common = grub-core/disk/luks.c;
    common = grub-core/disk/luks2.c;
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index f5f9b040c..f1f38d8d3 100644
+index 0ee65d54d..cd29a9df8 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
 @@ -1242,7 +1242,7 @@ module = {
@@ -48,7 +48,7 @@ index f5f9b040c..f1f38d8d3 100644
  
  module = {
 diff --git a/grub-core/disk/luks2.c b/grub-core/disk/luks2.c
-index efae8ac65..2e742f5be 100644
+index bbd8f5579..02cd615d9 100644
 --- a/grub-core/disk/luks2.c
 +++ b/grub-core/disk/luks2.c
 @@ -28,6 +28,7 @@

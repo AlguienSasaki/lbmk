@@ -1,7 +1,7 @@
-From 22a609e508350e2606f90f96d9d0569b2294cfcf Mon Sep 17 00:00:00 2001
+From 93404ba667dae9a5da9953f7a17245adfe529c78 Mon Sep 17 00:00:00 2001
 From: Ax333l <main@axelen.xyz>
 Date: Thu, 17 Aug 2023 00:00:00 +0000
-Subject: [PATCH 05/25] Add Argon2 algorithm
+Subject: [PATCH 05/26] Add Argon2 algorithm
 
 Signed-off-by: Nicholas Johnson <nick@nicholasjohnson.ch>
 ---
@@ -111,7 +111,7 @@ index f4367f895..9d96cedf9 100644
  @section Gnulib
  
 diff --git a/grub-core/Makefile.core.def b/grub-core/Makefile.core.def
-index f70e02e69..f5f9b040c 100644
+index 24e8c8437..0ee65d54d 100644
 --- a/grub-core/Makefile.core.def
 +++ b/grub-core/Makefile.core.def
 @@ -1219,6 +1219,14 @@ module = {
