@@ -1,7 +1,7 @@
-From 4ffaddc37d30d39f25faeaef73046a6e2ce525e8 Mon Sep 17 00:00:00 2001
+From cf5f29a8cfed97bb7fb5dee2d7539e57b169661e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 11 Dec 2024 01:06:01 +0000
-Subject: [PATCH 31/37] dell/3050micro: disable nvme hotplug
+Subject: [PATCH 31/41] dell/3050micro: disable nvme hotplug
 
 in my testing, when running my 3050micro for a few days,
 the nvme would sometimes randomly rename.
@@ -30,10 +30,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/src/mainboard/dell/optiplex_3050/devicetree.cb b/src/mainboard/dell/optiplex_3050/devicetree.cb
-index da11085ab6..2a97306c5d 100644
+index 0d2adff74a..829acacab3 100644
 --- a/src/mainboard/dell/optiplex_3050/devicetree.cb
 +++ b/src/mainboard/dell/optiplex_3050/devicetree.cb
-@@ -45,7 +45,9 @@ chip soc/intel/skylake
+@@ -44,7 +44,9 @@ chip soc/intel/skylake
  			register "PcieRpAdvancedErrorReporting[20]"     = "1"
  			register "PcieRpLtrEnable[20]"                  = "true"
  			register "PcieRpClkSrcNumber[20]"               = "3"

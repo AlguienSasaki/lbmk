@@ -1,7 +1,7 @@
-From b313c1d4bae17fc6eb3a8217c503187d1cd5453d Mon Sep 17 00:00:00 2001
+From 521518c2b9fe32f77937cbd4ff1942f148b1c0f3 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 22 Apr 2025 10:21:59 +0100
-Subject: [PATCH 1/1] hp/8300cmt: remove xhci_overcurrent_mapping
+Subject: [PATCH 39/41] hp/8300cmt: remove xhci_overcurrent_mapping
 
 No longer needed, as per the following commit:
 

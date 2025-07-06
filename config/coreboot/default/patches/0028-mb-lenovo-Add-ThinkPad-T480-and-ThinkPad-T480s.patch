@@ -1,7 +1,7 @@
-From b515ba5b0cd02dc1771f27eaa716582b0827a638 Mon Sep 17 00:00:00 2001
+From a2f4492e8680d96f328846e3eba85d5aebec8d09 Mon Sep 17 00:00:00 2001
 From: Mate Kukri <km@mkukri.xyz>
 Date: Tue, 31 Dec 2024 22:49:15 +0000
-Subject: [PATCH 28/37] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
+Subject: [PATCH 28/41] mb/lenovo: Add ThinkPad T480 and ThinkPad T480s
 
 These machine have BootGuard fused and requires deguard to
 boot coreboot.

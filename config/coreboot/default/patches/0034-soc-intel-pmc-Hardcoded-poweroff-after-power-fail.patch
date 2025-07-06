@@ -1,7 +1,7 @@
-From 09740dc9d43a8dc24b7416b70476796515af6581 Mon Sep 17 00:00:00 2001
+From 4e269cb66361a5b102f582e41ce8c70a0df3f60f Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 31 Dec 2024 01:40:42 +0000
-Subject: [PATCH 34/37] soc/intel/pmc: Hardcoded poweroff after power fail
+Subject: [PATCH 34/41] soc/intel/pmc: Hardcoded poweroff after power fail
 
 Coreboot can set the power state for power on after previous
 power failure, based on the option table. On the ThinkPad T480,

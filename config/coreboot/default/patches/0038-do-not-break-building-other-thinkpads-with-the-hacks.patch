@@ -1,8 +1,8 @@
-From 49204919e885dca2be45ffbaf2f5af62109ec3a7 Mon Sep 17 00:00:00 2001
+From 99086eb3298b01aa9b3c68d78c399261866321d5 Mon Sep 17 00:00:00 2001
 From: gaspar-ilom <gasparilom@riseup.net>
 Date: Thu, 6 Mar 2025 23:00:00 +0000
-Subject: [PATCH 1/1] do not break building other thinkpads with the hacks for
- the t480/s made Mate Kukri
+Subject: [PATCH 38/41] do not break building other thinkpads with the hacks
+ for the t480/s made Mate Kukri
 
 still not fixing things properly but at least it should now be possible to build older thinkpads without regressions.
 prior, some code was just commented or unreachable. now we make this explicit with preprocessor directives.
