@@ -102,7 +102,7 @@ mkcorebootbin()
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
 	[ -n "$grubtree" ] || grubtree="default"
-	grubelf="elf/grub/$grubtree/payload/grub.elf"
+	grubelf="elf/grub/$grubtree/$grubtree/payload/grub.elf"
 
 	[ "$payload_memtest" = "y" ] || payload_memtest="n"
 	[ "$(uname -m)" = "x86_64" ] || payload_memtest="n"
@@ -127,7 +127,7 @@ add_seabios()
 	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "arm64" ] || \
 	    $dry add_uboot
 
-	_seabioself="elf/seabios/default/$initmode/bios.bin.elf"
+	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
 	_seaname="fallback/payload" && [ "$payload_grubsea" = "y" ] && \
 	    _seaname="seabios.elf"
 
@@ -191,18 +191,21 @@ add_uboot()
 	# aarch64 targets:
 	ubcbfsargs=""
 	ubpath="fallback/payload"
+	ubtree="default"
 	ubtarget="$target"
 	# override for x86/x86_64 targets:
 	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
 		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
 			# on 64-bit, 0x1120000 is the SPL, and stub before that
 		ubpath="img/u-boot" # 64-bit
+		ubtree="x86_64"
 		ubtarget="amd64coreboot"
 		[ "$payload_uboot" = "i386" ] && ubpath="u-boot" # 32-bit
+		[ "$payload_uboot" = "i386" ] && ubtree="x86"
 		[ "$payload_uboot" = "i386" ] && ubtarget="i386coreboot"; :
 	fi
 
-	ubdir="elf/u-boot/$ubtarget/$uboot_config"
+	ubdir="elf/u-boot/$ubtree/$ubtarget/$uboot_config"
 
 	# aarch64 targets:
 	ubootelf="$ubdir/u-boot.elf" && [ ! -f "$ubootelf" ] && \

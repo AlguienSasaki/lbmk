@@ -264,7 +264,7 @@ gnu_setver()
 check_defconfig()
 {
 	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig"
-	dest_dir="$elfdir/$target/${defconfig#"$target_dir/config/"}"
+	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
 	$dry elfcheck || return 1; : # skip build if a previous one exists
 }
