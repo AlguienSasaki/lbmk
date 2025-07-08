@@ -1,0 +1,113 @@
+From eb71b55d2dd7af6f6ddca5e462fc228bdb04af50 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 8 Jul 2025 17:54:57 +0100
+Subject: [PATCH 1/1] lenovo/t480: Drop redundant PcieRpEnable
+
+This is in line with another change from upstream, in
+the recent revision update:
+
+commit ee30558c49c9c4622277785ee0cd54c32720e489
+Author: Nico Huber <nico.h@gmx.de>
+Date:   Fri Jan 12 16:22:19 2024 +0100
+
+    soc/intel/skylake: Drop redundant PcieRpEnable
+
+This change is necessary, to prevent a build error.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ .../lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb     | 5 -----
+ .../lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb    | 5 -----
+ 2 files changed, 10 deletions(-)
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+index bf66bd3a69..316dbcbe8a 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/overridetree.cb
+@@ -43,7 +43,6 @@ chip soc/intel/skylake
+ 
+ 		# dGPU - x4
+ 		device ref pcie_rp1 on
+-			register "PcieRpEnable[0]"			= "1"
+ 			register "PcieRpClkReqSupport[0]"		= "1"
+ 			register "PcieRpClkReqNumber[0]"		= "0"
+ 			register "PcieRpClkSrcNumber[0]"		= "0"
+@@ -61,7 +60,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 WLAN - x1
+ 		device ref pcie_rp7 on
+-			register "PcieRpEnable[6]"			= "1"
+ 			register "PcieRpClkReqSupport[6]"		= "1"
+ 			register "PcieRpClkReqNumber[6]"		= "2"
+ 			register "PcieRpClkSrcNumber[6]"		= "2"
+@@ -71,7 +69,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 WWAN - x2
+ 		device ref pcie_rp5 on
+-			register "PcieRpEnable[4]"			= "1"
+ 			register "PcieRpClkReqSupport[4]"		= "1"
+ 			register "PcieRpClkReqNumber[4]"		= "3"
+ 			register "PcieRpClkSrcNumber[4]"		= "3"
+@@ -81,7 +78,6 @@ chip soc/intel/skylake
+ 
+ 		# TB3 (Alpine Ridge LP) - x2
+ 		device ref pcie_rp9 on
+-			register "PcieRpEnable[8]"			= "1"
+ 			register "PcieRpClkReqSupport[8]"		= "1"
+ 			register "PcieRpClkReqNumber[8]"		= "4"
+ 			register "PcieRpClkSrcNumber[8]"		= "4"
+@@ -92,7 +88,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 2280 caddy - x2
+ 		device ref pcie_rp11 on
+-			register "PcieRpEnable[10]"			= "1"
+ 			register "PcieRpClkReqSupport[10]"		= "1"
+ 			register "PcieRpClkReqNumber[10]"		= "5"
+ 			register "PcieRpClkSrcNumber[10]"		= "5"
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
+index d4afca20c4..dcaf15fabf 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/overridetree.cb
+@@ -43,7 +43,6 @@ chip soc/intel/skylake
+ 
+ 		# dGPU - x2
+ 		device ref pcie_rp1 on
+-			register "PcieRpEnable[0]"			= "1"
+ 			register "PcieRpClkReqSupport[0]"		= "1"
+ 			register "PcieRpClkReqNumber[0]"		= "0"
+ 			register "PcieRpClkSrcNumber[0]"		= "0"
+@@ -53,7 +52,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 WWAN - x1
+ 		device ref pcie_rp4 on
+-			register "PcieRpEnable[3]"			= "1"
+ 			register "PcieRpClkReqSupport[3]"		= "1"
+ 			register "PcieRpClkReqNumber[3]"		= "1"
+ 			register "PcieRpClkSrcNumber[3]"		= "1"
+@@ -71,7 +69,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 WLAN - x1
+ 		device ref pcie_rp7 on
+-			register "PcieRpEnable[6]"			= "1"
+ 			register "PcieRpClkReqSupport[6]"		= "1"
+ 			register "PcieRpClkReqNumber[6]"		= "3"
+ 			register "PcieRpClkSrcNumber[6]"		= "3"
+@@ -81,7 +78,6 @@ chip soc/intel/skylake
+ 
+ 		# TB3 (Alpine Ridge LP) - x2
+ 		device ref pcie_rp5 on
+-			register "PcieRpEnable[4]"			= "1"
+ 			register "PcieRpClkReqSupport[4]"		= "1"
+ 			register "PcieRpClkReqNumber[4]"		= "4"
+ 			register "PcieRpClkSrcNumber[4]"		= "4"
+@@ -92,7 +88,6 @@ chip soc/intel/skylake
+ 
+ 		# M.2 2280 SSD - x2
+ 		device ref pcie_rp9 on
+-			register "PcieRpEnable[8]"			= "1"
+ 			register "PcieRpClkReqSupport[8]"		= "1"
+ 			register "PcieRpClkReqNumber[8]"		= "5"
+ 			register "PcieRpClkSrcNumber[8]"		= "5"
+-- 
+2.39.5
+
