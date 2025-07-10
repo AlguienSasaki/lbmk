@@ -81,7 +81,7 @@ coreboot_pad_one_byte()
 
 mkcorebootbin()
 {
-	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
+	$dry fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 
 	for y in "$target_dir/config"/*; do
 		defconfig="$y"
