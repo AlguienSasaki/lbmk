@@ -7,7 +7,7 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype rev build_depend gccdir cmakedir \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull do_make badhash tree`"
+    gnatver gnatfull do_make badhash badtghash tree`"
 
 trees()
 {
@@ -129,7 +129,7 @@ configure_project()
 {
 	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    makeargs btype mkhelper bootstrapargs premake release xlang xarch \
-	    badhash`"
+	    badhash badtghash`"
 	_tcfg="$1/target.cfg"
 	[ -f "$_tcfg" ] || btype="auto"
 	e "$datadir/mkhelper.cfg" f && eval "`setcfg "$datadir/mkhelper.cfg"`"
@@ -173,9 +173,14 @@ build_dependencies()
 	done; :
 }
 
+# delete src/project/TREE and elf/project/TREE if configs
+# change on the given tree, but don't check configs e.g.
+# don't check x200_8mb/ files if building for x200_8mb
 check_project_hashes()
 {
-	old_pjhash="" && x_ mkdir -p "$XBMK_CACHE/hash"
+	eval "`setvars "" old_pjhash pjhash`"
+	x_ mkdir -p "$XBMK_CACHE/hash"
+
 	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
 	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree" || \
 	    err "old_pjhash: Can't read '$XBMK_CACHE/hash/$project$tree'"
@@ -186,6 +191,7 @@ check_project_hashes()
 
 	pjhash="$(x_ sha512sum "$xbtmp/project.hash" | awk '{print $1}' || \
 	    err)" || err "pjhash: Can't read sha512 of '$xbtmp/project.hash'"
+
 	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
 	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
 
@@ -194,6 +200,40 @@ check_project_hashes()
 
 	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
 	    "elf/$project/$tree"; :
+
+	singletree "$project" || check_target_hash; :
+}
+
+# delete elf/project/TREE/TARGET on a given target, within a
+# multi-tree project; this happens even if the given tree isn't
+# deleted. for example, if coreboot/default doesn't change but
+# the x200_8mb/ files change, delete the x200_8mb files
+check_target_hash()
+{
+	[ -n "$target" ] || return 0
+
+	eval "`setvars "" old_tghash tghash`"
+	x_ mkdir -p "$XBMK_CACHE/tghash"
+
+	[ ! -f "$XBMK_CACHE/tghash/$project$target" ] || \
+	    read -r old_tghash < "$XBMK_CACHE/tghash/$project$target" || \
+	    err "t: Can't read '$XBMK_CACHE/tghash/$project$target'"
+
+	fx_ "x_ sha512sum" find "$configdir/$target" \
+	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
+	    "$xbtmp/target.hash" || err "!ht $project $target"
+
+	tghash="$(x_ sha512sum "$xbtmp/target.hash" | awk '{print $1}' \
+	    || err)" || err "tghash: !read sha512 '$xbtmp/target.hash'"
+
+	[ "$tghash" != "$old_tghash" ] && badtghash="y"; :
+	[ -f "$XBMK_CACHE/tghash/$project$target" ] || badtghash="y"; :
+
+	printf "%s\n" "$tghash" > "$XBMK_CACHE/tghash/$project$target" || \
+	    err "!mk $XBMK_CACHE/tghash/$project$target"
+
+	[ "$badtghash" != "y" ] || \
+	    x_ rm -Rf "elf/$project/$tree/$target"; :
 }
 
 check_cross_compiler()
