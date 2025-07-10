@@ -193,7 +193,7 @@ check_project_hashes()
 	    err "!mk $XBMK_CACHE/hash/$project$tree"
 
 	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
-	    "elf/$project/$tree" "elf/$project/$target"; :
+	    "elf/$project/$tree"; :
 }
 
 check_cross_compiler()
