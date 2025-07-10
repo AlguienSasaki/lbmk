@@ -74,18 +74,41 @@ check_coreboot_util()
 	x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
 }
 
+coreboot_pad_one_byte()
+{
+	$dry pad_one_byte "$srcdir/build/coreboot.rom"
+}
+
 mkcorebootbin()
+{
+	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
+
+	for y in "$target_dir/config"/*; do
+		defconfig="$y"
+		mkcorebootbin_real
+	done
+
+	mkcoreboottar
+}
+
+mkcorebootbin_real()
 {
 	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$xbtmp/coreboot.rom"
-	$dry x_ cp "$srcdir/build/coreboot.rom" "$tmprom"
 
 	initmode="${defconfig##*/}"
 	displaymode="${initmode##*_}"
 	[ "$displaymode" = "$initmode" ] && displaymode="" # "normal" config
 	initmode="${initmode%%_*}"
 	cbfstool="elf/coreboot/$tree/cbfstool"
+
+	elfrom="elf/coreboot/$tree/$target/$initmode"
+	[ -n "$displaymode" ] && elfrom="${elfrom}_$displaymode"
+	elfrom="$elfrom/coreboot.rom"
+
+	$dry x_ cp "$elfrom" "$tmprom"
+	$dry unpad_one_byte "$tmprom"
 
 	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "amd64" ] || \
 	    [ "$payload_uboot" = "i386" ] || [ "$payload_uboot" = "arm64" ] \

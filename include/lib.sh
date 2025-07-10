@@ -95,6 +95,24 @@ findpath()
 	done
 }
 
+pad_one_byte()
+{
+	paddedfile="`mktemp`" || err "mktemp pad_one_byte"
+	x_ cp "$1" "$paddedfile"
+	cat "$paddedfile" config/data/coreboot/0 > "$1" || err "!pad $1"; :
+	x_ rm "$paddedfile"
+}
+
+unpad_one_byte()
+{
+	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || err "!int"
+	[ $xromsize -lt 524288 ] && err "too small, $xromsize: $1"
+
+	unpaddedfile="`mktemp`" || err "mktemp unpad_one_byte"
+	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
+	x_ mv "$unpaddedfile" "$1"
+}
+
 fx_()
 {
 	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
