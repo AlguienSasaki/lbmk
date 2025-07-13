@@ -1,0 +1,38 @@
+From cbac507d93dc357a75ccc11fdda5c7ed60935538 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 13 Jul 2025 15:18:53 +0100
+Subject: [PATCH 1/1] re-try EDID reading when it fails
+
+some video converters are a bit buggy and have to be
+probed twice; linux works fine, but in these cases,
+coreboot won't set up the display.
+
+try it twice, to mitigate, when probing the EDID
+
+This entire function should probably be rewritten, since
+it's buggy in general.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ common/hw-gfx-gma-display_probing.adb | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/common/hw-gfx-gma-display_probing.adb b/common/hw-gfx-gma-display_probing.adb
+index 67f8ddf..0500217 100644
+--- a/common/hw-gfx-gma-display_probing.adb
++++ b/common/hw-gfx-gma-display_probing.adb
+@@ -122,6 +122,11 @@ is
+          Read_EDID (Raw_EDID, Port, Success);
+       end if;
+ 
++      if not Success then
++         Panel.Wait_On (Config_Helpers.To_Panel (Port));
++         Read_EDID (Raw_EDID, Port, Success);
++      end if;
++
+       if Success and then
+          ((not Is_DVI_I (Port) or EDID.Compatible_Display
+             (Raw_EDID, Config_Helpers.To_Display_Type (Port))) and
+-- 
+2.39.5
+
