@@ -1,7 +1,7 @@
-From 3b6c8e02eba287727b3abc96ffe5612f28c27df3 Mon Sep 17 00:00:00 2001
+From 951040d7f9193c90e707988a2e7a043a2ba942e7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Apr 2025 05:14:45 +0100
-Subject: [PATCH 37/41] Conditional TBFW setting for T480/T480S
+Subject: [PATCH 43/43] Conditional TBFW setting for T480/T480S
 
 Otherwise, other boards will define it, which
 might trigger the vendor download script, and

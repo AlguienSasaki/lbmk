@@ -1,7 +1,7 @@
-From cf5f29a8cfed97bb7fb5dee2d7539e57b169661e Mon Sep 17 00:00:00 2001
+From a9a8ed5895dcb3af2bb57ca1492ddc5e9432b2b7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 11 Dec 2024 01:06:01 +0000
-Subject: [PATCH 31/41] dell/3050micro: disable nvme hotplug
+Subject: [PATCH 30/43] dell/3050micro: disable nvme hotplug
 
 in my testing, when running my 3050micro for a few days,
 the nvme would sometimes randomly rename.

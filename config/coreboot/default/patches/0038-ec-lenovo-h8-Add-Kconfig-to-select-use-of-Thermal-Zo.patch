@@ -1,0 +1,137 @@
+From 596f2d915a36ebd3347441d7486e4d11780fc48c Mon Sep 17 00:00:00 2001
+From: Matt DeVillier <matt.devillier@gmail.com>
+Date: Sat, 12 Jul 2025 17:17:42 -0500
+Subject: [PATCH 38/43] ec/lenovo/h8: Add Kconfig to select use of Thermal Zone
+ 1
+
+Looking at the ACPI dumps of many older Thinkpads, most do not have a
+second thermal zone (zone 1), they only use zone 0. This doesn't seem
+to be a problem for most boards in the tree currently, but newer boards
+(such as the T480) are reporting critical temperature errors on zone 1,
+due to differences in the EC RAM layout (ie, TMP1 is not valid).
+
+To mitigate this issue with the T480 (and likely other newer boards),
+only include the ACPI code for thermal zone 1 for boards which need it.
+Explicitly select it for those boards based on ACPI dump analysis and
+model similarity.
+
+Change-Id: Ic022f2e14b2cae74656c0ac85ba8410d50cdc9de
+Signed-off-by: Matt DeVillier <matt.devillier@gmail.com>
+---
+ src/ec/lenovo/h8/Kconfig          | 4 ++++
+ src/ec/lenovo/h8/acpi/thermal.asl | 3 ++-
+ src/mainboard/lenovo/t400/Kconfig | 1 +
+ src/mainboard/lenovo/t410/Kconfig | 1 +
+ src/mainboard/lenovo/t60/Kconfig  | 1 +
+ src/mainboard/lenovo/x200/Kconfig | 1 +
+ src/mainboard/lenovo/x201/Kconfig | 1 +
+ src/mainboard/lenovo/x60/Kconfig  | 1 +
+ 8 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/src/ec/lenovo/h8/Kconfig b/src/ec/lenovo/h8/Kconfig
+index fbdca5f94a..c8626cc75b 100644
+--- a/src/ec/lenovo/h8/Kconfig
++++ b/src/ec/lenovo/h8/Kconfig
+@@ -73,4 +73,8 @@ config H8_HAS_WWAN_GPIO_DETECTION
+ 	bool
+ 	default n
+ 
++config H8_HAS_2ND_THERMAL_ZONE
++	bool
++	default n
++
+ endif # EC_LENOVO_H8
+diff --git a/src/ec/lenovo/h8/acpi/thermal.asl b/src/ec/lenovo/h8/acpi/thermal.asl
+index fa5a282f54..bf9b653e12 100644
+--- a/src/ec/lenovo/h8/acpi/thermal.asl
++++ b/src/ec/lenovo/h8/acpi/thermal.asl
+@@ -130,7 +130,7 @@ External (\PPKG, MethodObj)
+ 			Name (_PR0, Package () { FPWR })
+ 		}
+ 	}
+-
++#if CONFIG(H8_HAS_2ND_THERMAL_ZONE)
+ 	ThermalZone(THM1)
+ 	{
+ 		/* Thermal zone polling frequency: 10 seconds */
+@@ -168,4 +168,5 @@ External (\PPKG, MethodObj)
+ 			Return (C2K(\_SB.PCI0.LPCB.EC.TMP1))
+ 		}
+ 	}
++#endif
+ }
+diff --git a/src/mainboard/lenovo/t400/Kconfig b/src/mainboard/lenovo/t400/Kconfig
+index 85e580e30e..12fbcbdee6 100644
+--- a/src/mainboard/lenovo/t400/Kconfig
++++ b/src/mainboard/lenovo/t400/Kconfig
+@@ -11,6 +11,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SOUTHBRIDGE_INTEL_I82801IX
+ 	select EC_LENOVO_PMH7
+ 	select EC_LENOVO_H8
++	select H8_HAS_2ND_THERMAL_ZONE
+ 	select H8_HAS_BAT_THRESHOLDS_IMPL
+ 	select H8_HAS_BDC_GPIO_DETECTION if !BOARD_LENOVO_R500
+ 	select BOARD_ROMSIZE_KB_8192 if !BOARD_LENOVO_R500
+diff --git a/src/mainboard/lenovo/t410/Kconfig b/src/mainboard/lenovo/t410/Kconfig
+index 9c78cb1741..6f18528824 100644
+--- a/src/mainboard/lenovo/t410/Kconfig
++++ b/src/mainboard/lenovo/t410/Kconfig
+@@ -22,6 +22,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select DRIVERS_LENOVO_HYBRID_GRAPHICS
+ 	select INTEL_GMA_HAVE_VBT
+ 	select MAINBOARD_USES_IFD_GBE_REGION
++	select H8_HAS_2ND_THERMAL_ZONE
+ 	select H8_HAS_BAT_THRESHOLDS_IMPL
+ 	select MAINBOARD_HAS_LIBGFXINIT
+ 	select DRIVERS_RICOH_RCE822
+diff --git a/src/mainboard/lenovo/t60/Kconfig b/src/mainboard/lenovo/t60/Kconfig
+index 6d095943bd..f1221191da 100644
+--- a/src/mainboard/lenovo/t60/Kconfig
++++ b/src/mainboard/lenovo/t60/Kconfig
+@@ -25,6 +25,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select HAVE_CMOS_DEFAULT
+ 	select I945_LVDS
+ 	select INTEL_GMA_HAVE_VBT
++	select H8_HAS_2ND_THERMAL_ZONE
+ 	select H8_HAS_BDC_GPIO_DETECTION if BOARD_LENOVO_T60 || BOARD_LENOVO_R60
+ 
+ config MAINBOARD_DIR
+diff --git a/src/mainboard/lenovo/x200/Kconfig b/src/mainboard/lenovo/x200/Kconfig
+index 4aa1e2ce1e..148584ed5c 100644
+--- a/src/mainboard/lenovo/x200/Kconfig
++++ b/src/mainboard/lenovo/x200/Kconfig
+@@ -10,6 +10,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SOUTHBRIDGE_INTEL_I82801IX
+ 	select EC_LENOVO_PMH7
+ 	select EC_LENOVO_H8
++	select H8_HAS_2ND_THERMAL_ZONE if BOARD_LENOVO_X200
+ 	select H8_HAS_BAT_THRESHOLDS_IMPL
+ 	select H8_HAS_BDC_GPIO_DETECTION if BOARD_LENOVO_X200
+ 	select NO_UART_ON_SUPERIO
+diff --git a/src/mainboard/lenovo/x201/Kconfig b/src/mainboard/lenovo/x201/Kconfig
+index 319f127ab6..e91ec3e642 100644
+--- a/src/mainboard/lenovo/x201/Kconfig
++++ b/src/mainboard/lenovo/x201/Kconfig
+@@ -24,6 +24,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select MAINBOARD_HAS_TPM1
+ 	select INTEL_GMA_HAVE_VBT
+ 	select MAINBOARD_USES_IFD_GBE_REGION
++	select H8_HAS_2ND_THERMAL_ZONE
+ 	select H8_HAS_BAT_THRESHOLDS_IMPL
+ 	select H8_HAS_BDC_GPIO_DETECTION
+ 
+diff --git a/src/mainboard/lenovo/x60/Kconfig b/src/mainboard/lenovo/x60/Kconfig
+index 33238ccbd8..edacdcf234 100644
+--- a/src/mainboard/lenovo/x60/Kconfig
++++ b/src/mainboard/lenovo/x60/Kconfig
+@@ -16,6 +16,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select EC_LENOVO_H8
+ 	select DRIVERS_I2C_CK505
+ 	select DRIVER_LENOVO_SERIALS
++	select H8_HAS_2ND_THERMAL_ZONE
+ 	select H8_HAS_BDC_GPIO_DETECTION
+ 	select HAVE_OPTION_TABLE
+ 	select INTEL_INT15
+-- 
+2.39.5
+
