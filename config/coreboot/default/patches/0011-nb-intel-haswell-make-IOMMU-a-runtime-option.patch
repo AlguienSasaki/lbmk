@@ -1,7 +1,7 @@
-From 73dc0d08dc11f297681123f91754722dac35c293 Mon Sep 17 00:00:00 2001
+From 49c11dedc8c12c6868237109c49509729502cc45 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 22:51:09 +0000
-Subject: [PATCH 11/43] nb/intel/haswell: make IOMMU a runtime option
+Subject: [PATCH 11/41] nb/intel/haswell: make IOMMU a runtime option
 
 When I tested graphics cards on a coreboot port for Dell
 OptiPlex 9020 SFF, I could not use a graphics card unless
