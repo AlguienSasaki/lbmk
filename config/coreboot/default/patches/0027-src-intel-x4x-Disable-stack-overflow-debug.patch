@@ -1,7 +1,7 @@
-From 5f34838af23fd4b6dccbab1f60b931fca7762e01 Mon Sep 17 00:00:00 2001
+From e1d09409f6062eb9798b2a63d555ef418a46f47b Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Jan 2025 01:53:53 +0000
-Subject: [PATCH 36/41] src/intel/x4x: Disable stack overflow debug
+Subject: [PATCH 27/35] src/intel/x4x: Disable stack overflow debug
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

@@ -1,7 +1,7 @@
-From 0b5aa25828b0f91a5345c12dfabdc9a0f9b3765b Mon Sep 17 00:00:00 2001
+From aba3cfe3888960b342147f74a65cb436608ae632 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Thu, 26 Sep 2024 19:51:25 -0600
-Subject: [PATCH 21/41] mb/dell/gm45_latitudes: Add E4300 variant
+Subject: [PATCH 20/35] mb/dell/gm45_latitudes: Add E4300 variant
 
 Change-Id: I0f2059501b11be103187e3ce1a7c04ab85ae63d2
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -21,10 +21,10 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  create mode 100644 src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb
 
 diff --git a/src/mainboard/dell/gm45_latitude/Kconfig b/src/mainboard/dell/gm45_latitude/Kconfig
-index ba76fb6e8c..144f9bcdf0 100644
+index 4b026be2ba..9f0f56e304 100644
 --- a/src/mainboard/dell/gm45_latitude/Kconfig
 +++ b/src/mainboard/dell/gm45_latitude/Kconfig
-@@ -21,6 +21,9 @@ config BOARD_DELL_GM45_LATITUDE_COMMON
+@@ -20,6 +20,9 @@ config BOARD_DELL_GM45_LATITUDE_COMMON
  config BOARD_DELL_E6400
  	select BOARD_DELL_GM45_LATITUDE_COMMON
  
@@ -32,9 +32,9 @@ index ba76fb6e8c..144f9bcdf0 100644
 +	select BOARD_DELL_GM45_LATITUDE_COMMON
 +
  if BOARD_DELL_GM45_LATITUDE_COMMON
- 
  config INTEL_GMA_DPLL_REF_FREQ
-@@ -31,12 +34,14 @@ config MAINBOARD_DIR
+ 	default 100000000
+@@ -29,12 +32,14 @@ config MAINBOARD_DIR
  
  config MAINBOARD_PART_NUMBER
  	default "Latitude E6400" if BOARD_DELL_E6400
