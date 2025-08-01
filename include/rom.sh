@@ -45,6 +45,8 @@ mkpayload_grub()
 
 corebootpremake()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 0; :
+
 	[ -n "$mode" ] || [ ! -f "$srcdir/.config" ] || $dry printf \
 	    "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || err "$srcdir: !cook"; :
 	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
@@ -76,11 +78,14 @@ check_coreboot_util()
 
 coreboot_pad_one_byte()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 0; :
 	$dry pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 mkcorebootbin()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 0; :
+
 	$dry fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 
 	for y in "$target_dir/config"/*; do
