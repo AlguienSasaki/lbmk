@@ -173,67 +173,44 @@ build_dependencies()
 	done; :
 }
 
-# delete src/project/TREE and elf/project/TREE if configs
-# change on the given tree, but don't check configs e.g.
-# don't check x200_8mb/ files if building for x200_8mb
 check_project_hashes()
 {
-	eval "`setvars "" old_pjhash pjhash`"
-	x_ mkdir -p "$XBMK_CACHE/hash"
+	check_hashes hash "$tree" badhash "$datadir" "$configdir/$tree" \
+	    "$mdir" || x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"; :
 
-	[ ! -f "$XBMK_CACHE/hash/$project$tree" ] || \
-	    read -r old_pjhash < "$XBMK_CACHE/hash/$project$tree" || \
-	    err "old_pjhash: Can't read '$XBMK_CACHE/hash/$project$tree'"
-
-	fx_ "x_ sha512sum" find "$datadir" "$configdir/$tree" "$mdir" \
-	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
-	    "$xbtmp/project.hash" || err "!h $project $tree"
-
-	pjhash="$(x_ sha512sum "$xbtmp/project.hash" | awk '{print $1}' || \
-	    err)" || err "pjhash: Can't read sha512 of '$xbtmp/project.hash'"
-
-	[ "$pjhash" != "$old_pjhash" ] && badhash="y"
-	[ -f "$XBMK_CACHE/hash/$project$tree" ] || badhash="y"
-
-	printf "%s\n" "$pjhash" > "$XBMK_CACHE/hash/$project$tree" || \
-	    err "!mk $XBMK_CACHE/hash/$project$tree"
-
-	[ "$badhash" != "y" ] || x_ rm -Rf "src/$project/$tree" \
-	    "elf/$project/$tree"; :
-
-	singletree "$project" || check_target_hash; :
+	singletree "$project" || [ -z "$target" ] || \
+	    check_hashes tghash "$target" badtghash "$configdir/$target" || \
+	    x_ rm -Rf "elf/$project/$tree/$target"; :
 }
 
-# delete elf/project/TREE/TARGET on a given target, within a
-# multi-tree project; this happens even if the given tree isn't
-# deleted. for example, if coreboot/default doesn't change but
-# the x200_8mb/ files change, delete the x200_8mb files
-check_target_hash()
+check_hashes()
 {
-	[ -n "$target" ] || return 0
+	eval "`setvars "" old_hash hash`"
+	hashname="$1"
+	hashtype="$2"
+	hashvar="$3"
+	shift 3
 
-	eval "`setvars "" old_tghash tghash`"
-	x_ mkdir -p "$XBMK_CACHE/tghash"
+	x_ mkdir -p "$XBMK_CACHE/$hashname"
 
-	[ ! -f "$XBMK_CACHE/tghash/$project$target" ] || \
-	    read -r old_tghash < "$XBMK_CACHE/tghash/$project$target" || \
-	    err "t: Can't read '$XBMK_CACHE/tghash/$project$target'"
+	[ ! -f "$XBMK_CACHE/$hashname/$project$hashtype" ] || \
+	    read -r old_hash < "$XBMK_CACHE/$hashname/$project$hashtype" || \
+	    err "$hashname: read err '$XBMK_CACHE/$hashname/$project$hashtype'"
 
-	fx_ "x_ sha512sum" find "$configdir/$target" \
-	    -type f -not -path "*/.git*/*" | awk '{print $1}' > \
-	    "$xbtmp/target.hash" || err "!ht $project $target"
+	fx_ "x_ sha512sum" find "$@" -type f -not -path "*/.git*/*" | awk \
+	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashname"
 
-	tghash="$(x_ sha512sum "$xbtmp/target.hash" | awk '{print $1}' \
-	    || err)" || err "tghash: !read sha512 '$xbtmp/target.hash'"
+	hash="$(x_ sha512sum "$xbtmp/tmp.hash" | awk '{print $1}' || \
+	    err)" || err "$hashtype: Can't read sha512 of '$xbtmp/tmp.hash'"
 
-	[ "$tghash" != "$old_tghash" ] && badtghash="y"; :
-	[ -f "$XBMK_CACHE/tghash/$project$target" ] || badtghash="y"; :
+	[ "$hash" != "$old_hash" ] && eval "$hashvar=\"y\""
+	[ -f "$XBMK_CACHE/$hashname/$project$hashtype" ] || \
+	    eval "$hashvar=\"y\""
 
-	printf "%s\n" "$tghash" > "$XBMK_CACHE/tghash/$project$target" || \
-	    err "!mk $XBMK_CACHE/tghash/$project$target"
+	printf "%s\n" "$hash" > "$XBMK_CACHE/$hashname/$project$hashtype" || \
+	    err "!mk $XBMK_CACHE/$hashname/$project$hashtype"
 
-	[ "$badtghash" != "y" ] || \
-	    x_ rm -Rf "elf/$project/$tree/$target"; :
+	eval "[ \"\$$hashvar\" = \"y\" ] && return 1"; :
 }
 
 check_cross_compiler()
