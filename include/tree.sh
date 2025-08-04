@@ -173,11 +173,17 @@ build_dependencies()
 	done; :
 }
 
+# get sha512sums of project-related files, concatenate and then
+# get a sha512sum of *that*; cache and re-check to detect changes
 check_project_hashes()
 {
+	# delete project source tree, if it changes; works for both
+	# single and multi-tree, since "tree" will be blank on single-tree
 	check_hashes hash "$tree" badhash "$datadir" "$configdir/$tree" \
 	    "$mdir" || x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"; :
 
+	# check only the given target; delete only the target build
+	# if that's all that changed (not applicable to single-tree)
 	singletree "$project" || [ -z "$target" ] || \
 	    check_hashes tghash "$target" badtghash "$configdir/$target" || \
 	    x_ rm -Rf "elf/$project/$tree/$target"; :
