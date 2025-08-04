@@ -184,9 +184,9 @@ check_project_hashes()
 
 	# check only the given target; delete only the target build
 	# if that's all that changed (not applicable to single-tree)
-	singletree "$project" || [ -z "$target" ] || \
-	    check_hashes tghash "$target" badtghash "$configdir/$target" || \
-	    x_ rm -Rf "elf/$project/$tree/$target"; :
+	singletree "$project" || [ -z "$target" ] || [ "$target" = "$tree" ] \
+	    || check_hashes tghash "$target" badtghash "$configdir/$target" \
+	    || x_ rm -Rf "elf/$project/$tree/$target"; :
 }
 
 check_hashes()
