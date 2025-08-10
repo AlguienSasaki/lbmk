@@ -177,10 +177,15 @@ delete_old_project_files()
 {
 	project_up_to_date hash "$tree" badhash "$datadir" "$configdir/$tree" \
 	    "$mdir" || x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"; :
+	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/hash/$project$tree"
 
-	singletree "$project" || [ -z "$target" ] || [ "$target" = "$tree" ] \
-	    || project_up_to_date tghash "$target" badtghash \
+	singletree "$project" && return 0
+	[ -z "$target" ] && return 0
+	[ "$target" = "$tree" ] && return 0
+
+	project_up_to_date tghash "$target" badtghash \
 	    "$configdir/$target" || x_ rm -Rf "elf/$project/$tree/$target"; :
+	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/tghash/$project$target"
 }
 
 project_up_to_date()
@@ -207,8 +212,8 @@ project_up_to_date()
 	[ -f "$XBMK_CACHE/$hashdir/$project$hashname" ] || \
 	    eval "$badhashvar=\"y\""
 
-	printf "%s\n" "$hash" > "$XBMK_CACHE/$hashdir/$project$hashname" || \
-	    err "!mk $XBMK_CACHE/$hashdir/$project$hashname"
+	printf "%s\n" "$hash" > "$xbtmp/new.hash" || \
+	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)"
 
 	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
