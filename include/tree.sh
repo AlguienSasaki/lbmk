@@ -186,29 +186,29 @@ delete_old_project_files()
 project_up_to_date()
 {
 	eval "`setvars "" old_hash hash`"
-	hashname="$1"
+	hashdir="$1"
 	hashtype="$2"
 	badhashvar="$3"
 	shift 3
 
-	x_ mkdir -p "$XBMK_CACHE/$hashname"
+	x_ mkdir -p "$XBMK_CACHE/$hashdir"
 
-	[ ! -f "$XBMK_CACHE/$hashname/$project$hashtype" ] || \
-	    read -r old_hash < "$XBMK_CACHE/$hashname/$project$hashtype" || \
-	    err "$hashname: read err '$XBMK_CACHE/$hashname/$project$hashtype'"
+	[ ! -f "$XBMK_CACHE/$hashdir/$project$hashtype" ] || \
+	    read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashtype" || \
+	    err "$hashdir: read err '$XBMK_CACHE/$hashdir/$project$hashtype'"
 
 	fx_ "x_ sha512sum" find "$@" -type f -not -path "*/.git*/*" | awk \
-	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashname"
+	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashdir"
 
 	hash="$(x_ sha512sum "$xbtmp/tmp.hash" | awk '{print $1}' || \
 	    err)" || err "$hashtype: Can't read sha512 of '$xbtmp/tmp.hash'"
 
 	[ "$hash" != "$old_hash" ] && eval "$badhashvar=\"y\""
-	[ -f "$XBMK_CACHE/$hashname/$project$hashtype" ] || \
+	[ -f "$XBMK_CACHE/$hashdir/$project$hashtype" ] || \
 	    eval "$badhashvar=\"y\""
 
-	printf "%s\n" "$hash" > "$XBMK_CACHE/$hashname/$project$hashtype" || \
-	    err "!mk $XBMK_CACHE/$hashname/$project$hashtype"
+	printf "%s\n" "$hash" > "$XBMK_CACHE/$hashdir/$project$hashtype" || \
+	    err "!mk $XBMK_CACHE/$hashdir/$project$hashtype"
 
 	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
