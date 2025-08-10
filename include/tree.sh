@@ -188,7 +188,7 @@ project_up_to_date()
 	eval "`setvars "" old_hash hash`"
 	hashname="$1"
 	hashtype="$2"
-	hashvar="$3"
+	badhashvar="$3"
 	shift 3
 
 	x_ mkdir -p "$XBMK_CACHE/$hashname"
@@ -203,14 +203,14 @@ project_up_to_date()
 	hash="$(x_ sha512sum "$xbtmp/tmp.hash" | awk '{print $1}' || \
 	    err)" || err "$hashtype: Can't read sha512 of '$xbtmp/tmp.hash'"
 
-	[ "$hash" != "$old_hash" ] && eval "$hashvar=\"y\""
+	[ "$hash" != "$old_hash" ] && eval "$badhashvar=\"y\""
 	[ -f "$XBMK_CACHE/$hashname/$project$hashtype" ] || \
-	    eval "$hashvar=\"y\""
+	    eval "$badhashvar=\"y\""
 
 	printf "%s\n" "$hash" > "$XBMK_CACHE/$hashname/$project$hashtype" || \
 	    err "!mk $XBMK_CACHE/$hashname/$project$hashtype"
 
-	eval "[ \"\$$hashvar\" = \"y\" ] && return 1"; :
+	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
 
 check_cross_compiler()
