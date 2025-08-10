@@ -153,7 +153,7 @@ configure_project()
 
 	mdir="$xbmkpwd/config/submodule/$project"
 	[ -n "$tree" ] && mdir="$mdir/$tree"
-	[ -f "CHANGELOG" ] || check_project_hashes
+	[ -f "CHANGELOG" ] || delete_old_project_files
 
 	if [ "$do_make" = "n" ]; then
 		[ -f "CHANGELOG" ] || fetch_${cmd#build_}
@@ -173,23 +173,17 @@ build_dependencies()
 	done; :
 }
 
-# get sha512sums of project-related files, concatenate and then
-# get a sha512sum of *that*; cache and re-check to detect changes
-check_project_hashes()
+delete_old_project_files()
 {
-	# delete project source tree, if it changes; works for both
-	# single and multi-tree, since "tree" will be blank on single-tree
-	check_hashes hash "$tree" badhash "$datadir" "$configdir/$tree" \
+	project_up_to_date hash "$tree" badhash "$datadir" "$configdir/$tree" \
 	    "$mdir" || x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"; :
 
-	# check only the given target; delete only the target build
-	# if that's all that changed (not applicable to single-tree)
 	singletree "$project" || [ -z "$target" ] || [ "$target" = "$tree" ] \
-	    || check_hashes tghash "$target" badtghash "$configdir/$target" \
-	    || x_ rm -Rf "elf/$project/$tree/$target"; :
+	    || project_up_to_date tghash "$target" badtghash \
+	    "$configdir/$target" || x_ rm -Rf "elf/$project/$tree/$target"; :
 }
 
-check_hashes()
+project_up_to_date()
 {
 	eval "`setvars "" old_hash hash`"
 	hashname="$1"
