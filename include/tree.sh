@@ -222,6 +222,10 @@ project_up_to_date()
 check_cross_compiler()
 {
 	cbdir="src/coreboot/$tree"
+	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+	xgccfile="elf/coreboot/$tree/xgcc_${xfix}_was_compiled"
+	x_ mkdir -p "elf/coreboot/$tree"
+
 	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 	[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
@@ -231,12 +235,15 @@ check_cross_compiler()
 	export CROSS_COMPILE="${xarch% *}-"
 	[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
 
+	[ -f "$xgccfile" ] && return 0 # skip build if already done
+
 	# match gnat-X to gcc
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 
-	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
+
+	x_ touch "$xgccfile"
 
 	# we only want to mess with hostcc to build xgcc
 	remkdir "$XBMK_CACHE/gnupath"
