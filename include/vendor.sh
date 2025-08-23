@@ -292,25 +292,16 @@ prep()
 	[ -z "${_xromname#"$vfix"}" ] && err "$_xromname / $vfix: name match"
 
 	# Remove the prefix and 1-byte pad
-	if [ "$nuke" != "nuke" ] && \
-	    [ "${_xromname#"$vfix"}" != "$_xromname" ]; then
-		xromsize="$(expr $(stat -c '%s' "$_xrom") - 1)" || err "!int"
-		[ $xromsize -lt 524288 ] && err "too small, $xromsize: $_xrom"
-
-		x_ dd if="$_xrom" of="$_xromnew" bs=$xromsize count=1
-		x_ rm -f "$_xrom"
-
-		_xrom="$_xromnew"
-	fi
+	[ "$nuke" != "nuke" ] && [ "${_xromname#"$vfix"}" != "$_xromname" ] \
+	    && unpad_one_byte "$_xrom" && x_ mv "$_xrom" "$_xromnew" \
+	    && _xrom="$_xromnew"
 
 	[ "$nuke" != "nuke" ] || ( mksha512 "$_xrom" "vendorhashes" ) || err
 
 	add_vfiles "$_xrom" || return 1 # if break return, can still change MAC
-	[ "$nuke" != "nuke" ] && return 0
 
-	# Rename the file, prefixing a warning saying not to flash
-	cat "$_xrom" config/data/coreboot/0 > "$_xromnew" || err "!pad $_xrom"
-	x_ rm -f "$_xrom"
+	[ "$nuke" = "nuke" ] && pad_one_byte "$_xrom" && x_ mv "$_xrom" \
+	    "$_xromnew"; :
 }
 
 mksha512()
