@@ -99,7 +99,7 @@ pad_one_byte()
 {
 	paddedfile="`mktemp`" || err "mktemp pad_one_byte"
 	x_ cp "$1" "$paddedfile"
-	cat "$paddedfile" config/data/coreboot/0 > "$1" || err "!pad $1"; :
+	x_ cat "$paddedfile" config/data/coreboot/0 > "$1" || err "!pad $1"; :
 	x_ rm "$paddedfile"
 }
 
