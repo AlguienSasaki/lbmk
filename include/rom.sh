@@ -27,7 +27,7 @@ copyps1bios()
 
 	printf "MIT License\n\nCopyright (c) 2019-2025 PCSX-Redux authors\n\n" \
 	    > bin/playstation/COPYING.txt || err "!pcsx-redux copyright"
-	cat config/snippet/mit >>bin/playstation/COPYING.txt || err "!pcsx MIT"
+	x_ cat config/snippet/mit >>bin/playstation/COPYING.txt || err "!pcsx MIT"
 }
 
 mkpayload_grub()
