@@ -98,9 +98,8 @@ findpath()
 pad_one_byte()
 {
 	paddedfile="`mktemp`" || err "mktemp pad_one_byte"
-	x_ cp "$1" "$paddedfile"
-	x_ cat "$paddedfile" config/data/coreboot/0 > "$1" || err "!pad $1"; :
-	x_ rm "$paddedfile"
+	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || err "!pad $1"; :
+	x_ mv "$paddedfile" "$1"
 }
 
 unpad_one_byte()
