@@ -224,29 +224,24 @@ check_cross_compiler()
 	cbdir="src/coreboot/$tree"
 	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
 	xgccfile="elf/coreboot/$tree/xgcc_${xfix}_was_compiled"
-	x_ mkdir -p "elf/coreboot/$tree"
+	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
 	[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
 
 	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
+	x_ mkdir -p "elf/coreboot/$tree"
 
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 	export CROSS_COMPILE="${xarch% *}-"
 	[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
-
 	[ -f "$xgccfile" ] && return 0 # skip build if already done
 
-	# match gnat-X to gcc
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
-
-	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
-
 	x_ touch "$xgccfile"
 
-	# we only want to mess with hostcc to build xgcc
-	remkdir "$XBMK_CACHE/gnupath"
+	remkdir "$XBMK_CACHE/gnupath" # reset hostcc
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
