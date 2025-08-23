@@ -111,15 +111,16 @@ handle_defconfig()
 
 	[ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ] && return 0
 
-	[ -z "$mode" ] && for _xarch in $xarch; do
-		$dry check_cross_compiler "$_xarch"
-	done; :
-
 	for y in "$target_dir/config"/*; do
 		[ "$_f" = "-d" ] || [ -f "$y" ] || continue
 		[ "$_f" = "-d" ] || defconfig="$y"
 
 		[ -n "$mode" ] || check_defconfig || continue
+
+		[ -z "$mode" ] && for _xarch in $xarch; do
+			$dry check_cross_compiler "$_xarch"
+		done; :
+
 		handle_makefile
 		[ -n "$mode" ] || $dry copy_elf
 	done; :
