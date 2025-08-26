@@ -149,21 +149,23 @@ extract_intel_me()
 	_metmp="$xbloc/me.bin"
 	x_ rm -f "$_metmp" "$xbloc/a"
 
-	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
-	    chkvars ME11delta ME11version ME11sku ME11pch
-	[ "$ME11bootguard" = "y" ] && x_ ./mk -f deguard
+	mfs=""
+	if [ "$ME11bootguard" = "y" ]; then
+		mfs="--whitelist MFS"
+		chkvars ME11delta ME11version ME11sku ME11pch
+		x_ ./mk -f deguard
+	fi
 
 	set +u +e
 	x_ rm -Rf "$xbmkpwd/metmp"
-	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :
-	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_pre_dest" && return 0
 
-	(
-	x_ cd src/deguard/
-	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
-	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
-	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_pre_dest"
-	) || err "Error running deguard for $_dest"; :
+	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :; :
+
+	if [ "$ME11bootguard" = "y" ]; then
+		apply_deguard_hack
+	else
+		x_ mv "$_metmp" "$_pre_dest"
+	fi; :
 }
 
 find_me()
@@ -179,6 +181,16 @@ find_me()
 
 	[ -f "$_metmp" ] && exit 1
 	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; :
+}
+
+apply_deguard_hack()
+{
+	(
+	x_ cd src/deguard/
+	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
+	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
+	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_pre_dest"
+	) || err "Error running deguard for $_dest"; :
 }
 
 extract_archive()
