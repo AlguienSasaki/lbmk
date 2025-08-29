@@ -112,7 +112,7 @@ readkconfig()
 scankconfig()
 {
 	for cbc in $cv; do
-		grep "$cbc" "$1" 1>>"$xbtmp/cbcfg" 2>/dev/null || :
+		grep "$cbc" "$1" 2>/dev/null 1>>"$xbtmp/cbcfg" || :
 	done
 }
 
