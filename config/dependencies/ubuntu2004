@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-pkg_add="apt-get install $reinstall"
+pkg_add="apt-get install --no-install-recommends $reinstall"
 pkglist=" \
 autoconf autogen automake autopoint autotools-dev bc binutils-arm-none-eabi \
 bison build-essential cmake curl device-tree-compiler doxygen e2fsprogs efitools \
