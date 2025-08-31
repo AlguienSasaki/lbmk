@@ -71,6 +71,8 @@ xbmk_set_env()
 
 	if [ "$is_child" = "y" ]; then
 		xbmk_child_set_tmp
+		[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
+		[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads; :
 		return 1
 	fi
 
@@ -136,9 +138,6 @@ xbmk_child_set_tmp()
 
 	xbtmp="$xbtmpchk"
 	export TMPDIR="$xbtmpchk"
-
-	[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
-	[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads; :
 }
 
 xbmk_parent_check_tmp()
