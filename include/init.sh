@@ -78,7 +78,6 @@ xbmk_set_env()
 	
 	xbmk_parent_check_tmp
 
-	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
 	    err "cannot create '$xbmklock'"; :
 
@@ -139,8 +138,7 @@ xbmk_child_set_tmp()
 	export TMPDIR="$xbtmpchk"
 
 	[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
-	[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads
-	e "lock" f missing && err "lock file absent on child"
+	[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads; :
 }
 
 xbmk_parent_check_tmp()
