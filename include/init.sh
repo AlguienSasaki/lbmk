@@ -15,7 +15,7 @@ projectsite="https://libreboot.org/"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbloc \
-    xbmklock cvxbmk cvchk xbmkpath`"
+    xbmklock cvxbmk cvchk xbmkpath is_child`"
 
 xbmk_init()
 {
@@ -70,65 +70,13 @@ xbmk_set_env()
 	[ -f "$xbmklock" ] && is_child="y"
 
 	if [ "$is_child" = "y" ]; then
-		eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
-
-		[ -z "${TMPDIR+x}" ] && export TMPDIR="/tmp"
-
-		# extremely pedantic safety checks on TMPDIR
-		xbtmpchk="`findpath "$TMPDIR" || err`" || err
-		[ "$xbtmpchk" = "${xbtmpchk#/tmp/}" ] && \
-		    badtmp="not a subdirectory in /tmp"
-		[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#/tmp/}" && \
-		    [ -z "$xbtmpchk" ] && badtmp="name after /tmp is empty"
-		[ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ] && \
-		    badtmp="'$TMPDIR' is a subdirectory in a subdir of /tmp"
-		[ -z "$badtmp" ] && [ -L "$xbtmpchk" ] && badtmp="is a symlink"
-		[ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ] && \
-		    badtmp="not a directory"
-		if [ -z "$badtmp" ]; then
-			# final check: check if TMPDIR changed
-			locktmp=""
-			read -r locktmp < "$xbmklock" || err "!read $xbmklock"
-			[ "$locktmp" = "$xbtmpchk" ] || \
-			    badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
-		fi
-		[ -n "$badtmp" ] && \
-		    printf "bad TMPDIR initialisation, '%s': %s\n" \
-		    "$TMPDIR" "$badtmp" 1>&2
-		[ -n "$badtmp" ] && err \
-		    "'$xbmklock' present with bad tmpdir. is a build running?"
-
-		xbtmp="$xbtmpchk"
-		export TMPDIR="$xbtmpchk"
-
-		[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
-		[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads
-		e "lock" f missing && err "lock file absent on child"
+		xbmk_child_set_tmp
 		return 1
 	fi
 
 	# parent instance of xbmk, so continue.
 	
-	export TMPDIR="/tmp"
-
-	xbmklist="`mktemp || err "can't make tmplist"`" || err
-	x_ rm -f "$xbmklist"
-	x_ touch "$xbmklist"
-	for xtmpdir in /tmp/xbmk_*; do
-		[ -e "$xtmpdir" ] || continue
-		printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
-		    err "can't write '$xtmpdir' to file: '$xbmklist'"; :
-	done
-
-	# set up a unified temporary directory, for common deletion later:
-	export TMPDIR="`mktemp -d -t xbmk_XXXXXXXX || err`" || err
-	xbtmp="$TMPDIR"
-
-	while read -r xtmpdir; do
-		[ "$xtmpdir" = "$xbtmp" ] && err \
-		    "'$xbtmp' existed previously (possible race condition)"; :
-	done < "$xbmklist" || err "Couldn't read xbmklist: '$xbmklist'"
-	x_ rm -f "$xbmklist"
+	xbmk_parent_check_tmp
 
 	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
@@ -155,6 +103,68 @@ xbmk_set_env()
 	remkdir "$xbtmp" "$xbloc" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 
 	xbmk_set_pyver
+}
+
+xbmk_child_set_tmp()
+{
+	eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
+
+	[ -z "${TMPDIR+x}" ] && export TMPDIR="/tmp"
+
+	# extremely pedantic safety checks on TMPDIR
+	xbtmpchk="`findpath "$TMPDIR" || err`" || err
+	[ "$xbtmpchk" = "${xbtmpchk#/tmp/}" ] && \
+	    badtmp="not a subdirectory in /tmp"
+	[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#/tmp/}" && \
+	    [ -z "$xbtmpchk" ] && badtmp="name after /tmp is empty"
+	[ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ] && \
+	    badtmp="'$TMPDIR' is a subdirectory in a subdir of /tmp"
+	[ -z "$badtmp" ] && [ -L "$xbtmpchk" ] && badtmp="is a symlink"
+	[ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ] && \
+	    badtmp="not a directory"
+	if [ -z "$badtmp" ]; then
+		# final check: check if TMPDIR changed
+		locktmp=""
+		read -r locktmp < "$xbmklock" || err "!read $xbmklock"
+		[ "$locktmp" = "$xbtmpchk" ] || \
+		    badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
+	fi
+	[ -n "$badtmp" ] && \
+	    printf "bad TMPDIR initialisation, '%s': %s\n" \
+	    "$TMPDIR" "$badtmp" 1>&2
+	[ -n "$badtmp" ] && err \
+	    "'$xbmklock' present with bad tmpdir. is a build running?"
+
+	xbtmp="$xbtmpchk"
+	export TMPDIR="$xbtmpchk"
+
+	[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
+	[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads
+	e "lock" f missing && err "lock file absent on child"
+}
+
+xbmk_parent_check_tmp()
+{
+	export TMPDIR="/tmp"
+
+	xbmklist="`mktemp || err "can't make tmplist"`" || err
+	x_ rm -f "$xbmklist"
+	x_ touch "$xbmklist"
+	for xtmpdir in /tmp/xbmk_*; do
+		[ -e "$xtmpdir" ] || continue
+		printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
+		    err "can't write '$xtmpdir' to file: '$xbmklist'"; :
+	done
+
+	# set up a unified temporary directory, for common deletion later:
+	export TMPDIR="`mktemp -d -t xbmk_XXXXXXXX || err`" || err
+	xbtmp="$TMPDIR"
+
+	while read -r xtmpdir; do
+		[ "$xtmpdir" = "$xbtmp" ] && err \
+		    "'$xbtmp' existed previously (possible race condition)"; :
+	done < "$xbmklist" || err "Couldn't read xbmklist: '$xbmklist'"
+	x_ rm -f "$xbmklist"
 }
 
 xbmk_set_threads()
