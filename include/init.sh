@@ -64,30 +64,58 @@ xbmk_get_version()
 
 xbmk_set_env()
 {
-	is_child="n"
-
 	xbmkpath="$PATH"
 
-	# unify all temporary files/directories in a single TMPDIR
-	[ -z "${TMPDIR+x}" ] || [ "${TMPDIR%_*}" = "/tmp/xbmk" ] || \
-	    unset TMPDIR
-	[ -n "${TMPDIR+x}" ] && export TMPDIR="$TMPDIR" && xbtmp="$TMPDIR"
-	[ -z "${TMPDIR+x}" ] || is_child="y" # child instance, so return
+	is_child="n"
+	[ -f "$xbmklock" ] && is_child="y"
 
 	if [ "$is_child" = "y" ]; then
+		eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
+
+		[ -z "${TMPDIR+x}" ] && export TMPDIR="/tmp"
+
+		# extremely pedantic safety checks on TMPDIR
+		xbtmpchk="`findpath "$TMPDIR" || err`" || err
+		[ "$xbtmpchk" = "${xbtmpchk#/tmp/}" ] && \
+		    badtmp="not a subdirectory in /tmp"
+		[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#/tmp/}" && \
+		    [ -z "$xbtmpchk" ] && badtmp="name after /tmp is empty"
+		[ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ] && \
+		    badtmp="'$TMPDIR' is a subdirectory in a subdir of /tmp"
+		[ -z "$badtmp" ] && [ -L "$xbtmpchk" ] && badtmp="is a symlink"
+		[ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ] && \
+		    badtmp="not a directory"
+		if [ -z "$badtmp" ]; then
+			# final check: check if TMPDIR changed
+			locktmp=""
+			read -r locktmp < "$xbmklock" || err "!read $xbmklock"
+			[ "$locktmp" = "$xbtmpchk" ] || \
+			    badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
+		fi
+		[ -n "$badtmp" ] && \
+		    printf "bad TMPDIR initialisation, '%s': %s\n" \
+		    "$TMPDIR" "$badtmp" 1>&2
+		[ -n "$badtmp" ] && err \
+		    "'$xbmklock' present with bad tmpdir. is a build running?"
+
+		xbtmp="$xbtmpchk"
+		export TMPDIR="$xbtmpchk"
+
 		[ -z "${XBMK_CACHE+x}" ] && err "XBMK_CACHE unset on child"
 		[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads
 		e "lock" f missing && err "lock file absent on child"
 		return 1
 	fi
 
-	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
-	touch "$xbmklock" || err "cannot create '$xbmklock'"; :
-
-	# parent instance of xbmk, so don't return. set up TMPDIR
+	# parent instance of xbmk, so continue.
+	# first, set up a unified temporary directory:
 	export TMPDIR="/tmp"
-	export TMPDIR="$(mktemp -d -t xbmk_XXXXXXXX)"
+	export TMPDIR="`mktemp -d -t xbmk_XXXXXXXX || err`" || err
 	xbtmp="$TMPDIR"
+
+	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
+	printf "%s\n" "$xbtmp" > "$xbmklock" || \
+	    err "cannot create '$xbmklock'"; :
 
 	export XBMK_CACHE="$xbmkpwd/cache"
 	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
