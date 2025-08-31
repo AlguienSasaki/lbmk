@@ -5,7 +5,7 @@
 
 set -u -e
 
-if [ "./${0##*/}" != "${0}" ] || [ ! -f "mk" ] || [ -L "mk" ]; then
+if [ "$0" != "./mk" ]; then
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
 fi
