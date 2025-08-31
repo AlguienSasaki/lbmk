@@ -79,30 +79,12 @@ xbmk_set_env()
 	# parent instance of xbmk, so continue.
 	
 	xbmk_parent_check_tmp
-
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
 	    err "cannot create '$xbmklock'"; :
 
-	export XBMK_CACHE="$xbmkpwd/cache"
-	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
-	    err "cachedir '$xbmkpwd/cache' is a symlink"
-	[ ! -e "$XBMK_CACHE" ] || \
-	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
-
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
-	xbmkpath="$PATH"
-
-	# if "y": a coreboot target won't be built if target.cfg says release="n"
-	# (this is used to exclude certain build targets from releases)
-	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
-	[ "$XBMK_RELEASE" = "Y" ] && export XBMK_RELEASE="y"
-	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"
-
+	xbmk_parent_set_export
 	xbmk_set_version
-	export LOCALVERSION="-$projectname-${version%%-*}"
-
 	remkdir "$xbtmp" "$xbloc" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
-
 	xbmk_set_pyver
 }
 
@@ -164,6 +146,24 @@ xbmk_parent_check_tmp()
 	x_ rm -f "$xbmklist"
 }
 
+xbmk_parent_set_export()
+{
+	export XBMK_CACHE="$xbmkpwd/cache"
+	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
+	    err "cachedir '$xbmkpwd/cache' is a symlink"
+	[ ! -e "$XBMK_CACHE" ] || \
+	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
+
+	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
+	xbmkpath="$PATH"
+
+	# if "y": a coreboot target won't be built if target.cfg says release="n"
+	# (this is used to exclude certain build targets from releases)
+	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
+	[ "$XBMK_RELEASE" = "Y" ] && export XBMK_RELEASE="y"
+	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"; :
+}
+
 xbmk_set_threads()
 {
 	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
@@ -184,6 +184,7 @@ xbmk_set_version()
 	update_xbmkver "."
 
 	relname="$projectname-$version"
+	export LOCALVERSION="-$projectname-${version%%-*}"
 }
 
 xbmk_set_pyver()
