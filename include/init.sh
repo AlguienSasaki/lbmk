@@ -108,10 +108,27 @@ xbmk_set_env()
 	fi
 
 	# parent instance of xbmk, so continue.
-	# first, set up a unified temporary directory:
+	
 	export TMPDIR="/tmp"
+
+	xbmklist="`mktemp || err "can't make tmplist"`" || err
+	x_ rm -f "$xbmklist"
+	x_ touch "$xbmklist"
+	for xtmpdir in /tmp/xbmk_*; do
+		[ -e "$xtmpdir" ] || continue
+		printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
+		    err "can't write '$xtmpdir' to file: '$xbmklist'"; :
+	done
+
+	# set up a unified temporary directory, for common deletion later:
 	export TMPDIR="`mktemp -d -t xbmk_XXXXXXXX || err`" || err
 	xbtmp="$TMPDIR"
+
+	while read -r xtmpdir; do
+		[ "$xtmpdir" = "$xbtmp" ] && err \
+		    "'$xbtmp' existed previously (possible race condition)"; :
+	done < "$xbmklist" || err "Couldn't read xbmklist: '$xbmklist'"
+	x_ rm -f "$xbmklist"
 
 	[ -f "$xbmklock" ] && err "'$xbmklock' exists. Is a build running?"
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
