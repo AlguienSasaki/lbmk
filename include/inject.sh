@@ -19,7 +19,6 @@ inject()
 {
 	remkdir "$tmpromdel"
 
-	set +u +e
 	[ $# -lt 1 ] && err "No options specified"
 	eval "`setvars "" nuke new_mac xchanged`"
 

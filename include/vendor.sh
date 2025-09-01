@@ -160,6 +160,7 @@ extract_intel_me()
 	x_ rm -Rf "$xbmkpwd/metmp"
 
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :; :
+	set -u -e
 
 	if [ "$ME11bootguard" = "y" ]; then
 		apply_deguard_hack
