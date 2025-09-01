@@ -114,7 +114,8 @@ unpad_one_byte()
 
 fx_()
 {
-	fd="`mktemp`" && x_ rm -f "$fd" && x_ touch "$fd"
+	fd="`mktemp || err "can't create tmpfile"`" || err
+	x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
 	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || err "FATAL: !sort fx_"
 	dx_ "$xx" "$fd" || :

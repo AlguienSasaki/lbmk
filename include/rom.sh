@@ -257,7 +257,7 @@ cprom()
 	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 
 	irom="$tmprom"
-	[ $# -lt 1 ] || irom="`mktemp`" || err "!mk irom, $(echo "$@")"
+	[ $# -lt 1 ] || irom="`mktemp || err "!mk irom, $(echo "$@")"`" || err
 	[ $# -gt 0 ] && x_ cp "$tmprom" "$irom" && cpcmd="mv"
 
 	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && \
