@@ -9,10 +9,9 @@ release()
 
 	reldir="release"
 
-	while getopts d:m: option; do
+	while getopts m: option; do
 		[ -z "$OPTARG" ] && err "empty argument not allowed"
 		case "$option" in
-		d) reldir="$OPTARG" ;;
 		m) relmode="$OPTARG" ;;
 		*) err "invalid option '-$option'" ;;
 		esac
