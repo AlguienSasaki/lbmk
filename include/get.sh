@@ -3,7 +3,7 @@
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 eval "`setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
-    depend subcurl_bkup repofail`"
+    depend subcurl_bkup`"
 
 tmpgit="$xbloc/gitclone"
 tmpgitcache="$XBMK_CACHE/tmpgit"
