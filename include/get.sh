@@ -3,10 +3,7 @@
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
 eval "`setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
-    depend subcurl_bkup`"
-
-tmpgit="$xbtmp/gitclone"
-tmpgitcache="$XBMK_CACHE/tmpgit"
+    depend subcurl_bkup tmpgit`"
 
 fetch_targets()
 {
@@ -31,7 +28,7 @@ clone_project()
 	loc="$XBMK_CACHE/clone/$project" && singletree "$project" && \
 	    loc="src/$project"
 
-	e "$loc" d missing && remkdir "${tmpgit%/*}" && git_prep \
+	e "$loc" d missing && git_prep \
 	    "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"; :
 }
 
@@ -41,6 +38,10 @@ git_prep()
 
 	_patchdir="$3"
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
+
+	tmpgit="`mktemp -d || err "can't make tmpgit"`" || err
+	x_ rm -Rf "$tmpgit"
+	x_ mkdir -p "${tmpgit%/*}"
 
 	chkvars rev
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
@@ -134,7 +135,9 @@ try_copy()
 try_git()
 {
 	gitdest="`findpath "$1"`" || err "Can't get readpath for '$1'"
+	tmpgitcache="`mktemp -d || err "can't make tmpgitcache"`" || err
 	x_ rm -Rf "$tmpgitcache"
+	x_ mkdir -p "${tmpgitcache%/*}"
 
 	[ -d "$gitdest" ] || ( x_ git clone "$2" "$tmpgitcache" ) || return 1
 	[ -d "$gitdest" ] || x_ mkdir -p "${gitdest%/*}"
