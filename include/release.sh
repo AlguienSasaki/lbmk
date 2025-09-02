@@ -42,7 +42,6 @@ release()
 
 prep_release()
 {
-	x_ cp "$xbmklock" "$rsrc/lock"
 	(
 	[ "$1" = "tarball" ] || x_ cd "$rsrc"
 	prep_release_$1
