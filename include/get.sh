@@ -77,12 +77,13 @@ xbget()
 	[ "$1" = "curl" ] || [ "$1" = "copy" ] || [ "$1" = "git" ] || \
 	    err "Bad dlop (arg 1): xbget $*"
 
-	echk="f" && [ "$1" = "git" ] && echk="d"
-
 	for url in "$2" "$3"; do
 		[ -n "$url" ] || err "empty URL given in: xbget $*"
 		try_file "$url" "$@" || continue
-		eval "[ -$echk \"$4\" ] || continue"
+		case "$1" in
+		git) [ -d "$4" ] || continue ;;
+		*) [ -f "$4" ] || continue ;;
+		esac
 		return 0 # successful download/copy
 	done
 	err "$1 $2 $3 $4: not downloaded"; :
