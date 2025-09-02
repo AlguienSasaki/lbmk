@@ -117,21 +117,21 @@ scankconfig()
 
 modify_mac()
 {
-	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbloc/gbe"
+	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbtmp/gbe"
 	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
 	    x_ make -C util/nvmutil clean && x_ make -C util/nvmutil && \
-	    x_ "$nvm" "$xbloc/gbe" setmac "$new_mac"
+	    x_ "$nvm" "$xbtmp/gbe" setmac "$new_mac"
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nThe following GbE NVM data will be written:\n"
-	x_ "$nvm" "$xbloc/gbe" dump | grep -v "bytes read from file" || :
+	x_ "$nvm" "$xbtmp/gbe" dump | grep -v "bytes read from file" || :
 }
 
 newmac()
 {
 	e "$1" f && xchanged="y" && x_ \
-	    "$ifdtool" $ifdprefix -i GbE:"$xbloc/gbe" "$1" -O "$1"; :
+	    "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"; :
 }
 
 remktar()

@@ -14,13 +14,12 @@ projectsite="https://libreboot.org/"
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
-    datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbloc \
-    xbmklock cvxbmk cvchk xbmkpath is_child basetmp`"
+    datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbmklock \
+    cvxbmk cvchk xbmkpath is_child basetmp`"
 
 xbmk_init()
 {
 	xbmkpwd="`pwd`" || err "Cannot generate PWD"
-	xbloc="$xbmkpwd/tmp"
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 
@@ -86,7 +85,7 @@ xbmk_set_env()
 
 	xbmk_parent_set_export
 	xbmk_set_version
-	remkdir "$xbtmp" "$xbloc" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	remkdir "$xbtmp" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
 	xbmk_set_pyver
 }
 
@@ -265,7 +264,7 @@ xbmk_child_exec()
 {
 	xbmk_rval=0
 	( x_ ./mk "$@" ) || xbmk_rval=1
-	( x_ rm -Rf "$xbloc" "$xbtmp" ) || xbmk_rval=1
+	( x_ rm -Rf "$xbtmp" ) || xbmk_rval=1
 	( x_ rm -f "$xbmklock" ) || xbmk_rval=1
 	exit $xbmk_rval
 }

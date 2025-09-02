@@ -145,9 +145,9 @@ extract_intel_me()
 {
 	e "$mecleaner" f not && err "$cbdir: me_cleaner missing"
 
-	_7ztest="$xbloc/metmp/a"
-	_metmp="$xbloc/me.bin"
-	x_ rm -f "$_metmp" "$xbloc/a"
+	_7ztest="$xbtmp/metmp/a"
+	_metmp="$xbtmp/me.bin"
+	x_ rm -f "$_metmp" "$xbtmp/a"
 
 	mfs=""
 	if [ "$ME11bootguard" = "y" ]; then
@@ -176,7 +176,7 @@ find_me()
 
 	_7ztest="${_7ztest}a" && _r="-r" && [ -n "$mfs" ] && _r=""
 
-	"$mecleaner" $mfs $_r -t -O "$xbloc/a" -M "$_metmp" "$1" || \
+	"$mecleaner" $mfs $_r -t -O "$xbtmp/a" -M "$_metmp" "$1" || \
 	    "$mecleaner" $mfs $_r -t -O "$_metmp" "$1" || "$me7updateparser" \
 	    -O "$_metmp" "$1" || extract_archive "$1" "$_7ztest" || return 0
 
@@ -386,9 +386,9 @@ vfile()
 	elif [ "$nuke" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
 	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
-		x_ rm -f "$xbloc/refcode"
-		x_ "$rmodtool" -i "$_dest" -o "$xbloc/refcode"
-		x_ "$cbfstool" "$rom" add-stage -f "$xbloc/refcode" \
+		x_ rm -f "$xbtmp/refcode"
+		x_ "$rmodtool" -i "$_dest" -o "$xbtmp/refcode"
+		x_ "$cbfstool" "$rom" add-stage -f "$xbtmp/refcode" \
 		    -n "$cbfsname" -t stage
 	else
 		x_ "$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \

@@ -37,5 +37,6 @@ main "$@" && exit 0
 . "include/tree.sh"
 
 trees "$@" || exit 0
+x_ touch "$mkhelpercfg"
 . "$mkhelpercfg"
 $cmd
