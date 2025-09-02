@@ -15,15 +15,17 @@ projectsite="https://libreboot.org/"
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbloc \
-    xbmklock cvxbmk cvchk xbmkpath is_child`"
+    xbmklock cvxbmk cvchk xbmkpath is_child basetmp`"
 
 xbmk_init()
 {
 	xbmkpwd="`pwd`" || err "Cannot generate PWD"
 	xbloc="$xbmkpwd/tmp"
 	xbmklock="$xbmkpwd/lock"
+	basetmp="$xbmkpwd/xbmkwd"
 
 	export PWD="$xbmkpwd"
+	x_ mkdir -p "$basetmp"
 
 	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
 
@@ -92,16 +94,16 @@ xbmk_child_set_tmp()
 {
 	eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
 
-	[ -z "${TMPDIR+x}" ] && export TMPDIR="/tmp"
+	[ -z "${TMPDIR+x}" ] && export TMPDIR="$basetmp"
 
 	# extremely pedantic safety checks on TMPDIR
 	xbtmpchk="`findpath "$TMPDIR" || err`" || err
-	[ "$xbtmpchk" = "${xbtmpchk#/tmp/}" ] && \
-	    badtmp="not a subdirectory in /tmp"
-	[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#/tmp/}" && \
-	    [ -z "$xbtmpchk" ] && badtmp="name after /tmp is empty"
+	[ "$xbtmpchk" = "${xbtmpchk#"$basetmp/"}" ] && \
+	    badtmp="not a subdirectory in $basetmp"
+	[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#"$basetmp/"}" && \
+	    [ -z "$xbtmpchk" ] && badtmp="name after $basetmp is empty"
 	[ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ] && \
-	    badtmp="'$TMPDIR' is a subdirectory in a subdir of /tmp"
+	    badtmp="'$TMPDIR' is a subdirectory in a subdir of $basetmp"
 	[ -z "$badtmp" ] && [ -L "$xbtmpchk" ] && badtmp="is a symlink"
 	[ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ] && \
 	    badtmp="not a directory"
@@ -124,12 +126,12 @@ xbmk_child_set_tmp()
 
 xbmk_parent_check_tmp()
 {
-	export TMPDIR="/tmp"
+	export TMPDIR="$basetmp"
 
 	xbmklist="`mktemp || err "can't make tmplist"`" || err
 	x_ rm -f "$xbmklist"
 	x_ touch "$xbmklist"
-	for xtmpdir in /tmp/xbmk_*; do
+	for xtmpdir in "$basetmp"/xbmk_*; do
 		[ -e "$xtmpdir" ] || continue
 		printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
 		    err "can't write '$xtmpdir' to file: '$xbmklist'"; :
