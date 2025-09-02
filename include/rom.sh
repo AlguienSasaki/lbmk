@@ -72,8 +72,7 @@ check_coreboot_util()
 
 	x_ mkdir -p "$utilelfdir"
 	x_ cp "$utilsrcdir/$1" "$utilelfdir"
-	[ "$1" = "cbfstool" ] || return 0
-	x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
+	[ "$1" = "cbfstool" ] && x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"; :
 }
 
 coreboot_pad_one_byte()
