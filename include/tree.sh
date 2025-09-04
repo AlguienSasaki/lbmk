@@ -65,6 +65,8 @@ trees()
 	targets="$*"
 	cmd="build_targets $targets"
 	singletree "$project" && cmd="build_project"
+
+	remkdir "${tmpgit%/*}"
 }
 
 build_project()
