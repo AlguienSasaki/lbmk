@@ -64,7 +64,7 @@ trees()
 
 	targets="$*"
 	cmd="build_targets $targets"
-	singletree "$project" && cmd="build_project"; :
+	singletree "$project" && cmd="build_project"
 }
 
 build_project()
