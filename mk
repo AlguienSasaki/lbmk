@@ -5,7 +5,10 @@
 
 set -u -e
 
-if [ "$0" != "./mk" ]; then
+ispwd="true"
+[ "$0" = "./mk" ] || ispwd="false"
+[ "$ispwd" = "true" ] && [ -L "mk" ] && ispwd="false"
+if [ "$ispwd" = "false" ]; then
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
 fi
