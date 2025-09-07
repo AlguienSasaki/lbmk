@@ -269,7 +269,8 @@ check_gnu_path()
 	[ "$gnatfull" = "$gccfull" ] || return 1
 
 	(
-	remkdir "$xbtmp/gnupath" && x_ cd "$xbtmp/gnupath"
+	remkdir "$xbtmp/gnupath"
+	x_ cd "$xbtmp/gnupath"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
 		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
 		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
