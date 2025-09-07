@@ -22,8 +22,24 @@ mkrom_tarball()
 
 update_xbmkver()
 {
+	xbmk_sanitize_version
+
 	printf "%s\n" "$version" > "$1/.version" || err "$1 !version"; :
 	printf "%s\n" "$versiondate" > "$1/.versiondate" || err "$1 !vdate"; :
+}
+
+xbmk_sanitize_version()
+{
+	[ -n "$version" ] || return 0; :
+
+	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\.\.//g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\.\///g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\//-/g'`"
+	version="${version#-}"
+
+	[ -n "$version" ] || err "'version' empty after sanitization"; :
 }
 
 mktarball()

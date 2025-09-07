@@ -60,6 +60,8 @@ xbmk_get_version()
 	[ ! -e ".git" ] && [ ! -f ".version" ] && version="unknown"
 	[ ! -e ".git" ] && [ ! -f ".versiondate" ] && versiondate="1716415872"
 
+	xbmk_sanitize_version
+
 	[ -n "$version" ] && relname="$projectname-$version"; :
 }
 
