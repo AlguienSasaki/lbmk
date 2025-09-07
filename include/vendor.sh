@@ -87,7 +87,7 @@ fetch()
 	dl_bkup="$3"
 	dlsum="$4"
 	_dest="${5##*../}"
-	_pre_dest="$XBMK_CACHE/tmpdl/check"
+	_pre_dest="$xbtmp/tmpdl/check"
 	dlop="$6"
 	binsum="$7"
 
