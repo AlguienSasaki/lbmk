@@ -70,7 +70,7 @@ prep_release_tarball()
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$rsrc/CHANGELOG" || err "!log $rsrc"
 	x_ rm -f "$rsrc/lock"
-	x_ rm -Rf "$rsrc/cache" "$rsrc/tmp"
+	x_ rm -Rf "$rsrc/cache" "$rsrc/xbmkwd"
 	(
 	x_ cd "${rsrc%/*}"
 	x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
