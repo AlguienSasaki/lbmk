@@ -16,7 +16,8 @@ e6400_unpack="$xbmkpwd/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
-appdir="$xbtmp/app"
+vendir="vendorfiles"
+appdir="$vendir/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 
 # lbmk-specific extension to the "cv" variable (not suitable for cbmk)
