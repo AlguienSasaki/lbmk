@@ -21,7 +21,9 @@ release()
 	[ -e "$reldest" ] && \
 	    err "already exists: \"$reldest\""
 
-	vdir="$XBMK_CACHE/relpwd/${xbtmp##*/}/$version"
+	vdir="`mktemp -d || err "can't make vdir"`" || err
+	vdir="$vdir/$version"
+
 	rsrc="$vdir/${relname}_src"
 
 	remkdir "$vdir"
