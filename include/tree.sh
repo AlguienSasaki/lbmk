@@ -241,7 +241,7 @@ check_cross_compiler()
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 	x_ touch "$xgccfile"
 
-	remkdir "$XBMK_CACHE/gnupath" # reset hostcc
+	remkdir "$xbtmp/gnupath" # reset hostcc
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
@@ -269,7 +269,7 @@ check_gnu_path()
 	[ "$gnatfull" = "$gccfull" ] || return 1
 
 	(
-	remkdir "$XBMK_CACHE/gnupath" && x_ cd "$XBMK_CACHE/gnupath"
+	remkdir "$xbtmp/gnupath" && x_ cd "$xbtmp/gnupath"
 	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
 		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
 		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"

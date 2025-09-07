@@ -87,7 +87,7 @@ xbmk_set_env()
 
 	xbmk_parent_set_export
 	xbmk_set_version
-	remkdir "$xbtmp" "$XBMK_CACHE/gnupath" "$XBMK_CACHE/xbmkpath"
+	remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
 	xbmk_set_pyver
 }
 
@@ -157,7 +157,7 @@ xbmk_parent_set_export()
 	[ ! -e "$XBMK_CACHE" ] || \
 	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file"; :
 
-	export PATH="$XBMK_CACHE/xbmkpath:$XBMK_CACHE/gnupath:$PATH"
+	export PATH="$xbtmp/xbmkpath:$xbtmp/gnupath:$PATH"
 	xbmkpath="$PATH"
 
 	# if "y": a coreboot target won't be built if target.cfg says release="n"
@@ -207,9 +207,9 @@ xbmk_set_pyver()
 	(
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
-	x_ cd "$XBMK_CACHE/xbmkpath"
+	x_ cd "$xbtmp/xbmkpath"
 	x_ ln -s "`pybin "$python"`" python
-	) || err "Can't set up python symlink in $XBMK_CACHE/xbmkpath"; :
+	) || err "Can't set up python symlink in $xbtmp/xbmkpath"; :
 }
 
 # Use direct path, to prevent a hang if Python is using a virtual environment,
