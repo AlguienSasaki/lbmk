@@ -252,6 +252,10 @@ xbmk_git_init()
 
 	[ -L ".git" ] && err "'$xbmkpwd/.git' is a symlink"
 	[ -e ".git" ] && return 0
+
+	x_ date --version | grep "GNU coreutils" 1>/dev/null 2>/dev/null || \
+	    err "Non-GNU date implementation; current use relies on GNU date"
+
 	eval "`setvars "$(date -Rud @$versiondate)" cdate _nogit`"
 
 	x_ git init 1>/dev/null 2>/dev/null
