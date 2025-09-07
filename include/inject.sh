@@ -4,7 +4,7 @@
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
 cbcfgsdir="config/coreboot"
-tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
+tmpromdel="$xbtmp/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/coreboot/default/ifdtool"
 
