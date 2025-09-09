@@ -84,6 +84,7 @@ xbmk_set_env()
 	xbmk_parent_check_tmp
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
 	    err "cannot create '$xbmklock'"; :
+	x_ chmod -w "$xbmklock"
 
 	xbmk_parent_set_export
 	xbmk_set_version
