@@ -148,6 +148,7 @@ extract_intel_me()
 	_7ztest="$xbtmp/metmp/a"
 	_metmp="$xbtmp/me.bin"
 	x_ rm -f "$_metmp" "$xbtmp/a"
+	x_ rm -Rf "$_7ztest"
 
 	mfs=""
 	if [ "$ME11bootguard" = "y" ]; then
