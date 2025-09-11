@@ -157,8 +157,8 @@ extract_intel_me()
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :; :
 	set -u -e
 
-	[ "$ME11bootguard" = "y" ] || x_ mv "$_metmp" "$_pre_dest"
-	[ "$ME11bootguard" = "y" ] && apply_deguard_hack; :
+	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_pre_dest" && return 0
+	( apply_deguard_hack ) || err "Error running deguard for $_dest"; :
 }
 
 find_me()
@@ -178,12 +178,9 @@ find_me()
 
 apply_deguard_hack()
 {
-	(
-	x_ cd src/deguard/
-	x_ ./finalimage.py --delta "data/delta/$ME11delta" --version \
-	    "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
+	x_ cd src/deguard; x_ ./finalimage.py --delta "data/delta/$ME11delta" \
+	     --version "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
 	    --fake-fpfs data/fpfs/zero --input "$_metmp" --output "$_pre_dest"
-	) || err "Error running deguard for $_dest"; :
 }
 
 extract_archive()
