@@ -157,7 +157,6 @@ extract_intel_me()
 	fi
 
 	set +u +e
-	x_ rm -Rf "$xbmkpwd/metmp"
 
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :; :
 	set -u -e
