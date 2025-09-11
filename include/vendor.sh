@@ -150,23 +150,15 @@ extract_intel_me()
 	x_ rm -f "$_metmp" "$xbtmp/a"
 	x_ rm -Rf "$_7ztest"
 
-	mfs=""
-	if [ "$ME11bootguard" = "y" ]; then
-		mfs="--whitelist MFS"
-		chkvars ME11delta ME11version ME11sku ME11pch
-		x_ ./mk -f deguard
-	fi
+	mfs="" && [ "$ME11bootguard" = "y" ] && mfs="--whitelist MFS" && \
+	    chkvars ME11delta ME11version ME11sku ME11pch && x_ ./mk -f deguard
 
 	set +u +e
-
 	( fx_ find_me x_ find "$xbmkpwd/$appdir" -type f ) || :; :
 	set -u -e
 
-	if [ "$ME11bootguard" = "y" ]; then
-		apply_deguard_hack
-	else
-		x_ mv "$_metmp" "$_pre_dest"
-	fi; :
+	[ "$ME11bootguard" = "y" ] || x_ mv "$_metmp" "$_pre_dest"
+	[ "$ME11bootguard" = "y" ] && apply_deguard_hack; :
 }
 
 find_me()
