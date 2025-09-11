@@ -32,11 +32,11 @@ xbmk_sanitize_version()
 {
 	[ -n "$version" ] || return 0; :
 
-	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\.\.//g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\.\///g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\//-/g'`"
+	version="$(printf "%s\n" "$version" | sed -e 's/\t//g')"
+	version="$(printf "%s\n" "$version" | sed -e 's/\ //g')"
+	version="$(printf "%s\n" "$version" | sed -e 's/\.\.//g')"
+	version="$(printf "%s\n" "$version" | sed -e 's/\.\///g')"
+	version="$(printf "%s\n" "$version" | sed -e 's/\//-/g')"
 	version="${version#-}"
 
 	[ -n "$version" ] || err "'version' empty after sanitization"; :
@@ -103,8 +103,8 @@ findpath()
 {
 	[ $# -gt 0 ] || err "findpath: No arguments provided"
 	while [ $# -gt 0 ]; do
-		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
-		[ -n "$found" ] || found="`realpath "$1" 2>/dev/null`" || \
+		found="$(readlink -f "$1" 2>/dev/null)" || return 1; :
+		[ -n "$found" ] || found="$(realpath "$1" 2>/dev/null)" || \
 		    return 1; :
 		printf "%s\n" "$found"
 		shift 1
@@ -113,7 +113,7 @@ findpath()
 
 pad_one_byte()
 {
-	paddedfile="`mktemp`" || err "mktemp pad_one_byte"
+	paddedfile="$(mktemp || err "mktemp pad_one_byte")" || err
 	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || err "!pad $1"; :
 	x_ mv "$paddedfile" "$1"
 }
@@ -123,14 +123,14 @@ unpad_one_byte()
 	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || err "!int"
 	[ $xromsize -lt 524288 ] && err "too small, $xromsize: $1"
 
-	unpaddedfile="`mktemp`" || err "mktemp unpad_one_byte"
+	unpaddedfile="$(mktemp || err "mktemp unpad_one_byte")" || err
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
 }
 
 fx_()
 {
-	fd="`mktemp || err "can't create tmpfile"`" || err
+	fd="$(mktemp || err "can't create tmpfile")" || err
 	x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
 	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || err "FATAL: !sort fx_"

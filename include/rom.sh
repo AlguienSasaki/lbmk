@@ -32,8 +32,8 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	eval "`setvars "" grub_modules grub_install_modules`"
-	$dry eval "`setcfg "$grubdata/module/$tree"`"
+	eval "$(setvars "" grub_modules grub_install_modules)"
+	$dry eval "$(setcfg "$grubdata/module/$tree")"
 	$dry x_ rm -f "$srcdir/grub.elf"; $dry \
 	x_ "$srcdir/grub-mkstandalone" --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
@@ -256,7 +256,7 @@ cprom()
 	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 
 	irom="$tmprom"
-	[ $# -lt 1 ] || irom="`mktemp || err "!mk irom, $(echo "$@")"`" || err
+	[ $# -lt 1 ] || irom="$(mktemp || err "!mk irom, $(echo "$@")")" || err
 	[ $# -gt 0 ] && x_ cp "$tmprom" "$irom" && cpcmd="mv"
 
 	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && \

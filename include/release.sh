@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" reldir reldest vdir rsrc relmode`"
+eval "$(setvars "" reldir reldest vdir rsrc relmode)"
 
 release()
 {
@@ -21,7 +21,7 @@ release()
 	[ -e "$reldest" ] && \
 	    err "already exists: \"$reldest\""
 
-	vdir="`mktemp -d || err "can't make vdir"`" || err
+	vdir="$(mktemp -d || err "can't make vdir")" || err
 	vdir="$vdir/$version"
 
 	rsrc="$vdir/${relname}_src"

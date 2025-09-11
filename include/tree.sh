@@ -3,11 +3,11 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
+eval "$(setvars "" xarch srcdir premake gnatdir tree mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype rev build_depend gccdir cmakedir \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull do_make badhash badtghash tree`"
+    gnatver gnatfull do_make badhash badtghash xlang)"
 
 trees()
 {
@@ -128,16 +128,16 @@ handle_defconfig()
 
 configure_project()
 {
-	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
+	eval "$(setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    makeargs btype mkhelper bootstrapargs premake release xlang xarch \
-	    badhash badtghash`"
+	    badhash badtghash)"
 	_tcfg="$1/target.cfg"
 	[ -f "$_tcfg" ] || btype="auto"
-	e "$datadir/mkhelper.cfg" f && eval "`setcfg "$datadir/mkhelper.cfg"`"
+	e "$datadir/mkhelper.cfg" f && eval "$(setcfg "$datadir/mkhelper.cfg")"
 
 	while e "$_tcfg" f || [ "$cmd" != "build_project" ]; do
-		eval "`setvars "" rev tree`"
-		eval "`setcfg "$_tcfg"`"
+		eval "$(setvars "" rev tree)"
+		eval "$(setcfg "$_tcfg")"
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
 		[ "$_f" = "-d" ] && build_depend="" # dry run
@@ -191,7 +191,7 @@ delete_old_project_files()
 
 project_up_to_date()
 {
-	eval "`setvars "" old_hash hash`"
+	eval "$(setvars "" old_hash hash)"
 	hashdir="$1"
 	hashname="$2"
 	badhashvar="$3"
@@ -252,7 +252,7 @@ check_gnu_path()
 {
 	command -v "$1" 1>/dev/null || err "Host '$1' unavailable"
 
-	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
+	eval "$(setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir)"
 	x_ gnu_setver "$1" "$1" || err "Command '$1' unavailable."
 	gnu_setver "$2" "$2" || :
 
@@ -281,7 +281,7 @@ check_gnu_path()
 gnu_setver()
 {
 	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
-	eval "$1ver=\"`"$2" --version 2>/dev/null | head -n1`\""
+	eval "$1ver=\"$("$2" --version 2>/dev/null | head -n1)\""
 	eval "$1ver=\"\${$1ver##* }\""
 	eval "$1full=\"\$$1ver\""
 	eval "$1ver=\"\${$1ver%%.*}\""; :
