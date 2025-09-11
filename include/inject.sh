@@ -33,7 +33,7 @@ inject()
 		[ $# -gt 2 ] && new_mac="$3" && \
 		    [ -z "$new_mac" ] && err "Empty MAC address specified" ;;
 	*)
-		err "Unrecognised inject mode: '$2'"
+		err "Unrecognised inject mode: '$2'" ;;
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
