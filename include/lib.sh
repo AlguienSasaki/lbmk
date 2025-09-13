@@ -130,6 +130,7 @@ unpad_one_byte()
 
 fx_()
 {
+	xchk fx_ "$@"
 	fd="$(mktemp || err "can't create tmpfile")" || err
 	x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
@@ -140,6 +141,7 @@ fx_()
 
 dx_()
 {
+	xchk dx_ "$@"
 	[ ! -f "$2" ] || while read -r fx; do
 		$1 "$fx" || return 1; :
 	done < "$2" || err "dx_ $*: cannot read '$2'"; :
@@ -149,6 +151,25 @@ x_()
 {
 	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg: x_ $(echo "$@")"
 	[ $# -lt 1 ] || "$@" || err "Unhandled error for: $(echo "$@")"; :
+}
+
+xchk()
+{
+	[ $# -lt 3 ] && err "$1 needs at least two arguments: $(xprintf "$@")"
+	if [ -z "$2" ] || [ -z "$3" ]; then
+		err "arguments must not be empty in $1: \"$2\" \"$3\" "
+	fi
+}
+
+xprintf()
+{
+	xprintfargs=0
+	while [ $# -gt 0 ]; do
+		printf "\"%s\"" "$1"
+		xprintfargs=1
+		shift 1
+	done
+	[ $xprintfargs -gt 0 ] && printf "\n"; :
 }
 
 err()
