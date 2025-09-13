@@ -24,8 +24,10 @@ update_xbmkver()
 {
 	xbmk_sanitize_version
 
-	printf "%s\n" "$version" > "$1/.version" || err "$1 !version"; :
-	printf "%s\n" "$versiondate" > "$1/.versiondate" || err "$1 !vdate"; :
+	printf "%s\n" "$version" > "$1/.version" || \
+	    err "can't write '$1'" "update_xbmkver" "$@"; :
+	printf "%s\n" "$versiondate" > "$1/.versiondate" || \
+	    err "can't write '$versiondate'" "update_xbmkver" "$@"; :
 }
 
 xbmk_sanitize_version()
@@ -39,14 +41,16 @@ xbmk_sanitize_version()
 	version="$(printf "%s\n" "$version" | sed -e 's/\//-/g')"
 	version="${version#-}"
 
-	[ -n "$version" ] || err "'version' empty after sanitization"; :
+	[ -n "$version" ] || err "'version' empty after sanitization" \
+	    "xbmk_sanitize_version" "$@"; :
 }
 
 mktarball()
 {
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 	[ "${2%/*}" = "$2" ] || x_ mkdir -p "${2%/*}"
-	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || err "mktarball2, $1"
+	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || \
+	    err "can't make tarball '$1'" "mktarball" "$@"
 }
 
 e()
@@ -79,8 +83,8 @@ setcfg()
 {
 	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
 	[ $# -gt 1 ] || \
-		printf "e \"%s\" f not && err \"Missing config\";\n" "$1"
-	printf ". \"%s\" || err \"Could not read config\";\n" "$1"
+		printf "e \"%s\" f not && err \"Missing config '$1'\";\n" "$1"
+	printf ". \"%s\" || err \"Could not read config '$1'\";\n" "$1"
 }
 
 chkvars()
@@ -101,7 +105,7 @@ singletree()
 
 findpath()
 {
-	[ $# -gt 0 ] || err "findpath: No arguments provided"
+	[ $# -gt 0 ] || err "findpath: No arguments provided" "findpath" "$@"
 	while [ $# -gt 0 ]; do
 		found="$(readlink -f "$1" 2>/dev/null)" || return 1; :
 		[ -n "$found" ] || found="$(realpath "$1" 2>/dev/null)" || \
@@ -113,17 +117,22 @@ findpath()
 
 pad_one_byte()
 {
-	paddedfile="$(mktemp || err "mktemp pad_one_byte")" || err
-	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || err "!pad $1"; :
+	paddedfile="$(mktemp || err "mktemp pad_one_byte")" || \
+	    err "can't make tmp file" "pad_one_byte" "$@"
+	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || \
+	    err "could not pad file '$paddedfile'" "pad_one_byte" "$1"; :
 	x_ mv "$paddedfile" "$1"
 }
 
 unpad_one_byte()
 {
-	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || err "!int"
-	[ $xromsize -lt 524288 ] && err "too small, $xromsize: $1"
+	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || \
+	    err "can't increment file size" "unpad_one_byte" "$@"
+	[ $xromsize -lt 524288 ] && \
+	    err "too small, $xromsize: $1" "unpad_one_byte" "$@"
 
-	unpaddedfile="$(mktemp || err "mktemp unpad_one_byte")" || err
+	unpaddedfile="$(mktemp || err "mktemp unpad_one_byte")" || \
+	    err "can't make tmp file" "unpad_one_byte" "$@"
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
 }
@@ -131,10 +140,12 @@ unpad_one_byte()
 fx_()
 {
 	xchk fx_ "$@"
-	fd="$(mktemp || err "can't create tmpfile")" || err
+	fd="$(mktemp || err "can't create tmpfile")" || \
+	    err "can't make tmpfile" "fx_" "$@"
 	x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1
-	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || err "FATAL: !sort fx_"
+	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
+	    err "can't sort to '$fd'" "fx_" "$xx" "$@"
 	dx_ "$xx" "$fd" || :
 	x_ rm -f "$fd"
 }
@@ -144,20 +155,20 @@ dx_()
 	xchk dx_ "$@"
 	[ ! -f "$2" ] || while read -r fx; do
 		$1 "$fx" || return 1; :
-	done < "$2" || err "dx_ $*: cannot read '$2'"; :
+	done < "$2" || err "cannot read '$2'" "dx_" "$@"; :
 }
 
 x_()
 {
-	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg" "$@"
-	[ $# -lt 1 ] || "$@" || err "Unhandled error" "$@"
+	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg" "x_" "$@"
+	[ $# -lt 1 ] || "$@" || err "Unhandled error" "x_" "$@"
 }
 
 xchk()
 {
-	[ $# -lt 3 ] && err "$1 needs at least two arguments" "$@"
+	[ $# -lt 3 ] && err "$1 needs at least two arguments" "xchk" "$@"
 	if [ -z "$2" ] || [ -z "$3" ]; then
-		err "arguments must not be empty in $1: \"$2\" \"$3\" "
+		err "arguments must not be empty" "xchk" "$@"
 	fi
 }
 

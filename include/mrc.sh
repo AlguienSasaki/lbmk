@@ -35,7 +35,7 @@ extract_mrc()
 	x_ cd "$appdir"
 	extract_partition "${MRC_url##*/}"
 	extract_archive "$SHELLBALL" .
-	) || err "mrc download/extract failure"
+	) || err "mrc download/extract failure" "extract_mrc" "$@"
 
 	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
 	    -f "${_pre_dest%/*}/mrc.bin" -r RO_SECTION
@@ -54,5 +54,6 @@ extract_partition()
 	    count=$(( $SIZE / 1024 ))
 
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
-	    "$SHELLBALL" | debugfs "root-a.ext2" || err "!extract shellball"
+	    "$SHELLBALL" | debugfs "root-a.ext2" || \
+	    err "!extract shellball" "extract_partition" "$@"
 }

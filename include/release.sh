@@ -10,18 +10,20 @@ release()
 	reldir="release"
 
 	while getopts m: option; do
-		[ -z "$OPTARG" ] && err "empty argument not allowed"
+		[ -z "$OPTARG" ] && \
+		    err "empty argument not allowed" "release" "$@"
 		case "$option" in
 		m) relmode="$OPTARG" ;;
-		*) err "invalid option '-$option'" ;;
+		*) err "invalid option '-$option'" "release" "$@" ;;
 		esac
 	done
 
 	reldest="$reldir/$version"
 	[ -e "$reldest" ] && \
-	    err "already exists: \"$reldest\""
+	    err "already exists: \"$reldest\"" "release" "$@"
 
-	vdir="$(mktemp -d || err "can't make vdir")" || err
+	vdir="$(mktemp -d || err "can't make vdir")" || \
+	    err "can't make tmp vdir" "release" "$@"
 	vdir="$vdir/$version"
 
 	rsrc="$vdir/${relname}_src"
@@ -47,7 +49,7 @@ prep_release()
 	(
 	[ "$1" = "tarball" ] || x_ cd "$rsrc"
 	prep_release_$1
-	) || err "can't prep release $1"
+	) || err "can't prep release $1" "prep_release" "$@"
 }
 
 prep_release_src()
@@ -68,13 +70,14 @@ nuke()
 prep_release_tarball()
 {
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
-	    --abbrev-commit > "$rsrc/CHANGELOG" || err "!log $rsrc"
+	    --abbrev-commit > "$rsrc/CHANGELOG" || \
+	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 
 	x_ rm -f "$rsrc/lock"
 	x_ rm -Rf "$rsrc/cache" "$rsrc/xbmkwd"
 	(
 	x_ cd "${rsrc%/*}"
 	x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
-	) || err "can't create src tarball"; :
+	) || err "can't create src tarball" "prep_release_tarball" "$@"; :
 }
 
 prep_release_bin()

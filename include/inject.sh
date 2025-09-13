@@ -19,7 +19,7 @@ inject()
 {
 	remkdir "$tmpromdel"
 
-	[ $# -lt 1 ] && err "No options specified"
+	[ $# -lt 1 ] && err "No options specified" "inject" "$@"
 	eval "$(setvars "" nuke new_mac xchanged)"
 
 	archive="$1";
@@ -31,9 +31,10 @@ inject()
 		nuke="nuke" ;;
 	setmac)
 		[ $# -gt 2 ] && new_mac="$3" && \
-		    [ -z "$new_mac" ] && err "Empty MAC address specified" ;;
+		    [ -z "$new_mac" ] && \
+		    err "Empty MAC address specified" "inject" "$@" ;;
 	*)
-		err "Unrecognised inject mode: '$2'" ;;
+		err "Unrecognised inject mode: '$2'" "inject" "$@" ;;
 	esac
 	[ "$new_mac" = "keep" ] && new_mac=""
 
@@ -50,22 +51,23 @@ inject()
 
 check_release()
 {
-	[ -L "$archive" ] && err "'$archive' is a symlink"
-	e "$archive" f missing && err "'$archive' missing"
+	[ -L "$archive" ] && err "'$archive' is a symlink" "check_release" "$@"
+	e "$archive" f missing && err "'$archive' missing" "check_release" "$@"
 
 	archivename="$(basename "$archive" || err "Can't get '$archive' name")" \
-	    || err
-	[ -z "$archivename" ] && err "Can't determine archive name"
+	    || err "can't get '$archive' name" "check_release" "$@"
+	[ -z "$archivename" ] && \
+	    err "Can't determine archive name" "check_release" "$@"
 
 	case "$archivename" in
 	*_src.tar.xz)
-		err "'$archive' is a src archive, silly!" ;;
+		err "'$archive' is a src archive!" "check_release" "$@" ;;
 	grub_*|seagrub_*|custom_*|seauboot_*|seabios_withgrub_*)
-		err "'$archive' is a ROM image (it must be a tarball)" ;;
+		err "'$archive' is a ROM image" "check_release" "$@" ;;
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
 		board="${_stripped_prefix%.tar.xz}" ;;
 	*)
-		err "'$archive': could not detect board type" ;;
+		err "'$archive': cannot detect board" "check_release" "$@" ;;
 	esac; :
 }
 
@@ -141,8 +143,9 @@ remktar()
 	x_ cd "${tmpromdir%"/bin/$board"}"
 	printf "Re-building tar archive (please wait)\n"
 	mkrom_tarball "bin/$board" 1>/dev/null
-	) || err "Cannot re-generate '$archive'"
+	) || err "Cannot re-generate '$archive'" "remktar" "$@"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
-	    "$archive" || err "'$archive' -> Can't overwrite"; :
+	    "$archive" || \
+	    err "'$archive' -> Can't overwrite" "remktar" "$@"; :
 }

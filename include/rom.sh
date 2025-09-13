@@ -26,8 +26,10 @@ copyps1bios()
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
 
 	printf "MIT License\n\nCopyright (c) 2019-2025 PCSX-Redux authors\n\n" \
-	    > bin/playstation/COPYING.txt || err "!pcsx-redux copyright"
-	x_ cat config/snippet/mit >>bin/playstation/COPYING.txt || err "!pcsx MIT"
+	    > bin/playstation/COPYING.txt || \
+	    err "can't write PCSX Redux copyright info" "copyps1bios" "$@"
+	x_ cat config/snippet/mit >>bin/playstation/COPYING.txt || \
+	    err "can't copy MIT license snippet" "copyps1bios" "$@"
 }
 
 mkpayload_grub()
@@ -47,13 +49,19 @@ corebootpremake()
 {
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 0; :
 
-	[ -n "$mode" ] || [ ! -f "$srcdir/.config" ] || $dry printf \
-	    "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || err "$srcdir: !cook"; :
+	$dry cook_coreboot_config
 	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
-	    err "!mk $srcdir .coreboot-version"
+	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 	    x_ ./mk download "$target"; :
+}
+
+cook_coreboot_config()
+{
+	[ -n "$mode" ] || [ ! -f "$srcdir/.config" ] || printf \
+	    "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || \
+	    err "can't cook config in '$srcdir'" "cook_coreboot_config" "$@"; :
 }
 
 check_coreboot_util()
@@ -116,7 +124,8 @@ mkcorebootbin_real()
 
 	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "amd64" ] || \
 	    [ "$payload_uboot" = "i386" ] || [ "$payload_uboot" = "arm64" ] \
-		|| err "'$target' defines bad u-boot type '$payload_uboot'"
+	    || err "'$target' defines bad u-boot type '$payload_uboot'" \
+	    "mkcorebootbin_real" "$@"
 
 	[ -z "$payload_uboot" ] || [ "$payload_uboot" = "arm64" ] || \
 		payload_seabios="y"
@@ -124,7 +133,8 @@ mkcorebootbin_real()
 	[ -n "$uboot_config" ] || uboot_config="default"
 	[ "$payload_grub" = "y" ] && payload_seabios="y"
 	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ] && \
-	    $dry err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled."
+	    $dry err "$target: U-Boot(arm64) and SeaBIOS/GRUB both enabled." \
+	    "mkcorebootbin_real" "$@"
 
 	[ -z "$grub_scan_disk" ] && grub_scan_disk="nvme ahci ata"
 
@@ -185,7 +195,8 @@ add_grub()
 	    _grubname="fallback/payload"
 	cbfs "$tmprom" "$grubelf" "$_grubname"
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$xbtmp/tmpcfg" || err "$target: !insert scandisk"
+	    > "$xbtmp/tmpcfg" || \
+	    err "$target: !insert scandisk" "add_grub" "$@"
 	cbfs "$tmprom" "$xbtmp/tmpcfg" scan.cfg raw
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 	    cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
@@ -256,7 +267,8 @@ cprom()
 	    newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 
 	irom="$tmprom"
-	[ $# -lt 1 ] || irom="$(mktemp || err "!mk irom, $(echo "$@")")" || err
+	[ $# -lt 1 ] || irom="$(mktemp || err "!mk irom, $(echo "$@")")" || \
+	    err "can't copy rom" "cprom" "$@"
 	[ $# -gt 0 ] && x_ cp "$tmprom" "$irom" && cpcmd="mv"
 
 	[ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ] && \

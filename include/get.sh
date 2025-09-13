@@ -63,7 +63,8 @@ fetch_submodule()
 		eval "$_seval; then st=\"\$st \$xt\"; fi"
 	done
 
-	st="${st# }" && [ "$st" = "git curl" ] && err "$mdir: git+curl defined"
+	st="${st# }" && [ "$st" = "git curl" ] && \
+	    err "$mdir: git+curl defined" fetch_submodule "$@"
 	[ -z "$st" ] && return 0 # subgit/subcurl not defined
 	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
@@ -75,7 +76,7 @@ fetch_submodule()
 xbget()
 {
 	[ "$1" = "curl" ] || [ "$1" = "copy" ] || [ "$1" = "git" ] || \
-	    err "Bad dlop (arg 1): xbget $*"
+	    err "Bad dlop (arg 1)" xbget "$@"
 
 	for url in "$2" "$3"; do
 		[ -n "$url" ] || err "empty URL given in: xbget $*"
@@ -86,7 +87,7 @@ xbget()
 		esac
 		return 0 # successful download/copy
 	done
-	err "$1 $2 $3 $4: not downloaded"; :
+	err "failed to download file/repository" xbget "$@"; :
 }
 
 try_file()
@@ -108,7 +109,7 @@ try_file()
 
 	if [ "$2" = "git" ]; then
 		[ -d "$5" ] || tmpclone "$cached" "$5" "$6" "$7" || \
-		    err "Can't clone final repo in command: try_file $*"; :
+		    err "Can't clone final repo" try_file "$@"; :
 	else
 		bad_checksum "$6" "$cached" && x_ rm -f "$cached" && return 1
 		[ "$cached" != "$5" ] && x_ cp "$cached" "$5"
@@ -133,7 +134,8 @@ try_copy()
 
 try_git()
 {
-	gitdest="$(findpath "$1" || err "Can't get readpath for '$1'")" || err
+	gitdest="$(findpath "$1" || err "Can't get findpath for '$1'")" || \
+	    err "failed findpath for '$1'" try_get "$@"
 	x_ rm -Rf "$tmpgitcache"
 
 	[ -d "$gitdest" ] || ( x_ git clone "$2" "$tmpgitcache" ) || return 1
@@ -150,7 +152,8 @@ try_git()
 bad_checksum()
 {
 	e "$2" f missing && return 0
-	csum="$(x_ sha512sum "$2" | awk '{print $1}')" || err "!sha512 '$2' $1"
+	csum="$(x_ sha512sum "$2" | awk '{print $1}')" || \
+	    err "!sha512 '$2' $1" bad_checksum "$@"
 	[ "$csum" = "$1" ] && return 1; x_ rm -f "$2"
 	printf "BAD SHA512 %s, '%s'; need '%s'\n" "$csum" "$2" "$1" 1>&2
 }

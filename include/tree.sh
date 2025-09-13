@@ -14,7 +14,7 @@ trees()
 	flags="f:b:m:u:c:x:s:l:n:d:"
 
 	while getopts $flags option; do
-		[ -n "$_f" ] && err "only one flag is permitted"
+		[ -n "$_f" ] && err "only one flag is permitted" "trees" "$@"
 		_f="$1"
 
 		case "$_f" in
@@ -30,7 +30,7 @@ trees()
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
-		*) err "invalid option '-$option'" ;;
+		*) err "invalid option '-$option'" "trees" "$@" ;;
 		esac
 
 		if [ -z "${OPTARG+x}" ]; then
@@ -42,11 +42,11 @@ trees()
 		project="${project#config/git/}"
 		shift 2
 	done
-	[ -z "$_f" ] && err "missing flag ($flags)"
+	[ -z "$_f" ] && err "missing flag ($flags)" "trees" "$@"
 	[ -z "$project" ] && fx_ "x_ ./mk $_f" x_ ls -1 config/git && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || \
-	    err "config/git/$project/pkg.cfg missing"
+	    err "config/git/$project/pkg.cfg missing" "$trees" "$@"
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
@@ -82,8 +82,10 @@ build_project()
 
 build_targets()
 {
-	[ -d "$configdir" ] || err "directory, $configdir, does not exist"
-	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || err "!o $configdir"
+	[ -d "$configdir" ] || \
+	    err "directory, $configdir, does not exist" "build_targets" "$@"
+	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || \
+	    err "can't fetch targets in '$configdir'" "build_targets" "$@"
 
 	for x in $targets; do
 		unset CROSS_COMPILE
@@ -168,7 +170,8 @@ build_dependencies()
 	for bd in $build_depend; do
 		bd_p="${bd%%/*}"
 		bd_t="${bd##*/}"
-		[ -z "$bd_p" ] && $dry err "$project/$tree: !bd '$bd'"
+		[ -z "$bd_p" ] && $dry err "$project/$tree: !bd '$bd'" \
+		    "build_dependencies" "$@"
 		[ "${bd##*/}" = "$bd" ] && bd_t=""
 		[ -z "$bd_p" ] || $dry x_ ./mk -b $bd_p $bd_t; :
 	done; :
@@ -201,20 +204,24 @@ project_up_to_date()
 
 	[ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ] || \
 	    read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" || \
-	    err "$hashdir: read err '$XBMK_CACHE/$hashdir/$project$hashname'"
+	    err "$hashdir: read err '$XBMK_CACHE/$hashdir/$project$hashname'" \
+	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
 	fx_ "x_ sha512sum" find "$@" -type f -not -path "*/.git*/*" | awk \
-	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashdir"
+	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashdir" \
+	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
 	hash="$(x_ sha512sum "$xbtmp/tmp.hash" | awk '{print $1}' || \
-	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'"
+	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'" \
+	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
 	[ "$hash" != "$old_hash" ] && eval "$badhashvar=\"y\""
 	[ -f "$XBMK_CACHE/$hashdir/$project$hashname" ] || \
 	    eval "$badhashvar=\"y\""
 
 	printf "%s\n" "$hash" > "$xbtmp/new.hash" || \
-	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)"
+	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)" \
+	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
 	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
@@ -250,10 +257,12 @@ check_cross_compiler()
 # gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
 check_gnu_path()
 {
-	command -v "$1" 1>/dev/null || err "Host '$1' unavailable"
+	command -v "$1" 1>/dev/null || \
+	    err "Host '$1' unavailable" "check_gnu_path" "$@"
 
 	eval "$(setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir)"
-	x_ gnu_setver "$1" "$1" || err "Command '$1' unavailable."
+	x_ gnu_setver "$1" "$1" || \
+	    err "Command '$1' unavailable." "check_gnu_path" "$@"
 	gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
@@ -275,7 +284,8 @@ check_gnu_path()
 		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
 		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
 	done
-	) || err "Cannot create $2-$_gnuver link in $_gnudir"; :
+	) || err "Cannot symlink '$2-$_gnuver' in '$_gnudir'" \
+	    "check_gnu_path" "$@"; :
 }
 
 gnu_setver()
@@ -289,7 +299,8 @@ gnu_setver()
 
 check_defconfig()
 {
-	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig"
+	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig" \
+	    "check_defconfig" "$@"
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
 	$dry elfcheck || return 1; : # skip build if a previous one exists
@@ -308,7 +319,7 @@ handle_makefile()
 
 	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
 
-	run_make_command || err "handle_makefile $srcdir: no makefile!"
+	run_make_command || err "no makefile!" "handle_makefile" "$@"
 
 	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
 	[ "${mode%config}" = "$mode" ] || \
@@ -350,7 +361,7 @@ check_autoconf()
 	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
 	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
 	[ -f "configure" ] && x_ ./configure $autoconfargs; :
-	) || err "can't bootstrap project: $1"; :
+	) || err "can't bootstrap project: $1" "check_autoconf" "$@"; :
 }
 
 check_makefile()
@@ -364,6 +375,7 @@ copy_elf()
 	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir"
 	[ ! -f "$listfile" ] || while read -r f; do
 		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"; :
-	done < "$listfile" || err "copy_elf $*: cannot read '$listfile'"; :
-	x_ make clean -C "$srcdir" $cleanargs
+	done < "$listfile" || err "cannot read '$listfile'" "copy_elf" "$@"; :
+	( x_ make clean -C "$srcdir" $cleanargs ) || \
+	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
 }

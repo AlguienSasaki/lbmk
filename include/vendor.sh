@@ -45,7 +45,7 @@ eval "$(setvars "" has_hashes EC_hash DL_hash _pre_dest MRC_refcode_gbe vcfg \
 
 download()
 {
-	[ $# -gt 0 ] || err "No argument given"
+	[ $# -gt 0 ] || err "No argument given" "download" "$@"
 	export PATH="$PATH:/sbin"
 	board="$1" && check_target && readkconfig download
 }
@@ -116,7 +116,8 @@ fetch()
 
 	x_ mkdir -p "${_dest%/*}"
 	[ "$dl_type" = "fsp" ] || extract_archive "$_dl" "$appdir" || \
-	    [ "$dl_type" = "e6400vga" ] || err "$_dest $dl_type: !extract"
+	    [ "$dl_type" = "e6400vga" ] || \
+	    err "$_dest $dl_type: !extract" "fetch" "$@"
 
 	x_ extract_$dl_type "$_dl" "$appdir"
 	set -u -e
@@ -130,7 +131,8 @@ fetch()
 	[ -z "$binsum" ] && printf "'%s': checksum undefined\n" "$_dest" 1>&2
 	[ -L "$_dest" ] && printf "WARNING: '%s' is a link!\n" "$_dest" 1>&2
 	[ -L "$_dest" ] || x_ rm -f "$_dest"
-	err "Could not safely extract '$_dest', for board '$board'"
+	err "Could not safely extract '$_dest', for board '$board'" \
+	    "fetch" "$@"
 }
 
 mkdst()
@@ -143,7 +145,8 @@ mkdst()
 
 extract_intel_me()
 {
-	e "$mecleaner" f not && err "$cbdir: me_cleaner missing"
+	e "$mecleaner" f not && err "$cbdir: me_cleaner missing" \
+	    "extract_intel_me" "$@"
 
 	_7ztest="$xbtmp/metmp/a"
 	_metmp="$xbtmp/me.bin"
@@ -158,7 +161,8 @@ extract_intel_me()
 	set -u -e
 
 	[ "$ME11bootguard" != "y" ] && x_ mv "$_metmp" "$_pre_dest" && return 0
-	( apply_deguard_hack ) || err "Error running deguard for $_dest"; :
+	( apply_deguard_hack ) || err "Error running deguard on '$_dest'" \
+	    "extract_intel_me" "$@"; :
 }
 
 find_me()
@@ -196,10 +200,11 @@ extract_kbc1126ec()
 	(
 	x_ cd "$appdir/"
 	mv Rompaq/68*.BIN ec.bin || unar -D ROM.CAB Rom.bin || unar -D \
-	    Rom.CAB Rom.bin || unar -D 68*.CAB Rom.bin || err "!kbc1126 unar"
+	    Rom.CAB Rom.bin || unar -D 68*.CAB Rom.bin || \
+	    err "!kbc1126 unar" "extract_kbc1126ec" "$@"
 	[ -f "ec.bin" ] || x_ mv Rom.bin ec.bin
 	x_ e ec.bin f && x_ "$kbc1126_ec_dump" ec.bin
-	) || err "$board: can't extract kbc1126 ec firmware"
+	) || err "$board: can't extract kbc1126 fw" "extract_kbc1126ec" "$@"
 
 	x_ e "$appdir/ec.bin.fw1" f && x_ e "$appdir/ec.bin.fw2" f
 	x_ cp "$appdir/"ec.bin.fw* "${_pre_dest%/*}/"
@@ -214,7 +219,7 @@ extract_e6400vga()
 	x_ cd "$appdir"
 	x_ e "bios.bin" f
 	"$e6400_unpack" bios.bin || printf "TODO: fix dell extract util\n"
-	) || err "can't extract e6400 vga rom"
+	) || err "can't extract e6400 vga rom" "extract_e6400vga" "$@"
 	x_ cp "$appdir/$E6400_VGA_romname" "$_pre_dest"
 }
 
@@ -264,7 +269,8 @@ getvfile()
 	eval "$(setcfg "config/vendor/$vcfg/pkg.cfg" 1)"
 	bootstrap && [ $# -gt 0 ] && getfiles && return 0 # download
 	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
-	( check_vendor_hashes ) || err "$archive: Can't verify hashes"; :
+	( check_vendor_hashes ) || \
+	    err "$archive: Can't verify hashes" "getvfile" "$@"; :
 }
 
 bootstrap()
@@ -291,7 +297,8 @@ prep()
 	[ "$nuke" = "nuke" ] && _xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
 
 	e "$_xrom" f missing && return 0
-	[ -z "${_xromname#"$vfix"}" ] && err "$_xromname / $vfix: name match"
+	[ -z "${_xromname#"$vfix"}" ] && \
+	    err "$_xromname / $vfix: name match" "prep" "$@"
 
 	# Remove the prefix and 1-byte pad
 	[ "$nuke" != "nuke" ] && [ "${_xromname#"$vfix"}" != "$_xromname" ] \
@@ -309,7 +316,8 @@ prep()
 mksha512()
 {
 	[ "${1%/*}" != "$1" ] && x_ cd "${1%/*}"
-	sha512sum ./"${1##*/}" >> "$2" || err "!sha512sum \"$1\" > \"$2\""
+	sha512sum ./"${1##*/}" >> "$2" || \
+	    err "!sha512sum \"$1\" > \"$2\"" "mksha512" "$@"
 }
 
 add_vfiles()
@@ -362,7 +370,7 @@ vfile()
 	if [ "$_t" = "fsp" ] && [ $# -gt 3 ]; then
 		_offset="$4"
 	elif [ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ]; then
-		err "vfile $*, $rom: offset given but empty (undefined)"
+		err "$rom: offset given but empty (undefined)" "vfile" "$@"
 	fi
 
 	[ "$nuke" = "nuke" ] || x_ e "$_dest" f

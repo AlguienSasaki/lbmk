@@ -30,7 +30,7 @@ main()
 	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
 	release|download|inject) $cmd "$@" ;;
 	-*) return 1 ;;
-	*) err "bad command" ;;
+	*) err "bad command" main "$@" ;;
 	esac
 	set -u -e # some commands disable them. turn them on!
 }
