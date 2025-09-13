@@ -149,16 +149,31 @@ dx_()
 
 x_()
 {
-	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg: x_ $(xprintf "$@")"
-	[ $# -lt 1 ] || "$@" || err "Unhandled error for: $(xprintf "$@")"; :
+	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg" "$@"
+	[ $# -lt 1 ] || "$@" || err "Unhandled error" "$@"
 }
 
 xchk()
 {
-	[ $# -lt 3 ] && err "$1 needs at least two arguments: $(xprintf "$@")"
+	[ $# -lt 3 ] && err "$1 needs at least two arguments" "$@"
 	if [ -z "$2" ] || [ -z "$3" ]; then
 		err "arguments must not be empty in $1: \"$2\" \"$3\" "
 	fi
+}
+
+err()
+{
+	if [ $# -eq 1 ]; then
+		printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
+	elif [ $# -gt 1 ]; then
+		printf "ERROR %s: %s: in command/function with arguments: " \
+		    "$0" "$1" 1>&2
+		shift 1
+		xprintf "$@" 1>&2
+	else
+		printf "ERROR, but no arguments provided to err\n" 1>&2
+	fi
+	exit 1
 }
 
 xprintf()
@@ -171,10 +186,4 @@ xprintf()
 		shift 1
 	done
 	[ $xprintfargs -gt 0 ] && printf "\n"; :
-}
-
-err()
-{
-	[ $# -lt 1 ] || printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
-	exit 1
 }
