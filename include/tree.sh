@@ -46,7 +46,7 @@ trees()
 	[ -z "$project" ] && fx_ "x_ ./mk $_f" x_ ls -1 config/git && return 1
 
 	[ -f "config/git/$project/pkg.cfg" ] || \
-	    err "config/git/$project/pkg.cfg missing" "$trees" "$@"
+	    err "config/git/$project/pkg.cfg missing" "trees" "$@"
 
 	for d in "elf" "config/data" "config" "src"; do
 		eval "${d#*/}dir=\"$d/$project\""
