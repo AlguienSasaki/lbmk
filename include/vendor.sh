@@ -33,7 +33,7 @@ cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_FSP_FULL_FD \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS"
 
 # lbmk-specific extensions; mostly used for downloading vendor files
-eval "$(setvars "" has_hashes EC_hash DL_hash _pre_dest MRC_refcode_gbe vcfg \
+eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
     E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
     kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
@@ -41,7 +41,7 @@ eval "$(setvars "" has_hashes EC_hash DL_hash _pre_dest MRC_refcode_gbe vcfg \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
     TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
     EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
-    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash DL_url_bkup)"
+    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash _pre_dest`"
 
 download()
 {
@@ -266,7 +266,7 @@ setvfile()
 
 getvfile()
 {
-	eval "$(setcfg "config/vendor/$vcfg/pkg.cfg" 1)"
+	eval "`setcfg "config/vendor/$vcfg/pkg.cfg" 1`"
 	bootstrap && [ $# -gt 0 ] && getfiles && return 0 # download
 	fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 	( check_vendor_hashes ) || \

@@ -12,15 +12,15 @@ cv="CONFIG_GBE_BIN_PATH"
 [ -n "$cvxbmk" ] && cv="$cv $cvxbmk"
 [ -n "$cvchk" ] && cv="$cv $cvchk"
 
-eval "$(setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
-    tmpromdir board xchanged $cv)"
+eval "`setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
+    tmpromdir board xchanged $cv`"
 
 inject()
 {
 	remkdir "$tmpromdel"
 
 	[ $# -lt 1 ] && err "No options specified" "inject" "$@"
-	eval "$(setvars "" nuke new_mac xchanged)"
+	eval "`setvars "" nuke new_mac xchanged`"
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
@@ -54,7 +54,7 @@ check_release()
 	[ -L "$archive" ] && err "'$archive' is a symlink" "check_release" "$@"
 	e "$archive" f missing && err "'$archive' missing" "check_release" "$@"
 
-	archivename="$(basename "$archive" || err "Can't get '$archive' name")" \
+	archivename="`basename "$archive" || err "Can't get '$archive' name"`" \
 	    || err "can't get '$archive' name" "check_release" "$@"
 	[ -z "$archivename" ] && \
 	    err "Can't determine archive name" "check_release" "$@"
@@ -76,7 +76,7 @@ check_target()
 	[ "$board" = "${board#serprog_}" ] || return 1
 	boarddir="$cbcfgsdir/$board"
 
-	eval "$(setcfg "$boarddir/target.cfg")"
+	eval "`setcfg "$boarddir/target.cfg"`"
 	chkvars tree && x_ ./mk -d coreboot "$tree"
 
 	ifdtool="elf/coreboot/$tree/ifdtool"
@@ -107,7 +107,7 @@ readkconfig()
 {
 	x_ rm -f "$xbtmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
-	eval "$(setcfg "$xbtmp/cbcfg" 1)"
+	eval "`setcfg "$xbtmp/cbcfg" 1`"
 	setvfile "$@" || return 1; :
 }
 

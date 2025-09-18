@@ -13,13 +13,13 @@ projectsite="https://libreboot.org/"
 [ -z "${PATH+x}" ] && \
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
-eval "$(setvars "" _nogit board reinstall versiondate aur_notice configdir \
+eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbmklock \
-    cvxbmk cvchk xbmkpath is_child basetmp)"
+    cvxbmk cvchk xbmkpath is_child basetmp`"
 
 xbmk_init()
 {
-	xbmkpwd="$(pwd || err "Cannot generate PWD")" || err "!" xbmk_init "$@"
+	xbmkpwd="`pwd || err "Cannot generate PWD"`" || err "!" xbmk_init "$@"
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 
@@ -42,7 +42,7 @@ xbmkpkg()
 	xchk xbmkpkg "$@"
 	[ $# -gt 2 ] && reinstall="$3"
 
-	eval "$(setcfg "config/dependencies/$2")"
+	eval "`setcfg "config/dependencies/$2"`"
 
 	chkvars pkg_add pkglist
 	x_ $pkg_add $pkglist
@@ -98,12 +98,12 @@ xbmk_set_env()
 
 xbmk_child_set_tmp()
 {
-	eval "$(setvars "" xbtmp badtmp xbtmpchk xbtmpname)"
+	eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
 
 	[ -z "${TMPDIR+x}" ] && export TMPDIR="$basetmp"
 
 	# extremely pedantic safety checks on TMPDIR
-	xbtmpchk="$(findpath "$TMPDIR" || err "!findpath $TMPDIR")" || \
+	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" xbmk_child_set_tmp "$@"
 	[ "$xbtmpchk" = "${xbtmpchk#"$basetmp/"}" ] && \
 	    badtmp="not a subdirectory in $basetmp"
@@ -136,7 +136,7 @@ xbmk_parent_check_tmp()
 {
 	export TMPDIR="$basetmp"
 
-	xbmklist="$(mktemp || err "can't make tmplist")" || \
+	xbmklist="`mktemp || err "can't make tmplist"`" || \
 	    err "can't make tmplist" xbmk_parent_check_tmp "$@"
 	x_ rm -f "$xbmklist"
 	x_ touch "$xbmklist"
@@ -148,7 +148,7 @@ xbmk_parent_check_tmp()
 	done
 
 	# set up a unified temporary directory, for common deletion later:
-	export TMPDIR="$(x_ mktemp -d -t xbmk_XXXXXXXX)" || \
+	export TMPDIR="`x_ mktemp -d -t xbmk_XXXXXXXX`" || \
 	    err "can't export TMPDIR" xbmk_parent_check_tmp "$@"
 	xbtmp="$TMPDIR"
 
@@ -211,7 +211,7 @@ xbmk_set_pyver()
 	pybin python3 1>/dev/null || python="python"
 	pyver="2" && [ "$python" = "python3" ] && pyver="3"
 	pybin "$python" 1>/dev/null || pyver=""
-	[ -z "$pyver" ] || "$(x_ pybin "$python")" -c "$pyv" 1>/dev/null \
+	[ -z "$pyver" ] || "`x_ pybin "$python"`" -c "$pyv" 1>/dev/null \
 	    2>/dev/null || err "Cannot detect host Python version." \
 	    xbmk_set_pyver "$@"
 	[ -n "$pyver" ] && \
@@ -224,7 +224,7 @@ xbmk_set_pyver()
 	# set up python v3.x in PATH, in case it's not set up correctly.
 	# see code above that detected the correct python3 command.
 	x_ cd "$xbtmp/xbmkpath"
-	x_ ln -s "$(x_ pybin "$python")" python || err "can't make symlink" \
+	x_ ln -s "`x_ pybin "$python"`" python || err "can't make symlink" \
 	    xbmk_set_pyver "$@"
 	) || err "Can't set up python symlink in $xbtmp/xbmkpath" \
 	    xbmk_set_pyver "$@"; :
@@ -243,7 +243,7 @@ pybin()
 
 	# ideally, don't rely on PATH or hardcoded paths if python venv.
 	# use the *real*, direct executable linked to by the venv symlink
-	if [ $venv -gt 0 ] && [ -L "$(command -v "$1" 2>/dev/null)" ]; then
+	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
 		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
 		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
@@ -278,7 +278,7 @@ xbmk_git_init()
 	    "xbmk_git_init" "$@"
 
 	eval "$(setvars "$(x_ date -Rud @$versiondate)" cdate _nogit || err)" \
-	    err "can't get date" "xbmk_git_init" "$@"
+	    || err "can't get date" "xbmk_git_init" "$@"
 
 	x_ git init 1>/dev/null 2>/dev/null
 	x_ git add -A . 1>/dev/null 2>/dev/null

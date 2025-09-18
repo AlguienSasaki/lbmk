@@ -34,11 +34,11 @@ xbmk_sanitize_version()
 {
 	[ -n "$version" ] || return 0; :
 
-	version="$(printf "%s\n" "$version" | sed -e 's/\t//g')"
-	version="$(printf "%s\n" "$version" | sed -e 's/\ //g')"
-	version="$(printf "%s\n" "$version" | sed -e 's/\.\.//g')"
-	version="$(printf "%s\n" "$version" | sed -e 's/\.\///g')"
-	version="$(printf "%s\n" "$version" | sed -e 's/\//-/g')"
+	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\.\.//g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\.\///g'`"
+	version="`printf "%s\n" "$version" | sed -e 's/\//-/g'`"
 	version="${version#-}"
 
 	[ -n "$version" ] || err "'version' empty after sanitization" \
@@ -107,8 +107,8 @@ findpath()
 {
 	[ $# -gt 0 ] || err "findpath: No arguments provided" "findpath" "$@"
 	while [ $# -gt 0 ]; do
-		found="$(readlink -f "$1" 2>/dev/null)" || return 1; :
-		[ -n "$found" ] || found="$(realpath "$1" 2>/dev/null)" || \
+		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
+		[ -n "$found" ] || found="`realpath "$1" 2>/dev/null`" || \
 		    return 1; :
 		printf "%s\n" "$found"
 		shift 1
@@ -117,7 +117,7 @@ findpath()
 
 pad_one_byte()
 {
-	paddedfile="$(mktemp || err "mktemp pad_one_byte")" || \
+	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
 	    err "can't make tmp file" "pad_one_byte" "$@"
 	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || \
 	    err "could not pad file '$paddedfile'" "pad_one_byte" "$1"; :
@@ -131,7 +131,7 @@ unpad_one_byte()
 	[ $xromsize -lt 524288 ] && \
 	    err "too small, $xromsize: $1" "unpad_one_byte" "$@"
 
-	unpaddedfile="$(mktemp || err "mktemp unpad_one_byte")" || \
+	unpaddedfile="`mktemp || err "mktemp unpad_one_byte"`" || \
 	    err "can't make tmp file" "unpad_one_byte" "$@"
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
@@ -140,7 +140,7 @@ unpad_one_byte()
 fx_()
 {
 	xchk fx_ "$@"
-	fd="$(mktemp || err "can't create tmpfile")" || \
+	fd="`mktemp || err "can't create tmpfile"`" || \
 	    err "can't make tmpfile" "fx_" "$@"
 	x_ rm -f "$fd" && x_ touch "$fd"
 	xx="$1" && shift 1

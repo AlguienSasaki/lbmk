@@ -2,8 +2,8 @@
 # Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "$(setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
-    depend subcurl_bkup)"
+eval "`setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
+    depend subcurl_bkup`"
 
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
@@ -16,8 +16,8 @@ fetch_targets()
 
 fetch_project()
 {
-	eval "$(setvars "" xtree)"
-	eval "$(setcfg "config/git/$project/pkg.cfg")"
+	eval "`setvars "" xtree`"
+	eval "`setcfg "config/git/$project/pkg.cfg"`"
 
 	chkvars url bkup_url && [ -n "$xtree" ] && x_ ./mk -f coreboot "$xtree"
 	[ -z "$depend" ] || for d in $depend ; do
@@ -55,8 +55,8 @@ git_prep()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"; eval \
-	    "$(setvars "" subhash subgit subgit_bkup subcurl subcurl_bkup st)"
-	eval "$(setcfg "$mcfgdir/module.cfg" 0)"
+	    "`setvars "" subhash subgit subgit_bkup subcurl subcurl_bkup st`"
+	eval "`setcfg "$mcfgdir/module.cfg" 0`"
 
 	for xt in git curl; do
 		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
@@ -134,7 +134,7 @@ try_copy()
 
 try_git()
 {
-	gitdest="$(findpath "$1" || err "Can't get findpath for '$1'")" || \
+	gitdest="`findpath "$1" || err "Can't get findpath for '$1'"`" || \
 	    err "failed findpath for '$1'" try_get "$@"
 	x_ rm -Rf "$tmpgitcache"
 
