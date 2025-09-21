@@ -23,10 +23,10 @@ xbmk_init()
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 
+	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
+
 	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp"
-
-	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
 
 	id -u 1>/dev/null 2>/dev/null || err "suid check failed" xbmk_init "$@"
 	[ "$(id -u)" != "0" ] || \
