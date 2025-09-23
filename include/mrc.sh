@@ -12,7 +12,8 @@ extract_refcode()
 
 	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
 	# and refcode is extracted from an image using the old scheme. we use
-	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16
+	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16:
+
 	chkvars cbfstoolref
 	x_ mkdir -p "${_pre_dest%/*}"
 
@@ -20,8 +21,11 @@ extract_refcode()
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
-	[ -z "$MRC_refcode_gbe" ] || x_ dd if="config/ifd/hp820g2/1.bin" \
-	    of="$appdir/ref" bs=1 seek=$MRC_refcode_gbe count=1 conv=notrunc; :
+	if [ -n "$MRC_refcode_gbe" ]
+	then
+		x_ dd if="config/ifd/hp820g2/1.bin" of="$appdir/ref" bs=1 \
+		    seek=$MRC_refcode_gbe count=1 conv=notrunc; :
+	fi
 
 	x_ mv "$appdir/ref" "$_pre_dest"
 }
@@ -32,9 +36,11 @@ extract_mrc()
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 
 	(
-	x_ cd "$appdir"
-	extract_partition "${MRC_url##*/}"
-	extract_archive "$SHELLBALL" .
+
+		x_ cd "$appdir"
+		extract_partition "${MRC_url##*/}"
+		extract_archive "$SHELLBALL" .
+
 	) || err "mrc download/extract failure" "extract_mrc" "$@"
 
 	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
