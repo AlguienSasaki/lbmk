@@ -13,20 +13,37 @@ trees()
 {
 	flags="f:b:m:u:c:x:s:l:n:d:"
 
-	while getopts $flags option; do
-		[ -n "$_f" ] && err "only one flag is permitted" "trees" "$@"
+	while getopts $flags option
+	do
+		if [ -n "$_f" ]
+		then
+			err "only one flag is permitted" "trees" "$@"
+		fi
+
 		_f="$1"
 
+		# the "mode" variable is affixed to a make command, example:
+		# ./mk -m coreboot does: make menuconfig -C src/coreboot/tree
+
 		case "$_f" in
-		-d) dry=":" ;;
+		-d)
+			# -d is similar to -b, except that
+			# a large number of operations will be
+			# skipped. these are "dry build" scenarios
+			# where only a subset of build tasks are done,
+			# and $dry is prefixed to skipped commands
+
+			dry=":"
+			;;
 		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
-		-f)
-			do_make="n"
-			dry=":" ;;
+		-f) # download source code for a project
+			do_make="n" # lets us know not to build anything
+			dry=":"
+			;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
@@ -40,24 +57,41 @@ trees()
 
 		project="${OPTARG#src/}"
 		project="${project#config/git/}"
+
 		shift 2
 	done
-	[ -z "$_f" ] && err "missing flag ($flags)" "trees" "$@"
-	[ -z "$project" ] && fx_ "x_ ./mk $_f" x_ ls -1 config/git && return 1
 
-	[ -f "config/git/$project/pkg.cfg" ] || \
-	    err "config/git/$project/pkg.cfg missing" "trees" "$@"
+	if [ -z "$_f" ]
+	then
+		err "missing flag ($flags)" "trees" "$@"
+	fi
 
-	for d in "elf" "config/data" "config" "src"; do
-		eval "${d#*/}dir=\"$d/$project\""
-	done
+	if [ -z "$project" ]
+	then
+		fx_ "x_ ./mk $_f" x_ ls -1 config/git
+		return 1
+	fi
+
+	if [ ! -f "config/git/$project/pkg.cfg" ]
+	then
+		err "config/git/$project/pkg.cfg missing" "trees" "$@"
+	fi
+
+	elfdir="elf/$project"
+	datadir="config/data/$project"
+	configdir="config/$project"
+	srcdir="src/$project"
 	dest_dir="$elfdir"
 
 	listfile="$datadir/build.list"
-	[ -f "$listfile" ] || listfile="" # optional on all projects
+	if [ ! -f "$listfile" ]
+	then
+		listfile="" # build.list is optional on all projects
+	fi
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
-	if e "$mkhelpercfg" f missing; then
+	if e "$mkhelpercfg" f missing
+	then
 		mkhelpercfg="$xbtmp/mkhelper.cfg"
 		x_ touch "$mkhelpercfg"
 	fi
@@ -71,33 +105,60 @@ trees()
 
 build_project()
 {
-	configure_project "$configdir" || return 0
-	[ ! -f "$listfile" ] || $dry elfcheck || return 0
+	if ! configure_project "$configdir"
+	then
+		return 0
+	elif [ -f "$listfile" ]
+	then
+		$dry elfcheck || return 0; :
+	fi
 
-	[ "$mode" = "distclean" ] && mode="clean"
+	if [ "$mode" = "distclean" ]
+	then
+		mode="clean"
+	fi
+
 	run_make_command || return 0
 
-	[ -n "$mode" ] || $dry copy_elf; :
+	if [ -z "$mode" ]
+	then
+		$dry copy_elf; :
+	fi
 }
 
 build_targets()
 {
-	[ -d "$configdir" ] || \
-	    err "directory, $configdir, does not exist" "build_targets" "$@"
-	[ $# -gt 0 ] || targets="$(ls -1 "$configdir")" || \
-	    err "can't fetch targets in '$configdir'" "build_targets" "$@"
+	if [ ! -d "$configdir" ]
+	then
+		err "directory '$configdir' doesn't exist" "build_targets" "$@"
+	elif [ $# -lt 1 ]
+	then
+		targets="$(ls -1 "$configdir")" || \
+		    err "'$configdir': can't list targets" "build_targets" "$@"
+	fi
 
-	for x in $targets; do
+	for x in $targets
+	do
 		unset CROSS_COMPILE
 		export PATH="$xbmkpath"
-		[ "$x" = "list" ] && x_ ls -1 "config/$project" && \
-		    listfile="" && break
+
+		if [ "$x" = "list" ]
+		then
+			x_ ls -1 "config/$project"
+			listfile=""
+			break
+		fi
+
+		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$x"
 
 		target="$x"
-		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$target"
+
 		x_ handle_defconfig
 
-		[ -n "$mode" ] || x_ $postmake
+		if [ -z "$mode" ]
+		then
+			x_ $postmake
+		fi
 	done; :
 }
 
@@ -105,26 +166,55 @@ handle_defconfig()
 {
 	target_dir="$configdir/$target"
 
-	[ -f "CHANGELOG" ] || fetch_project "$project"
-	configure_project "$target_dir" || return 0
+	if [ ! -f "CHANGELOG" ]
+	then
+		fetch_project "$project"
+	fi
+
+	if ! configure_project "$target_dir"
+	then
+		return 0
+	fi
 
 	chkvars tree
 	srcdir="src/$project/$tree"
 
-	[ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ] && return 0
+	if [ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ]
+	then
+		return 0
+	fi
 
-	for y in "$target_dir/config"/*; do
-		[ "$_f" = "-d" ] || [ -f "$y" ] || continue
-		[ "$_f" = "-d" ] || defconfig="$y"
+	for y in "$target_dir/config"/*
+	do
+		if [ "$_f" != "-d" ] && [ ! -f "$y" ]
+		then
+			continue
+		elif [ "$_f" != "-d" ]
+		then
+			defconfig="$y"
+		fi
 
-		[ -n "$mode" ] || check_defconfig || continue
+		if [ -z "$mode" ]
+		then
+			check_defconfig || continue; :
+		fi
 
-		[ -z "$mode" ] && for _xarch in $xarch; do
-			$dry check_cross_compiler "$_xarch"
-		done; :
+		if [ -z "$mode" ]
+		then
+			for _xarch in $xarch; do
+				if [ -n "$_xarch" ]
+				then
+					$dry check_cross_compiler "$_xarch"
+				fi
+			done; :
+		fi
 
 		handle_makefile
-		[ -n "$mode" ] || $dry copy_elf
+
+		if [ -z "$mode" ]
+		then
+			$dry copy_elf
+		fi
 	done; :
 }
 
@@ -133,79 +223,194 @@ configure_project()
 	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
 	    makeargs btype mkhelper bootstrapargs premake release xlang xarch \
 	    badhash badtghash`"
-	_tcfg="$1/target.cfg"
-	[ -f "$_tcfg" ] || btype="auto"
-	e "$datadir/mkhelper.cfg" f && eval "`setcfg "$datadir/mkhelper.cfg"`"
 
-	while e "$_tcfg" f || [ "$cmd" != "build_project" ]; do
-		eval "`setvars "" rev tree`"
-		eval "`setcfg "$_tcfg"`"
+	_tcfg="$1/target.cfg"
+
+	if [ ! -f "$_tcfg" ]
+	then
+		btype="auto"
+	fi
+
+	# globally initialise all variables for a source tree / target:
+
+	if e "$datadir/mkhelper.cfg" f
+	then
+		eval "`setcfg "$datadir/mkhelper.cfg"`"
+	fi
+
+	# override target/tree specific variables from per-target config:
+
+	while e "$_tcfg" f || [ "$cmd" != "build_project" ]
+	do
+		# TODO: implement infinite loop detection here, caused
+		#       by project targets pointing to other targets/trees
+		#       when then ultimate point back repeatedly; this is
+		#       currently avoided simply by careful configuration.
+		#       temporary files per tree/target name could be created
+		#	per iteration, and then checked the next time
+
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
-		[ "$_f" = "-d" ] && build_depend="" # dry run
-		[ "$cmd" = "build_project" ] && break
-		[ "$do_make" != "n" ] && break
+		eval "`setvars "" rev tree`"
+		eval "`setcfg "$_tcfg"`"
 
-		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
-		    && break
-		_tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
+		if [ "$_f" = "-d" ]
+		then
+			build_depend="" # dry run
+		fi
+
+		if [ "$cmd" = "build_project" ]
+		then
+			# single-tree, so it can't be a target pointing
+			# to a main source tree
+
+			break
+		fi
+
+		if [ "$do_make" != "n" ]
+		then
+			# if we're *downloading* a project, then
+			# we don't need to to change the target.cfg 
+
+			break
+		fi
+
+		if [ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ]
+		then
+			# we have found the main source tree that
+			# a given target uses; no need to continue
+
+			break
+		else
+			_tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
+		fi
+
 	done
-	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && return 1
-	[ -z "$btype" ] || [ "${mode%config}" = "$mode" ] || return 1
-	[ -z "$mode" ] && $dry build_dependencies
 
-	mdir="$xbmkpwd/config/submodule/$project"
-	[ -n "$tree" ] && mdir="$mdir/$tree"
-	[ -f "CHANGELOG" ] || delete_old_project_files
-
-	if [ "$do_make" = "n" ]; then
-		[ -f "CHANGELOG" ] || fetch_${cmd#build_}
+	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]
+	then
 		return 1
 	fi
+
+	if [ -n "$btype" ] && [ "${mode%config}" != "$mode" ]
+	then
+		return 1
+	fi
+
+	if [ -z "$mode" ]
+	then
+		$dry build_dependencies; :
+	fi
+
+	mdir="$xbmkpwd/config/submodule/$project"
+	if [ -n "$tree" ]
+	then
+		mdir="$mdir/$tree"
+	fi
+
+	if [ ! -f "CHANGELOG" ]
+	then
+		delete_old_project_files
+	fi
+
+	if [ "$do_make" = "n" ]
+	then
+		if [ ! -f "CHANGELOG" ]
+		then
+			fetch_${cmd#build_}
+		fi
+
+		return 1
+	fi
+
 	x_ ./mk -f "$project" "$target"
 }
 
+# projects can specify which other projects
+# to build first, as declared dependencies:
+
 build_dependencies()
 {
-	for bd in $build_depend; do
-		bd_p="${bd%%/*}"
-		bd_t="${bd##*/}"
-		[ -z "$bd_p" ] && $dry err "$project/$tree: !bd '$bd'" \
-		    "build_dependencies" "$@"
-		[ "${bd##*/}" = "$bd" ] && bd_t=""
-		[ -z "$bd_p" ] || $dry x_ ./mk -b $bd_p $bd_t; :
+	for bd in $build_depend
+	do
+		bd_project="${bd%%/*}"
+		bd_tree="${bd##*/}"
+
+		if [ -z "$bd_project" ]
+		then
+			$dry err "$project/$tree: !bd '$bd'" \
+			    "build_dependencies" "$@"
+		fi
+
+		if [ "${bd##*/}" = "$bd" ]
+		then
+			bd_tree=""
+		fi
+
+		if [ -n "$bd_project" ]
+		then
+			$dry x_ ./mk -b $bd_project $bd_tree; :
+		fi
 	done; :
 }
 
+# delete_old_project_files along with project_up_to_date,
+# concatenates the sha512sum hashes of all files related to
+# a project, tree or target, then gets the sha512sum of that
+# concatenation. this is checked against any existing
+# calculation previously cached; if the result differs, or
+# nothing was previously stored, we know to delete resources
+# such as builds, project sources and so on, for auto-rebuild:
+
 delete_old_project_files()
 {
-	project_up_to_date hash "$tree" badhash "$datadir" "$configdir/$tree" \
-	    "$mdir" || x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"; :
+	# delete an entire source tree along with its builds:
+	if ! project_up_to_date hash "$tree" badhash "$datadir" \
+	    "$configdir/$tree" "$mdir"
+	then
+		x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"
+	fi
+
 	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/hash/$project$tree"
 
-	singletree "$project" && return 0
-	[ -z "$target" ] && return 0
-	[ "$target" = "$tree" ] && return 0
+	if singletree "$project" || [ -z "$target" ] || [ "$target" = "$tree" ]
+	then
+		return 0
+	fi
 
-	project_up_to_date tghash "$target" badtghash \
-	    "$configdir/$target" || x_ rm -Rf "elf/$project/$tree/$target"; :
+	# delete only the builds of a given target, but not src.
+	# this is useful when only the target config changes, for
+	# example x200_8mb coreboot configs change, but not coreboot:
+
+	if ! project_up_to_date tghash "$target" badtghash "$configdir/$target"
+	then
+		x_ rm -Rf "elf/$project/$tree/$target"
+	fi
+
 	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/tghash/$project$target"
 }
 
 project_up_to_date()
 {
 	eval "`setvars "" old_hash hash`"
+
 	hashdir="$1"
 	hashname="$2"
 	badhashvar="$3"
+
 	shift 3
 
 	x_ mkdir -p "$XBMK_CACHE/$hashdir"
 
-	[ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ] || \
-	    read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" || \
-	    err "$hashdir: read err '$XBMK_CACHE/$hashdir/$project$hashname'" \
-	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
+	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]
+	then
+		read -r old_hash < \
+		    "$XBMK_CACHE/$hashdir/$project$hashname" \
+		    || err \
+		    "$hashdir: err '$XBMK_CACHE/$hashdir/$project$hashname'" \
+		    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" \
+		    "$@"
+	fi
 
 	fx_ "x_ sha512sum" find "$@" -type f -not -path "*/.git*/*" | awk \
 	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashdir" \
@@ -215,9 +420,11 @@ project_up_to_date()
 	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'" \
 	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
-	[ "$hash" != "$old_hash" ] && eval "$badhashvar=\"y\""
-	[ -f "$XBMK_CACHE/$hashdir/$project$hashname" ] || \
-	    eval "$badhashvar=\"y\""
+	if [ "$hash" != "$old_hash" ] || \
+	    [ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ]
+	then
+		eval "$badhashvar=\"y\""
+	fi
 
 	printf "%s\n" "$hash" > "$xbtmp/new.hash" || \
 	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)" \
@@ -229,20 +436,41 @@ project_up_to_date()
 check_cross_compiler()
 {
 	cbdir="src/coreboot/$tree"
-	xfix="${1%-*}" && [ "$xfix" = "x86_64" ] && xfix="x64"
+
+	if [ "$project" != "coreboot" ]
+	then
+		cbdir="src/coreboot/default"
+	fi
+	if [ -n "$xtree" ]
+	then
+		cbdir="src/coreboot/$xtree"
+	fi
+
+	xfix="${1%-*}"
+
+	if [ "$xfix" = "x86_64" ]
+	then
+		xfix="x64"
+	fi
+
 	xgccfile="elf/coreboot/$tree/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
-	[ "$project" != "coreboot" ] && cbdir="src/coreboot/default"
-	[ -n "$xtree" ] && cbdir="src/coreboot/$xtree"
-
 	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
-	x_ mkdir -p "elf/coreboot/$tree"
+	x_ mkdir -p "elf/coreboot/$tree" # TODO: is this needed?
 
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 	export CROSS_COMPILE="${xarch% *}-"
-	[ -n "$xlang" ] && export BUILD_LANGUAGES="$xlang"
-	[ -f "$xgccfile" ] && return 0 # skip build if already done
+
+	if [ -n "$xlang" ]
+	then
+		export BUILD_LANGUAGES="$xlang"
+	fi
+
+	if [ -f "$xgccfile" ]
+	then
+		return 0 # a build already exists
+	fi
 
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
@@ -257,40 +485,69 @@ check_cross_compiler()
 # gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
 check_gnu_path()
 {
-	command -v "$1" 1>/dev/null || \
-	    err "Host '$1' unavailable" "check_gnu_path" "$@"
+	if ! command -v "$1" 1>/dev/null
+	then
+		err "Host '$1' unavailable" "check_gnu_path" "$@"
+	fi
 
 	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
-	x_ gnu_setver "$1" "$1" || \
-	    err "Command '$1' unavailable." "check_gnu_path" "$@"
+	if ! gnu_setver "$1" "$1"
+	then
+		err "Command '$1' unavailable." "check_gnu_path" "$@"
+	fi
 	gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
-	[ "$gnatfull" = "$gccfull" ] && return 0
+
+	if [ "$gnatfull" = "$gccfull" ]
+	then
+		return 0 # matching gcc/gnat versions
+	fi
 
 	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
-	eval "_gnudir=\"\$$1dir\"; _gnuver=\"\$$1ver\""
-	for _bin in "$_gnudir/$2-"*; do
-		[ "${_bin#"$_gnudir/$2-"}" = "$_gnuver" ] && [ -x "$_bin" ] \
-		    && _gnuver="${_bin#"$_gnudir/$2-"}" && break; :
+	eval "_gnudir=\"\$$1dir\""
+	eval "_gnuver=\"\$$1ver\""
+
+	for _bin in "$_gnudir/$2-"*
+	do
+		if [ "${_bin#"$_gnudir/$2-"}" = "$_gnuver" ] && [ -x "$_bin" ]
+		then
+			_gnuver="${_bin#"$_gnudir/$2-"}"
+			break
+		fi
 	done
-	gnu_setver "$2" "$_gnudir/$2-$_gnuver" || return 1
-	[ "$gnatfull" = "$gccfull" ] || return 1
+
+	if ! gnu_setver "$2" "$_gnudir/$2-$_gnuver"
+	then
+		return 1
+	elif [ "$gnatfull" != "$gccfull" ]
+	then
+		return 1
+	fi
 
 	(
-	remkdir "$xbtmp/gnupath"
-	x_ cd "$xbtmp/gnupath"
-	for _gnubin in "$_gnudir/$2"*"-$_gnuver"; do
-		_gnuutil="${_gnubin##*/}" && [ -e "$_gnubin" ] && \
-		    x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
-	done
-	) || err "Cannot symlink '$2-$_gnuver' in '$_gnudir'" \
-	    "check_gnu_path" "$@"; :
+
+		remkdir "$xbtmp/gnupath"
+
+		x_ cd "$xbtmp/gnupath"
+
+		for _gnubin in "$_gnudir/$2"*"-$_gnuver"
+		do
+			_gnuutil="${_gnubin##*/}"
+			if [ -e "$_gnubin" ]
+			then
+				x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
+			fi
+		done
+
+	) || err \
+	    "Can't link '$2-$_gnuver' '$_gnudir'" "check_gnu_path" "$@"; :
 }
 
 gnu_setver()
 {
 	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
+
 	eval "$1ver=\"`"$2" --version 2>/dev/null | head -n1`\""
 	eval "$1ver=\"\${$1ver##* }\""
 	eval "$1full=\"\$$1ver\""
@@ -299,8 +556,12 @@ gnu_setver()
 
 check_defconfig()
 {
-	[ -f "$defconfig" ] || $dry err "$project/$target: missing defconfig" \
-	    "check_defconfig" "$@"
+	if [ ! -f "$defconfig" ]
+	then
+		$dry err "$project/$target: missing defconfig" \
+		    "check_defconfig" "$@"
+	fi
+
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
 	$dry elfcheck || return 1; : # skip build if a previous one exists
@@ -309,7 +570,12 @@ check_defconfig()
 elfcheck()
 {
 	# TODO: *STILL* very hacky check. do it properly (based on build.list)
-	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1; :
+
+	(
+
+		fx_ "eval exit 1 && err" find "$dest_dir" -type f
+
+	) || return 1; :
 }
 
 handle_makefile()
@@ -317,65 +583,126 @@ handle_makefile()
 	$dry check_makefile "$srcdir" && \
 	    $dry x_ make -C "$srcdir" $cleanargs clean
 
-	[ -f "$defconfig" ] && x_ cp "$defconfig" "$srcdir/.config"
+	if [ -f "$defconfig" ]
+	then
+		x_ cp "$defconfig" "$srcdir/.config"
+	fi
 
-	run_make_command || err "no makefile!" "handle_makefile" "$@"
+	run_make_command || \
+	    err "no makefile!" "handle_makefile" "$@"
 
-	_copy=".config" && [ "$mode" = "savedefconfig" ] && _copy="defconfig"
-	[ "${mode%config}" = "$mode" ] || \
-	    $dry x_ cp "$srcdir/$_copy" "$defconfig"
+	_copy=".config"
 
-	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && \
+	if [ "$mode" = "savedefconfig" ]
+	then
+		_copy="defconfig"
+	fi
+
+	if [ "${mode%config}" != "$mode" ]
+	then
+		$dry x_ cp "$srcdir/$_copy" "$defconfig"; :
+	fi
+
+	if [ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
+	    [ "$mode" = "distclean" ]
+	then
 		$dry x_ git -C "$srcdir" $cleanargs clean -fdx; :
+	fi
 }
 
 run_make_command()
 {
-	[ -n "$mode" ] || x_ $premake
+	if [ -z "$mode" ]
+	then
+		x_ $premake
+	fi
 
 	$dry check_cmake "$srcdir" && [ -z "$mode" ] && \
 	    $dry check_autoconf "$srcdir"
 	$dry check_makefile "$srcdir" || return 1
 
 	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
-	[ -n "$mode" ] || x_ $mkhelper
+
+	if [ -z "$mode" ]
+	then
+		x_ $mkhelper
+	fi
 
 	check_makefile "$srcdir" || return 0
-	[ "$mode" != "clean" ] || \
-	    $dry make -C "$srcdir" $cleanargs distclean || \
-	    $dry x_ make -C "$srcdir" $cleanargs clean; :
+
+	if [ "$mode" = "clean" ]
+	then
+		$dry make -C "$srcdir" $cleanargs distclean || \
+		    $dry x_ make -C "$srcdir" $cleanargs clean; :
+	fi
 }
 
 check_cmake()
 {
-	[ -z "$cmakedir" ] || $dry check_makefile "$1" || cmake -B "$1" \
-	    "$1/$cmakedir" || $dry x_ check_makefile "$1"
-	[ -z "$cmakedir" ] || $dry x_ check_makefile "$1"; :
+	if [ -n "$cmakedir" ]
+	then
+		$dry check_makefile "$1" || cmake -B "$1" \
+		    "$1/$cmakedir" || $dry x_ check_makefile "$1"
+		$dry x_ check_makefile "$1"; :
+	fi
 }
 
 check_autoconf()
 {
 	(
-	x_ cd "$1"
-	[ -f "bootstrap" ] && x_ ./bootstrap $bootstrapargs
-	[ -f "autogen.sh" ] && x_ ./autogen.sh $autogenargs
-	[ -f "configure" ] && x_ ./configure $autoconfargs; :
+
+		x_ cd "$1"
+
+		if [ -f "bootstrap" ]
+		then
+			x_ ./bootstrap $bootstrapargs
+		fi
+
+		if [ -f "autogen.sh" ]
+		then
+			x_ ./autogen.sh $autogenargs
+		fi
+
+		if [ -f "configure" ]
+		then
+			x_ ./configure $autoconfargs; :
+		fi
+
 	) || err "can't bootstrap project: $1" "check_autoconf" "$@"; :
 }
 
 check_makefile()
 {
-	[ -f "$1/Makefile" ] || [ -f "$1/makefile" ] || \
-	    [ -f "$1/GNUmakefile" ] || return 1; :
+	if [ ! -f "$1/Makefile" ] && [ ! -f "$1/makefile" ] && \
+	    [ ! -f "$1/GNUmakefile" ]
+	then
+		return 1
+	fi
 }
 
 copy_elf()
 {
-	[ -f "$listfile" ] && x_ mkdir -p "$dest_dir"
-	[ ! -f "$listfile" ] || while read -r f; do
-		[ -f "$srcdir/$f" ] && x_ cp "$srcdir/$f" "$dest_dir"; :
-	done < "$listfile" || err "cannot read '$listfile'" "copy_elf" "$@"; :
-	( x_ make clean -C "$srcdir" $cleanargs ) || \
-	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
+	if [ -f "$listfile" ]
+	then
+		x_ mkdir -p "$dest_dir"
+	fi
+
+	if [ -f "$listfile" ]
+	then
+		while read -r f
+		do
+			if [ -f "$srcdir/$f" ]
+			then
+				x_ cp "$srcdir/$f" "$dest_dir"
+			fi
+
+		done < "$listfile" || err \
+		    "cannot read '$listfile'" "copy_elf" "$@"; :
+	fi
+
+	(
+
+		x_ make clean -C "$srcdir" $cleanargs
+
+	) ||  err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
 }
