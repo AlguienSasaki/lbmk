@@ -21,8 +21,7 @@ extract_refcode()
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
-	if [ -n "$MRC_refcode_gbe" ]
-	then
+	if [ -n "$MRC_refcode_gbe" ]; then
 		x_ dd if="config/ifd/hp820g2/1.bin" of="$appdir/ref" bs=1 \
 		    seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 	fi
@@ -36,7 +35,6 @@ extract_mrc()
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 
 	(
-
 		x_ cd "$appdir"
 		extract_partition "${MRC_url##*/}"
 		extract_archive "$SHELLBALL" .

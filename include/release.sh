@@ -9,22 +9,23 @@ release()
 
 	reldir="release"
 
-	while getopts m: option
-	do
-		if [ -z "$OPTARG" ]
-		then
+	while getopts m: option; do
+		if [ -z "$OPTARG" ]; then
 			err "empty argument not allowed" "release" "$@"
 		fi
 
 		case "$option" in
-		m) relmode="$OPTARG" ;;
-		*) err "invalid option '-$option'" "release" "$@" ;;
+		m)
+			relmode="$OPTARG"
+			;;
+		*)
+			err "invalid option '-$option'" "release" "$@"
+			;;
 		esac
 	done
 
 	reldest="$reldir/$version"
-	if [ -e "$reldest" ]
-	then
+	if [ -e "$reldest" ]; then
 		err "already exists: \"$reldest\"" "release" "$@"
 	fi
 
@@ -40,8 +41,7 @@ release()
 
 	prep_release src
 	prep_release tarball
-	if [ "$relmode" != "src" ]
-	then
+	if [ "$relmode" != "src" ]; then
 		prep_release bin
 	fi
 	x_ rm -Rf "$rsrc"
@@ -56,9 +56,7 @@ release()
 prep_release()
 {
 	(
-
-		if [ "$1" != "tarball" ]
-		then
+		if [ "$1" != "tarball" ]; then
 			x_ cd "$rsrc"
 		fi
 
@@ -74,19 +72,15 @@ prep_release_src()
 	fx_ "x_ rm -Rf" x_ find . -name ".git"
 	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
 
-	(
-
-		fx_ nuke x_ find config -type f -name "nuke.list"
-
-	) || err "can't prune project files" "prep_release_src" "$@"; :
+	( fx_ nuke x_ find config -type f -name "nuke.list" ) || \
+	    err "can't prune project files" "prep_release_src" "$@"; :
 }
 
 nuke()
 {
 	r="$rsrc/src/${1#config/}"
 
-	if [ -d "${r%/*}" ]
-	then
+	if [ -d "${r%/*}" ]; then
 		x_ cd "${r%/*}"
 
 		dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$rsrc/$1"
@@ -103,7 +97,6 @@ prep_release_tarball()
 	x_ rm -Rf "$rsrc/cache" "$rsrc/xbmkwd"
 
 	(
-
 		x_ cd "${rsrc%/*}"
 		x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
 
@@ -114,8 +107,10 @@ prep_release_bin()
 {
 	x_ ./mk -d coreboot
 
-	fx_ "x_ ./mk -b" printf \
-	    "coreboot\npico-serprog\nstm32-vserprog\npcsx-redux\n"
+	x_ ./mk -b coreboot
+	x_ ./mk -b pico-serprog
+	x_ ./mx -b stm32-vserprog
+	x_ ./mk -b pcsx-redux
 
 	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
 

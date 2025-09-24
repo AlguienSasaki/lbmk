@@ -375,8 +375,12 @@ pybin()
 
 		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
-		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
-		    [ -x "$pypath" ] && printf "%s\n" "$pypath" && return 0; :
+
+		if [ -e "$pypath" ] && [ ! -d "$pypath" ] && \
+		    [ -x "$pypath" ]; then
+			printf "%s\n" "$pypath"
+			return 0
+		fi
 	fi
 
 	# if python venv: fall back to common PATH directories for checking

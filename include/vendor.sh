@@ -277,37 +277,49 @@ apply_deguard_hack()
 
 extract_archive()
 {
-	innoextract "$1" -d "$2" || python "$pfs_extract" "$1" -e || 7z x \
-	    "$1" -o"$2" || unar "$1" -o "$2" || unzip "$1" -d "$2" || return 1
+	if innoextract "$1" -d "$2"; then
+		:
+	elif python "$pfs_extract" "$1" -e; then
+		:
+	elif 7z x "$1" -o"$2"; then
+		:
+	elif unar "$1" -o "$2"; then
+		:
+	elif unzip "$1" -d "$2"; then
+		:
+	else
+		return 1
+	fi
 
-	[ ! -d "${_dl}_extracted" ] || x_ cp -R "${_dl}_extracted" "$2"; :
+	if [ -d "${_dl}_extracted" ]; then
+		x_ cp -R "${_dl}_extracted" "$2"
+	fi
 }
 
 extract_kbc1126ec()
 {
 	(
+		x_ cd "$appdir/"
 
-	x_ cd "$appdir/"
+		if mv Rompaq/68*.BIN ec.bin; then
+			:
+		elif unar -D ROM.CAB Rom.bin; then
+			:
+		elif unar -D Rom.CAB Rom.bin; then
+			:
+		elif unar -D 68*.CAB Rom.bin; then
+			:
+		else
+			err "!kbc1126 unar" "extract_kbc1126ec" "$@"
+		fi
 
-	if mv Rompaq/68*.BIN ec.bin; then
-		:
-	elif unar -D ROM.CAB Rom.bin; then
-		:
-	elif unar -D Rom.CAB Rom.bin; then
-		:
-	elif unar -D 68*.CAB Rom.bin; then
-		:
-	else
-		err "!kbc1126 unar" "extract_kbc1126ec" "$@"
-	fi
+		if [ ! -f "ec.bin" ]; then
+			x_ mv Rom.bin ec.bin
+		fi
 
-	if [ ! -f "ec.bin" ]; then
-		x_ mv Rom.bin ec.bin
-	fi
-
-	if x_ e ec.bin f; then
-		x_ "$kbc1126_ec_dump" ec.bin
-	fi
+		if x_ e ec.bin f; then
+			x_ "$kbc1126_ec_dump" ec.bin
+		fi
 
 	) || err "$board: can't extract kbc1126 fw" "extract_kbc1126ec" "$@"
 

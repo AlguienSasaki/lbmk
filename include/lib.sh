@@ -94,8 +94,7 @@ setvars()
 	fi
 	val="$1"
 	shift 1
-	while [ $# -gt 0 ]
-	do
+	while [ $# -gt 0 ]; do
 		printf "%s=\"%s\"\n" "$1" "$val"
 		shift 1
 	done
@@ -165,7 +164,7 @@ unpad_one_byte()
 	    err "can't increment file size" "unpad_one_byte" "$@"
 
 	if [ $xromsize -lt 524288 ]; then
-	    err "too small, $xromsize: $1" "unpad_one_byte" "$@"
+		err "too small, $xromsize: $1" "unpad_one_byte" "$@"
 	fi
 
 	unpaddedfile="`mktemp || err "mktemp unpad_one_byte"`" || \
