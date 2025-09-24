@@ -6,8 +6,15 @@
 set -u -e
 
 ispwd="true"
-[ "$0" = "./mk" ] || ispwd="false"
-[ "$ispwd" = "true" ] && [ -L "mk" ] && ispwd="false"
+
+if [ "$0" != "./mk" ]; then
+	ispwd="false"
+fi
+
+if [ "$ispwd" = "true" ] && [ -L "mk" ]; then
+	ispwd="false"
+fi
+
 if [ "$ispwd" = "false" ]; then
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
@@ -24,22 +31,40 @@ fi
 
 main()
 {
-	cmd="" && [ $# -gt 0 ] && cmd="$1" && shift 1
+	cmd=""
+	if [ $# -gt 0 ]; then
+		cmd="$1"
+		shift 1
+	fi
 
 	case "$cmd" in
-	version) printf "%s\nWebsite: %s\n" "$relname" "$projectsite" ;;
-	release|download|inject) $cmd "$@" ;;
-	-*) return 1 ;;
-	*) err "bad command" main "$@" ;;
+	version)
+		printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
+		;;
+	release|download|inject)
+		$cmd "$@"
+		;;
+	-*)
+		return 0
+		;;
+	*)
+		err "bad command" main "$@"
+		;;
 	esac
-	set -u -e # some commands disable them. turn them on!
+
+	# some commands disable them. turn them back on!
+	set -u -e
+
+	return 1
 }
 
-main "$@" && exit 0
+main "$@" || exit 0
 
 . "include/tree.sh"
 
 trees "$@" || exit 0
+
 x_ touch "$mkhelpercfg"
+
 . "$mkhelpercfg"
 $cmd
