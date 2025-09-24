@@ -17,6 +17,7 @@ mkrom_tarball()
 {
 	update_xbmkver "$1"
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
+
 	x_ rm -Rf "$1"
 }
 
@@ -26,41 +27,61 @@ update_xbmkver()
 
 	printf "%s\n" "$version" > "$1/.version" || \
 	    err "can't write '$1'" "update_xbmkver" "$@"; :
+
 	printf "%s\n" "$versiondate" > "$1/.versiondate" || \
 	    err "can't write '$versiondate'" "update_xbmkver" "$@"; :
 }
 
 xbmk_sanitize_version()
 {
-	[ -n "$version" ] || return 0; :
+	if [ -z "$version" ]; then
+		return 0
+	fi
 
 	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
 	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
 	version="`printf "%s\n" "$version" | sed -e 's/\.\.//g'`"
 	version="`printf "%s\n" "$version" | sed -e 's/\.\///g'`"
 	version="`printf "%s\n" "$version" | sed -e 's/\//-/g'`"
+
 	version="${version#-}"
 
-	[ -n "$version" ] || err "'version' empty after sanitization" \
-	    "xbmk_sanitize_version" "$@"; :
+	if [ -z "$version" ]; then
+		err "'version' empty after sanitization" \
+		    "xbmk_sanitize_version" "$@"
+	fi
 }
 
 mktarball()
 {
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
-	[ "${2%/*}" = "$2" ] || x_ mkdir -p "${2%/*}"
+
+	if [ "${2%/*}" != "$2" ]; then
+		x_ mkdir -p "${2%/*}"
+	fi
+
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || \
 	    err "can't make tarball '$1'" "mktarball" "$@"
 }
 
 e()
 {
-	es_t="e" && [ $# -gt 1 ] && es_t="$2"
+	es_t="e"
+
+	if [ $# -gt 1 ]; then
+		es_t="$2"
+	fi
+
 	es2="already exists"
 	estr="[ -$es_t \"\$1\" ] || return 1"
-	[ $# -gt 2 ] && estr="[ -$es_t \"\$1\" ] && return 1" && es2="missing"
+
+	if [ $# -gt 2 ]; then
+		estr="[ -$es_t \"\$1\" ] && return 1"
+		es2="missing"
+	fi
 
 	eval "$estr"
+
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
@@ -73,7 +94,8 @@ setvars()
 	fi
 	val="$1"
 	shift 1
-	while [ $# -gt 0 ]; do
+	while [ $# -gt 0 ]
+	do
 		printf "%s=\"%s\"\n" "$1" "$val"
 		shift 1
 	done
@@ -81,9 +103,12 @@ setvars()
 
 setcfg()
 {
-	[ $# -gt 1 ] && printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	[ $# -gt 1 ] || \
+	if [ $# -gt 1 ]; then
+		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
+	fi
+	if [ $# -lt 2 ]; then
 		printf "e \"%s\" f not && err \"Missing config '$1'\";\n" "$1"
+	fi
 	printf ". \"%s\" || err \"Could not read config '$1'\";\n" "$1"
 }
 
@@ -105,11 +130,19 @@ singletree()
 
 findpath()
 {
-	[ $# -gt 0 ] || err "findpath: No arguments provided" "findpath" "$@"
-	while [ $# -gt 0 ]; do
+	if [ $# -lt 1 ]; then
+		err "findpath: No arguments provided" "findpath" "$@"
+	fi
+
+	while [ $# -gt 0 ]
+	do
 		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
-		[ -n "$found" ] || found="`realpath "$1" 2>/dev/null`" || \
-		    return 1; :
+
+		if [ -z "$found" ]; then
+			found="`realpath "$1" 2>/dev/null`" || \
+			    return 1
+		fi
+
 		printf "%s\n" "$found"
 		shift 1
 	done
@@ -119,8 +152,10 @@ pad_one_byte()
 {
 	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
 	    err "can't make tmp file" "pad_one_byte" "$@"
+
 	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || \
 	    err "could not pad file '$paddedfile'" "pad_one_byte" "$1"; :
+
 	x_ mv "$paddedfile" "$1"
 }
 
@@ -128,11 +163,14 @@ unpad_one_byte()
 {
 	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || \
 	    err "can't increment file size" "unpad_one_byte" "$@"
-	[ $xromsize -lt 524288 ] && \
+
+	if [ $xromsize -lt 524288 ]; then
 	    err "too small, $xromsize: $1" "unpad_one_byte" "$@"
+	fi
 
 	unpaddedfile="`mktemp || err "mktemp unpad_one_byte"`" || \
 	    err "can't make tmp file" "unpad_one_byte" "$@"
+
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
 }
@@ -140,14 +178,19 @@ unpad_one_byte()
 fx_()
 {
 	xchk fx_ "$@"
-	fd="`mktemp || err "can't create tmpfile"`" || \
+	xcmd="$1"
+
+	xfile="`mktemp || err "can't create tmpfile"`" || \
 	    err "can't make tmpfile" "fx_" "$@"
-	x_ rm -f "$fd" && x_ touch "$fd"
-	xx="$1" && shift 1
-	"$@" 2>/dev/null | sort 1>"$fd" 2>/dev/null || \
-	    err "can't sort to '$fd'" "fx_" "$xx" "$@"
-	dx_ "$xx" "$fd" || :
-	x_ rm -f "$fd"
+
+	x_ rm -f "$xfile" && x_ touch "$xfile"
+	shift 1
+
+	"$@" 2>/dev/null | sort 1>"$xfile" 2>/dev/null || \
+	    err "can't sort to '$xfile'" "fx_" "$xcmd" "$@"
+
+	dx_ "$xcmd" "$xfile" || :
+	x_ rm -f "$xfile"
 }
 
 dx_()
@@ -160,13 +203,20 @@ dx_()
 
 x_()
 {
-	[ $# -lt 1 ] || [ -n "$1" ] || err "Empty first arg" "x_" "$@"
-	[ $# -lt 1 ] || "$@" || err "Unhandled error" "x_" "$@"
+	if [ $# -lt 1 ]; then
+		return 0
+	fi
+	if [ -z "$1" ]; then
+		err "Empty first arg" "x_" "$@"
+	fi
+	"$@" || err "Unhandled error" "x_" "$@"
 }
 
 xchk()
 {
-	[ $# -lt 3 ] && err "$1 needs at least two arguments" "xchk" "$@"
+	if [ $# -lt 3 ]; then
+		err "$1 needs at least two arguments" "xchk" "$@"
+	fi
 	if [ -z "$2" ] || [ -z "$3" ]; then
 		err "arguments must not be empty" "xchk" "$@"
 	fi
@@ -196,5 +246,7 @@ xprintf()
 		[ $# -gt 1 ] && printf " "; :
 		shift 1
 	done
-	[ $xprintfargs -gt 0 ] && printf "\n"; :
+	if [ $xprintfargs -gt 0 ]; then
+		printf "\n"
+	fi
 }
