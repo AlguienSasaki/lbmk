@@ -10,8 +10,9 @@ export LC_ALL=C
 projectname="libreboot"
 projectsite="https://libreboot.org/"
 
-[ -z "${PATH+x}" ] && \
-    export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+if [ -z "${PATH+x}" ]; then
+	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+fi
 
 eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
     datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbmklock \
@@ -23,97 +24,167 @@ xbmk_init()
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 
-	[ $# -gt 0 ] && [ "$1" = "dependencies" ] && x_ xbmkpkg "$@" && exit 0
+	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
+		x_ xbmkpkg "$@"
+		exit 0
+	fi
 
 	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp"
 
-	id -u 1>/dev/null 2>/dev/null || err "suid check failed" xbmk_init "$@"
-	[ "$(id -u)" != "0" ] || \
-	    err "this command as root is not permitted" xbmk_init "$@"
+	id -u 1>/dev/null 2>/dev/null || \
+	    err "suid check failed" "xbmk_init" "$@"
+
+	if [ "$(id -u)" = "0" ]; then
+		err "this command as root is not permitted" "xbmk_init" "$@"
+	fi
 
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
-		xbmk_$init_cmd "$@" || break
+		if ! xbmk_$init_cmd "$@"; then
+			break
+		fi
 	done
 }
 
 xbmkpkg()
 {
 	xchk xbmkpkg "$@"
-	[ $# -gt 2 ] && reinstall="$3"
+
+	if [ $# -gt 2 ]; then
+		reinstall="$3"
+	fi
 
 	eval "`setcfg "config/dependencies/$2"`"
 
 	chkvars pkg_add pkglist
 	x_ $pkg_add $pkglist
 
-	[ -n "$aur_notice" ] && \
-	    printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
+	if [ -n "$aur_notice" ]; then
+		printf "You need AUR packages: %s\n" "$aur_notice" 1>&2
+	fi
 }
 
 xbmk_get_version()
 {
-	[ ! -f ".version" ] || read -r version < ".version" || \
-	    err "can't read version file" xbmk_get_version "$@"
-	[ ! -f ".versiondate" ] || read -r versiondate < ".versiondate" || \
-	    err "can't read versiondate" xbmk_get_version "$@"
-	[ ! -f ".version" ] || chkvars version
-	[ ! -f ".versiondate" ] || chkvars versiondate
+	if [ -f ".version" ]; then
+		read -r version < ".version" || \
+		    err "can't read version file" "xbmk_get_version" "$@"
+	fi
+	if [ -f ".versiondate" ]; then
+		read -r versiondate < ".versiondate" || \
+		    err "can't read versiondate" xbmk_get_version "$@"
+	fi
 
-	[ ! -e ".git" ] && [ ! -f ".version" ] && version="unknown"
-	[ ! -e ".git" ] && [ ! -f ".versiondate" ] && versiondate="1716415872"
+	if [ -f ".version" ]; then
+		chkvars version
+	fi
+	if [ -f ".versiondate" ]; then
+		chkvars versiondate
+	fi
+
+	if [ ! -e ".git" ] && [ ! -f ".version" ]; then
+		version="unknown"
+	fi
+	if [ ! -e ".git" ] && [ ! -f ".versiondate" ]; then
+		versiondate="1716415872"
+	fi
 
 	xbmk_sanitize_version
 
-	[ -n "$version" ] && relname="$projectname-$version"; :
+	if [ -n "$version" ]; then
+		relname="$projectname-$version"
+	fi
 }
 
+# a parent instance will cause this function to return 0.
+# a child instance will return 1, skipping further initialisation
+# after this function is called.
 xbmk_set_env()
 {
 	xbmkpath="$PATH"
 
 	is_child="n"
-	[ -f "$xbmklock" ] && is_child="y"
-
-	if [ "$is_child" = "y" ]; then
-		xbmk_child_set_tmp
-		[ -z "${XBMK_CACHE+x}" ] && \
-		    err "XBMK_CACHE unset on child" xbmk_set_env "$@"
-		[ -z "${XBMK_THREADS+x}" ] && xbmk_set_threads; :
-		return 1
+	if [ -f "$xbmklock" ]; then
+		is_child="y"
 	fi
 
-	# parent instance of xbmk, so continue.
-	
-	xbmk_parent_check_tmp
-	printf "%s\n" "$xbtmp" > "$xbmklock" || \
-	    err "cannot create '$xbmklock'" xbmk_set_env "$@"; :
-	x_ chmod -w "$xbmklock"
+	if [ "$is_child" = "y" ]
+	then
+		# child instance of xbmk, so we stop init after this point:
 
-	xbmk_parent_set_export
-	xbmk_set_version
-	remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
-	xbmk_set_pyver
+		xbmk_child_set_tmp
+
+		if [ -z "${XBMK_CACHE+x}" ]; then
+			err "XBMK_CACHE unset on child" "xbmk_set_env" "$@"
+		fi
+		if [ -z "${XBMK_THREADS+x}" ]; then
+			xbmk_set_threads; :
+		fi
+
+		return 1
+	else
+		# parent instance of xbmk, so we continue initialising.
+		# a parent instance of xbmk never processes its own
+		# command directly; instead, it calls a child instance
+		# of xbmk, and exits with the corresponding return status.
+		
+		xbmk_parent_check_tmp
+
+		printf "%s\n" "$xbtmp" > "$xbmklock" || \
+		    err "cannot create '$xbmklock'" xbmk_set_env "$@"; :
+
+		# not really critical for security, but it's a barrier
+		# against the user to make them think twice before deleting it
+		# in case an actual instance of xbmk is already running:
+
+		x_ chmod -w "$xbmklock"
+
+		xbmk_parent_set_export
+		xbmk_set_version
+
+		remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
+
+		xbmk_set_pyver
+
+		return 0
+	fi
 }
 
 xbmk_child_set_tmp()
 {
 	eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
 
-	[ -z "${TMPDIR+x}" ] && export TMPDIR="$basetmp"
+	if [ -z "${TMPDIR+x}" ]; then
+		export TMPDIR="$basetmp"
+	fi
 
 	# extremely pedantic safety checks on TMPDIR
+	# TODO: should probably scale this back, because as a result
+	#       of these checks, release work directories don't have
+	#       project caches so projects have to be downloaded again.
+	# TODO: even if these checks are kept, this TMPDIR checking code
+	#       is utter garbage and should be re-written more cleanly:
+
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" xbmk_child_set_tmp "$@"
-	[ "$xbtmpchk" = "${xbtmpchk#"$basetmp/"}" ] && \
-	    badtmp="not a subdirectory in $basetmp"
-	[ -z "$badtmp" ] && xbtmpname="${xbtmpchk#"$basetmp/"}" && \
-	    [ -z "$xbtmpchk" ] && badtmp="name after $basetmp is empty"
-	[ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ] && \
-	    badtmp="'$TMPDIR' is a subdirectory in a subdir of $basetmp"
-	[ -z "$badtmp" ] && [ -L "$xbtmpchk" ] && badtmp="is a symlink"
-	[ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ] && \
-	    badtmp="not a directory"
+	if [ "$xbtmpchk" = "${xbtmpchk#"$basetmp/"}" ]; then
+		badtmp="not a subdirectory in $basetmp"
+	fi
+	if [ -z "$badtmp" ]; then
+		xbtmpname="${xbtmpchk#"$basetmp/"}"
+		if [ -z "$xbtmpchk" ]; then
+			badtmp="name after $basetmp is empty"
+		fi
+	fi
+	if [ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ]; then
+		badtmp="'$TMPDIR' is a subdirectory in a subdir of $basetmp"
+	fi
+	if [ -z "$badtmp" ] && [ -L "$xbtmpchk" ]; then
+		badtmp="is a symlink"
+	fi
+	if [ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ]; then
+		badtmp="not a directory"
+	fi
 	if [ -z "$badtmp" ]; then
 		# final check: check if TMPDIR changed
 		locktmp=""
@@ -122,11 +193,12 @@ xbmk_child_set_tmp()
 		[ "$locktmp" = "$xbtmpchk" ] || \
 		    badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
 	fi
-	[ -n "$badtmp" ] && \
-	    printf "bad TMPDIR initialisation, '%s': %s\n" \
-	    "$TMPDIR" "$badtmp" 1>&2
-	[ -n "$badtmp" ] && err \
-	    "'$xbmklock' present with bad tmpdir. is a build running?"
+	if [ -n "$badtmp" ]; then
+		printf "bad TMPDIR init, '%s': %s\n" "$TMPDIR" "$badtmp" 1>&2
+	fi
+	if [ -n "$badtmp" ]; then
+		err "'$xbmklock' present with bad tmpdir. is a build running?"
+	fi
 
 	xbtmp="$xbtmpchk"
 	export TMPDIR="$xbtmpchk"
@@ -138,64 +210,88 @@ xbmk_parent_check_tmp()
 
 	xbmklist="`mktemp || err "can't make tmplist"`" || \
 	    err "can't make tmplist" xbmk_parent_check_tmp "$@"
+
 	x_ rm -f "$xbmklist"
 	x_ touch "$xbmklist"
+
 	for xtmpdir in "$basetmp"/xbmk_*; do
-		[ -e "$xtmpdir" ] || continue
-		printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
-		    err "can't write '$xtmpdir' to file: '$xbmklist'" \
-		    xbmk_parent_check_tmp "$@"; :
+		if [ -e "$xtmpdir" ]; then
+			printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
+			    err "can't write '$xtmpdir' to '$xbmklist'" \
+			    "xbmk_parent_check_tmp" "$@"; :
+		fi
 	done
 
 	# set up a unified temporary directory, for common deletion later:
 	export TMPDIR="`x_ mktemp -d -t xbmk_XXXXXXXX`" || \
-	    err "can't export TMPDIR" xbmk_parent_check_tmp "$@"
+	    err "can't export TMPDIR" "xbmk_parent_check_tmp" "$@"
 	xbtmp="$TMPDIR"
 
 	while read -r xtmpdir; do
-		[ "$xtmpdir" = "$xbtmp" ] && err \
-		    "'$xbtmp' existed previously (possible race condition)" \
-		    xbmk_parent_check_tmp "$@"; :
-	done < "$xbmklist" || err "Couldn't read xbmklist: '$xbmklist'" \
-	    xbmk_parent_check_tmp "$@"
+		if [ "$xtmpdir" = "$xbtmp" ]; then
+			err "pre-existing '$xbtmp'" "xbmk_parent_check_tmp" "$@"
+		fi
+	done < "$xbmklist" || \
+	    err "Can't read xbmklist: '$xbmklist'" "xbmk_parent_check_tmp" "$@"
+
 	x_ rm -f "$xbmklist"
 }
 
 xbmk_parent_set_export()
 {
 	export XBMK_CACHE="$xbmkpwd/cache"
-	[ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ] && \
-	    err "cachedir '$xbmkpwd/cache' is a symlink" \
-	    xbmk_parent_set_export "$@"
-	[ ! -e "$XBMK_CACHE" ] || \
-	    [ -d "$XBMK_CACHE" ] || err "cachedir '$XBMK_CACHE' is a file" \
-	    xbmk_parent_set_export "$@"; :
+
+	if [ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ]; then
+		err "cachedir '$xbmkpwd/cache' is a symlink" \
+		    "xbmk_parent_set_export" "$@"
+	fi
+	if [ -e "$XBMK_CACHE" ] && [ ! -d "$XBMK_CACHE" ]; then
+		err "cachedir '$XBMK_CACHE' is a file" \
+		    "xbmk_parent_set_export" "$@"
+	fi
 
 	export PATH="$xbtmp/xbmkpath:$xbtmp/gnupath:$PATH"
 	xbmkpath="$PATH"
 
-	# if "y": a coreboot target won't be built if target.cfg says release="n"
+	# if "y": a coreboot target won't be built if target.cfg says release=n
 	# (this is used to exclude certain build targets from releases)
-	[ -z "${XBMK_RELEASE+x}" ] && export XBMK_RELEASE="n"
-	[ "$XBMK_RELEASE" = "Y" ] && export XBMK_RELEASE="y"
-	[ "$XBMK_RELEASE" = "y" ] || export XBMK_RELEASE="n"; :
+
+	if [ -z "${XBMK_RELEASE+x}" ]; then
+		export XBMK_RELEASE="n"
+	fi
+	if [ "$XBMK_RELEASE" = "Y" ]; then
+		export XBMK_RELEASE="y"
+	fi
+	if [ "$XBMK_RELEASE" != "y" ]; then
+		export XBMK_RELEASE="n"
+	fi
 }
 
 xbmk_set_threads()
 {
-	[ -z "${XBMK_THREADS+x}" ] && export XBMK_THREADS=1
-	expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
-	    1>/dev/null 2>/dev/null || export XBMK_THREADS=1
+	if [ -z "${XBMK_THREADS+x}" ]; then
+		export XBMK_THREADS=1
+	fi
+	if ! expr "X$XBMK_THREADS" : "X-\{0,1\}[0123456789][0123456789]*$" \
+	    1>/dev/null 2>/dev/null; then
+		export XBMK_THREADS=1
+	fi
 }
 
 xbmk_set_version()
 {
 	version_="$version"
-	[ ! -e ".git" ] || version="$(git describe --tags HEAD 2>&1)" || \
-	    version="git-$(git rev-parse HEAD 2>&1)" || version="$version_"
+	if [ -e ".git" ]; then
+		version="$(git describe --tags HEAD 2>&1)" || \
+		    version="git-$(git rev-parse HEAD 2>&1)" || \
+		    version="$version_"
+	fi
+
 	versiondate_="$versiondate"
-	[ ! -e ".git" ] || versiondate="$(git show --no-patch --no-notes \
-	    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+	if [ -e ".git" ]; then
+		versiondate="$(git show --no-patch --no-notes \
+		    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
+	fi
 
 	chkvars version versiondate
 	update_xbmkver "."
@@ -208,26 +304,49 @@ xbmk_set_pyver()
 {
 	pyv="import sys; print(sys.version_info[:])"
 	python="python3"
-	pybin python3 1>/dev/null || python="python"
-	pyver="2" && [ "$python" = "python3" ] && pyver="3"
-	pybin "$python" 1>/dev/null || pyver=""
-	[ -z "$pyver" ] || "`x_ pybin "$python"`" -c "$pyv" 1>/dev/null \
-	    2>/dev/null || err "Cannot detect host Python version." \
-	    xbmk_set_pyver "$@"
-	[ -n "$pyver" ] && \
-	    pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')" && \
-	    pyver="${pyver#(}" && pyver="${pyver%,}"
-	[ "${pyver%%.*}" = "3" ] || err "Bad python version (must by 3.x)" \
-	    xbmk_set_pyver "$@"
+	pyver="2"
+
+	if ! pybin python3 1>/dev/null; then
+		python="python"
+	fi
+
+	if [ "$python" = "python3" ]; then
+		pyver="3"
+	fi
+
+	if ! pybin "$python" 1>/dev/null; then
+		pyver=""
+	fi
+
+	if [ -n "$pyver" ]; then
+		"`x_ pybin "$python"`" -c "$pyv" 1>/dev/null \
+		    2>/dev/null || \
+		    err "Can't detect Python version." "xbmk_set_pyver" "$@"
+	fi
+
+	if [ -n "$pyver" ]; then
+		# TODO: very sus; possible holes in error management
+		# TODO: maybe use sed?
+
+		pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')"
+		pyver="${pyver#(}"
+		pyver="${pyver%,}"
+	fi
+
+	if [ "${pyver%%.*}" != "3" ]; then
+		err "Bad python version (must by 3.x)" "xbmk_set_pyver" "$@"
+	fi
+
+	# set up python in PATH (environmental variable):
 
 	(
-	# set up python v3.x in PATH, in case it's not set up correctly.
-	# see code above that detected the correct python3 command.
-	x_ cd "$xbtmp/xbmkpath"
-	x_ ln -s "`x_ pybin "$python"`" python || err "can't make symlink" \
-	    xbmk_set_pyver "$@"
-	) || err "Can't set up python symlink in $xbtmp/xbmkpath" \
-	    xbmk_set_pyver "$@"; :
+		x_ cd "$xbtmp/xbmkpath"
+
+		x_ ln -s "`x_ pybin "$python"`" python || \
+		    err "can't make symlink" "xbmk_set_pyver" "$@"
+
+	) || \
+	    err "Can't link Python in $xbtmp/xbmkpath" "xbmk_set_pyver" "$@"; :
 }
 
 # Use direct path, to prevent a hang if Python is using a virtual environment,
@@ -238,12 +357,22 @@ pybin()
 	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
 
 	venv=1
-	command -v "$1" 1>/dev/null 2>/dev/null || venv=0
-	[ $venv -lt 1 ] || "$1" -c "$py" 1>/dev/null 2>/dev/null || venv=0
+	if ! command -v "$1" 1>/dev/null 2>/dev/null; then
+		venv=0
+	fi
+
+	if [ $venv -gt 0 ]; then
+		if ! "$1" -c "$py" 1>/dev/null 2>/dev/null; then
+			venv=0
+		fi
+	fi
 
 	# ideally, don't rely on PATH or hardcoded paths if python venv.
-	# use the *real*, direct executable linked to by the venv symlink
+	# use the *real*, direct executable linked to by the venv symlink:
+
 	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
+		# TODO: very sus; possible hole in error management:
+
 		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
 		[ -e "$pypath" ] && [ ! -d "$pypath" ] && \
@@ -258,7 +387,9 @@ pybin()
 	done && return 1
 
 	# Defer to normal command -v if not a venv
-	command -v "$1" 2>/dev/null || return 1
+	if ! command -v "$1" 2>/dev/null; then
+		return 1
+	fi
 }
 
 xbmk_git_init()
@@ -269,13 +400,18 @@ xbmk_git_init()
 		    "xbmk_git_init" "$@"
 	done
 
-	[ -L ".git" ] && err "'$xbmkpwd/.git' is a symlink" \
-	    "xbmk_git_init" "$@"
-	[ -e ".git" ] && return 0
+	if [ -L ".git" ]; then
+		err "'$xbmkpwd/.git' is a symlink" "xbmk_git_init" "$@"
+	fi
+	if [ -e ".git" ]; then
+		return 0
+	fi
+
+	# GNU-specific extensions of date are used.
+	# TODO: that is a bug. fix it!
 
 	x_ date --version | grep "GNU coreutils" 1>/dev/null 2>/dev/null || \
-	    err "Non-GNU date implementation; current use relies on GNU date" \
-	    "xbmk_git_init" "$@"
+	    err "Non-GNU date implementation" "xbmk_git_init" "$@"
 
 	eval "$(setvars "$(x_ date -Rud @$versiondate)" cdate _nogit || err)" \
 	    || err "can't get date" "xbmk_git_init" "$@"
@@ -291,9 +427,12 @@ xbmk_git_init()
 xbmk_child_exec()
 {
 	xbmk_rval=0
+
 	( x_ ./mk "$@" ) || xbmk_rval=1
+
 	( x_ rm -Rf "$xbtmp" ) || xbmk_rval=1
 	( x_ rm -f "$xbmklock" ) || xbmk_rval=1
+
 	exit $xbmk_rval
 }
 
