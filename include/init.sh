@@ -102,10 +102,19 @@ xbmk_get_version()
 # after this function is called.
 xbmk_set_env()
 {
+	is_child="n"
+
 	xbmkpath="$PATH"
 
-	is_child="n"
-	if [ -f "$xbmklock" ]; then
+	# unify all temporary files/directories in a single TMPDIR
+	if [ -n "${TMPDIR+x}" ] && [ "${TMPDIR%_*}" != "$basetmp/xbmk" ]; then
+		unset TMPDIR
+	fi
+	if [ -n "${TMPDIR+x}" ]; then
+		export TMPDIR="$TMPDIR"
+		xbtmp="$TMPDIR"
+	fi
+	if [ -n "${TMPDIR+x}" ]; then
 		is_child="y"
 	fi
 
@@ -153,57 +162,25 @@ xbmk_set_env()
 
 xbmk_child_set_tmp()
 {
-	eval `setvars "" xbtmp badtmp xbtmpchk xbtmpname`
-
-	if [ -z "${TMPDIR+x}" ]; then
-		export TMPDIR="$basetmp"
-	fi
-
-	# extremely pedantic safety checks on TMPDIR
-	# TODO: should probably scale this back, because as a result
-	#       of these checks, release work directories don't have
-	#       project caches so projects have to be downloaded again.
-	# TODO: even if these checks are kept, this TMPDIR checking code
-	#       is utter garbage and should be re-written more cleanly:
+	eval `setvars "" badtmp xbtmpchk locktmp`
 
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" xbmk_child_set_tmp "$@"
-	if [ "$xbtmpchk" = "${xbtmpchk#"$basetmp/"}" ]; then
-		badtmp="not a subdirectory in $basetmp"
-	fi
-	if [ -z "$badtmp" ]; then
-		xbtmpname="${xbtmpchk#"$basetmp/"}"
-		if [ -z "$xbtmpchk" ]; then
-			badtmp="name after $basetmp is empty"
-		fi
-	fi
-	if [ -z "$badtmp" ] && [ "$xbtmpname" != "${xbtmpname#*/}" ]; then
-		badtmp="'$TMPDIR' is a subdirectory in a subdir of $basetmp"
-	fi
-	if [ -z "$badtmp" ] && [ -L "$xbtmpchk" ]; then
-		badtmp="is a symlink"
-	fi
-	if [ -z "$badtmp" ] && [ ! -d "$xbtmpchk" ]; then
-		badtmp="not a directory"
-	fi
-	if [ -z "$badtmp" ]; then
-		# final check: check if TMPDIR changed
-		locktmp=""
-		read -r locktmp < "$xbmklock" || \
-		    err "can't read '$xbmklock'" xbmk_child_set_tmp "$@"
-		[ "$locktmp" = "$xbtmpchk" ] || \
-		    badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
-	fi
-	if [ -n "$badtmp" ]; then
+
+	read -r locktmp < "$xbmklock" || \
+	    err "can't read '$xbmklock'" xbmk_child_set_tmp "$@"
+
+	if [ "$locktmp" != "$xbtmpchk" ]; then
+		badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
+
 		printf "bad TMPDIR init, '%s': %s\n" "$TMPDIR" "$badtmp" 1>&2
-	fi
-	if [ -n "$badtmp" ]; then
 		err "'$xbmklock' present with bad tmpdir. is a build running?"
 	fi
 
 	xbtmp="$xbtmpchk"
 	export TMPDIR="$xbtmpchk"
 }
+
 
 xbmk_parent_check_tmp()
 {
