@@ -219,10 +219,6 @@ xbmk_parent_set_export()
 {
 	export XBMK_CACHE="$xbmkpwd/cache"
 
-	if [ -L "$XBMK_CACHE" ] && [ "$XBMK_CACHE" = "$xbmkpwd/cache" ]; then
-		err "cachedir '$xbmkpwd/cache' is a symlink" \
-		    "xbmk_parent_set_export" "$@"
-	fi
 	if [ -e "$XBMK_CACHE" ] && [ ! -d "$XBMK_CACHE" ]; then
 		err "cachedir '$XBMK_CACHE' is a file" \
 		    "xbmk_parent_set_export" "$@"
