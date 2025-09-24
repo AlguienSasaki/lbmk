@@ -109,7 +109,7 @@ prep_release_bin()
 
 	x_ ./mk -b coreboot
 	x_ ./mk -b pico-serprog
-	x_ ./mx -b stm32-vserprog
+	x_ ./mk -b stm32-vserprog
 	x_ ./mk -b pcsx-redux
 
 	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
