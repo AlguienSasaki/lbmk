@@ -9,8 +9,12 @@ nvm="util/nvmutil/nvm"
 ifdtool="elf/coreboot/default/ifdtool"
 
 cv="CONFIG_GBE_BIN_PATH"
-[ -n "$cvxbmk" ] && cv="$cv $cvxbmk"
-[ -n "$cvchk" ] && cv="$cv $cvchk"
+if [ -n "$cvxbmk" ]; then
+	cv="$cv $cvxbmk"
+fi
+if [ -n "$cvchk" ]; then
+	cv="$cv $cvchk"
+fi
 
 eval "`setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
     tmpromdir board xchanged $cv`"
@@ -19,7 +23,10 @@ inject()
 {
 	remkdir "$tmpromdel"
 
-	[ $# -lt 1 ] && err "No options specified" "inject" "$@"
+	if [ $# -lt 1 ]; then
+		err "No options specified" "inject" "$@"
+	fi
+
 	eval "`setvars "" nuke new_mac xchanged`"
 
 	archive="$1";
@@ -28,64 +35,99 @@ inject()
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
 		new_mac=""
-		nuke="nuke" ;;
+		nuke="nuke"
+		;;
 	setmac)
-		[ $# -gt 2 ] && new_mac="$3" && \
-		    [ -z "$new_mac" ] && \
-		    err "Empty MAC address specified" "inject" "$@" ;;
+		if [ $# -gt 2 ]; then
+			new_mac="$3" && \
+			if [ -z "$new_mac" ]; then
+				err "Empty MAC address specified" "inject" "$@"
+			fi
+		fi
+		;;
 	*)
 		err "Unrecognised inject mode: '$2'" "inject" "$@" ;;
 	esac
-	[ "$new_mac" = "keep" ] && new_mac=""
+
+	if [ "$new_mac" = "keep" ]; then
+		new_mac=""
+	fi
 
 	check_release
-	check_target && patch_release
+	if check_target; then
+		patch_release
+	fi
 
-	[ "$xchanged" = "y" ] && remktar
+	if [ "$xchanged" = "y" ]; then
+		remktar
+	fi
 
-	xnot=" NOT" && [ "$xchanged" = "y" ] && xnot=""
-	printf "\n'%s' was%s modified\n" "$archive" "$xnot" 1>&2
+	if [ "$xchanged" = "y" ]; then
+		printf "\n'%s' was modified\n" "$archive" 1>&2
+	else
+		printf "\n'%s' was NOT modified\n" "$archive" 1>&2
+	fi
 
 	x_ rm -Rf "$tmpromdel"
 }
 
 check_release()
 {
-	[ -L "$archive" ] && err "'$archive' is a symlink" "check_release" "$@"
-	e "$archive" f missing && err "'$archive' missing" "check_release" "$@"
+	if [ -L "$archive" ]; then
+		err "'$archive' is a symlink" "check_release" "$@"
+	fi
+	if e "$archive" f missing; then
+		err "'$archive' missing" "check_release" "$@"
+	fi
 
 	archivename="`basename "$archive" || err "Can't get '$archive' name"`" \
 	    || err "can't get '$archive' name" "check_release" "$@"
-	[ -z "$archivename" ] && \
-	    err "Can't determine archive name" "check_release" "$@"
+
+	if [ -z "$archivename" ]; then
+		err "Can't determine archive name" "check_release" "$@"
+	fi
 
 	case "$archivename" in
 	*_src.tar.xz)
-		err "'$archive' is a src archive!" "check_release" "$@" ;;
+		err "'$archive' is a src archive!" "check_release" "$@"
+		;;
 	grub_*|seagrub_*|custom_*|seauboot_*|seabios_withgrub_*)
-		err "'$archive' is a ROM image" "check_release" "$@" ;;
+		err "'$archive' is a ROM image" "check_release" "$@"
+		;;
 	*.tar.xz) _stripped_prefix="${archivename#*_}"
-		board="${_stripped_prefix%.tar.xz}" ;;
+		board="${_stripped_prefix%.tar.xz}"
+		;;
 	*)
-		err "'$archive': cannot detect board" "check_release" "$@" ;;
+		err "'$archive': cannot detect board" "check_release" "$@"
+		;;
 	esac; :
 }
 
 check_target()
 {
-	[ "$board" = "${board#serprog_}" ] || return 1
+	if [ "$board" != "${board#serprog_}" ]; then
+		return 1
+	fi
+
 	boarddir="$cbcfgsdir/$board"
 
 	eval "`setcfg "$boarddir/target.cfg"`"
-	chkvars tree && x_ ./mk -d coreboot "$tree"
+	chkvars tree
+
+	x_ ./mk -d coreboot "$tree"
 
 	ifdtool="elf/coreboot/$tree/ifdtool"
-	[ -n "$IFD_platform" ] && ifdprefix="-p $IFD_platform"; :
+
+	if [ -n "$IFD_platform" ]; then
+		ifdprefix="-p $IFD_platform"
+	fi
 }
 
 patch_release()
 {
-	[ "$nuke" = "nuke" ] || x_ ./mk download "$board"
+	if [ "$nuke" != "nuke" ]; then
+		x_ ./mk download "$board"
+	fi
 
 	has_hashes="n"
 	tmpromdir="$tmpromdel/bin/$board"
@@ -94,20 +136,32 @@ patch_release()
 	x_ tar -xf "$archive" -C "${tmpromdir%"/bin/$board"}"
 
 	for _hashes in "vendorhashes" "blobhashes"; do
-		e "$tmpromdir/$_hashes" f && \
-		    has_hashes="y" && hashfile="$_hashes" && break; :
+		if e "$tmpromdir/$_hashes" f; then
+			has_hashes="y"
+			hashfile="$_hashes"
+			break
+		fi
 	done
 
-	readkconfig || exit 0
+	if ! readkconfig; then
+		# TODO: audit this. lbmk coding style specifically
+		#       prohibits direct exits. should probably return?
 
-	[ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ] && modify_mac; :
+		exit 0
+	fi
+
+	if [ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ]; then
+		modify_mac
+	fi
 }
 
 readkconfig()
 {
 	x_ rm -f "$xbtmp/cbcfg"
+
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 	eval "`setcfg "$xbtmp/cbcfg" 1`"
+
 	setvfile "$@" || return 1; :
 }
 
@@ -121,9 +175,13 @@ scankconfig()
 modify_mac()
 {
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbtmp/gbe"
-	[ -n "$new_mac" ] && [ "$new_mac" != "restore" ] && \
-	    x_ make -C util/nvmutil clean && x_ make -C util/nvmutil && \
-	    x_ "$nvm" "$xbtmp/gbe" setmac "$new_mac"
+
+	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
+		x_ make -C util/nvmutil clean
+		x_ make -C util/nvmutil
+
+		x_ "$nvm" "$xbtmp/gbe" setmac "$new_mac"
+	fi
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
@@ -133,16 +191,20 @@ modify_mac()
 
 newmac()
 {
-	e "$1" f && xchanged="y" && x_ \
-	    "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"; :
+	if e "$1" f; then
+		xchanged="y"
+		x_ "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"
+	fi
 }
 
 remktar()
 {
 	(
-	x_ cd "${tmpromdir%"/bin/$board"}"
-	printf "Re-building tar archive (please wait)\n"
-	mkrom_tarball "bin/$board" 1>/dev/null
+		x_ cd "${tmpromdir%"/bin/$board"}"
+
+		printf "Re-building tar archive (please wait)\n"
+		mkrom_tarball "bin/$board" 1>/dev/null
+
 	) || err "Cannot re-generate '$archive'" "remktar" "$@"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
