@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (c) 2022-2023 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>

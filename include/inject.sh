@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
+
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>

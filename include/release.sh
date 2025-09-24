@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
 eval "`setvars "" reldir reldest vdir rsrc relmode`"

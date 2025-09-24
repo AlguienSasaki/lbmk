@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
+
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 # Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
