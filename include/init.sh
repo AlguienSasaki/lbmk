@@ -336,8 +336,6 @@ pybin()
 	# use the *real*, direct executable linked to by the venv symlink:
 
 	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
-		# TODO: very sus; possible hole in error management:
-
 		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
 
