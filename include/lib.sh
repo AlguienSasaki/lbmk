@@ -89,24 +89,25 @@ e()
 setvars()
 {
 	_setvars=""
+
 	if [ $# -lt 2 ]; then
 		printf "err \"setvars: too few args\\n\""
 		return 0
-	fi
-	val="$1"
-	shift 1
-	while [ $# -gt 0 ]; do
-		printf "%s=\"%s\"\n" "$1" "$val"
+	else
+		val="$1"
 		shift 1
-	done
+		while [ $# -gt 0 ]; do
+			printf "%s=\"%s\"\n" "$1" "$val"
+			shift 1
+		done
+	fi
 }
 
 setcfg()
 {
 	if [ $# -gt 1 ]; then
 		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	fi
-	if [ $# -lt 2 ]; then
+	else
 		printf "e \"%s\" f not && err \"Missing config '$1'\";\n" "$1"
 	fi
 	printf ". \"%s\" || err \"Could not read config '$1'\";\n" "$1"
@@ -205,19 +206,18 @@ x_()
 {
 	if [ $# -lt 1 ]; then
 		return 0
-	fi
-	if [ -z "$1" ]; then
+	elif [ -z "$1" ]; then
 		err "Empty first arg" "x_" "$@"
+	else
+		"$@" || err "Unhandled error" "x_" "$@"
 	fi
-	"$@" || err "Unhandled error" "x_" "$@"
 }
 
 xchk()
 {
 	if [ $# -lt 3 ]; then
 		err "$1 needs at least two arguments" "xchk" "$@"
-	fi
-	if [ -z "$2" ] || [ -z "$3" ]; then
+	elif [ -z "$2" ] || [ -z "$3" ]; then
 		err "arguments must not be empty" "xchk" "$@"
 	fi
 }

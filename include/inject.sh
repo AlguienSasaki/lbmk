@@ -58,7 +58,6 @@ inject()
 	if check_target; then
 		patch_release
 	fi
-
 	if [ "$xchanged" = "y" ]; then
 		remktar
 	fi
@@ -149,9 +148,7 @@ patch_release()
 		#       prohibits direct exits. should probably return?
 
 		exit 0
-	fi
-
-	if [ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ]; then
+	elif [ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ]; then
 		modify_mac
 	fi
 }

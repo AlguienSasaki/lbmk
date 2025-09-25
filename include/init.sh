@@ -283,27 +283,22 @@ xbmk_set_pyver()
 	if ! pybin python3 1>/dev/null; then
 		python="python"
 	fi
-
 	if [ "$python" = "python3" ]; then
 		pyver="3"
 	fi
-
 	if ! pybin "$python" 1>/dev/null; then
 		pyver=""
 	fi
-
 	if [ -n "$pyver" ]; then
 		"`x_ pybin "$python"`" -c "$pyv" 1>/dev/null \
 		    2>/dev/null || \
 		    err "Can't detect Python version." "xbmk_set_pyver" "$@"
 	fi
-
 	if [ -n "$pyver" ]; then
 		pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')"
 		pyver="${pyver#(}"
 		pyver="${pyver%,}"
 	fi
-
 	if [ "${pyver%%.*}" != "3" ]; then
 		err "Bad python version (must by 3.x)" "xbmk_set_pyver" "$@"
 	fi
@@ -331,7 +326,6 @@ pybin()
 	if ! command -v "$1" 1>/dev/null 2>/dev/null; then
 		venv=0
 	fi
-
 	if [ $venv -gt 0 ]; then
 		if ! "$1" -c "$py" 1>/dev/null 2>/dev/null; then
 			venv=0
@@ -354,11 +348,14 @@ pybin()
 		fi
 	fi
 
-	# if python venv: fall back to common PATH directories for checking
+	# if python venv: fall back to common PATH directories for checking:
+
 	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
-		[ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
-		    [ -x "$pypath/$1" ] && printf "%s/%s\n" "$pypath" "$1" && \
-		    return 0
+		if [ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
+		    [ -x "$pypath/$1" ]; then
+			printf "%s/%s\n" "$pypath" "$1"
+			return 0
+		fi
 	done && return 1
 
 	# Defer to normal command -v if not a venv

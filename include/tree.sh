@@ -63,14 +63,10 @@ trees()
 
 	if [ -z "$_f" ]; then
 		err "missing flag ($flags)" "trees" "$@"
-	fi
-
-	if [ -z "$project" ]; then
+	elif [ -z "$project" ]; then
 		fx_ "x_ ./mk $_f" x_ ls -1 config/git
 		return 1
-	fi
-
-	if [ ! -f "config/git/$project/pkg.cfg" ]; then
+	elif [ ! -f "config/git/$project/pkg.cfg" ]; then
 		err "config/git/$project/pkg.cfg missing" "trees" "$@"
 	fi
 
@@ -156,7 +152,6 @@ handle_defconfig()
 	if [ ! -f "CHANGELOG" ]; then
 		fetch_project "$project"
 	fi
-
 	if ! configure_project "$target_dir"; then
 		return 0
 	fi
@@ -234,21 +229,18 @@ configure_project()
 		if [ "$_f" = "-d" ]; then
 			build_depend="" # dry run
 		fi
-
 		if [ "$cmd" = "build_project" ]; then
 			# single-tree, so it can't be a target pointing
 			# to a main source tree
 
 			break
 		fi
-
 		if [ "$do_make" != "n" ]; then
 			# if we're *downloading* a project, then
 			# we don't need to to change the target.cfg 
 
 			break
 		fi
-
 		if [ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ]
 		then
 			# we have found the main source tree that
@@ -264,7 +256,6 @@ configure_project()
 	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]; then
 		return 1
 	fi
-
 	if [ -n "$btype" ] && [ "${mode%config}" != "$mode" ]; then
 		return 1
 	fi
@@ -281,10 +272,8 @@ configure_project()
 	if [ ! -f "CHANGELOG" ]; then
 		delete_old_project_files
 	fi
-
 	if [ "$do_make" = "n" ]; then
-		if [ ! -f "CHANGELOG" ]
-		then
+		if [ ! -f "CHANGELOG" ]; then
 			fetch_${cmd#build_}
 		fi
 
@@ -308,11 +297,9 @@ build_dependencies()
 			$dry err "$project/$tree: !bd '$bd'" \
 			    "build_dependencies" "$@"
 		fi
-
 		if [ "${bd##*/}" = "$bd" ]; then
 			bd_tree=""
 		fi
-
 		if [ -n "$bd_project" ]; then
 			$dry x_ ./mk -b $bd_project $bd_tree; :
 		fi
@@ -591,18 +578,13 @@ check_autoconf()
 	(
 		x_ cd "$1"
 
-		if [ -f "bootstrap" ]
-		then
+		if [ -f "bootstrap" ]; then
 			x_ ./bootstrap $bootstrapargs
 		fi
-
-		if [ -f "autogen.sh" ]
-		then
+		if [ -f "autogen.sh" ]; then
 			x_ ./autogen.sh $autogenargs
 		fi
-
-		if [ -f "configure" ]
-		then
+		if [ -f "configure" ]; then
 			x_ ./configure $autoconfargs; :
 		fi
 

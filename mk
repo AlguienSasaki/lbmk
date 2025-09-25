@@ -12,11 +12,9 @@ ispwd="true"
 if [ "$0" != "./mk" ]; then
 	ispwd="false"
 fi
-
 if [ "$ispwd" = "true" ] && [ -L "mk" ]; then
 	ispwd="false"
 fi
-
 if [ "$ispwd" = "false" ]; then
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1

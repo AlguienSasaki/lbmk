@@ -197,7 +197,6 @@ mkcorebootbin_real()
 	if [ -z "$grub_scan_disk" ]; then
 		grub_scan_disk="nvme ahci ata"
 	fi
-
 	if [ -z "$grubtree" ]; then
 		grubtree="default"
 	fi
@@ -408,7 +407,6 @@ cprom()
 	if [ -n "$displaymode" ]; then
 		newrom="${newrom%.rom}_$displaymode.rom"
 	fi
-
 	if [ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ]; then
 		tmpnew="${1##*/}"
 		newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"

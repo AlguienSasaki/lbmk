@@ -28,7 +28,6 @@ fetch_project()
 	if [ -n "$xtree" ]; then
 		x_ ./mk -f coreboot "$xtree"
 	fi
-
 	if [ -n "$depend" ]; then
 		for d in $depend ; do
 			x_ ./mk -f $d
@@ -118,9 +117,7 @@ xbget()
 	do
 		if [ -z "$url" ]; then
 			err "empty URL given in" "xbget" "$@"
-		fi
-
-		if ! try_file "$url" "$@"; then
+		elif ! try_file "$url" "$@"; then
 			continue
 		fi
 
