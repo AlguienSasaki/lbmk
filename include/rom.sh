@@ -120,7 +120,6 @@ check_coreboot_util()
 
 coreboot_pad_one_byte()
 {
-	# TODO: why is this if block here? can i remove it?
 	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]; then
 		return 0
 	fi
