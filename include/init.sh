@@ -30,15 +30,15 @@ xbmk_init()
 		exit 0
 	fi
 
-	export PWD="$xbmkpwd"
-	x_ mkdir -p "$basetmp"
-
 	id -u 1>/dev/null 2>/dev/null || \
 	    err "suid check failed" "xbmk_init" "$@"
 
 	if [ "$(id -u)" = "0" ]; then
 		err "this command as root is not permitted" "xbmk_init" "$@"
 	fi
+
+	export PWD="$xbmkpwd"
+	x_ mkdir -p "$basetmp"
 
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
 		if ! xbmk_$init_cmd "$@"; then
