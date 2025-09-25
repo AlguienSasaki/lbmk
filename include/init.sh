@@ -299,9 +299,6 @@ xbmk_set_pyver()
 	fi
 
 	if [ -n "$pyver" ]; then
-		# TODO: very sus; possible holes in error management
-		# TODO: maybe use sed?
-
 		pyver="$("$(pybin "$python")" -c "$pyv" | awk '{print $1}')"
 		pyver="${pyver#(}"
 		pyver="${pyver%,}"
