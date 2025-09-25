@@ -56,7 +56,7 @@ inject()
 
 	check_release
 	if check_target; then
-		patch_release
+		patch_release || return 0
 	fi
 	if [ "$xchanged" = "y" ]; then
 		remktar
@@ -144,10 +144,7 @@ patch_release()
 	done
 
 	if ! readkconfig; then
-		# TODO: audit this. lbmk coding style specifically
-		#       prohibits direct exits. should probably return?
-
-		exit 0
+		return 1
 	elif [ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ]; then
 		modify_mac
 	fi
