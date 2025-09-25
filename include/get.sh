@@ -215,15 +215,6 @@ try_curl()
 
 try_copy()
 {
-	if e "$2" f missing
-	then
-		# TODO: is this if statement necessary? the following
-		#       x_ cp command would provide the same effective
-		#       error handle, and provide equivalent feedback
-
-		return 1
-	fi
-
 	( x_ cp "$2" "$1" ) || return 1; :
 }
 
