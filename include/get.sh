@@ -117,7 +117,7 @@ xbget()
 	do
 		if [ -z "$url" ]; then
 			err "empty URL given in" "xbget" "$@"
-		elif ! try_file "$url" "$@"; then
+		elif ! try_fetch "$url" "$@"; then
 			continue
 		fi
 
@@ -139,13 +139,11 @@ xbget()
 	err "failed to download file/repository" "xbget" "$@"; :
 }
 
-# TODO: this function "try_file" actually handles git as well.
-#       the name is misleading. think of a better name instead.
-# TODO: try_file is also a bit messy. those eval statements can
+# TODO: try_fetch is also a bit messy. those eval statements can
 #       be tidied up, or eval can be dropped entirely.
 # (it works much better than the old code, but it's over-engineered)
 
-try_file()
+try_fetch()
 {
 	cached="file/$6"
 	if [ "$2" = "git" ]
@@ -187,7 +185,7 @@ try_file()
 	then
 		if [ ! -d "$5" ]; then
 			tmpclone "$cached" "$5" "$6" "$7" || \
-			    err "Can't clone final repo" "try_file" "$@"; :
+			    err "Can't clone final repo" "try_fetch" "$@"; :
 		fi
 	else
 		if bad_checksum "$6" "$cached"; then
