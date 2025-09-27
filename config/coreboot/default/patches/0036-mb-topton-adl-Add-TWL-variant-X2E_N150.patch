@@ -1,0 +1,110 @@
+From 96a6735e7b59f1e538ed8c87993ed2d217c27891 Mon Sep 17 00:00:00 2001
+From: Riku Viitanen <riku.viitanen@protonmail.com>
+Date: Thu, 25 Sep 2025 22:45:37 +0300
+Subject: [PATCH] mb/topton/adl: Add TWL variant (X2E_N150)
+
+Seems to be the same board but with a Twin Lake processor.
+VBT extracted from vendor firmware. This makes HDMI and
+DisplayPort work.
+
+Change-Id: I1018042802cbb8010888847226a2117fd9dfaeb0
+Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
+---
+ src/mainboard/topton/adl/Kconfig      |  12 +++++++++---
+ src/mainboard/topton/adl/Kconfig.name |   3 +++
+ src/mainboard/topton/adl/data_twl.vbt | Bin 0 -> 9216 bytes
+ 3 files changed, 12 insertions(+), 3 deletions(-)
+ create mode 100644 src/mainboard/topton/adl/data_twl.vbt
+
+diff --git a/src/mainboard/topton/adl/Kconfig b/src/mainboard/topton/adl/Kconfig
+index ffdfae1eee..331e1d624d 100644
+--- a/src/mainboard/topton/adl/Kconfig
++++ b/src/mainboard/topton/adl/Kconfig
+@@ -1,6 +1,6 @@
+ ## SPDX-License-Identifier: GPL-2.0-or-later
+ 
+-if BOARD_TOPTON_X2F_N100
++if BOARD_TOPTON_X2F_N100 || BOARD_TOPTON_X2E_N150
+ 
+ config BOARD_SPECIFIC_OPTIONS
+ 	def_bool y
+@@ -12,6 +12,7 @@ config BOARD_SPECIFIC_OPTIONS
+ 	select SUPERIO_ITE_IT8625E
+ 	select DRIVERS_UART_8250IO
+ 	select SOC_INTEL_ALDERLAKE_PCH_N
++	select SOC_INTEL_TWINLAKE if BOARD_TOPTON_X2E_N150
+ 	select INTEL_GMA_HAVE_VBT
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 	select HAVE_INTEL_PTT
+@@ -20,7 +21,12 @@ config BOARD_SPECIFIC_OPTIONS
+ config MAINBOARD_DIR
+ 	default "topton/adl"
+ 
++config INTEL_GMA_VBT_FILE
++	default "src/mainboard/\$(MAINBOARDDIR)/data.vbt" if BOARD_TOPTON_X2F_N100
++	default "src/mainboard/\$(MAINBOARDDIR)/data_twl.vbt" if BOARD_TOPTON_X2E_N150
++
+ config MAINBOARD_PART_NUMBER
+-	default "X2F_N100"
++	default "X2F_N100" if BOARD_TOPTON_X2F_N100
++	default "X2E_N150" if BOARD_TOPTON_X2E_N150
+ 
+-endif # BOARD_TOPTON_X2F_N100
++endif # BOARD_TOPTON_X2F_N100 || BOARD_TOPTON_X2E_N150
+diff --git a/src/mainboard/topton/adl/Kconfig.name b/src/mainboard/topton/adl/Kconfig.name
+index 5b8b5ff602..db0eef29be 100644
+--- a/src/mainboard/topton/adl/Kconfig.name
++++ b/src/mainboard/topton/adl/Kconfig.name
+@@ -2,3 +2,6 @@
+ 
+ config BOARD_TOPTON_X2F_N100
+ 	bool "X2F_N100"
++
++config BOARD_TOPTON_X2E_N150
++	bool "X2E_N150"
+diff --git a/src/mainboard/topton/adl/data_twl.vbt b/src/mainboard/topton/adl/data_twl.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..05fbd5807365b3343e55ecedbd12fabb8a3199e9
+GIT binary patch
+literal 9216
+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
+DX%2oa
+
+literal 0
+HcmV?d00001
+
+-- 
+2.51.0
+

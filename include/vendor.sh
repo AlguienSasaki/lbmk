@@ -42,7 +42,8 @@ eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
     ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
     TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
     EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
-    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash _pre_dest`"
+    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash _pre_dest \
+    XBMKmecleaner MEclean`"
 
 download()
 {
@@ -235,19 +236,30 @@ find_me()
 	fi
 
 	_7ztest="${_7ztest}a"
-	_r="-r"
+	_r="-r" # re-locate modules
+	_trunc="-t" # -t: truncate the ME size
+	_keep="" # -k: keep fptr modules even if they can be removed
+	_pass="" # -p: skip fptr check
 
-	if [ -n "$mfs" ]; then
+	if [ -n "$mfs" ] || [ "$MEclean" = "n" ]; then
 		_r=""
 	fi
 
-	if "$mecleaner" $mfs $_r -t -O "$xbtmp/a" -M "$_metmp" "$1"; then
+	if [ "$MEclean" = "n" ]; then
+		_keep="-k"
+		_trunc=""
+		_pass="-p"
+	fi
+
+	if "$mecleaner" $mfs $_r $_keep $_pass $_trunc -O "$xbtmp/a" \
+	    -M "$_metmp" "$1" || [ -f "$_metmp" ]; then
 		# me.bin extracted from a full image with ifd, then shrunk
 		:
-	elif "$mecleaner" $mfs $_r -t -O "$_metmp" "$1"; then
+	elif "$mecleaner" $mfs $_r $_pass $_keep $_trunc -O "$_metmp" "$1" || \
+	    [ -f "$_metmp" ]; then
 		# me.bin image already present, and we shrunk it
 		:
-	elif "$me7updateparser" -O "$_metmp" "$1"; then
+	elif "$me7updateparser" $_keep -O "$_metmp" "$1"; then
 		# thinkpad sandybridge me.bin image e.g. x220/t420
 		:
 	elif extract_archive "$1" "$_7ztest"; then
@@ -284,7 +296,9 @@ extract_archive()
 		:
 	elif 7z x "$1" -o"$2"; then
 		:
-	elif unar "$1" -o "$2"; then
+	elif unar -f "$1" -o "$2" || unrar -o+ -op"$2" x "$1"; then
+		# compatible with unrar-free and unrar-nonfree
+
 		:
 	elif unzip "$1" -d "$2"; then
 		:
@@ -415,12 +429,17 @@ getvfile()
 bootstrap()
 {
 	cbdir="src/coreboot/$tree"
-	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
 	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/coreboot/$tree/cbfstool"
 	rmodtool="elf/coreboot/$tree/rmodtool"
 
+	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
+	if [ "$XBMKmecleaner" = "y" ]; then
+		mecleaner="$xbmkpwd/src/me_cleaner/me_cleaner.py"
+	fi
+
 	x_ ./mk -f coreboot "${cbdir##*/}"
+	x_ ./mk -f me_cleaner
 
 	x_ ./mk -b bios_extract
 	x_ ./mk -b biosutilities
