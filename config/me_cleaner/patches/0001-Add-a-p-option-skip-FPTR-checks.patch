@@ -1,0 +1,71 @@
+From e9ceef92dc53501d8d6debc9f5ac9580149eb3dc Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 27 Sep 2025 22:52:45 +0100
+Subject: [PATCH 1/1] Add a -p option (skip FPTR checks)
+
+if you pass -k (keep fptr modules), don't use -r, don't
+use -t, you can essentially just use me_cleaner to
+extract a ME image without changing it. this is useful
+when for example, you just want to set the HAP bit.
+
+however, me_cleaner still performs a FPTR check.
+
+on some newer ME versions, it's always invalid according
+to me_cleaner, because for example it doesn't handle
+ME16 very well yet.
+
+this patch adds an option to override the FPTR check
+
+either pass -p or --pass-fptr
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ me_cleaner.py | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/me_cleaner.py b/me_cleaner.py
+index 473e761..36760fb 100755
+--- a/me_cleaner.py
++++ b/me_cleaner.py
+@@ -276,8 +276,10 @@ def check_partition_signature(f, offset):
+     return "{:#x}".format(decrypted_sig).endswith(sha256.hexdigest())   # FIXME
+ 
+ 
+-def print_check_partition_signature(f, offset):
+-    if check_partition_signature(f, offset):
++def print_check_partition_signature(f, offset, pass_fptr):
++    if pass_fptr:
++        print("Skipping FPTR checks because the user told us to")
++    elif check_partition_signature(f, offset):
+         print("VALID")
+     else:
+         print("INVALID!!")
+@@ -517,6 +519,8 @@ if __name__ == "__main__":
+                         "--extract-me)", action="store_true")
+     parser.add_argument("-k", "--keep-modules", help="don't remove the FTPR "
+                         "modules, even when possible", action="store_true")
++    parser.add_argument("-p", "--pass-fptr", help="skip FTPR signature checks"
++                        "regardless of other operations", action="store_true")
+     bw_list.add_argument("-w", "--whitelist", metavar="whitelist",
+                          help="Comma separated list of additional partitions "
+                          "to keep in the final image. This can be used to "
+@@ -1024,12 +1028,14 @@ if __name__ == "__main__":
+                 print("Checking the FTPR RSA signature of the extracted ME "
+                       "image... ", end="")
+                 print_check_partition_signature(mef_copy,
+-                                                ftpr_offset + ftpr_mn2_offset)
++                                                ftpr_offset + ftpr_mn2_offset,
++                                                args.pass_fptr)
+             mef_copy.close()
+ 
+         if not me6_ignition:
+             print("Checking the FTPR RSA signature... ", end="")
+-            print_check_partition_signature(mef, ftpr_offset + ftpr_mn2_offset)
++            print_check_partition_signature(mef, ftpr_offset + ftpr_mn2_offset,
++                                                args.pass_fptr)
+ 
+     f.close()
+ 
+-- 
+2.47.3
+
