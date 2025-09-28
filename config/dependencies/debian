@@ -12,7 +12,7 @@ libncurses-dev libnewlib-arm-none-eabi libopts25 libopts25-dev libpci-dev libpyt
 libsdl2-dev libselinux1-dev libssl-dev libtool libusb-1.0-0 libusb-1.0-0-dev \
 libusb-dev lz4 lzma lzma-alone m4 nasm openssl p7zip p7zip-full parted pciutils \
 perl pkg-config python3 python3-distutils-extra python3-pkg-resources python3-pycryptodome \
-python3-pyelftools python3-setuptools python-is-python3 sharutils swig unar \
+python3-pyelftools python3-setuptools python-is-python3 sharutils swig \
 unifont unifont-bin unzip uuid-dev wget xfonts-unifont zlib1g-dev ccache \
 g++-mipsel-linux-gnu make genisoimage mtools libx86-1 libx86-dev \
 "

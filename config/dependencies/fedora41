@@ -10,7 +10,7 @@ innoextract intltool libftdi-devel libgpiod-devel libjaylink-devel \
 libselinux-devel libusb1 libusb1-devel nasm ncurses-devel openssl-devel openssl-devel-engine \
 p7zip p7zip-plugins pandoc parted pciutils-devel perl perl-libwww-perl \
 python-unversioned-command python3 python3-setuptools rsync sharutils \
-subversion systemd-devel texinfo unar unifont unifont-fonts uuid-devel \
+subversion systemd-devel texinfo unifont unifont-fonts uuid-devel \
 unifont-ttf-fonts unzip wget xz zlib-devel ccache swig python3-devel \
 libuuid-devel gnutls-devel \
 "
