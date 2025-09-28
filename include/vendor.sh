@@ -18,6 +18,7 @@ me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
 bsdtar="$xbmkpwd/elf/libarchive/bsdtar"
+bsdunzip="$xbmkpwd/elf/libarchive/bsdunzip"
 vendir="vendorfiles"
 appdir="$vendir/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
@@ -299,7 +300,7 @@ extract_archive()
 		:
 	elif "$bsdtar" -C "$2" -xf "$1"; then
 		:
-	elif unzip "$1" -d "$2"; then
+	elif "$bsdunzip" "$1" -d "$2"; then
 		:
 	else
 		return 1
@@ -443,7 +444,7 @@ bootstrap()
 	x_ ./mk -b bios_extract
 	x_ ./mk -b biosutilities
 	x_ ./mk -b uefitool
-	x_ ./mk -b libarchive # for bsdtar
+	x_ ./mk -b libarchive # for bsdtar and bsdunzip
 
 	if [ -d "${kbc1126_ec_dump%/*}" ]; then
 		x_ make -C "$cbdir/util/kbc1126"
