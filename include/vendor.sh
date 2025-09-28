@@ -183,7 +183,7 @@ fetch()
 
 mkdst()
 {
-	if bad_checksum "$1" "$2"; then
+	if bad_checksum "$1" "$2" 2>/dev/null; then
 		x_ rm -f "$2"
 	else
 		x_ mv "$2" "$_dl_bin"
