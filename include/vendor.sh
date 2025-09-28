@@ -296,9 +296,7 @@ extract_archive()
 		:
 	elif 7z x "$1" -o"$2"; then
 		:
-	elif unar -f "$1" -o "$2" || unrar -o+ -op"$2" x "$1"; then
-		# compatible with unrar-free and unrar-nonfree
-
+	elif unar -f "$1" -o "$2"; then
 		:
 	elif unzip "$1" -d "$2"; then
 		:
