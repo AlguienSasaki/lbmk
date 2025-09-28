@@ -17,6 +17,7 @@ e6400_unpack="$xbmkpwd/src/bios_extract/dell_inspiron_1100_unpacker.py"
 me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
 uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
+bsdtar="$xbmkpwd/elf/libarchive/bsdtar"
 vendir="vendorfiles"
 appdir="$vendir/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
@@ -296,7 +297,7 @@ extract_archive()
 		:
 	elif 7z x "$1" -o"$2"; then
 		:
-	elif unar -f "$1" -o "$2"; then
+	elif "$bsdtar" -C "$2" -xf "$1"; then
 		:
 	elif unzip "$1" -d "$2"; then
 		:
@@ -442,6 +443,7 @@ bootstrap()
 	x_ ./mk -b bios_extract
 	x_ ./mk -b biosutilities
 	x_ ./mk -b uefitool
+	x_ ./mk -b libarchive # for bsdtar
 
 	if [ -d "${kbc1126_ec_dump%/*}" ]; then
 		x_ make -C "$cbdir/util/kbc1126"
