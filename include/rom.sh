@@ -155,7 +155,7 @@ mkcorebootbin_real()
 	initmode="${defconfig##*/}"
 	displaymode="${initmode##*_}"
 	if [ "$displaymode" = "$initmode" ]; then
-		# blank it for "normal" configs:
+		# blank it for "normal" or "fspgop" configs:
 
 		displaymode=""
 	fi
@@ -247,6 +247,9 @@ add_seabios()
 	fi
 
 	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
+	[ "$initmode" = "fspgop" ] && \
+	    _seabioself="elf/seabios/default/default/libgfxinit/bios.bin.elf"
+
 	_seaname="fallback/payload"
 	if [ "$payload_grubsea" = "y" ]; then
 		 _seaname="seabios.elf"
@@ -263,7 +266,7 @@ add_seabios()
 	x_ "$cbfstool" "$tmprom" add-int -i $opexec -n etc/pci-optionrom-exec
 
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
-	if [ "$initmode" = "libgfxinit" ]; then
+	if [ "$initmode" = "libgfxinit" ] || [ "$initmode" = "fspgop" ]; then
 		cbfs "$tmprom" "$seavgabiosrom" vgaroms/seavgabios.bin raw
 	fi
 
