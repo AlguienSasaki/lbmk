@@ -313,36 +313,39 @@ extract_archive()
 
 extract_kbc1126ec()
 {
-	(
-		x_ cd "$appdir/"
-
-		if mv Rompaq/68*.BIN ec.bin; then
-			:
-		elif unar -D ROM.CAB Rom.bin; then
-			:
-		elif unar -D Rom.CAB Rom.bin; then
-			:
-		elif unar -D 68*.CAB Rom.bin; then
-			:
-		else
-			err "!kbc1126 unar" "extract_kbc1126ec" "$@"
-		fi
-
-		if [ ! -f "ec.bin" ]; then
-			x_ mv Rom.bin ec.bin
-		fi
-
-		if x_ e ec.bin f; then
-			x_ "$kbc1126_ec_dump" ec.bin
-		fi
-
-	) || err "$board: can't extract kbc1126 fw" "extract_kbc1126ec" "$@"
+	( extract_kbc1126ec_dump ) || \
+	    err "$board: can't extract kbc1126 fw" "extract_kbc1126ec" "$@"
 
 	# throw error if either file is missing
 	x_ e "$appdir/ec.bin.fw1" f
 	x_ e "$appdir/ec.bin.fw2" f
 
 	x_ cp "$appdir/"ec.bin.fw* "${_pre_dest%/*}/"
+}
+
+extract_kbc1126ec_dump()
+{
+	x_ cd "$appdir/"
+
+	if mv Rompaq/68*.BIN ec.bin; then
+		:
+	elif unar -D ROM.CAB Rom.bin; then
+		:
+	elif unar -D Rom.CAB Rom.bin; then
+		:
+	elif unar -D 68*.CAB Rom.bin; then
+		:
+	else
+		err "!kbc1126 unar" "extract_kbc1126ec" "$@"
+	fi
+
+	if [ ! -f "ec.bin" ]; then
+		x_ mv Rom.bin ec.bin
+	fi
+
+	if x_ e ec.bin f; then
+		x_ "$kbc1126_ec_dump" ec.bin
+	fi
 }
 
 extract_e6400vga()
