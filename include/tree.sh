@@ -8,7 +8,7 @@ eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
     project target target_dir targets xtree _f release bootstrapargs mkhelper \
     autoconfargs listfile autogenargs btype rev build_depend gccdir cmakedir \
     defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull do_make badhash badtghash tree`"
+    gnatver gnatfull do_make badhash badtghash tree forcepull`"
 
 trees()
 {
@@ -43,6 +43,11 @@ trees()
 		-f) # download source code for a project
 			do_make="n" # lets us know not to build anything
 			dry=":"
+			;;
+		-F) # same as -F, but don't skip git fetch/pull on cache
+			do_make="n" # lets us know not to build anything
+			dry=":"
+			forcepull="y"
 			;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
