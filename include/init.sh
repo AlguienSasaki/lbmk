@@ -120,16 +120,10 @@ xbmk_set_env()
 
 	if [ "$is_child" = "y" ]
 	then
-		# child instance of xbmk, so we stop init after this point:
+		# child instance of xbmk, so we stop init after this point
+		# and execute the given user command upon return:
 
-		xbmk_child_set_tmp
-
-		if [ -z "${XBMK_CACHE+x}" ]; then
-			err "XBMK_CACHE unset on child" "xbmk_set_env" "$@"
-		fi
-		if [ -z "${XBMK_THREADS+x}" ]; then
-			xbmk_set_threads; :
-		fi
+		xbmk_child_set_env
 
 		return 1
 	else
@@ -138,25 +132,21 @@ xbmk_set_env()
 		# command directly; instead, it calls a child instance
 		# of xbmk, and exits with the corresponding return status.
 		
-		xbmk_parent_check_tmp
-
-		printf "%s\n" "$xbtmp" > "$xbmklock" || \
-		    err "cannot create '$xbmklock'" xbmk_set_env "$@"; :
-
-		# not really critical for security, but it's a barrier
-		# against the user to make them think twice before deleting it
-		# in case an actual instance of xbmk is already running:
-
-		x_ chmod -w "$xbmklock"
-
-		xbmk_parent_set_export
-		xbmk_set_version
-
-		remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
-
-		xbmk_set_pyver
+		xbmk_parent_set_env
 
 		return 0
+	fi
+}
+
+xbmk_child_set_env()
+{
+	xbmk_child_set_tmp
+
+	if [ -z "${XBMK_CACHE+x}" ]; then
+		err "XBMK_CACHE unset on child" "xbmk_set_env" "$@"
+	fi
+	if [ -z "${XBMK_THREADS+x}" ]; then
+		xbmk_set_threads; :
 	fi
 }
 
@@ -165,10 +155,10 @@ xbmk_child_set_tmp()
 	eval `setvars "" badtmp xbtmpchk locktmp`
 
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
-	    err "!findpath '$TMPDIR'" xbmk_child_set_tmp "$@"
+	    err "!findpath '$TMPDIR'" "xbmk_child_set_tmp" "$@"
 
 	read -r locktmp < "$xbmklock" || \
-	    err "can't read '$xbmklock'" xbmk_child_set_tmp "$@"
+	    err "can't read '$xbmklock'" "xbmk_child_set_tmp" "$@"
 
 	if [ "$locktmp" != "$xbtmpchk" ]; then
 		badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
@@ -181,6 +171,26 @@ xbmk_child_set_tmp()
 	export TMPDIR="$xbtmpchk"
 }
 
+xbmk_parent_set_env()
+{
+	xbmk_parent_check_tmp
+
+	printf "%s\n" "$xbtmp" > "$xbmklock" || \
+	    err "cannot create '$xbmklock'" xbmk_set_env "$@"; :
+
+	# not really critical for security, but it's a barrier
+	# against the user to make them think twice before deleting it
+	# in case an actual instance of xbmk is already running:
+
+	x_ chmod -w "$xbmklock"
+
+	xbmk_parent_set_export
+	xbmk_set_version
+
+	remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
+
+	xbmk_set_pyver
+}
 
 xbmk_parent_check_tmp()
 {
