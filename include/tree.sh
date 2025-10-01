@@ -427,6 +427,7 @@ check_cross_compiler()
 # trixie/sid had gnat-13 as gnat and gcc-14 as gcc, but has gnat-14 in apt. in
 # some cases, gcc 13+14 and gnat-13 are present; or gnat-14 and gcc-14, but
 # gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
+
 check_gnu_path()
 {
 	if ! command -v "$1" 1>/dev/null; then
@@ -434,6 +435,20 @@ check_gnu_path()
 	fi
 
 	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
+
+	if host_gcc_gnat_match "$@"; then
+		return 0
+	fi
+
+	if ! match_gcc_gnat_versions "$@"; then
+		return 1
+	fi
+}
+
+# check if gcc/gnat versions already match:
+
+host_gcc_gnat_match()
+{
 	if ! gnu_setver "$1" "$1"; then
 		err "Command '$1' unavailable." "check_gnu_path" "$@"
 	fi
@@ -441,12 +456,17 @@ check_gnu_path()
 
 	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
 
-	if [ "$gnatfull" = "$gccfull" ]; then
-		# matching gcc/gnat versions
+	if [ "$gnatfull" != "$gccfull" ]; then
+		# non-matching gcc/gnat versions
 
-		return 0
+		return 1
 	fi
+}
 
+# find all gcc/gnat versions, matching them up in PATH:
+
+match_gcc_gnat_versions()
+{
 	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
 	eval "_gnudir=\"\$$1dir\""
 	eval "_gnuver=\"\$$1ver\""
@@ -466,23 +486,32 @@ check_gnu_path()
 		return 1
 	fi
 
-	(
-		remkdir "$xbtmp/gnupath"
-
-		x_ cd "$xbtmp/gnupath"
-
-		for _gnubin in "$_gnudir/$2"*"-$_gnuver"
-		do
-			_gnuutil="${_gnubin##*/}"
-			if [ -e "$_gnubin" ]; then
-				x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
-			fi
-		done
-
-	) || err \
-	    "Can't link '$2-$_gnuver' '$_gnudir'" "check_gnu_path" "$@"; :
+	( link_gcc_gnat_versions "$@" "$_gnudir" "$_gnuver" ) || \
+	    err "Can't link '$2-$_gnuver' '$_gnudir'" "check_gnu_path" "$@"; :
 }
 
+# create symlinks in PATH, so that the GCC/GNAT versions match:
+
+link_gcc_gnat_versions()
+{
+	_gnudir="$3"
+	_gnuver="$4"
+
+	remkdir "$xbtmp/gnupath"
+
+	x_ cd "$xbtmp/gnupath"
+
+	for _gnubin in "$_gnudir/$2"*"-$_gnuver"
+	do
+		_gnuutil="${_gnubin##*/}"
+		if [ -e "$_gnubin" ]; then
+			x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"
+		fi
+	done
+}
+
+# get the gcc/gnat version
+# fail: return 1 if util not found
 gnu_setver()
 {
 	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
