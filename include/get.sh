@@ -232,6 +232,15 @@ try_git()
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 
+	if git -C "$gitdest" whatchanged "$7" 1>/dev/null 2>/dev/null; then
+		# don't try to pull the latest changes if the given target
+		# revision already exists locally. this saves a lot of time
+		# during release builds, and reduces the chance that we will
+		# interact with grub.git or gnulib.git overall during runtime
+
+		return 0
+	fi
+
 	( x_ git -C "$gitdest" remote remove main ) || :
 	( x_ git -C "$gitdest" remote remove backup ) || :
 
