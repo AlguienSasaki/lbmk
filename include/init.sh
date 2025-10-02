@@ -12,12 +12,12 @@ projectname="libreboot"
 projectsite="https://libreboot.org/"
 
 if [ -z "${PATH+x}" ]; then
-	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
 
-eval "`setvars "" _nogit board reinstall versiondate aur_notice configdir \
+eval "`setvars "" board reinstall versiondate aur_notice configdir xbmkpath \
     datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbmklock \
-    cvxbmk cvchk xbmkpath is_child basetmp`"
+    cvxbmk cvchk is_child basetmp`"
 
 xbmk_init()
 {
@@ -152,7 +152,9 @@ xbmk_child_set_env()
 
 xbmk_child_set_tmp()
 {
-	eval `setvars "" badtmp xbtmpchk locktmp`
+	badtmp=""
+	xbtmpchk=""
+	locktmp=""
 
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" "xbmk_child_set_tmp" "$@"
@@ -393,8 +395,8 @@ xbmk_git_init()
 	x_ date --version | grep "GNU coreutils" 1>/dev/null 2>/dev/null || \
 	    err "Non-GNU date implementation" "xbmk_git_init" "$@"
 
-	eval "$(setvars "$(x_ date -Rud @$versiondate)" cdate _nogit || err)" \
-	    || err "can't get date" "xbmk_git_init" "$@"
+	cdate="`x_ date -Rud @$versiondate || err "can't get date"`" || \
+	    err "can't get date" "xbmk_git_init" "$@"
 
 	x_ git init 1>/dev/null 2>/dev/null
 	x_ git add -A . 1>/dev/null 2>/dev/null
