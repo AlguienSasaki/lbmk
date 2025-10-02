@@ -228,7 +228,9 @@ configure_project()
 
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
-		eval "`setvars "" rev tree`"
+		rev=""
+		tree=""
+
 		eval "`setcfg "$_tcfg"`"
 
 		if [ "$_f" = "-d" ]; then
@@ -348,7 +350,8 @@ delete_old_project_files()
 
 project_up_to_date()
 {
-	eval "`setvars "" old_hash hash`"
+	old_hash=""
+	hash=""
 
 	hashdir="$1"
 	hashname="$2"
@@ -439,7 +442,12 @@ check_gnu_path()
 		err "Host '$1' unavailable" "check_gnu_path" "$@"
 	fi
 
-	eval "`setvars "" gccver gccfull gnatver gnatfull gccdir gnatdir`"
+	gccver=""
+	gccfull=""
+	gnatver=""
+	gnatfull=""
+	gccdir=""
+	gnatdir=""
 
 	if host_gcc_gnat_match "$@"; then
 		return 0
