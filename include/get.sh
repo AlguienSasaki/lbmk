@@ -20,7 +20,8 @@ fetch_targets()
 
 fetch_project()
 {
-	eval "`setvars "" xtree`"
+	xtree=""
+
 	eval "`setcfg "config/git/$project/pkg.cfg"`"
 
 	chkvars url bkup_url
@@ -80,25 +81,30 @@ fetch_submodule()
 
 	eval "`setcfg "$mcfgdir/module.cfg" 0`"
 
-	for xt in git curl; do
-		_seval="if [ -n \"\$sub$xt\" ] || [ -n \"\$sub${xt}_bkup\" ]"
-		eval "$_seval; then st=\"\$st \$xt\"; fi"
-	done
+	if [ -n "$subgit" ] || [ -n "$subgit_bkup" ]; then
+		st="$st git"
+	fi
+	if [ -n "$subcurl" ] || [ -n "$subcurl_bkup" ]; then
+		st="$st curl"
+	fi
 
 	st="${st# }"
 	if [ "$st" = "git curl" ]; then
 		err "$mdir: git+curl defined" "fetch_submodule" "$@"
 	fi
 
-	if [ -n "$st" ]
-	then
-		chkvars "sub${st}" "sub${st}_bkup" "subhash"
+	if [ -z "$st" ]; then
+		return 0
+	fi
 
-		if [ "$st" = "git" ]; then
-			x_ rm -Rf "$tmpgit/$1"
-		fi
+	chkvars "sub${st}" "sub${st}_bkup" "subhash"
 
-		eval xbget "$st" "\$sub$st" "\$sub${st}_bkup" "$tmpgit/$1" \
+	if [ "$st" = "git" ]; then
+		x_ rm -Rf "$tmpgit/$1"
+		xbget "$st" "$subgit" "$subgit_bkup" "$tmpgit/$1" \
+		    "$subhash" "$mdir/${1##*/}/patches"
+	else
+		xbget "$st" "$subcurl" "$subcurl_bkup" "$tmpgit/$1" \
 		    "$subhash" "$mdir/${1##*/}/patches"
 	fi
 }
@@ -139,69 +145,86 @@ xbget()
 	err "failed to download file/repository" "xbget" "$@"; :
 }
 
-# TODO: try_fetch is also a bit messy. those eval statements can
-#       be tidied up, or eval can be dropped entirely.
-# (it works much better than the old code, but it's over-engineered)
-
 try_fetch()
 {
-	cached="file/$6"
-	if [ "$2" = "git" ]
-	then
-		# always the main repo as basis for naming,
-		# in case the backup has another name
-
-		cached="clone/${3##*/}"
-		cached="${cached%.git}"
+	if [ "$2" = "git" ]; then
+		if ! try_fetch_git "$@"; then
+			return 1
+		fi
+	else
+		if ! try_fetch_file "$@"; then
+			return 1
+		fi
 	fi
+}
+
+try_fetch_git()
+{
+	# always the main repo as basis for naming,
+	# in case the backup has another name
+
+	cached="clone/${3##*/}"
+	cached="${cached%.git}"
 	cached="$XBMK_CACHE/$cached"
 
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
-	echk="d"
-	if [ "$2" != "git" ]; then
-		echk="f"
-		if bad_checksum "$6" "$cached" 2>/dev/null; then
-			x_ rm -f "$cached"
+	if ! try_$2 "$cached" "$@"; then
+		return 1
+	elif [ ! -d "$cached" ]; then
+		return 1
+	fi
+
+	if [ ! -d "$5" ]; then
+		tmpclone "$cached" "$5" "$6" "$7" || \
+		    err "Can't clone final repo" "try_fetch" "$@"; :
+	fi
+
+	if [ ! -d "$5" ]; then
+		return 1
+	fi
+}
+
+try_fetch_file()
+{
+	cached="file/$6"
+	cached="$XBMK_CACHE/$cached"
+
+	x_ mkdir -p "${5%/*}" "${cached%/*}"
+
+	if bad_checksum "$6" "$cached" 2>/dev/null; then
+		x_ rm -f "$cached"
+	fi
+
+	if [ ! -f "$cached" ]; then
+		if ! try_$2 "$cached" "$@"; then
+			return 1
 		fi
 	fi
 
-	evalchk="[ -$echk \"$cached\" ] || "
-	if [ "$2" = "git" ]; then
-		evalchk=""
-	fi
-
-	eval "${evalchk}try_$2 \"\$cached\" \"\$@\" || return 1"
-
-	if [ "$2" != "git" ] && [ -f "$5" ]; then
+	if [ -f "$5" ]; then
 		if bad_checksum "$6" "$5" 2>/dev/null; then
 			x_ cp "$cached" "$5"
 		fi
 	fi
 
-	eval "[ -$echk \"$cached\" ] || return 1"
-
-	if [ "$2" = "git" ]
-	then
-		if [ ! -d "$5" ]; then
-			tmpclone "$cached" "$5" "$6" "$7" || \
-			    err "Can't clone final repo" "try_fetch" "$@"; :
-		fi
-	else
-		if bad_checksum "$6" "$cached"; then
-			x_ rm -f "$cached"
-			return 1
-		fi
-		if [ "$cached" != "$5" ]; then
-			x_ cp "$cached" "$5"
-		fi
-		if bad_checksum "$6" "$5"; then
-			x_ rm -f "$5"
-			return 1
-		fi
+	if [ ! -f "$cached" ]; then
+		return 1
+	elif bad_checksum "$6" "$cached"; then
+		x_ rm -f "$cached"
+		return 1
 	fi
 
-	eval "[ -$echk \"$5\" ] || return 1"
+	if [ "$cached" != "$5" ]; then
+		x_ cp "$cached" "$5"
+	fi
+
+	if bad_checksum "$6" "$5"; then
+		x_ rm -f "$5"
+		return 1
+	elif [ ! -f "$5" ]; then
+		return 1
+	fi
 }
 
 try_curl()
