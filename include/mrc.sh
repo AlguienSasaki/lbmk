@@ -4,7 +4,11 @@
 # Modifications in this version are Copyright 2021,2023-2025 Leah Rowe.
 # Original copyright detailed in repo: https://review.coreboot.org/coreboot/
 
-eval "`setvars "" MRC_url MRC_url_bkup MRC_hash MRC_board SHELLBALL`"
+MRC_url=""
+MRC_url_bkup=""
+MRC_hash=""
+MRC_board=""
+SHELLBALL=""
 
 extract_refcode()
 {
