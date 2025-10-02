@@ -28,7 +28,9 @@ inject()
 		err "No options specified" "inject" "$@"
 	fi
 
-	eval "`setvars "" nuke new_mac xchanged`"
+	nuke=""
+	new_mac=""
+	xchanged=""
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
