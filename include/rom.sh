@@ -42,7 +42,8 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	eval "`setvars "" grub_modules grub_install_modules`"
+	grub_modules=""
+	grub_install_modules=""
 
 	$dry eval "`setcfg "$grubdata/module/$tree"`"
 
