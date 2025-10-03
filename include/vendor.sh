@@ -208,7 +208,7 @@ extract_intel_me()
 	x_ rm -Rf "$_7ztest"
 
 	if [ "$ME11bootguard" = "y" ]; then
-		mfs="--whitelist MFS" && \
+		mfs="--whitelist MFS"
 		chkvars ME11delta ME11version ME11sku ME11pch
 		x_ ./mk -f deguard
 	fi
