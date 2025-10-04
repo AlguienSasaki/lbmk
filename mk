@@ -34,6 +34,7 @@ main()
 	cmd=""
 	if [ $# -gt 0 ]; then
 		cmd="$1"
+
 		shift 1
 	fi
 

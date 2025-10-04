@@ -136,11 +136,13 @@ fetch()
 		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""; :
 	done; :
 
-	# download the file (from the internet) to extract from
+	# download the file (from the internet) to extract from:
+
 	xbget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
 	x_ rm -Rf "${_dl}_extracted"
 
-	# skip extraction if a cached extracted file exists
+	# skip extraction if a cached extracted file exists:
+
 	( xbget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) || :
 	if [ -f "$_dest" ]; then
 		return 0
@@ -178,8 +180,7 @@ fetch()
 		x_ rm -f "$_dest"
 	fi
 
-	err "Could not safely extract '$_dest', for board '$board'" \
-	    "fetch" "$@"
+	err "Can't safely extract '$_dest', for board '$board'" "fetch" "$@"
 }
 
 mkdst()
@@ -232,6 +233,8 @@ extract_intel_me()
 find_me()
 {
 	if [ -f "$_metmp" ]; then
+		# we found me.bin, so we stop searching
+
 		exit 1
 	elif [ -L "$1" ]; then
 		return 0
@@ -273,7 +276,8 @@ find_me()
 	fi
 
 	if [ -f "$_metmp" ]; then
-		# we found me.bin
+		# we found me.bin, so we stop searching
+
 		exit 1
 	else
 		# if the subshell does exit 1, we found me.bin, so exit 1
@@ -351,6 +355,7 @@ extract_kbc1126ec_dump()
 extract_e6400vga()
 {
 	set +u +e
+
 	chkvars E6400_VGA_offset E6400_VGA_romname
 
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
@@ -391,6 +396,7 @@ copytb()
 	if [ -f "$1" ] && [ ! -L "$1" ]; then
 		x_ dd if=/dev/null of="$1" bs=1 seek=$TBFW_size
 		x_ mv "$1" "$_pre_dest"
+
 		return 1
 	fi
 }
@@ -480,6 +486,7 @@ prep()
 	# Remove the prefix and 1-byte pad
 	if [ "${_xromname#"$vfix"}" != "$_xromname" ] \
 	    && [ "$nuke" != "nuke" ]; then
+
 		unpad_one_byte "$_xrom"
 		x_ mv "$_xrom" "$_xromnew"
 
@@ -490,10 +497,16 @@ prep()
 		( mksha512 "$_xrom" "vendorhashes" ) || err; :
 	fi
 
-	add_vfiles "$_xrom" || return 1 # we still change the MAC if needed
+	if ! add_vfiles "$_xrom"; then
+		# no need to insert files. we will later
+		# still process MAC addresses as required
+
+		return 1
+	fi
 
 	if [ "$nuke" = "nuke" ]; then
-		pad_one_byte "$_xrom" && x_ mv "$_xrom" "$_xromnew"
+		pad_one_byte "$_xrom"
+		x_ mv "$_xrom" "$_xromnew"
 	fi
 }
 
@@ -513,9 +526,11 @@ add_vfiles()
 
 	if [ "$has_hashes" != "y" ] && [ "$nuke" != "nuke" ]; then
 		printf "'%s' has no hash file. Skipping.\n" "$archive" 1>&2
+
 		return 1
 	elif [ "$has_hashes" = "y" ] && [ "$nuke" = "nuke" ]; then
 		printf "'%s' has a hash file. Skipping nuke.\n" "$archive" 1>&2
+
 		return 1
 	fi
 
@@ -599,7 +614,6 @@ vfile()
 	fi
 
 	xchanged="y"
-	:
 }
 
 # must be called from a subshell

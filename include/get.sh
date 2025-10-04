@@ -212,6 +212,7 @@ try_fetch_file()
 		return 1
 	elif bad_checksum "$6" "$cached"; then
 		x_ rm -f "$cached"
+
 		return 1
 	fi
 
@@ -221,6 +222,7 @@ try_fetch_file()
 
 	if bad_checksum "$6" "$5"; then
 		x_ rm -f "$5"
+
 		return 1
 	elif [ ! -f "$5" ]; then
 		return 1

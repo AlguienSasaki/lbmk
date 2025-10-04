@@ -52,10 +52,12 @@ extract_mrc()
 extract_partition()
 {
 	printf "Extracting ROOT-A partition\n"
+
 	ROOTP=$( printf "unit\nB\nprint\nquit\n" | \
 	    parted "${1%.zip}" 2>/dev/null | grep "ROOT-A" )
 
 	START=$(( $( echo $ROOTP | cut -f2 -d\ | tr -d "B" ) ))
+
 	SIZE=$(( $( echo $ROOTP | cut -f4 -d\ | tr -d "B" ) ))
 
 	x_ dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \

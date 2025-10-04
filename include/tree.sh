@@ -57,6 +57,7 @@ trees()
 
 		if [ -z "${OPTARG+x}" ]; then
 			shift 1
+
 			break
 		fi
 
@@ -70,7 +71,9 @@ trees()
 		err "missing flag ($flags)" "trees" "$@"
 	elif [ -z "$project" ]; then
 		fx_ "x_ ./mk $_f" x_ ls -1 config/git
+
 		return 1
+
 	elif [ ! -f "config/git/$project/pkg.cfg" ]; then
 		err "config/git/$project/pkg.cfg missing" "trees" "$@"
 	fi
@@ -94,7 +97,9 @@ trees()
 
 	targets="$*"
 	cmd="build_targets $targets"
-	singletree "$project" && cmd="build_project"
+	if singletree "$project"; then
+		cmd="build_project"
+	fi
 
 	remkdir "${tmpgit%/*}"
 }
@@ -104,14 +109,18 @@ build_project()
 	if ! configure_project "$configdir"; then
 		return 0
 	elif [ -f "$listfile" ]; then
-		$dry elfcheck || return 0; :
+		if ! $dry elfcheck; then
+			return 0
+		fi
 	fi
 
 	if [ "$mode" = "distclean" ]; then
 		mode="clean"
 	fi
 
-	run_make_command || return 0
+	if ! run_make_command; then
+		return 0
+	fi
 
 	if [ -z "$mode" ]; then
 		$dry copy_elf; :
@@ -134,7 +143,9 @@ build_targets()
 
 		if [ "$x" = "list" ]; then
 			x_ ls -1 "config/$project"
+
 			listfile=""
+
 			break
 		fi
 
@@ -182,8 +193,7 @@ handle_defconfig()
 
 		if [ -z "$mode" ]; then
 			for _xarch in $xarch; do
-				if [ -n "$_xarch" ]
-				then
+				if [ -n "$_xarch" ]; then
 					$dry check_cross_compiler "$_xarch"
 				fi
 			done; :
@@ -421,14 +431,19 @@ check_cross_compiler()
 	fi
 
 	if [ -f "$xgccfile" ]; then
-		return 0 # a build already exists
+		# skip the build, because a build already exists:
+
+		return 0
 	fi
 
 	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
+
+	# this tells subsequent runs that the build was already done:
 	x_ touch "$xgccfile"
 
-	remkdir "$xbtmp/gnupath" # reset hostcc
+	# reset hostcc in PATH:
+	remkdir "$xbtmp/gnupath"
 }
 
 # fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
@@ -538,13 +553,16 @@ gnu_setver()
 check_defconfig()
 {
 	if [ ! -f "$defconfig" ]; then
-		$dry err "$project/$target: missing defconfig" \
-		    "check_defconfig" "$@"
+		$dry err "$project/$target: no config" "check_defconfig" "$@"
 	fi
 
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
-	$dry elfcheck || return 1; : # skip build if a previous one exists
+	# skip build if a previous one exists:
+
+	if ! $dry elfcheck; then
+		return 1
+	fi
 }
 
 elfcheck()
@@ -556,8 +574,9 @@ elfcheck()
 
 handle_makefile()
 {
-	$dry check_makefile "$srcdir" && \
-	    $dry x_ make -C "$srcdir" $cleanargs clean
+	if $dry check_makefile "$srcdir"; then
+		$dry x_ make -C "$srcdir" $cleanargs clean
+	fi
 
 	if [ -f "$defconfig" ]; then
 		x_ cp "$defconfig" "$srcdir/.config"
@@ -588,9 +607,14 @@ run_make_command()
 		x_ $premake
 	fi
 
-	$dry check_cmake "$srcdir" && [ -z "$mode" ] && \
-	    $dry check_autoconf "$srcdir"
-	$dry check_makefile "$srcdir" || return 1
+	if $dry check_cmake "$srcdir"; then
+		if [ -z "$mode" ]; then
+			$dry check_autoconf "$srcdir"
+		fi
+	fi
+	if ! $dry check_makefile "$srcdir"; then
+		return 1
+	fi
 
 	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
@@ -598,7 +622,9 @@ run_make_command()
 		x_ $mkhelper
 	fi
 
-	check_makefile "$srcdir" || return 0
+	if ! check_makefile "$srcdir"; then
+		return 0
+	fi
 
 	if [ "$mode" = "clean" ]; then
 		$dry make -C "$srcdir" $cleanargs distclean || \
@@ -609,8 +635,11 @@ run_make_command()
 check_cmake()
 {
 	if [ -n "$cmakedir" ]; then
-		$dry check_makefile "$1" || cmake -B "$1" \
-		    "$1/$cmakedir" || $dry x_ check_makefile "$1"
+		if ! $dry check_makefile "$1"; then
+			if ! cmake -B "$1" "$1/$cmakedir"; then
+				$dry x_ check_makefile "$1"
+			fi
+		fi
 		$dry x_ check_makefile "$1"; :
 	fi
 }
@@ -637,6 +666,7 @@ check_makefile()
 {
 	if [ ! -f "$1/Makefile" ] && [ ! -f "$1/makefile" ] && \
 	    [ ! -f "$1/GNUmakefile" ]; then
+
 		return 1
 	fi
 }

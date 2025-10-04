@@ -27,6 +27,7 @@ xbmk_init()
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
+
 		exit 0
 	fi
 
@@ -353,7 +354,9 @@ pybin()
 
 		if [ -e "$pypath" ] && [ ! -d "$pypath" ] && \
 		    [ -x "$pypath" ]; then
+
 			printf "%s\n" "$pypath"
+
 			return 0
 		fi
 	fi
@@ -363,7 +366,9 @@ pybin()
 	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
 		if [ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
 		    [ -x "$pypath/$1" ]; then
+
 			printf "%s/%s\n" "$pypath" "$1"
+
 			return 0
 		fi
 	done && return 1

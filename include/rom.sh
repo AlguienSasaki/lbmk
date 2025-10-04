@@ -12,11 +12,11 @@ buildser()
 {
 	if [ "$1" = "pico" ]; then
 		x_ cmake -DPICO_BOARD="$2" \
-		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc" && \
-		    x_ cmake --build "$sersrc/build"
+		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc"
+		x_ cmake --build "$sersrc/build"
 	elif [ "$1" = "stm32" ]; then
-		x_ make -C "$sersrc" libopencm3-just-make \
-		    BOARD=$2 && x_ make -C "$sersrc" BOARD=$2
+		x_ make -C "$sersrc" libopencm3-just-make BOARD=$2
+		x_ make -C "$sersrc" BOARD=$2
 	fi
 
 	x_ mkdir -p "bin/serprog_$1"
@@ -106,6 +106,7 @@ check_coreboot_util()
 		# TODO: is this rm command needed?
 
 		x_ rm -Rf "$utilelfdir"
+
 		return 0
 	elif [ -n "$mode" ] || [ -f "$utilelfdir/$1" ]; then
 		return 0
@@ -341,12 +342,13 @@ mkseagrub()
 add_uboot()
 {
 	if [ "$displaymode" = "txtmode" ]; then
-		printf "cb/%s: Cannot use U-Boot in text mode\n" \
-		    "$target" 1>&2
+		printf "cb/%s: Can't use U-Boot in text mode\n" "$target" 1>&2
+
 		return 0
 	elif [ "$initmode" = "normal" ]; then
-		printf "cb/%s: Cannot use U-Boot in normal initmode\n" \
+		printf "cb/%s: Can't use U-Boot in normal initmode\n" \
 		    "$target" 1>&2
+
 		return 0
 	fi
 

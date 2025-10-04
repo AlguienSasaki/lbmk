@@ -58,7 +58,9 @@ inject()
 
 	check_release
 	if check_target; then
-		patch_release || return 0
+		if ! patch_release; then
+			return 0
+		fi
 	fi
 	if [ "$xchanged" = "y" ]; then
 		remktar
@@ -141,6 +143,7 @@ patch_release()
 		if e "$tmpromdir/$_hashes" f; then
 			has_hashes="y"
 			hashfile="$_hashes"
+
 			break
 		fi
 	done
@@ -159,7 +162,9 @@ readkconfig()
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 	eval "`setcfg "$xbtmp/cbcfg" 1`"
 
-	setvfile "$@" || return 1; :
+	if ! setvfile "$@"; then
+		return 1
+	fi
 }
 
 scankconfig()

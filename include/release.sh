@@ -10,7 +10,8 @@ release()
 
 	reldir="release"
 
-	while getopts m: option; do
+	while getopts m: option
+	do
 		if [ -z "$OPTARG" ]; then
 			err "empty argument not allowed" "release" "$@"
 		fi

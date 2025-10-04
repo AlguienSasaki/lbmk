@@ -92,12 +92,16 @@ setvars()
 
 	if [ $# -lt 2 ]; then
 		printf "err \"setvars: too few args\\n\""
+
 		return 0
 	else
 		val="$1"
+
 		shift 1
+
 		while [ $# -gt 0 ]; do
 			printf "%s=\"%s\"\n" "$1" "$val"
+
 			shift 1
 		done
 	fi
@@ -145,6 +149,7 @@ findpath()
 		fi
 
 		printf "%s\n" "$found"
+
 		shift 1
 	done
 }
@@ -184,7 +189,9 @@ fx_()
 	xfile="`mktemp || err "can't create tmpfile"`" || \
 	    err "can't make tmpfile" "fx_" "$@"
 
-	x_ rm -f "$xfile" && x_ touch "$xfile"
+	x_ rm -f "$xfile"
+	x_ touch "$xfile"
+
 	shift 1
 
 	"$@" 2>/dev/null | sort 1>"$xfile" 2>/dev/null || \
@@ -197,7 +204,12 @@ fx_()
 dx_()
 {
 	xchk dx_ "$@"
-	[ ! -f "$2" ] || while read -r fx; do
+
+	if [ ! -f "$2" ]; then
+		return 0
+	fi
+
+	while read -r fx; do
 		$1 "$fx" || return 1; :
 	done < "$2" || err "cannot read '$2'" "dx_" "$@"; :
 }
@@ -227,13 +239,13 @@ err()
 	if [ $# -eq 1 ]; then
 		printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
 	elif [ $# -gt 1 ]; then
-		printf "ERROR %s: %s: in command/function with arguments: " \
-		    "$0" "$1" 1>&2
+		printf "ERROR %s: %s: in command with args: " "$0" "$1" 1>&2
 		shift 1
 		xprintf "$@" 1>&2
 	else
 		printf "ERROR, but no arguments provided to err\n" 1>&2
 	fi
+
 	exit 1
 }
 
@@ -242,8 +254,11 @@ xprintf()
 	xprintfargs=0
 	while [ $# -gt 0 ]; do
 		printf "\"%s\"" "$1"
+		if [ $# -gt 1 ]; then
+			printf " "
+		fi
+
 		xprintfargs=1
-		[ $# -gt 1 ] && printf " "; :
 		shift 1
 	done
 	if [ $xprintfargs -gt 0 ]; then
