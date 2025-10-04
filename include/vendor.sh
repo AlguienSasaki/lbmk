@@ -671,11 +671,11 @@ vfile()
 
 	cbfsname="$1"
 	_dest="${2##*../}"
-	_t="$3"
+	blobtype="$3"
 
 	_offset=""
 
-	if [ "$_t" = "fsp" ] && [ $# -gt 3 ]; then
+	if [ "$blobtype" = "fsp" ] && [ $# -gt 3 ]; then
 		_offset="$4"
 	elif [ $# -gt 3 ] && _offset="-b $4" && [ -z "$4" ]; then
 		err "$rom: offset given but empty (undefined)" "vfile" "$@"
@@ -687,20 +687,22 @@ vfile()
 
 	if [ "$cbfsname" = "IFD" ]; then
 		if [ "$nuke" = "nuke" ]; then
-			x_ "$ifdtool" $ifdprefix --nuke $_t "$rom" -O "$rom"
+			x_ "$ifdtool" $ifdprefix --nuke $blobtype "$rom" \
+			    -O "$rom"
 		else
-			x_ "$ifdtool" $ifdprefix -i $_t:$_dest "$rom" -O "$rom"
+			x_ "$ifdtool" $ifdprefix -i $blobtype:$_dest "$rom" \
+			    -O "$rom"
 		fi
 	elif [ "$nuke" = "nuke" ]; then
 		x_ "$cbfstool" "$rom" remove -n "$cbfsname"
-	elif [ "$_t" = "stage" ]; then # the only stage we handle is refcode
+	elif [ "$blobtype" = "stage" ]; then # the only stage we handle is refcode
 		x_ rm -f "$xbtmp/refcode"
 		x_ "$rmodtool" -i "$_dest" -o "$xbtmp/refcode"
 		x_ "$cbfstool" "$rom" add-stage -f "$xbtmp/refcode" \
 		    -n "$cbfsname" -t stage
 	else
 		x_ "$cbfstool" "$rom" add -f "$_dest" -n "$cbfsname" \
-		    -t $_t $_offset
+		    -t $blobtype $_offset
 	fi
 
 	xchanged="y"
