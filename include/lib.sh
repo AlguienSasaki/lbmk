@@ -162,6 +162,13 @@ unpad_one_byte()
 	x_ mv "$unpaddedfile" "$1"
 }
 
+build_sbase()
+{
+	if [ ! -f "$sha512sum" ]; then
+		x_ make -C "$xbmkpwd/util/sbase"
+	fi
+}
+
 fx_()
 {
 	xchk fx_ "$@"

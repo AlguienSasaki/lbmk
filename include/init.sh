@@ -35,11 +35,14 @@ checkvarschk=""
 is_child=""
 basetmp=""
 
+sha512sum="util/sbase/sha512sum"
+
 xbmk_init()
 {
 	xbmkpwd="`pwd || err "Cannot generate PWD"`" || err "!" xbmk_init "$@"
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
+	sha512sum="$xbmkpwd/util/sbase/sha512sum"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"

@@ -313,7 +313,8 @@ bad_checksum()
 		return 0
 	fi
 
-	csum="$(x_ sha512sum "$2" | awk '{print $1}')" || \
+	build_sbase
+	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \
 	    err "!sha512 '$2' $1" bad_checksum "$@"
 
 	if [ "$csum" = "$1" ]; then

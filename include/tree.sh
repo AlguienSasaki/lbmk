@@ -442,11 +442,13 @@ project_up_to_date()
 		    "$@"
 	fi
 
-	fx_ "x_ sha512sum" find "$@" -type f -not -path "*/.git*/*" | awk \
-	    '{print $1}' > "$xbtmp/tmp.hash" || err "!h $project $hashdir" \
+	build_sbase
+	fx_ "x_ util/sbase/sha512sum" find "$@" -type f -not -path \
+	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
+	    err "!h $project $hashdir" \
 	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 
-	hash="$(x_ sha512sum "$xbtmp/tmp.hash" | awk '{print $1}' || \
+	hash="$(x_ "$sha512sum" "$xbtmp/tmp.hash" | awk '{print $1}' || \
 	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'" \
 	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
 

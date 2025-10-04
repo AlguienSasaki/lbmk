@@ -602,11 +602,13 @@ prep()
 
 mksha512()
 {
+	build_sbase
+
 	if [ "${1%/*}" != "$1" ]; then
 		x_ cd "${1%/*}"
 	fi
 
-	x_ sha512sum ./"${1##*/}" >> "$2" || \
+	x_ "$sha512sum" ./"${1##*/}" >> "$2" || \
 	    err "!sha512sum \"$1\" > \"$2\"" "mksha512" "$@"
 }
 
@@ -711,11 +713,13 @@ vfile()
 # must be called from a subshell
 check_vendor_hashes()
 {
+	build_sbase
+
 	x_ cd "$tmpromdir"
 
 	if [ "$has_hashes" != "n" ] && [ "$nuke" != "nuke" ]; then
-		sha512sum --status -c "$hashfile" || x_ sha1sum --status \
-		    -c "$hashfile"
+		( x_ "$sha512sum" -c "$hashfile" ) || \
+		    x_ sha1sum -c "$hashfile"
 	fi
 
 	x_ rm -f "$hashfile"
