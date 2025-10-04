@@ -23,13 +23,13 @@ vendir="vendorfiles"
 appdir="$vendir/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 
-# lbmk-specific extension to the "cv" variable (not suitable for cbmk)
-cvchk="CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
+# lbmk-specific extension to the "checkvars" variable (not suitable for cbmk)
+checkvarschk="CONFIG_INCLUDE_SMSC_SCH5545_EC_FW CONFIG_HAVE_MRC CONFIG_HAVE_ME_BIN \
     CONFIG_LENOVO_TBFW_BIN CONFIG_VGA_BIOS_FILE CONFIG_FSP_M_FILE \
     CONFIG_FSP_S_FILE CONFIG_KBC1126_FW1 CONFIG_KBC1126_FW2"
 
-# lbmk-specific extensions to the "cv" variable (not suitable for cbmk)
-cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_FSP_FULL_FD \
+# lbmk-specific extensions to the "checkvars" variable (not suitable for cbmk)
+checkvarsxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_FSP_FULL_FD \
     CONFIG_KBC1126_FW1_OFFSET CONFIG_KBC1126_FW2_OFFSET CONFIG_FSP_USE_REPO \
     CONFIG_VGA_BIOS_ID CONFIG_BOARD_DELL_E6400 CONFIG_FSP_S_CBFS \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_FSP_FD_PATH \
@@ -490,7 +490,7 @@ extract_fsp()
 
 setvfile()
 {
-	[ -n "$vcfg" ] && for c in $cvchk; do
+	[ -n "$vcfg" ] && for c in $checkvarschk; do
 		vcmd="[ \"\${$c}\" = \"/dev/null\" ] || [ -z \"\${$c}\" ]"
 		eval "$vcmd || return 0"
 

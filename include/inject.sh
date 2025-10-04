@@ -9,12 +9,12 @@ tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvm="util/nvmutil/nvm"
 ifdtool="elf/coreboot/default/ifdtool"
 
-cv="CONFIG_GBE_BIN_PATH"
-if [ -n "$cvxbmk" ]; then
-	cv="$cv $cvxbmk"
+checkvars="CONFIG_GBE_BIN_PATH"
+if [ -n "$checkvarsxbmk" ]; then
+	checkvars="$checkvars $checkvarsxbmk"
 fi
-if [ -n "$cvchk" ]; then
-	cv="$cv $cvchk"
+if [ -n "$checkvarschk" ]; then
+	checkvars="$checkvars $checkvarschk"
 fi
 
 archive=""
@@ -27,7 +27,7 @@ tmpromdir=""
 board=""
 xchanged=""
 
-eval "`setvars "" $cv`"
+eval "`setvars "" $checkvars`"
 
 inject()
 {
@@ -188,7 +188,7 @@ readkconfig()
 
 scankconfig()
 {
-	for cbc in $cv; do
+	for cbc in $checkvars; do
 		grep "$cbc" "$1" 2>/dev/null 1>>"$xbtmp/cbcfg" || :
 	done
 }
