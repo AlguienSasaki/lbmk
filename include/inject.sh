@@ -115,7 +115,9 @@ check_target()
 
 	boarddir="$cbcfgsdir/$board"
 
-	eval "`setcfg "$boarddir/target.cfg"`"
+	. "$boarddir/target.cfg" || \
+	    err "Can't read '$boarddir/target.cfg'" "check_target" "$@"
+
 	chkvars tree
 
 	x_ ./mk -d coreboot "$tree"
@@ -160,7 +162,13 @@ readkconfig()
 	x_ rm -f "$xbtmp/cbcfg"
 
 	fx_ scankconfig x_ find "$boarddir/config" -type f
-	eval "`setcfg "$xbtmp/cbcfg" 1`"
+
+	if e "$xbtmp/cbcfg" f missing; then
+		return 1
+	fi
+
+	. "$xbtmp/cbcfg" || \
+	    err "Can't read '$xbtmp/cbcfg'" "readkconfig" "$@"
 
 	if ! setvfile "$@"; then
 		return 1

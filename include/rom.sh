@@ -45,7 +45,12 @@ mkpayload_grub()
 	grub_modules=""
 	grub_install_modules=""
 
-	$dry eval "`setcfg "$grubdata/module/$tree"`"
+	if [ "$dry" = ":" ]; then
+		return 0
+	fi
+
+	. "$grubdata/module/$tree" || \
+	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"
 
 	$dry x_ rm -f "$srcdir/grub.elf"
 

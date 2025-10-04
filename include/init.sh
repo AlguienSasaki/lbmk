@@ -56,7 +56,8 @@ xbmkpkg()
 		reinstall="$3"
 	fi
 
-	eval "`setcfg "config/dependencies/$2"`"
+	. "config/dependencies/$2" || \
+	    err "Can't read 'config/dependencies/$2'" "xbmkpkg" "$@"
 
 	chkvars pkg_add pkglist
 	x_ $pkg_add $pkglist

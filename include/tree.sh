@@ -222,7 +222,9 @@ configure_project()
 	# globally initialise all variables for a source tree / target:
 
 	if e "$datadir/mkhelper.cfg" f; then
-		eval "`setcfg "$datadir/mkhelper.cfg"`"
+		. "$datadir/mkhelper.cfg" || \
+		    err "Can't read '$datadir/mkhelper.cfg'" \
+		    "configure_project" "$@"
 	fi
 
 	# override target/tree specific variables from per-target config:
@@ -241,7 +243,8 @@ configure_project()
 		rev=""
 		tree=""
 
-		eval "`setcfg "$_tcfg"`"
+		. "$_tcfg" || \
+		    err "Can't read '$_tcfg'" "configure_project" "$@"
 
 		if [ "$_f" = "-d" ]; then
 			build_depend="" # dry run

@@ -417,7 +417,12 @@ setvfile()
 
 getvfile()
 {
-	eval "`setcfg "config/vendor/$vcfg/pkg.cfg" 1`"
+	if e "config/vendor/$vcfg/pkg.cfg" f missing; then
+		return 1
+	fi
+
+	. "config/vendor/$vcfg/pkg.cfg" || \
+	    err "Can't read 'config/vendor/$vcfg/pkg.cfg'" "getvfile" "$@"
 
 	bootstrap
 

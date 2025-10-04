@@ -107,16 +107,6 @@ setvars()
 	fi
 }
 
-setcfg()
-{
-	if [ $# -gt 1 ]; then
-		printf "e \"%s\" f missing && return %s;\n" "$1" "$2"
-	else
-		printf "e \"%s\" f not && err \"Missing config '$1'\";\n" "$1"
-	fi
-	printf ". \"%s\" || err \"Could not read config '$1'\";\n" "$1"
-}
-
 chkvars()
 {
 	while [ $# -gt 0 ]; do

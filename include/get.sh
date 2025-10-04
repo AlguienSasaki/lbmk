@@ -29,7 +29,9 @@ fetch_project()
 {
 	xtree=""
 
-	eval "`setcfg "config/git/$project/pkg.cfg"`"
+	. "config/git/$project/pkg.cfg" || \
+	    err "Can't read config 'config/git/$project/pkg.cfg'" \
+	    "fetch_project" "@"
 
 	chkvars url bkup_url
 
@@ -90,7 +92,11 @@ fetch_submodule()
 	subcurl_bkup=""
 	st=""
 
-	eval "`setcfg "$mcfgdir/module.cfg" 0`"
+	if e "$mcfgdir/module.cfg" f missing; then
+		return 0
+	fi
+	. "$mcfgdir/module.cfg" || \
+	    err "Can't read '$mcfgdir/module.cfg'" "fetch_submodules" "$@"
 
 	if [ -n "$subgit" ] || [ -n "$subgit_bkup" ]; then
 		st="$st git"
