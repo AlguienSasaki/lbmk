@@ -27,7 +27,7 @@ mkhelper=""
 autoconfargs=""
 listfile=""
 autogenargs=""
-btype=""
+buildtype=""
 rev=""
 build_depend=""
 gccdir=""
@@ -260,7 +260,7 @@ configure_project()
 	xtree=""
 	postmake=""
 	makeargs=""
-	btype=""
+	buildtype=""
 	mkhelper=""
 	bootstrapargs=""
 	premake=""
@@ -273,7 +273,7 @@ configure_project()
 	_tcfg="$1/target.cfg"
 
 	if [ ! -f "$_tcfg" ]; then
-		btype="auto"
+		buildtype="auto"
 	fi
 
 	# globally initialise all variables for a source tree / target:
@@ -333,7 +333,7 @@ configure_project()
 	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]; then
 		return 1
 	fi
-	if [ -n "$btype" ] && [ "${mode%config}" != "$mode" ]; then
+	if [ -n "$buildtype" ] && [ "${mode%config}" != "$mode" ]; then
 		return 1
 	fi
 
