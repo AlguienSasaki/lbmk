@@ -347,4 +347,6 @@ tmpclone()
 
 	done < "$tmpclone_patchlist" || \
 	    err "Can't read '$tmpclone_patchlist'" "tmpclone" "$@"
+
+	x_ rm -f "$tmpclone_patchlist"
 }
