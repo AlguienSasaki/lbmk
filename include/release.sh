@@ -2,7 +2,11 @@
 
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" reldir reldest vdir rsrc relmode`"
+reldir=""
+reldest=""
+vdir=""
+rsrc=""
+relmode=""
 
 release()
 {

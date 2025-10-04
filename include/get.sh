@@ -3,8 +3,15 @@
 # Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "`setvars "" loc url bkup_url subcurl subhash subgit subgit_bkup \
-    depend subcurl_bkup`"
+depend=""
+loc=""
+url=""
+bkup_url=""
+subgit=""
+subgit_bkup=""
+subcurl=""
+subcurl_bkup=""
+subhash=""
 
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
@@ -76,8 +83,12 @@ fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
 
-	eval \
-	    "`setvars "" subhash subgit subgit_bkup subcurl subcurl_bkup st`"
+	subhash=""
+	subgit=""
+	subgit_bkup=""
+	subcurl=""
+	subcurl_bkup=""
+	st=""
 
 	eval "`setcfg "$mcfgdir/module.cfg" 0`"
 
