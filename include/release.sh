@@ -76,6 +76,8 @@ prep_release()
 
 prep_release_src()
 {
+	x_ cp -R "util/sbase" "util/sbase2"
+
 	x_ ./mk -f
 
 	fx_ "x_ rm -Rf" x_ find . -name ".git"
@@ -103,7 +105,8 @@ prep_release_tarball()
 	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 
 
 	x_ rm -f "$rsrc/lock" "$rsrc/cache"
-	x_ rm -Rf "$rsrc/xbmkwd"
+	x_ rm -Rf "$rsrc/xbmkwd" "$rsrc/util/sbase"
+	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase"
 
 	(
 		x_ cd "${rsrc%/*}"
