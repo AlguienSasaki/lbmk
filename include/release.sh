@@ -92,7 +92,7 @@ nuke()
 	if [ -d "${r%/*}" ]; then
 		x_ cd "${r%/*}"
 
-		dx_ "eval [ -L \"\$fx\" ] || x_ rm -Rf" "$rsrc/$1"
+		dx_ "x_ rm -Rf" "$rsrc/$1"
 	fi
 }
 
