@@ -182,16 +182,27 @@ fetch()
 	remkdir "${_pre_dest%/*}" "$appdir"
 
 	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
-	if [ "$dl_type" = "fsp" ]; then
+	if [ "$dl_type" = "fsp" ]
+	then
 		dl="${dl##*../}"
 		_cdp="$dl"
-		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
-		[ -f "$_cdp" ] && dl="$_cdp"; :
+
+		if [ ! -f "$_cdp" ]; then
+			_cdp="$cbdir/$_cdp"
+		fi
+		if [ -f "$_cdp" ]; then
+			dl="$_cdp"
+		fi
 
 		dl_bkup="${dl_bkup##*../}"
 		_cdp="$dl_bkup"
-		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
-		[ -f "$_cdp" ] && dl_bkup="$_cdp"; :
+
+		if [ ! -f "$_cdp" ]; then
+			_cdp="$cbdir/$_cdp"
+		fi
+		if [ -f "$_cdp" ]; then
+			dl_bkup="$_cdp"; :
+		fi
 	fi
 
 	# download the file (from the internet) to extract from:
