@@ -188,7 +188,7 @@ fetch()
 		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
 		[ -f "$_cdp" ] && dl="$_cdp"; :
 
-		dl="${dl_bkup##*../}"
+		dl_bkup="${dl_bkup##*../}"
 		_cdp="$dl_bkup"
 		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
 		[ -f "$_cdp" ] && dl_bkup="$_cdp"; :
