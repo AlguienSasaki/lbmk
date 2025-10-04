@@ -33,7 +33,10 @@ fetch_project()
 	    err "Can't read config 'config/git/$project/pkg.cfg'" \
 	    "fetch_project" "@"
 
-	chkvars url bkup_url
+	if [ -z "$url" ] || [ -z "$bkup_url" ]; then
+		err "url/bkup_url not both set 'config/git/$project/pkg.cfg'" \
+		    "fetch_project" "$@"
+	fi
 
 	if [ -n "$xtree" ]; then
 		x_ ./mk -f coreboot "$xtree"
@@ -68,7 +71,9 @@ git_prep()
 	_patchdir="$3"
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
-	chkvars rev
+	if [ -z "$rev" ]; then
+		err "$project/$tree: rev not set" "git_prep" "$@"
+	fi
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
@@ -114,7 +119,16 @@ fetch_submodule()
 		return 0
 	fi
 
-	chkvars "sub${st}" "sub${st}_bkup" "subhash"
+	if [ "$st" = "curl" ]; then
+		if [ -z "$subcurl" ] || [ -z "$subcurl_bkup" ]; then
+			err "subcurl/subcurl_bkup not both set" \
+			    "fetch_submodule" "$@"
+		fi
+	elif [ -z "$subgit" ] || [ -z "$subgit_bkup" ]; then
+		err "subgit/subgit_bkup not both set" "fetch_submodule" "$@"
+	elif [ -z "$subhash" ]; then
+		err "subhash not set" "fetch_submodule" "$@"
+	fi
 
 	if [ "$st" = "git" ]; then
 		x_ rm -Rf "$tmpgit/$1"
@@ -314,5 +328,23 @@ tmpclone()
 {
 	( x_ git clone "$1" "$2" ) || return 1
 	( x_ git -C "$2" reset --hard "$3" ) || return 1
-	( fx_ "eval x_ git -C \"$2\" am" find "$4" -type f ) || return 1; :
+
+	if [ ! -d "$4" ]; then
+		return 0
+	fi
+
+	tmpclone_patchlist="`mktemp || err "Can't create tmp patch list"`" || \
+	    err "Can't create tmp patch list" "tmpclone" "$@"
+
+	x_ find "$4" -type f > "$tmpclone_patchlist" || \
+	    err "Can't write patch names to '$tmpclone_patchlist'" \
+	    "tmpclone" "$@"
+
+	while read -r tmpclone_patch; do
+
+		( x_ git -C "$2" am "$tmpclone_patch" ) || \
+		    err "Can't apply '$tmpclone_patch'" "tmpclone" "$@"; :
+
+	done < "$tmpclone_patchlist" || \
+	    err "Can't read '$tmpclone_patchlist'" "tmpclone" "$@"
 }

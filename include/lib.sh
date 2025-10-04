@@ -91,7 +91,6 @@ setvars()
 	_setvars=""
 
 	if [ $# -lt 2 ]; then
-		printf "err \"setvars: too few args\\n\""
 
 		return 0
 	else
@@ -105,14 +104,6 @@ setvars()
 			shift 1
 		done
 	fi
-}
-
-chkvars()
-{
-	while [ $# -gt 0 ]; do
-		eval "[ -n \"\${$1+x}\" ] || err \"$1 unset\""
-		eval "[ -n \"\$$1\" ] || err \"$1 unset\"; shift 1; :"
-	done; :
 }
 
 # return 0 if project is single-tree, otherwise 1

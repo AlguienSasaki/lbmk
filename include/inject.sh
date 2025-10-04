@@ -17,8 +17,17 @@ if [ -n "$cvchk" ]; then
 	cv="$cv $cvchk"
 fi
 
-eval "`setvars "" archive boarddir IFD_platform ifdprefix tree new_mac \
-    tmpromdir board xchanged $cv`"
+archive=""
+boarddir=""
+IFD_platform=""
+ifdprefix=""
+tree=""
+new_mac=""
+tmpromdir=""
+board=""
+xchanged=""
+
+eval "`setvars "" $cv`"
 
 inject()
 {
@@ -118,7 +127,9 @@ check_target()
 	. "$boarddir/target.cfg" || \
 	    err "Can't read '$boarddir/target.cfg'" "check_target" "$@"
 
-	chkvars tree
+	if [ -z "$tree" ]; then
+		err "tree unset in '$boarddir/target.cfg'" "check_target" "$@"
+	fi
 
 	x_ ./mk -d coreboot "$tree"
 

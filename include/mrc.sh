@@ -18,7 +18,10 @@ extract_refcode()
 	# and refcode is extracted from an image using the old scheme. we use
 	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16:
 
-	chkvars cbfstoolref
+	if [ -z "$cbfstoolref" ]; then
+		err "cbfstoolref not set" "extract_refcode" "$@"
+	fi
+
 	x_ mkdir -p "${_pre_dest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
@@ -35,7 +38,12 @@ extract_refcode()
 
 extract_mrc()
 {
-	chkvars "MRC_board" "CONFIG_MRC_FILE"
+	if [ -z "$MRC_board" ]; then
+		err "MRC_board unset" "extract_mrc" "$@"
+	elif [ -z "$CONFIG_MRC_FILE" ]; then
+		err "CONFIG_MRC_FILE unset" "extract_mrc" "$@"
+	fi
+
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 
 	(

@@ -12,12 +12,28 @@ projectname="libreboot"
 projectsite="https://libreboot.org/"
 
 if [ -z "${PATH+x}" ]; then
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
 
-eval "`setvars "" board reinstall versiondate aur_notice configdir xbmkpath \
-    datadir version xbmkpwd relname xbmkpwd xbtmp python pyver xbmklock \
-    cvxbmk cvchk is_child basetmp`"
+board=""
+reinstall=""
+version=""
+versiondate=""
+aur_notice=""
+configdir=""
+xbmkpath=""
+datadir=""
+xbmkpwd=""
+relname=""
+xbmkpwd=""
+xbtmp=""
+python=""
+pyver=""
+xbmklock=""
+cvxbmk=""
+cvchk=""
+is_child=""
+basetmp=""
 
 xbmk_init()
 {
@@ -59,7 +75,10 @@ xbmkpkg()
 	. "config/dependencies/$2" || \
 	    err "Can't read 'config/dependencies/$2'" "xbmkpkg" "$@"
 
-	chkvars pkg_add pkglist
+	if [ -z "$pkg_add" ] || [ -z "$pkglist" ]; then
+		err "pkg_add/pkglist not both set" "xbmkpkg" "$@"
+	fi
+
 	x_ $pkg_add $pkglist
 
 	if [ -n "$aur_notice" ]; then
@@ -78,11 +97,11 @@ xbmk_get_version()
 		    err "can't read versiondate" xbmk_get_version "$@"
 	fi
 
-	if [ -f ".version" ]; then
-		chkvars version
+	if [ -f ".version" ] && [ -z "$version" ]; then
+		err "version not set" "xbmk_get_version" "$@"
 	fi
-	if [ -f ".versiondate" ]; then
-		chkvars versiondate
+	if [ -f ".versiondate" ] && [ -z "$versiondate" ]; then
+		err "versiondate not set" "xbmk_get_version" "$@"
 	fi
 
 	if [ ! -e ".git" ] && [ ! -f ".version" ]; then
@@ -281,7 +300,10 @@ xbmk_set_version()
 		    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 	fi
 
-	chkvars version versiondate
+	if [ -z "$version" ] || [ -z "$versiondate" ]; then
+		err "version and/or versiondate unset" "xbmk_set_version" "$@"
+	fi
+
 	update_xbmkver "."
 
 	relname="$projectname-$version"

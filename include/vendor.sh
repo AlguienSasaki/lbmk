@@ -35,17 +35,65 @@ cvxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE CONFIG_FSP_FULL_FD \
     CONFIG_HAVE_REFCODE_BLOB CONFIG_REFCODE_BLOB_FILE CONFIG_FSP_FD_PATH \
     CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS"
 
-# lbmk-specific extensions; mostly used for downloading vendor files
-eval "`setvars "" has_hashes EC_hash DL_hash DL_url_bkup MRC_refcode_gbe vcfg \
-    E6400_VGA_DL_hash E6400_VGA_DL_url E6400_VGA_DL_url_bkup E6400_VGA_offset \
-    E6400_VGA_romname SCH5545EC_DL_url_bkup SCH5545EC_DL_hash _dest mecleaner \
-    kbc1126_ec_dump MRC_refcode_cbtree _dl SCH5545EC_DL_url EC_url rom DL_url \
-    nuke cbfstoolref FSPFD_hash _7ztest ME11bootguard ME11delta xromsize \
-    ME11version ME11sku ME11pch _me _metmp mfs TBFW_url_bkup TBFW_url cbdir \
-    TBFW_hash TBFW_size hashfile EC_url_bkup FSPM_bin_hash FSPS_bin_hash \
-    EC_FW1_hash EC_FW2_hash ME_bin_hash MRC_bin_hash REF_bin_hash _dl_bin \
-    SCH5545EC_bin_hash TBFW_bin_hash E6400_VGA_bin_hash _pre_dest \
-    XBMKmecleaner MEclean`"
+# lbmk-specific extensions; general variables
+_dest=""
+has_hashes=""
+vcfg=""
+mecleaner=""
+kbc1126_ec_dump=""
+_dl=""
+rom=""
+nuke=""
+_7ztest=""
+cbfstoolref=""
+_me=""
+_metmp=""
+mfs=""
+cbdir=""
+hashfile=""
+_dl_bin=""
+_pre_dest=""
+
+# lbmk-specific extensions; declared in pkg.cfg files in config/vendor/
+EC_hash=""
+DL_hash=""
+DL_url_bkup=""
+MRC_refcode_gbe=""
+E6400_VGA_DL_hash=""
+E6400_VGA_DL_url=""
+E6400_VGA_DL_url_bkup=""
+E6400_VGA_offset=""
+E6400_VGA_romname=""
+SCH5545EC_DL_url_bkup=""
+SCH5545EC_DL_hash=""
+MRC_refcode_cbtree=""
+SCH5545EC_DL_url=""
+EC_url=""
+DL_url=""
+FSPFD_hash=""
+ME11bootguard=""
+ME11delta=""
+xromsize=""
+ME11version=""
+ME11sku=""
+ME11pch=""
+TBFW_url_bkup=""
+TBFW_url=""
+TBFW_hash=""
+TBFW_size=""
+EC_url_bkup=""
+FSPM_bin_hash=""
+FSPS_bin_hash=""
+EC_FW1_hash=""
+EC_FW2_hash=""
+ME_bin_hash=""
+MRC_bin_hash=""
+REF_bin_hash=""
+SCH5545EC_bin_hash=""
+TBFW_bin_hash=""
+E6400_VGA_bin_hash=""
+XBMKmecleaner=""
+MEclean=""
 
 download()
 {
@@ -118,6 +166,10 @@ fetch()
 	dlop="$6"
 	binsum="$7"
 
+	if [ -z "$binsum" ]; then
+		err "binsum is empty (no checksum)" "fetch" "$@"
+	fi
+
 	_dl="$XBMK_CACHE/file/$dlsum" # internet file to extract from e.g. .exe
 	_dl_bin="$XBMK_CACHE/file/$binsum" # extracted file e.g. me.bin
 
@@ -130,11 +182,17 @@ fetch()
 	remkdir "${_pre_dest%/*}" "$appdir"
 
 	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
-	[ "$dl_type" = "fsp" ] && for _cdl in dl dl_bkup; do
-		eval "$_cdl=\"\${$_cdl##*../}\"; _cdp=\"\$$_cdl\""
-		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"
-		[ -f "$_cdp" ] && eval "$_cdl=\"$_cdp\""; :
-	done; :
+	if [ "$dl_type" = "fsp" ]; then
+		dl="${dl##*../}"
+		_cdp="$dl"
+		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
+		[ -f "$_cdp" ] && dl="$_cdp"; :
+
+		dl="${dl_bkup##*../}"
+		_cdp="$dl_bkup"
+		[ -f "$_cdp" ] || _cdp="$cbdir/$_cdp"; :
+		[ -f "$_cdp" ] && dl_bkup="$_cdp"; :
+	fi
 
 	# download the file (from the internet) to extract from:
 
@@ -162,7 +220,7 @@ fetch()
 	# some functions don't output directly to the given file, _pre_dest.
 	# instead, they put multiple files there, but we need the one matching
 	# the given hashsum. So, search for a matching file via bruteforce:
-	( fx_ "eval mkdst \"$binsum\"" x_ find "${_pre_dest%/*}" -type f ) || :
+	( fx_ "mkdst $binsum" x_ find "${_pre_dest%/*}" -type f ) || :
 
 	if ! bad_checksum "$binsum" "$_dest"; then
 		if [ -f "$_dest" ]; then
@@ -210,7 +268,13 @@ extract_intel_me()
 
 	if [ "$ME11bootguard" = "y" ]; then
 		mfs="--whitelist MFS"
-		chkvars ME11delta ME11version ME11sku ME11pch
+
+		if [ -z "$ME11delta" ] || [ -z "$ME11version" ] || \
+		    [ -z "$ME11sku" ] || [ -z "$ME11pch" ]; then
+			err "$board: ME11delta/ME11version/ME11sku/ME11pch" \
+			    "extract_intel_me" "$@"
+		fi
+
 		x_ ./mk -f deguard
 	fi
 
@@ -356,7 +420,10 @@ extract_e6400vga()
 {
 	set +u +e
 
-	chkvars E6400_VGA_offset E6400_VGA_romname
+	if [ -z "$E6400_VGA_offset" ] || [ -z "$E6400_VGA_romname" ]; then
+		err "$board: E6400_VGA_romname/E6400_VGA_offset unset" \
+		    "extract_e6400vga" "$@"
+	fi
 
 	tail -c +$E6400_VGA_offset "$_dl" | gunzip > "$appdir/bios.bin" || :
 
@@ -387,7 +454,10 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	chkvars TBFW_size
+	if [ -z "$TBFW_size" ]; then
+		err "$board: TBFW_size unset" "extract_tbfw" "$@"
+	fi
+
 	fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
 
@@ -410,8 +480,12 @@ extract_fsp()
 setvfile()
 {
 	[ -n "$vcfg" ] && for c in $cvchk; do
-		vcmd="[ \"\${$c}\" != \"/dev/null\" ] && [ -n \"\${$c}\" ]"
-		eval "$vcmd && getvfile \"\$@\" && return 0"
+		vcmd="[ \"\${$c}\" = \"/dev/null\" ] || [ -z \"\${$c}\" ]"
+		eval "$vcmd || return 0"
+
+		if getvfile "$@"; then
+			return 0
+		fi
 	done && return 1; :
 }
 

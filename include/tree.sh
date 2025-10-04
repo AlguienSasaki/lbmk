@@ -4,11 +4,48 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-eval "`setvars "" xarch srcdir premake gnatdir xlang mode makeargs elfdir cmd \
-    project target target_dir targets xtree _f release bootstrapargs mkhelper \
-    autoconfargs listfile autogenargs btype rev build_depend gccdir cmakedir \
-    defconfig postmake mkhelpercfg dry dest_dir mdir cleanargs gccver gccfull \
-    gnatver gnatfull do_make badhash badtghash tree forcepull`"
+xarch=""
+srcdir=""
+premake=""
+gnatdir=""
+xlang=""
+mode=""
+makeargs=""
+elfdir=""
+cmd=""
+project=""
+target=""
+target_dir=""
+targets=""
+xtree=""
+_f=""
+release=""
+bootstrapargs=""
+mkhelper=""
+autoconfargs=""
+listfile=""
+autogenargs=""
+btype=""
+rev=""
+build_depend=""
+gccdir=""
+cmakedir=""
+defconfig=""
+postmake=""
+mkhelpercfg=""
+dry=""
+dest_dir=""
+mdir=""
+cleanargs=""
+gccver=""
+gccfull=""
+gnatver=""
+gnatfull=""
+do_make=""
+badhash=""
+badtghash=""
+tree=""
+forcepull=""
 
 trees()
 {
@@ -172,7 +209,10 @@ handle_defconfig()
 		return 0
 	fi
 
-	chkvars tree
+	if [ -z "$tree" ]; then
+		err "$configdir: 'tree' not set" "handle_defconfig" "$@"
+	fi
+
 	srcdir="src/$project/$tree"
 
 	if [ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ]; then
@@ -209,9 +249,21 @@ handle_defconfig()
 
 configure_project()
 {
-	eval "`setvars "" cleanargs build_depend autoconfargs xtree postmake \
-	    makeargs btype mkhelper bootstrapargs premake release xlang xarch \
-	    badhash badtghash`"
+	cleanargs=""
+	build_depend=""
+	autoconfargs=""
+	xtree=""
+	postmake=""
+	makeargs=""
+	btype=""
+	mkhelper=""
+	bootstrapargs=""
+	premake=""
+	release=""
+	xlang=""
+	xarch=""
+	badhash=""
+	badtghash=""
 
 	_tcfg="$1/target.cfg"
 
