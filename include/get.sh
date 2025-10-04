@@ -336,7 +336,7 @@ tmpclone()
 	tmpclone_patchlist="`mktemp || err "Can't create tmp patch list"`" || \
 	    err "Can't create tmp patch list" "tmpclone" "$@"
 
-	x_ find "$4" -type f > "$tmpclone_patchlist" || \
+	x_ find "$4" -type f | sort > "$tmpclone_patchlist" || \
 	    err "Can't write patch names to '$tmpclone_patchlist'" \
 	    "tmpclone" "$@"
 
