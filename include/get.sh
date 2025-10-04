@@ -81,7 +81,7 @@ git_prep()
 	fi
 
 	if [ "$_loc" != "${_loc%/*}" ]; then
-		x_ mkdir -p "${_loc%/*}"
+		x_ xbmkdir "${_loc%/*}"
 	fi
 	x_ mv "$tmpgit" "$_loc"
 }
@@ -198,7 +198,7 @@ try_fetch_git()
 	cached="${cached%.git}"
 	cached="$XBMK_CACHE/$cached"
 
-	x_ mkdir -p "${5%/*}" "${cached%/*}"
+	x_ xbmkdir "${5%/*}" "${cached%/*}"
 
 	if ! try_$2 "$cached" "$@"; then
 		return 1
@@ -221,7 +221,7 @@ try_fetch_file()
 	cached="file/$6"
 	cached="$XBMK_CACHE/$cached"
 
-	x_ mkdir -p "${5%/*}" "${cached%/*}"
+	x_ xbmkdir "${5%/*}" "${cached%/*}"
 
 	if bad_checksum "$6" "$cached" 2>/dev/null; then
 		x_ rm -f "$cached"
@@ -284,7 +284,7 @@ try_git()
 	if [ ! -d "$gitdest" ]; then
 		( x_ git clone "$2" "$tmpgitcache" ) || return 1
 
-		x_ mkdir -p "${gitdest%/*}"
+		x_ xbmkdir "${gitdest%/*}"
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 

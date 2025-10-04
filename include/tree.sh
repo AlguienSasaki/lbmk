@@ -432,7 +432,7 @@ project_up_to_date()
 
 	shift 3
 
-	x_ mkdir -p "$XBMK_CACHE/$hashdir"
+	x_ xbmkdir "$XBMK_CACHE/$hashdir"
 
 	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
 		read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" \
@@ -485,7 +485,7 @@ check_cross_compiler()
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
-	x_ mkdir -p "elf/coreboot/$tree" # TODO: is this needed?
+	x_ xbmkdir "elf/coreboot/$tree" # TODO: is this needed?
 
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
 	export CROSS_COMPILE="${xarch% *}-"
@@ -748,7 +748,7 @@ check_makefile()
 copy_elf()
 {
 	if [ -f "$listfile" ]; then
-		x_ mkdir -p "$dest_dir"
+		x_ xbmkdir "$dest_dir"
 	fi
 
 	if [ -f "$listfile" ]; then

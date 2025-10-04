@@ -8,12 +8,6 @@
 cbfstool="elf/coreboot/default/cbfstool"
 rmodtool="elf/coreboot/default/rmodtool"
 
-remkdir()
-{
-	x_ rm -Rf "$@"
-	x_ mkdir -p "$@"
-}
-
 mkrom_tarball()
 {
 	update_xbmkver "$1"
@@ -58,7 +52,7 @@ mktarball()
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 
 	if [ "${2%/*}" != "$2" ]; then
-		x_ mkdir -p "${2%/*}"
+		x_ xbmkdir "${2%/*}"
 	fi
 
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || \
@@ -167,6 +161,24 @@ build_sbase()
 	if [ ! -f "$sha512sum" ]; then
 		x_ make -C "$xbmkpwd/util/sbase"
 	fi
+}
+
+remkdir()
+{
+	x_ rm -Rf "$@"
+	x_ xbmkdir "$@"
+}
+
+xbmkdir()
+{
+	while [ $# -gt 0 ]
+	do
+		if [ ! -d "$1" ]; then
+			x_ mkdir -p "$1"
+		fi
+
+		shift 1
+	done
 }
 
 fx_()

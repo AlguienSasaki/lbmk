@@ -217,7 +217,7 @@ fetch()
 		return 0
 	fi
 
-	x_ mkdir -p "${_dest%/*}"
+	x_ xbmkdir "${_dest%/*}"
 
 	if [ "$dl_type" != "fsp" ]; then
 		extract_archive "$_dl" "$appdir" || \
