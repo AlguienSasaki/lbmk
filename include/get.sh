@@ -27,7 +27,7 @@ fetch_targets()
 
 fetch_project()
 {
-	xtree=""
+	xgcctree=""
 
 	. "config/git/$project/pkg.cfg" || \
 	    err "Can't read config 'config/git/$project/pkg.cfg'" \
@@ -38,8 +38,8 @@ fetch_project()
 		    "fetch_project" "$@"
 	fi
 
-	if [ -n "$xtree" ]; then
-		x_ ./mk -f coreboot "$xtree"
+	if [ -n "$xgcctree" ]; then
+		x_ ./mk -f coreboot "$xgcctree"
 	fi
 	if [ -n "$depend" ]; then
 		for d in $depend ; do

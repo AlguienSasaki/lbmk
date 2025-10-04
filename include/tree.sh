@@ -20,7 +20,7 @@ project=""
 target=""
 target_dir=""
 targets=""
-xtree=""
+xgcctree=""
 release=""
 bootstrapargs=""
 mkhelper=""
@@ -257,7 +257,7 @@ configure_project()
 	cleanargs=""
 	build_depend=""
 	autoconfargs=""
-	xtree=""
+	xgcctree=""
 	postmake=""
 	makeargs=""
 	buildtype=""
@@ -469,8 +469,8 @@ check_cross_compiler()
 	if [ "$project" != "coreboot" ]; then
 		cbdir="src/coreboot/default"
 	fi
-	if [ -n "$xtree" ]; then
-		cbdir="src/coreboot/$xtree"
+	if [ -n "$xgcctree" ]; then
+		cbdir="src/coreboot/$xgcctree"
 	fi
 
 	xfix="${1%-*}"
