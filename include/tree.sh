@@ -4,6 +4,9 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
+# flag e.g. ./mk -b <-- mkflag would be "b"
+flag=""
+
 xarch=""
 srcdir=""
 premake=""
@@ -18,7 +21,6 @@ target=""
 target_dir=""
 targets=""
 xtree=""
-_f=""
 release=""
 bootstrapargs=""
 mkhelper=""
@@ -53,16 +55,16 @@ trees()
 
 	while getopts $flags option
 	do
-		if [ -n "$_f" ]; then
+		if [ -n "$flag" ]; then
 			err "only one flag is permitted" "trees" "$@"
 		fi
 
-		_f="$1"
+		flag="$1"
 
 		# the "mode" variable is affixed to a make command, example:
 		# ./mk -m coreboot does: make menuconfig -C src/coreboot/tree
 
-		case "$_f" in
+		case "$flag" in
 		-d)
 			# -d is similar to -b, except that
 			# a large number of operations will be
@@ -104,10 +106,10 @@ trees()
 		shift 2
 	done
 
-	if [ -z "$_f" ]; then
+	if [ -z "$flag" ]; then
 		err "missing flag ($flags)" "trees" "$@"
 	elif [ -z "$project" ]; then
-		fx_ "x_ ./mk $_f" x_ ls -1 config/git
+		fx_ "x_ ./mk $flag" x_ ls -1 config/git
 
 		return 1
 
@@ -222,9 +224,9 @@ handle_defconfig()
 
 	for y in "$target_dir/config"/*
 	do
-		if [ "$_f" != "-d" ] && [ ! -f "$y" ]; then
+		if [ "$flag" != "-d" ] && [ ! -f "$y" ]; then
 			continue
-		elif [ "$_f" != "-d" ]; then
+		elif [ "$flag" != "-d" ]; then
 			defconfig="$y"
 		fi
 
@@ -301,7 +303,7 @@ configure_project()
 		. "$_tcfg" || \
 		    err "Can't read '$_tcfg'" "configure_project" "$@"
 
-		if [ "$_f" = "-d" ]; then
+		if [ "$flag" = "-d" ]; then
 			build_depend="" # dry run
 		fi
 		if [ "$cmd" = "build_project" ]; then
