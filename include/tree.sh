@@ -372,8 +372,7 @@ project_up_to_date()
 	x_ mkdir -p "$XBMK_CACHE/$hashdir"
 
 	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
-		read -r old_hash < \
-		    "$XBMK_CACHE/$hashdir/$project$hashname" \
+		read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" \
 		    || err \
 		    "$hashdir: err '$XBMK_CACHE/$hashdir/$project$hashname'" \
 		    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" \

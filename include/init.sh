@@ -382,9 +382,11 @@ pybin()
 xbmk_git_init()
 {
 	for gitarg in "--global user.name" "--global user.email"; do
-		gitcmd="git config $gitarg"; $gitcmd 1>/dev/null 2>/dev/null \
-		    || err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
-		    "xbmk_git_init" "$@"
+		gitcmd="git config $gitarg"
+		if ! $gitcmd 1>/dev/null 2>/dev/null; then
+			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
+			    "xbmk_git_init" "$@"
+		fi
 	done
 
 	if [ -L ".git" ]; then
