@@ -25,7 +25,7 @@ buildser()
 
 copyps1bios()
 {
-	if [ "$dry" = ":" ]; then
+	if [ "$if_not_dry_build" = ":" ]; then
 		return 0
 	fi
 
@@ -45,16 +45,16 @@ mkpayload_grub()
 	grub_modules=""
 	grub_install_modules=""
 
-	if [ "$dry" = ":" ]; then
+	if [ "$if_not_dry_build" = ":" ]; then
 		return 0
 	fi
 
 	. "$grubdata/module/$tree" || \
 	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"
 
-	$dry x_ rm -f "$srcdir/grub.elf"
+	x_ rm -f "$srcdir/grub.elf"
 
-	$dry x_ "$srcdir/grub-mkstandalone" \
+	x_ "$srcdir/grub-mkstandalone" \
 	    --grub-mkimage="$srcdir/grub-mkimage" \
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
@@ -69,7 +69,9 @@ corebootpremake()
 		return 0
 	fi
 
-	$dry cook_coreboot_config
+	$if_not_dry_build \
+		cook_coreboot_config
+
 	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
@@ -131,7 +133,8 @@ coreboot_pad_one_byte()
 		return 0
 	fi
 
-	$dry pad_one_byte "$srcdir/build/coreboot.rom"
+	$if_not_dry_build \
+		pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 mkcorebootbin()
@@ -140,8 +143,11 @@ mkcorebootbin()
 		return 0
 	fi
 
-	$dry check_coreboot_util cbfstool
-	$dry check_coreboot_util ifdtool
+	$if_not_dry_build \
+		check_coreboot_util cbfstool
+
+	$if_not_dry_build \
+		check_coreboot_util ifdtool
 
 	for y in "$target_dir/config"/*; do
 		defconfig="$y"
@@ -175,8 +181,11 @@ mkcorebootbin_real()
 	fi
 	elfrom="$elfrom/coreboot.rom"
 
-	$dry x_ cp "$elfrom" "$tmprom"
-	$dry unpad_one_byte "$tmprom"
+	$if_not_dry_build \
+		x_ cp "$elfrom" "$tmprom"
+
+	$if_not_dry_build \
+		unpad_one_byte "$tmprom"
 
 	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
 	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ]
@@ -196,8 +205,9 @@ mkcorebootbin_real()
 		payload_seabios="y"
 	fi
 	if [ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ]; then
-		$dry err "$target: U-Boot(arm) and SeaBIOS/GRUB both enabled" \
-		    "mkcorebootbin_real" "$@"
+		$if_not_dry_build \
+			err "$target: U-Boot arm and SeaBIOS/GRUB both enabled" \
+			    "mkcorebootbin_real" "$@"
 	fi
 
 	if [ -z "$grub_scan_disk" ]; then
@@ -222,18 +232,21 @@ mkcorebootbin_real()
 		payload_grubsea="n"
 	fi
 
-	if $dry grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
+	if $if_not_dry_build grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
-			$dry add_seabios
+			$if_not_dry_build \
+				add_seabios
 		fi
 		if [ "$payload_uboot" = "arm64" ]; then
 			pname="uboot"
-			$dry add_uboot
+			$if_not_dry_build \
+				add_uboot
 		fi
 	else
 		pname="custom"
-		$dry cprom
+		$if_not_dry_build \
+			cprom
 	fi; :
 }
 
@@ -250,7 +263,8 @@ add_seabios()
 		# we must add u-boot first, because it's added as a flat
 		# binary at a specific offset for secondary program loader
 
-		$dry add_uboot
+		$if_not_dry_build \
+			add_uboot
 	fi
 
 	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
@@ -465,7 +479,11 @@ mkcoreboottar()
 {
 	if [ "$target" != "$tree" ] && [ "$XBMK_RELEASE" = "y" ] && \
 	    [ "$release" != "n" ]; then
-		$dry mkrom_tarball "bin/$target" && \
-		$dry x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke; :
+
+		$if_not_dry_build \
+			mkrom_tarball "bin/$target"
+
+		$if_not_dry_build \
+			x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke
 	fi
 }

@@ -33,7 +33,7 @@ cmakedir=""
 defconfig=""
 postmake=""
 mkhelpercfg=""
-dry=""
+if_not_dry_build=""
 dest_dir=""
 mdir=""
 cleanargs=""
@@ -66,11 +66,11 @@ trees()
 		-d)
 			# -d is similar to -b, except that
 			# a large number of operations will be
-			# skipped. these are "dry build" scenarios
+			# skipped. these are "if_not_dry_build build" scenarios
 			# where only a subset of build tasks are done,
-			# and $dry is prefixed to skipped commands
+			# and $if_not_dry_build is prefixed to skipped commands
 
-			dry=":"
+			if_not_dry_build=":"
 			;;
 		-b) : ;;
 		-u) mode="oldconfig" ;;
@@ -79,11 +79,11 @@ trees()
 		-x) mode="crossgcc-clean" ;;
 		-f) # download source code for a project
 			do_make="n" # lets us know not to build anything
-			dry=":"
+			if_not_dry_build=":"
 			;;
 		-F) # same as -F, but don't skip git fetch/pull on cache
 			do_make="n" # lets us know not to build anything
-			dry=":"
+			if_not_dry_build=":"
 			forcepull="y"
 			;;
 		-s) mode="savedefconfig" ;;
@@ -146,7 +146,7 @@ build_project()
 	if ! configure_project "$configdir"; then
 		return 0
 	elif [ -f "$listfile" ]; then
-		if ! $dry elfcheck; then
+		if ! $if_not_dry_build elfcheck; then
 			return 0
 		fi
 	fi
@@ -160,7 +160,8 @@ build_project()
 	fi
 
 	if [ -z "$mode" ]; then
-		$dry copy_elf; :
+		$if_not_dry_build \
+			copy_elf; :
 	fi
 }
 
@@ -234,7 +235,8 @@ handle_defconfig()
 		if [ -z "$mode" ]; then
 			for _xarch in $xarch; do
 				if [ -n "$_xarch" ]; then
-					$dry check_cross_compiler "$_xarch"
+					$if_not_dry_build \
+						check_cross_compiler "$_xarch"
 				fi
 			done; :
 		fi
@@ -242,7 +244,8 @@ handle_defconfig()
 		handle_makefile
 
 		if [ -z "$mode" ]; then
-			$dry copy_elf
+			$if_not_dry_build \
+				copy_elf
 		fi
 	done; :
 }
@@ -333,7 +336,8 @@ configure_project()
 	fi
 
 	if [ -z "$mode" ]; then
-		$dry build_dependencies; :
+		$if_not_dry_build \
+			build_dependencies
 	fi
 
 	mdir="$xbmkpwd/config/submodule/$project"
@@ -366,14 +370,16 @@ build_dependencies()
 		bd_tree="${bd##*/}"
 
 		if [ -z "$bd_project" ]; then
-			$dry err "$project/$tree: !bd '$bd'" \
-			    "build_dependencies" "$@"
+			$if_not_dry_build \
+				err "$project/$tree: !bd '$bd'" \
+				    "build_dependencies" "$@"
 		fi
 		if [ "${bd##*/}" = "$bd" ]; then
 			bd_tree=""
 		fi
 		if [ -n "$bd_project" ]; then
-			$dry x_ ./mk -b $bd_project $bd_tree; :
+			$if_not_dry_build \
+				x_ ./mk -b $bd_project $bd_tree; :
 		fi
 	done; :
 }
@@ -607,14 +613,15 @@ gnu_setver()
 check_defconfig()
 {
 	if [ ! -f "$defconfig" ]; then
-		$dry err "$project/$target: no config" "check_defconfig" "$@"
+		$if_not_dry_build \
+			err "$project/$target: no config" "check_defconfig" "$@"
 	fi
 
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
 	# skip build if a previous one exists:
 
-	if ! $dry elfcheck; then
+	if ! $if_not_dry_build elfcheck; then
 		return 1
 	fi
 }
@@ -628,8 +635,9 @@ elfcheck()
 
 handle_makefile()
 {
-	if $dry check_makefile "$srcdir"; then
-		$dry x_ make -C "$srcdir" $cleanargs clean
+	if $if_not_dry_build check_makefile "$srcdir"; then
+		$if_not_dry_build \
+			x_ make -C "$srcdir" $cleanargs clean
 	fi
 
 	if [ -f "$defconfig" ]; then
@@ -646,12 +654,14 @@ handle_makefile()
 	fi
 
 	if [ "${mode%config}" != "$mode" ]; then
-		$dry x_ cp "$srcdir/$_copy" "$defconfig"; :
+		$if_not_dry_build \
+			x_ cp "$srcdir/$_copy" "$defconfig"; :
 	fi
 
 	if [ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
 	    [ "$mode" = "distclean" ]; then
-		$dry x_ git -C "$srcdir" $cleanargs clean -fdx; :
+		$if_not_dry_build \
+			x_ git -C "$srcdir" $cleanargs clean -fdx; :
 	fi
 }
 
@@ -661,16 +671,18 @@ run_make_command()
 		x_ $premake
 	fi
 
-	if $dry check_cmake "$srcdir"; then
+	if $if_not_dry_build check_cmake "$srcdir"; then
 		if [ -z "$mode" ]; then
-			$dry check_autoconf "$srcdir"
+			$if_not_dry_build \
+				check_autoconf "$srcdir"
 		fi
 	fi
-	if ! $dry check_makefile "$srcdir"; then
+	if ! $if_not_dry_build check_makefile "$srcdir"; then
 		return 1
 	fi
 
-	$dry x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
+	$if_not_dry_build \
+		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
 	if [ -z "$mode" ]; then
 		x_ $mkhelper
@@ -681,20 +693,24 @@ run_make_command()
 	fi
 
 	if [ "$mode" = "clean" ]; then
-		$dry make -C "$srcdir" $cleanargs distclean || \
-		    $dry x_ make -C "$srcdir" $cleanargs clean; :
+		$if_not_dry_build \
+			make -C "$srcdir" $cleanargs distclean || \
+			$if_not_dry_build \
+				x_ make -C "$srcdir" $cleanargs clean; :
 	fi
 }
 
 check_cmake()
 {
 	if [ -n "$cmakedir" ]; then
-		if ! $dry check_makefile "$1"; then
+		if ! $if_not_dry_build check_makefile "$1"; then
 			if ! cmake -B "$1" "$1/$cmakedir"; then
-				$dry x_ check_makefile "$1"
+				$if_not_dry_build \
+					x_ check_makefile "$1"
 			fi
 		fi
-		$dry x_ check_makefile "$1"; :
+		$if_not_dry_build \
+			x_ check_makefile "$1"; :
 	fi
 }
 
