@@ -491,12 +491,8 @@ extract_fsp()
 setvfile()
 {
 	[ -n "$vcfg" ] && for c in $checkvarschk; do
-		vcmd="[ \"\${$c}\" = \"/dev/null\" ] || [ -z \"\${$c}\" ]"
-		eval "$vcmd || return 0"
-
-		if getvfile "$@"; then
-			return 0
-		fi
+		vcmd="[ \"\${$c}\" != \"/dev/null\" ] && [ -n \"\${$c}\" ]"
+		eval "$vcmd && getvfile \"\$@\" && return 0"
 	done && return 1; :
 }
 
