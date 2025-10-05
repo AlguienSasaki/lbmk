@@ -60,6 +60,10 @@ xbmk_init()
 	export PWD="$xbmkpwd"
 	x_ xbmkdir "$basetmp"
 
+	if [ ! -e "cache" ]; then
+		x_ xbmkdir "cache"
+	fi
+
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
 		if ! xbmk_$init_cmd "$@"; then
 			break
