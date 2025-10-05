@@ -64,9 +64,6 @@ prep_release()
 	(
 		if [ "$1" != "tarball" ]; then
 			x_ cd "$rsrc"
-			if [ ! -e "cache" ]; then
-				x_ ln -s "$XBMK_CACHE" "cache"
-			fi
 		fi
 
 		prep_release_$1
@@ -104,8 +101,8 @@ prep_release_tarball()
 	    --abbrev-commit > "$rsrc/CHANGELOG" || \
 	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 
 
-	x_ rm -f "$rsrc/lock" "$rsrc/cache"
-	x_ rm -Rf "$rsrc/xbmkwd" "$rsrc/util/sbase"
+	x_ rm -f "$rsrc/lock"
+	x_ rm -Rf "$rsrc/xbmkwd" "$rsrc/util/sbase" "$rsrc/cache"
 	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase"
 
 	(
