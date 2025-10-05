@@ -58,7 +58,7 @@ xbmk_init()
 	fi
 
 	export PWD="$xbmkpwd"
-	x_ xbmkdir "$basetmp" "cache"
+	x_ xbmkdir "$basetmp"
 
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
 		if ! xbmk_$init_cmd "$@"; then
