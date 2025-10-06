@@ -236,7 +236,8 @@ mkcorebootbin_real()
 	fi
 
 	if [ -f "$cbfscfg" ]; then
-		dx_ add_cbfs_option "$cbfscfg"
+		$if_not_dry_build \
+			dx_ add_cbfs_option "$cbfscfg"
 	fi
 
 	if $if_not_dry_build grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
