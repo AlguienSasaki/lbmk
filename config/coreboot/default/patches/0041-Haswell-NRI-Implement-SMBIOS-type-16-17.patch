@@ -1,0 +1,184 @@
+From b00d35efc78b13d53c8f0b35b869811c5a2c56cf Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Tue, 30 Sep 2025 22:36:53 +0100
+Subject: [PATCH] Haswell NRI: Implement SMBIOS type 16/17
+
+Based on the implementation from Ivy/Sandy Bridge NRI.
+
+Tested on a Dell OptiPlex 9020 SFF with libreboot.
+
+Change-Id: I5e153258f9f88726f54c98baac0b1788a839f934
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ .../haswell/native_raminit/raminit_main.c     |  6 +-
+ .../haswell/native_raminit/raminit_native.c   | 83 +++++++++++++++++--
+ .../haswell/native_raminit/raminit_native.h   |  2 +-
+ 3 files changed, 81 insertions(+), 10 deletions(-)
+
+diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_main.c b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
+index 84db33ebdf..328f777ee1 100644
+--- a/src/northbridge/intel/haswell/native_raminit/raminit_main.c
++++ b/src/northbridge/intel/haswell/native_raminit/raminit_main.c
+@@ -245,7 +245,7 @@ static enum raminit_status try_raminit(
+ 	return status;
+ }
+ 
+-void raminit_main(const enum raminit_boot_mode bootmode)
++const struct sysinfo *raminit_main(const enum raminit_boot_mode bootmode)
+ {
+ 	/*
+ 	 * The mighty_ctrl struct. Will happily nuke the pre-RAM stack
+@@ -261,7 +261,7 @@ void raminit_main(const enum raminit_boot_mode bootmode)
+ 	if (bootmode != BOOTMODE_COLD) {
+ 		status = try_raminit(&mighty_ctrl, fast_boot, ARRAY_SIZE(fast_boot));
+ 		if (status == RAMINIT_STATUS_SUCCESS)
+-			return;
++			return &mighty_ctrl;
+ 	}
+ 
+ 	/** TODO: Try more than once **/
+@@ -269,4 +269,6 @@ void raminit_main(const enum raminit_boot_mode bootmode)
+ 
+ 	if (status != RAMINIT_STATUS_SUCCESS)
+ 		die("Memory initialization was met with utmost failure and misery\n");
++
++	return &mighty_ctrl;
+ }
+diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.c b/src/northbridge/intel/haswell/native_raminit/raminit_native.c
+index 3ad8ce29e7..73532592e8 100644
+--- a/src/northbridge/intel/haswell/native_raminit/raminit_native.c
++++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.c
+@@ -16,6 +16,73 @@
+ 
+ #include "raminit_native.h"
+ 
++static uint8_t nb_get_ecc_type(const uint32_t capid0_a)
++{
++	return capid0_a & CAPID_ECCDIS ? MEMORY_ARRAY_ECC_NONE : MEMORY_ARRAY_ECC_SINGLE_BIT;
++}
++
++static uint16_t nb_slots_per_channel(const uint32_t capid0_a)
++{
++	return !(capid0_a & CAPID_DDPCD) + 1;
++}
++
++static uint16_t nb_number_of_channels(const uint32_t capid0_a)
++{
++	return !(capid0_a & CAPID_PDCD) + 1;
++}
++
++static uint32_t nb_max_chan_capacity_mib(const uint32_t capid0_a)
++{
++	uint32_t ddrsz;
++
++	/* Values from documentation, which assume two DIMMs per channel */
++	switch (CAPID_DDRSZ(capid0_a)) {
++	case 1:
++		ddrsz = 8192;
++		break;
++	case 2:
++		ddrsz = 2048;
++		break;
++	case 3:
++		ddrsz = 512;
++		break;
++	default:
++		ddrsz = 16384;
++		break;
++	}
++
++	/* Account for the maximum number of DIMMs per channel */
++	return (ddrsz / 2) * nb_slots_per_channel(capid0_a);
++}
++
++/* Fill cbmem with information for SMBIOS type 16 and type 17 */
++static void setup_sdram_meminfo(const struct sysinfo *ctrl)
++{
++	const u16 ddr_freq = (1000 << 8) / ctrl->tCK;
++
++	for (uint8_t channel = 0; channel < NUM_CHANNELS; channel++) {
++		for (uint8_t slot = 0; slot < NUM_SLOTS; slot++) {
++			enum cb_err ret = spd_add_smbios17(channel, slot, ddr_freq,
++						&ctrl->dimms[channel][slot].data);
++			if (ret != CB_SUCCESS)
++				printk(BIOS_ERR, "RAMINIT: Failed to add SMBIOS17\n");
++		}
++	}
++
++	/* The 'spd_add_smbios17' function allocates this CBMEM area */
++	struct memory_info *m = cbmem_find(CBMEM_ID_MEMINFO);
++	if (!m)
++		return;
++
++	const uint32_t capid0_a = pci_read_config32(HOST_BRIDGE, CAPID0_A);
++
++	const uint16_t channels = nb_number_of_channels(capid0_a);
++
++	m->ecc_type = nb_get_ecc_type(capid0_a);
++	m->max_capacity_mib = channels * nb_max_chan_capacity_mib(capid0_a);
++	m->number_of_devices = channels * nb_slots_per_channel(capid0_a);
++}
++
+ static void wait_txt_clear(void)
+ {
+ 	const struct cpuid_result cpuid = cpuid_ext(1, 0);
+@@ -90,7 +157,8 @@ static void raminit_reset(void)
+ static enum raminit_boot_mode do_actual_raminit(
+ 	const bool s3resume,
+ 	const bool cpu_replaced,
+-	const enum raminit_boot_mode orig_bootmode)
++	const enum raminit_boot_mode orig_bootmode,
++	const struct sysinfo **ctrl)
+ {
+ 	struct mrc_data md = prepare_mrc_cache();
+ 
+@@ -158,7 +226,7 @@ static enum raminit_boot_mode do_actual_raminit(
+ 	 * And now, the actual memory initialization thing.
+ 	 */
+ 	printk(RAM_DEBUG, "\nStarting native raminit\n");
+-	raminit_main(bootmode);
++	*ctrl = raminit_main(bootmode);
+ 
+ 	return bootmode;
+ }
+@@ -176,8 +244,9 @@ void perform_raminit(const int s3resume)
+ 	wait_txt_clear();
+ 	wrmsr(0x2e6, (msr_t) {.lo = 0, .hi = 0});
+ 
++	const struct sysinfo *ctrl;
+ 	const enum raminit_boot_mode bootmode =
+-			do_actual_raminit(s3resume, cpu_replaced, orig_bootmode);
++			do_actual_raminit(s3resume, cpu_replaced, orig_bootmode, &ctrl);
+ 
+ 	/** TODO: report_memory_config **/
+ 
+@@ -204,9 +273,9 @@ void perform_raminit(const int s3resume)
+ 		system_reset();
+ 	}
+ 
+-	/* Save training data on non-S3 resumes */
+-	if (!s3resume)
++	/* Save training data and set up SMBIOS type 16/17 on non-S3 resumes */
++	if (!s3resume) {
+ 		save_mrc_data();
+-
+-	/** TODO: setup_sdram_meminfo **/
++		setup_sdram_meminfo(ctrl);
++	}
+ }
+diff --git a/src/northbridge/intel/haswell/native_raminit/raminit_native.h b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
+index b9e84a11df..1401feedc5 100644
+--- a/src/northbridge/intel/haswell/native_raminit/raminit_native.h
++++ b/src/northbridge/intel/haswell/native_raminit/raminit_native.h
+@@ -476,7 +476,7 @@ static inline void mchbar_write64(const uintptr_t x, const uint64_t v)
+ 		  "m"(mmxsave));
+ }
+ 
+-void raminit_main(enum raminit_boot_mode bootmode);
++const struct sysinfo *raminit_main(enum raminit_boot_mode bootmode);
+ 
+ enum raminit_status collect_spd_info(struct sysinfo *ctrl);
+ enum raminit_status initialise_mpll(struct sysinfo *ctrl);
+-- 
+2.50.1
+
