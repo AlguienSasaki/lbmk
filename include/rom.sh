@@ -25,9 +25,8 @@ buildser()
 
 copyps1bios()
 {
-	if [ "$if_not_dry_build" = ":" ]; then
+	$if_dry_build \
 		return 0
-	fi
 
 	remkdir "bin/playstation"
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
@@ -45,9 +44,8 @@ mkpayload_grub()
 	grub_modules=""
 	grub_install_modules=""
 
-	if [ "$if_not_dry_build" = ":" ]; then
+	$if_dry_build \
 		return 0
-	fi
 
 	. "$grubdata/module/$tree" || \
 	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"

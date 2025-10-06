@@ -35,6 +35,7 @@ cmakedir=""
 defconfig=""
 postmake=""
 mkhelpercfg=""
+if_dry_build=":"
 if_not_dry_build=""
 dest_dir=""
 mdir=""
@@ -73,6 +74,7 @@ trees()
 			# and $if_not_dry_build is prefixed to skipped commands
 
 			if_not_dry_build=":"
+			if_dry_build=""
 			;;
 		-b) : ;;
 		-u) mode="oldconfig" ;;
@@ -82,10 +84,12 @@ trees()
 		-f) # download source code for a project
 			do_make="n" # lets us know not to build anything
 			if_not_dry_build=":"
+			if_dry_build=""
 			;;
 		-F) # same as -F, but don't skip git fetch/pull on cache
 			do_make="n" # lets us know not to build anything
 			if_not_dry_build=":"
+			if_dry_build=""
 			forcepull="y"
 			;;
 		-s) mode="savedefconfig" ;;
