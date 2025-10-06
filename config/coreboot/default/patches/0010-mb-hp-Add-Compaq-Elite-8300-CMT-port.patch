@@ -1,7 +1,7 @@
-From c08a6748a8cecb5b6332d7d1ac4e17e6ba7f1095 Mon Sep 17 00:00:00 2001
+From 922357b7d5b0b5304b0d4296b2f03961a17288a6 Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
 Date: Sat, 23 Dec 2023 19:02:10 +0200
-Subject: [PATCH 10/35] mb/hp: Add Compaq Elite 8300 CMT port
+Subject: [PATCH 10/40] mb/hp: Add Compaq Elite 8300 CMT port
 
 Based on autoport and Z220 SuperIO code.
 
@@ -868,5 +868,5 @@ index 0000000000..8dbd95ef96
 +	.enable_dev = mainboard_enable,
 +};
 -- 
-2.39.5
+2.47.3
 

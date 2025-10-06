@@ -175,6 +175,9 @@ mkcorebootbin_real()
 	initmode="${initmode%%_*}"
 	cbfstool="elf/coreboot/$tree/cbfstool"
 
+	# cbfstool option backends, if they exist
+	cbfscfg="config/coreboot/$target/cbfs.cfg"
+
 	elfrom="elf/coreboot/$tree/$target/$initmode"
 	if [ -n "$displaymode" ]; then
 		elfrom="${elfrom}_$displaymode"
@@ -232,6 +235,10 @@ mkcorebootbin_real()
 		payload_grubsea="n"
 	fi
 
+	if [ -f "$cbfscfg" ]; then
+		dx_ add_cbfs_option "$cbfscfg"
+	fi
+
 	if $if_not_dry_build grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
@@ -248,6 +255,25 @@ mkcorebootbin_real()
 		$if_not_dry_build \
 			cprom
 	fi; :
+}
+
+# options for cbfs backend (as opposed to nvram/smmstore):
+
+add_cbfs_option()
+{
+	# TODO: input sanitization (currently mitigated by careful config)
+
+	op_name="`printf "%s\n" "$1" | awk '{print $1}'`"
+	op_arg="`printf "%s\n" "$1" | awk '{print $2}'`"
+
+	if [ -z "$op_name" ] || [ -z "$op_arg" ]; then
+		return 0
+	fi
+
+	( x_ "$cbfstool" "$tmprom" remove -n "option/$op_name" 1>/dev/null \
+	    2>/dev/null ) || :
+
+	x_ "$cbfstool" "$tmprom" add-int -i "$op_arg" -n "option/$op_name"
 }
 
 # in our design, SeaBIOS is also responsible for starting either

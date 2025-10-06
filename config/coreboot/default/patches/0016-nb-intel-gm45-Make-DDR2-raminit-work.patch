@@ -1,7 +1,7 @@
-From 403c10efc815b6b58ddf8025916a5840d4f39d16 Mon Sep 17 00:00:00 2001
+From 20921eb7165b23e7b78e4c4126ff5bab8725404b Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Mon, 10 May 2021 22:40:59 +0200
-Subject: [PATCH 16/35] nb/intel/gm45: Make DDR2 raminit work
+Subject: [PATCH 16/40] nb/intel/gm45: Make DDR2 raminit work
 
 List of changes:
  - Update some timing and ODT values
@@ -219,5 +219,5 @@ index aef863f05a..b74765fd9c 100644
 +	mchbar_clrsetbits32(0x4d0, 0x3f << 20, magic_comp[1] << 20);
  }
 -- 
-2.39.5
+2.47.3
 

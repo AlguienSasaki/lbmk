@@ -1,7 +1,7 @@
-From 4dfcaaffc1fe01cd7676f804a7f1fd5f899beb36 Mon Sep 17 00:00:00 2001
+From 89ecd79ab46f56c65c0b5720d1c84b12698a02b4 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 31 Dec 2024 14:42:24 +0000
-Subject: [PATCH 23/35] Disable compression on refcode insertion
+Subject: [PATCH 23/40] Disable compression on refcode insertion
 
 Compression is not reliably reproducible. In an lbmk release
 context, this means we cannot rely on vendorfile insertion.
@@ -27,5 +27,5 @@ index 218e388bb5..a2163c4644 100644
  cbfs-files-$(CONFIG_SEABIOS_VGA_COREBOOT) += vgaroms/seavgabios.bin
  vgaroms/seavgabios.bin-file := $(CONFIG_PAYLOAD_VGABIOS_FILE)
 -- 
-2.39.5
+2.47.3
 

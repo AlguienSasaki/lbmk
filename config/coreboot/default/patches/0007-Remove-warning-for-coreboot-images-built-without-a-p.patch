@@ -1,7 +1,7 @@
-From 0a16c780932a176bba062a82df47dfebfa963e39 Mon Sep 17 00:00:00 2001
+From aab9296997bd88a86bbb40079a9caf504db81cea Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 12 May 2023 19:55:15 -0600
-Subject: [PATCH 07/35] Remove warning for coreboot images built without a
+Subject: [PATCH 07/40] Remove warning for coreboot images built without a
  payload
 
 I added this in upstream to prevent people from accidentally flashing
@@ -35,5 +35,5 @@ index 5f988dac1b..516133880f 100644
 -.PHONY: clean-payloads distclean-payloads print-repo-info-payloads warn_no_payload
 +.PHONY: clean-payloads distclean-payloads print-repo-info-payloads
 -- 
-2.39.5
+2.47.3
 

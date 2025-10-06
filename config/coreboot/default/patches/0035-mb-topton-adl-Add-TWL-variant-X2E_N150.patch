@@ -1,7 +1,7 @@
-From 96a6735e7b59f1e538ed8c87993ed2d217c27891 Mon Sep 17 00:00:00 2001
+From 0a98ff0cbd20484ced53b15f16f8b77d881ffb9e Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
 Date: Thu, 25 Sep 2025 22:45:37 +0300
-Subject: [PATCH] mb/topton/adl: Add TWL variant (X2E_N150)
+Subject: [PATCH 35/40] mb/topton/adl: Add TWL variant (X2E_N150)
 
 Seems to be the same board but with a Twin Lake processor.
 VBT extracted from vendor firmware. This makes HDMI and
@@ -67,44 +67,40 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..05fbd5807365b3343e55ecedbd12fabb8a3199e9
 GIT binary patch
 literal 9216
-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
-DX%2oa
+zcmeHML2MgE6#cVnZ(QS$EeWj~+AvA0;DjbwJ8eiKOI^oKsN1BmoiuVKP~6mpM!1bh
+zQ<Ng4E+U6qkoHnYD<ljO5(<}a;EYcw2q9TTAPykqMyWV})EjNgpV_rtrwuVJg{InX
+z{oV2WH*f#{GdnZ8yKlUIj0T261F@mNv4M^VMM;7J%`Is>-Yxy%k<p1zU@S1vKQt0N
+zMuF^r-<#KN03-?7<?<?uH+*h3mG;Ei=<xL9R65laN}Ydgb~-~N!7vS+KAlRZW=_qf
+zl5}+Z#Q<e|wa)$vQ|Tl<e&Ot7YNn4OiGpbAJ<!>GfKuNJT}pSCPw^f^OP{x=@8F?Y
+zXJ{ZeG8_pH1;)Z7$LUCnhQgzP(b0k7{-KjJ5*s-Z?hlU*gle4?Aq1y07iXqkJu^!^
+z!8Yo{>vV8l?lKKd&ty7jAf2W$hB;4Tsq?9sH&V&YS|=mQfx|`sh!g5^fCVPE`#}a9
+zsHlL)`xD_Z5wN|-v938@Q^cwq64R22!kSk4V-#wPQx09BB@^Ooa4i9{41s33Sk2r<
+zK0;0ZS^b&{U!7sNmrWe<2^=R^;wVES?xKmSE&7)*aR%uczZ&8$o4D-&c5Imgt&)#j
+zgz<fD;_3k;j?*h~oECB4nmE=BB?lQ3$FhWR@J>P8uj_HJ4#(k}A8x&g7&B1>2or#(
+ziF#Md@5Pn7>QZ(mOru^zeFybj)b~+8Lj4T&3)C-BzefEI^=H&yQ2#*v6Lnh>DFxmU
+z59?S!aef1(d!$e(MzK{(u6j6%x1#9q&+q23oB$|%*suhW@fW~f4DlZ4N5b|@r<kvC
+zLcZoES*U+BOZQ0K236&8v;n}XwleU58Su1#Aa+-fESXZSY#+C4!Ya|WKgriD$BYZ_
+zu(;sj=bJ>vv%T&)C=`C!rs;HbkL*aa7_FOnF5%qI$}TF#h0PhVbrihu-PEHslo*T|
+z99(Q}+MFS|3)BF#D(;0IgTdW%N#t7rWUzycG5B%K+c*lP9TuaYs7eOcR3;b&He@B&
+zoV~FshB+E-lvVi-2BNcNyjq4&yXID-jjd{YvFroU*#ZwPRa&mXha-noWpdf4s<|?Q
+z1bnyS8n;)I$yb`km!i<54C-cIuuSTFpM|belZUrD^=zWCNmZ!X7nn(#zKutr)l?IO
+z$FF5G%X^WbowYLhLg$OFD{G&xVmw@J%jTo=ElT9d&Ju$NPp~p(vKj`ZU0q4cClz;;
+zj{)w3h=YkS+~=6YJcxihK*nIFRYY;45wa1wQ*kLl*2?ff$NLc(w3=Q%9@rq?cvK60
+zn)~(M4mI9U?h6s>I0HC9+Wfv~Qz4;2eL|LTPs)TxA+wTeXfQGnIdv|TK7Q(K>M{7k
+zf_m6eC_L{a($N)=;!6+j$o8psiXaG2p_YVgTOUN(ob({-SSOoheg7o<Hi)1wZoN-H
+z1d_0yya(4sTz(9}aJcMPC#-%m@}j*{A+S)Atx+_5FNXM^pS$_AZa8tE2d5$(X9hk=
+z7L#h83x&hHC)jk%yv&<V;B0cOyY%eg2JBeY!5fL+4-Vf{>tGLoy;J9W`0zO4@q-WH
+z{1Fq+)|Jb-v$Fl~kFcA>_$}1`^HRBIDoYZV-fPCLpwhO*{~d}sCBEO<;&E8+TN$u2
+zU}eC{fRzC&16BsC4E&E7==)gM4KGasXo8NfuM)6I_LyJ%*vCx(^#cGZ0`Y(bal{hi
+z4KBA`zl{K!O5Cu3Z?s$S#hJuI(eSwX3BIqkFA@bZh*7W|KFgxyP?>GcPKk`RMw?t=
+z(|=;NRT76qw6#{)@^b>Hk|L<cvTXBJ*lrCI7`HExLD12cCbSuE88y7#k9h*Rlm!JS
+zayFIx%%M#`DS%dE*p_X3F?QoqB(vGF1hV!#iNF<@7h90ic*bTn7K19SfE%J{OENU7
+z5#L66$)SB;Ez3(5AL-E>aVNGa=cOUUd~sv!9nfp*sPOaZ+xVs0fuGXx2U0!y!oLUb
+SeEwbkJq|WZn<bBL2L1wR4t_2G
 
 literal 0
 HcmV?d00001
 
 -- 
-2.51.0
+2.47.3
 

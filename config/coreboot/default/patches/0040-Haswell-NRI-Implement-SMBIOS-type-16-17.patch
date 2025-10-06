@@ -1,7 +1,7 @@
-From b00d35efc78b13d53c8f0b35b869811c5a2c56cf Mon Sep 17 00:00:00 2001
+From 0fdb23e899e31b17a774ae9151410b11ccf13022 Mon Sep 17 00:00:00 2001
 From: Ron Nazarov <ron@noisytoot.org>
 Date: Tue, 30 Sep 2025 22:36:53 +0100
-Subject: [PATCH] Haswell NRI: Implement SMBIOS type 16/17
+Subject: [PATCH 40/40] Haswell NRI: Implement SMBIOS type 16/17
 
 Based on the implementation from Ivy/Sandy Bridge NRI.
 
@@ -180,5 +180,5 @@ index b9e84a11df..1401feedc5 100644
  enum raminit_status collect_spd_info(struct sysinfo *ctrl);
  enum raminit_status initialise_mpll(struct sysinfo *ctrl);
 -- 
-2.50.1
+2.47.3
 

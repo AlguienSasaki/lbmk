@@ -1,7 +1,7 @@
-From bea563e3288d3cae4cab410cf818552abbd3bba4 Mon Sep 17 00:00:00 2001
+From c075c12d5549cc6cfaa4fbb6bb3abd5e17503b04 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Mon, 20 May 2024 10:24:16 -0600
-Subject: [PATCH 18/35] mb/dell/e6400: Use 100 MHz reference clock for display
+Subject: [PATCH 18/40] mb/dell/e6400: Use 100 MHz reference clock for display
 
 The E6400 uses a 100 MHz reference clock for spread spectrum support on
 LVDS, whereas libgfxinit previously assumed a 96 MHz input clock. For
@@ -47,5 +47,5 @@ index fef0d735b3..fc5df8b11a 100644
  	select VBOOT_STARTS_IN_BOOTBLOCK
  
 -- 
-2.39.5
+2.47.3
 

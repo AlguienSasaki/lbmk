@@ -1,7 +1,7 @@
-From c58079787f45fd9d42bfaedfcb540634787c3010 Mon Sep 17 00:00:00 2001
+From 819fe0e89e426d3d875cf8ab4d2de439ba716848 Mon Sep 17 00:00:00 2001
 From: Felix Singer <felixsinger@posteo.net>
 Date: Wed, 26 Jun 2024 04:24:31 +0200
-Subject: [PATCH 30/35] soc/intel/skylake: configure usb acpi
+Subject: [PATCH 30/40] soc/intel/skylake: configure usb acpi
 
 Change-Id: I53fc73046e4b107064fa8c3c617ba6d9b807b71d
 Signed-off-by: Felix Singer <felixsinger@posteo.net>
@@ -90,5 +90,5 @@ index 6538a1475b..dfb81d496e 100644
  		device pci 14.2 alias thermal      off                     end
  		device pci 14.3 alias cio          off                     end
 -- 
-2.39.5
+2.47.3
 

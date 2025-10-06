@@ -1,7 +1,7 @@
-From 1cb3f95c58d501fe33dc2a3d090a84cd7d5d42d3 Mon Sep 17 00:00:00 2001
+From 6f54ed4b0622c7772561760ea4b435bd236ac834 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 22 Apr 2025 10:21:59 +0100
-Subject: [PATCH 28/35] hp/8300cmt: remove xhci_overcurrent_mapping
+Subject: [PATCH 28/40] hp/8300cmt: remove xhci_overcurrent_mapping
 
 No longer needed, as per the following commit:
 
@@ -38,5 +38,5 @@ index 3d21739b72..3a0b6d5c59 100644
  			register "usb_port_config" = "{
  				{ 1, 0, 0 },
 -- 
-2.39.5
+2.47.3
 
