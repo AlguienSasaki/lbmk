@@ -240,9 +240,10 @@ handle_defconfig()
 
 		if [ -z "$mode" ]; then
 			for _xarch in $xarch; do
+				$if_dry_build \
+					break
 				if [ -n "$_xarch" ]; then
-					$if_not_dry_build \
-						check_cross_compiler "$_xarch"
+					check_cross_compiler "$_xarch"
 				fi
 			done; :
 		fi
@@ -629,7 +630,9 @@ check_defconfig()
 
 	# skip build if a previous one exists:
 
-	if ! $if_not_dry_build elfcheck; then
+	$if_dry_build \
+		return 0
+	if ! elfcheck; then
 		return 1
 	fi
 }
@@ -701,25 +704,26 @@ run_make_command()
 	fi
 
 	if [ "$mode" = "clean" ]; then
-		$if_not_dry_build \
-			make -C "$srcdir" $cleanargs distclean || \
-			$if_not_dry_build \
-				x_ make -C "$srcdir" $cleanargs clean; :
+		$if_dry_build \
+			return 0
+		if ! make -C "$srcdir" $cleanargs distclean; then
+			x_ make -C "$srcdir" $cleanargs clean
+		fi
 	fi
 }
 
 check_cmake()
 {
-	if [ -n "$cmakedir" ]; then
-		if ! $if_not_dry_build check_makefile "$1"; then
-			if ! cmake -B "$1" "$1/$cmakedir"; then
-				$if_not_dry_build \
-					x_ check_makefile "$1"
-			fi
+	$if_dry_build \
+		return 0
+	if [ ! -n "$cmakedir" ]; then
+		return 0
+	elif ! check_makefile "$1"; then
+		if ! cmake -B "$1" "$1/$cmakedir"; then
+			x_ check_makefile "$1"
 		fi
-		$if_not_dry_build \
-			x_ check_makefile "$1"; :
 	fi
+	x_ check_makefile "$1"; :
 }
 
 check_autoconf()

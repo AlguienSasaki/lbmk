@@ -233,26 +233,25 @@ mkcorebootbin_real()
 		payload_grubsea="n"
 	fi
 
+	$if_dry_build \
+		return 0
+
 	if [ -f "$cbfscfg" ]; then
-		$if_not_dry_build \
-			dx_ add_cbfs_option "$cbfscfg"
+		dx_ add_cbfs_option "$cbfscfg"
 	fi
 
-	if $if_not_dry_build grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
+	if grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
-			$if_not_dry_build \
-				add_seabios
+			add_seabios
 		fi
 		if [ "$payload_uboot" = "arm64" ]; then
 			pname="uboot"
-			$if_not_dry_build \
-				add_uboot
+			add_uboot
 		fi
 	else
 		pname="custom"
-		$if_not_dry_build \
-			cprom
+		cprom
 	fi; :
 }
 
@@ -502,13 +501,14 @@ cbfs()
 
 mkcoreboottar()
 {
-	if [ "$target" != "$tree" ] && [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" != "n" ]; then
+	$if_dry_build \
+		return 0
 
-		$if_not_dry_build \
-			mkrom_tarball "bin/$target"
-
-		$if_not_dry_build \
-			x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke
+	if [ "$target" = "$tree" ] || [ "$XBMK_RELEASE" != "y" ] || \
+	    [ "$release" = "n" ]; then
+		return 0
 	fi
+
+	mkrom_tarball "bin/$target"
+	x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke
 }
