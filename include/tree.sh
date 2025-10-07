@@ -52,7 +52,7 @@ forcepull=""
 
 trees()
 {
-	flags="f:b:m:u:c:x:s:l:n:d:"
+	flags="f:F:b:m:u:c:x:s:l:n:d:"
 
 	while getopts $flags option
 	do
