@@ -68,8 +68,8 @@ extract_partition()
 
 	SIZE=$(( $( echo $ROOTP | cut -f4 -d\ | tr -d "B" ) ))
 
-	x_ dd if="${1%.zip}" of="root-a.ext2" bs=1024 skip=$(( $START / 1024 )) \
-	    count=$(( $SIZE / 1024 ))
+	x_ dd if="${1%.zip}" of="root-a.ext2" bs=1024 \
+	    skip=$(( $START / 1024 )) count=$(( $SIZE / 1024 ))
 
 	printf "cd /usr/sbin\ndump chromeos-firmwareupdate %s\nquit" \
 	    "$SHELLBALL" | debugfs "root-a.ext2" || \

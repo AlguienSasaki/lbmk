@@ -207,7 +207,7 @@ mkcorebootbin_real()
 	fi
 	if [ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ]; then
 		$if_not_dry_build \
-			err "$target: U-Boot arm and SeaBIOS/GRUB both enabled" \
+			err "$target: U-Boot arm / SeaBIOS/GRUB both enabled" \
 			    "mkcorebootbin_real" "$@"
 	fi
 
