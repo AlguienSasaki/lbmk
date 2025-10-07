@@ -288,7 +288,7 @@ try_git()
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 
-	if git -C "$gitdest" whatchanged "$7" 1>/dev/null 2>/dev/null && \
+	if git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null && \
 	    [ "$forcepull" != "y" ]; then
 		# don't try to pull the latest changes if the given target
 		# revision already exists locally. this saves a lot of time
