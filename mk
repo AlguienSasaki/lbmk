@@ -28,6 +28,7 @@ fi
 . "include/rom.sh"
 . "include/release.sh"
 . "include/get.sh"
+. "include/chromebook.sh"
 
 main()
 {
@@ -42,7 +43,7 @@ main()
 	version)
 		printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
 		;;
-	release|download|inject)
+	release|download|inject|prep_mr_import)
 		$cmd "$@"
 		;;
 	-*)
