@@ -176,6 +176,9 @@ xbmk_child_set_env()
 	if [ -z "${XBMK_THREADS+x}" ]; then
 		xbmk_set_threads; :
 	fi
+	if [ -z "${XBMK_CACHE_MIRROR+x}" ]; then
+		xbmk_set_mirror
+	fi
 }
 
 xbmk_child_set_tmp()
@@ -220,6 +223,7 @@ xbmk_parent_set_env()
 	remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
 
 	xbmk_set_pyver
+	xbmk_set_mirror
 }
 
 xbmk_parent_check_tmp()
@@ -406,6 +410,24 @@ pybin()
 	# Defer to normal command -v if not a venv
 	if ! command -v "$1" 2>/dev/null; then
 		return 1
+	fi
+}
+
+xbmk_set_mirror()
+{
+	# defines whether cache/clone/ (regular clones)
+	# or cache/mirror (--mirror clones) are used, per project
+
+	# to use cache/mirror/ do: export XBMK_CACHE_MIRROR="y"
+	# mirror/ stores a separate directory per repository, even per backup.
+	# it's slower, and uses more disk space, and some upstreams might not
+	# appreciate it, so it should only be used for development or archival
+
+	if [ -z "${XBMK_CACHE_MIRROR+x}" ]; then
+		export XBMK_CACHE_MIRROR="n"
+	fi
+	if [ "$XBMK_CACHE_MIRROR" != "y" ]; then
+		export XBMK_CACHE_MIRROR="n"
 	fi
 }
 

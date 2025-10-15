@@ -52,7 +52,9 @@ fetch_project()
 
 clone_project()
 {
-	loc="$XBMK_CACHE/clone/$project"
+	# if loc is blank, don't create a target
+	# directory; just update the caches
+	loc=""
 	if singletree "$project"; then
 		loc="src/$project"
 	fi
@@ -83,7 +85,17 @@ git_prep()
 	if [ "$_loc" != "${_loc%/*}" ]; then
 		x_ xbmkdir "${_loc%/*}"
 	fi
-	x_ mv "$tmpgit" "$_loc"
+
+	if [ -z "$_loc" ]; then
+		# we only used git_prep to update caches, on
+		# a multi-tree project. tmpgit is useless now.
+
+		x_ rm -Rf "$tmpgit"
+	else
+		# actual downloaded
+
+		x_ mv "$tmpgit" "$_loc"
+	fi
 }
 
 fetch_submodule()
@@ -191,11 +203,19 @@ try_fetch()
 
 try_fetch_git()
 {
-	# always the main repo as basis for naming,
-	# in case the backup has another name
+	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
+		# 1st argument $1 is the current git remote being tried,
+		# let's say it was https://foo.example.com/repo, then cached
+		# directories becomes cache/mirror/foo.example.com/repo
 
-	cached="clone/${3##*/}"
-	cached="${cached%.git}"
+		cached="mirror/${1#*://}"
+	else
+		# always the main repo as basis for naming,
+		# in case the backup has another name
+
+		cached="clone/${3##*/}"
+		cached="${cached%.git}"
+	fi
 	cached="$XBMK_CACHE/$cached"
 
 	x_ xbmkdir "${5%/*}" "${cached%/*}"
@@ -282,7 +302,12 @@ try_git()
 	x_ rm -Rf "$tmpgitcache"
 
 	if [ ! -d "$gitdest" ]; then
-		( x_ git clone "$2" "$tmpgitcache" ) || return 1
+		if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
+			( x_ git clone --mirror "$2" "$tmpgitcache" ) || \
+			    return 1
+		else
+			( x_ git clone "$2" "$tmpgitcache" ) || return 1
+		fi
 
 		x_ xbmkdir "${gitdest%/*}"
 		x_ mv "$tmpgitcache" "$gitdest"
@@ -298,13 +323,18 @@ try_git()
 		return 0
 	fi
 
-	( x_ git -C "$gitdest" remote remove main ) || :
-	( x_ git -C "$gitdest" remote remove backup ) || :
+	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
+		( x_ git -C "$gitdest" fetch ) || :; :
+		( x_ git -C "$gitdest" update-server-info ) || :; :
+	else
+		( x_ git -C "$gitdest" remote remove main ) || :
+		( x_ git -C "$gitdest" remote remove backup ) || :
 
-	x_ git -C "$gitdest" remote add main "$4"
-	x_ git -C "$gitdest" remote add backup "$5"
+		x_ git -C "$gitdest" remote add main "$4"
+		x_ git -C "$gitdest" remote add backup "$5"
 
-	( x_ git -C "$gitdest" pull --all ) || :; :
+		( x_ git -C "$gitdest" pull --all ) || :; :
+	fi
 }
 
 bad_checksum()
