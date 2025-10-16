@@ -15,27 +15,27 @@ if [ -z "${PATH+x}" ]; then
 	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
 
-board=""
-reinstall=""
-version=""
-versiondate=""
+sha512sum="util/sbase/sha512sum"
+
 aur_notice=""
+basetmp=""
+board=""
+checkvarschk=""
+checkvarsxbmk=""
 configdir=""
-xbmkpath=""
 datadir=""
-xbmkpwd=""
-relname=""
-xbmkpwd=""
-xbtmp=""
+is_child=""
 python=""
 pyver=""
+reinstall=""
+relname=""
+version=""
+versiondate=""
 xbmklock=""
-checkvarsxbmk=""
-checkvarschk=""
-is_child=""
-basetmp=""
-
-sha512sum="util/sbase/sha512sum"
+xbmkpath=""
+xbmkpwd=""
+xbmkpwd=""
+xbtmp=""
 
 xbmk_init()
 {
@@ -184,8 +184,8 @@ xbmk_child_set_env()
 xbmk_child_set_tmp()
 {
 	badtmp=""
-	xbtmpchk=""
 	locktmp=""
+	xbtmpchk=""
 
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" "xbmk_child_set_tmp" "$@"
@@ -323,9 +323,9 @@ xbmk_set_version()
 
 xbmk_set_pyver()
 {
-	pyv="import sys; print(sys.version_info[:])"
 	python="python3"
 	pyver="2"
+	pyv="import sys; print(sys.version_info[:])"
 
 	if ! pybin python3 1>/dev/null; then
 		python="python"

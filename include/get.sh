@@ -3,14 +3,15 @@
 # Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-depend=""
-loc=""
 url=""
 bkup_url=""
-subgit=""
-subgit_bkup=""
+
+depend=""
+loc=""
 subcurl=""
 subcurl_bkup=""
+subgit=""
+subgit_bkup=""
 subhash=""
 
 tmpgit="$xbtmp/gitclone"
@@ -102,12 +103,12 @@ fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
 
-	subhash=""
-	subgit=""
-	subgit_bkup=""
+	st=""
 	subcurl=""
 	subcurl_bkup=""
-	st=""
+	subgit=""
+	subgit_bkup=""
+	subhash=""
 
 	if e "$mcfgdir/module.cfg" f missing; then
 		return 0

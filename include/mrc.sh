@@ -4,10 +4,10 @@
 # Modifications in this version are Copyright 2021,2023-2025 Leah Rowe.
 # Original copyright detailed in repo: https://review.coreboot.org/coreboot/
 
+MRC_board=""
+MRC_hash=""
 MRC_url=""
 MRC_url_bkup=""
-MRC_hash=""
-MRC_board=""
 SHELLBALL=""
 
 extract_refcode()

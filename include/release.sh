@@ -2,11 +2,11 @@
 
 # Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
 
-reldir=""
 reldest=""
-vdir=""
-rsrc=""
+reldir=""
 relmode=""
+rsrc=""
+vdir=""
 
 release()
 {

@@ -18,13 +18,13 @@ if [ -n "$checkvarschk" ]; then
 fi
 
 archive=""
+board=""
 boarddir=""
 IFD_platform=""
 ifdprefix=""
-tree=""
 new_mac=""
 tmpromdir=""
-board=""
+tree=""
 xchanged=""
 
 eval "`setvars "" $checkvars`"
@@ -37,12 +37,12 @@ inject()
 		err "No options specified" "inject" "$@"
 	fi
 
-	nuke=""
-	new_mac=""
-	xchanged=""
-
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
+
+	new_mac=""
+	nuke=""
+	xchanged=""
 
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
