@@ -203,19 +203,16 @@ try_fetch()
 
 try_fetch_git()
 {
+	# 1st argument $1 is the current git remote being tried,
+	# let's say it was https://foo.example.com/repo, then cached
+	# directories becomes cache/mirror/foo.example.com/repo
+
 	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-		# 1st argument $1 is the current git remote being tried,
-		# let's say it was https://foo.example.com/repo, then cached
-		# directories becomes cache/mirror/foo.example.com/repo
-
-		cached="mirror/${1#*://}"
+		cached="mirror"
 	else
-		# always the main repo as basis for naming,
-		# in case the backup has another name
-
-		cached="clone/${3##*/}"
-		cached="${cached%.git}"
+		cached="clone"
 	fi
+	cached="$cached/${1#*://}"
 	cached="$XBMK_CACHE/$cached"
 
 	x_ xbmkdir "${5%/*}" "${cached%/*}"
@@ -327,12 +324,6 @@ try_git()
 		( x_ git -C "$gitdest" fetch ) || :; :
 		( x_ git -C "$gitdest" update-server-info ) || :; :
 	else
-		( x_ git -C "$gitdest" remote remove main ) || :
-		( x_ git -C "$gitdest" remote remove backup ) || :
-
-		x_ git -C "$gitdest" remote add main "$4"
-		x_ git -C "$gitdest" remote add backup "$5"
-
 		( x_ git -C "$gitdest" pull --all ) || :; :
 	fi
 }
