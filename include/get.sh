@@ -373,7 +373,7 @@ tmpclone()
 
 	while read -r tmpclone_patch; do
 
-		( x_ git -C "$2" am "$tmpclone_patch" ) || \
+		( x_ git -C "$2" am --keep-cr "$tmpclone_patch" ) || \
 		    err "Can't apply '$tmpclone_patch'" "tmpclone" "$@"; :
 
 	done < "$tmpclone_patchlist" || \
