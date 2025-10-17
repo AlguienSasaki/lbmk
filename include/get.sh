@@ -53,9 +53,11 @@ fetch_project()
 
 clone_project()
 {
-	# if loc is blank, don't create a target
-	# directory; just update the caches
-	loc=""
+	loc="$XBMK_CACHE/clone/${url#*://}"
+	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
+		loc="$XBMK_CACHE/mirror/${url#*://}"
+	fi
+
 	if singletree "$project"; then
 		loc="src/$project"
 	fi
