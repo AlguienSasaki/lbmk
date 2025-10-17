@@ -10,6 +10,8 @@ flag=""
 # macros, overridden depending on the flag
 if_dry_build=":"
 if_not_dry_build=""
+if_do_make=""
+if_not_do_make=":"
 
 autoconfargs=""
 autogenargs=""
@@ -23,7 +25,6 @@ cmakedir=""
 cmd=""
 defconfig=""
 dest_dir=""
-do_make=""
 elfdir=""
 forcepull=""
 gccdir=""
@@ -84,12 +85,16 @@ trees()
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
 		-f) # download source code for a project
-			do_make="n" # lets us know not to build anything
+			# macros. colon means false.
+			if_do_make=":"
+			if_not_do_make=""
 			if_not_dry_build=":"
 			if_dry_build=""
 			;;
 		-F) # same as -F, but don't skip git fetch/pull on cache
-			do_make="n" # lets us know not to build anything
+			# macros. colon means false
+			if_do_make=":"
+			if_not_do_make=""
 			if_not_dry_build=":"
 			if_dry_build=""
 			forcepull="y"
@@ -319,12 +324,8 @@ configure_project()
 
 			break
 		fi
-		if [ "$do_make" != "n" ]; then
-			# if we're *downloading* a project, then
-			# we don't need to to change the target.cfg 
-
+		$if_do_make \
 			break
-		fi
 		if [ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ]
 		then
 			# we have found the main source tree that
@@ -356,14 +357,11 @@ configure_project()
 
 	if [ ! -f "CHANGELOG" ]; then
 		delete_old_project_files
-	fi
-	if [ "$do_make" = "n" ]; then
-		if [ ! -f "CHANGELOG" ]; then
+		$if_not_do_make \
 			fetch_${cmd#build_}
-		fi
-
-		return 1
 	fi
+	$if_not_do_make \
+		return 1
 
 	x_ ./mk -f "$project" "$target"
 }
