@@ -26,6 +26,7 @@ cmd=""
 defconfig=""
 dest_dir=""
 elfdir=""
+forcepull=""
 gccdir=""
 gccfull=""
 gccver=""
@@ -92,7 +93,7 @@ trees()
 			if [ "$flag" = "-F" ]; then
 				# don't skip git fetch/pull on cached src
 
-				if_not_force_pull=":"
+				forcepull="y"
 			fi
 			;;
 		-s) mode="savedefconfig" ;;

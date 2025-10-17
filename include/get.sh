@@ -3,9 +3,6 @@
 # Copyright (c) 2020-2021,2023-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-# macro; ./mk -F sets it to :
-if_not_force_pull=""
-
 url=""
 bkup_url=""
 
@@ -314,14 +311,14 @@ try_git()
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 
-	if git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null; then
+	if git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null && \
+	    [ "$forcepull" != "y" ]; then
 		# don't try to pull the latest changes if the given target
 		# revision already exists locally. this saves a lot of time
 		# during release builds, and reduces the chance that we will
 		# interact with grub.git or gnulib.git overall during runtime
 
-		$if_not_force_pull \
-			return 0
+		return 0
 	fi
 
 	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
