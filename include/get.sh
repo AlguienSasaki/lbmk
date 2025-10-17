@@ -89,7 +89,16 @@ git_prep()
 		x_ xbmkdir "${_loc%/*}"
 	fi
 
-	x_ mv "$tmpgit" "$_loc"
+	if [ -z "$_loc" ]; then
+		# we only used git_prep to update caches, on
+		# a multi-tree project. tmpgit is useless now.
+
+		x_ rm -Rf "$tmpgit"
+	else
+		# actual downloaded
+
+		x_ mv "$tmpgit" "$_loc"
+	fi
 }
 
 fetch_submodule()
