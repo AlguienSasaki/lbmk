@@ -53,14 +53,13 @@ fetch_project()
 
 clone_project()
 {
-	# if loc is blank, don't create a target
-	# directory; just update the caches
-	loc=""
 	if singletree "$project"; then
 		loc="src/$project"
-	fi
 
-	if e "$loc" d missing; then
+		if [ -d "$loc" ]; then
+			return 0
+		fi
+
 		remkdir "${tmpgit%/*}"
 		git_prep "$url" "$bkup_url" \
 		    "$xbmkpwd/config/$project/patches" "$loc"
@@ -87,16 +86,7 @@ git_prep()
 		x_ xbmkdir "${_loc%/*}"
 	fi
 
-	if [ -z "$_loc" ]; then
-		# we only used git_prep to update caches, on
-		# a multi-tree project. tmpgit is useless now.
-
-		x_ rm -Rf "$tmpgit"
-	else
-		# actual downloaded
-
-		x_ mv "$tmpgit" "$_loc"
-	fi
+	x_ mv "$tmpgit" "$_loc"
 }
 
 fetch_submodule()
