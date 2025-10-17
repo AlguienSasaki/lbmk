@@ -8,10 +8,10 @@
 flag=""
 
 # macros, overridden depending on the flag
-if_dry_build=":"
-if_not_dry_build=""
 if_do_make=""
+if_dry_build=":"
 if_not_do_make=":"
+if_not_dry_build=""
 
 autoconfargs=""
 autogenargs=""
@@ -76,28 +76,25 @@ trees()
 			# where only a subset of build tasks are done,
 			# and $if_not_dry_build is prefixed to skipped commands
 
-			if_not_dry_build=":"
 			if_dry_build=""
+			if_not_dry_build=":"
 			;;
 		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
 		-c) mode="distclean" ;;
 		-x) mode="crossgcc-clean" ;;
-		-f) # download source code for a project
+		-f|-F) # download source code for a project
 			# macros. colon means false.
 			if_do_make=":"
+			if_dry_build=""
 			if_not_do_make=""
 			if_not_dry_build=":"
-			if_dry_build=""
-			;;
-		-F) # same as -F, but don't skip git fetch/pull on cache
-			# macros. colon means false
-			if_do_make=":"
-			if_not_do_make=""
-			if_not_dry_build=":"
-			if_dry_build=""
-			forcepull="y"
+			if [ "$flag" = "-F" ]; then
+				# don't skip git fetch/pull on cached src
+
+				forcepull="y"
+			fi
 			;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
