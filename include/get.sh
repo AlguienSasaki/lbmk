@@ -53,17 +53,18 @@ fetch_project()
 
 clone_project()
 {
-	if singletree "$project"; then
-		loc="src/$project"
-
-		if [ -d "$loc" ]; then
-			return 0
-		fi
-
-		remkdir "${tmpgit%/*}"
-		git_prep "$url" "$bkup_url" \
-		    "$xbmkpwd/config/$project/patches" "$loc"
+	if ! singletree "$project"; then
+		return 0
 	fi
+
+	loc="src/$project"
+
+	if [ -d "$loc" ]; then
+		return 0
+	fi
+
+	remkdir "${tmpgit%/*}"
+	git_prep "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"
 }
 
 git_prep()
