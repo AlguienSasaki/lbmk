@@ -85,19 +85,16 @@ setvars()
 	_setvars=""
 
 	if [ $# -lt 2 ]; then
-
 		return 0
-	else
-		val="$1"
-
-		shift 1
-
-		while [ $# -gt 0 ]; do
-			printf "%s=\"%s\"\n" "$1" "$val"
-
-			shift 1
-		done
 	fi
+
+	val="$1"
+	shift 1
+
+	while [ $# -gt 0 ]; do
+		printf "%s=\"%s\"\n" "$1" "$val"
+		shift 1
+	done
 }
 
 # return 0 if project is single-tree, otherwise 1
