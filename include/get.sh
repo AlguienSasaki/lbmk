@@ -19,11 +19,12 @@ tmpgitcache="$xbtmp/tmpgit"
 
 fetch_targets()
 {
-	if [ ! -d "src/$project/$tree" ]; then
-		git_prep "$url" "$bkup_url" \
-		    "$xbmkpwd/$configdir/$tree/patches" \
-		    "src/$project/$tree" "submod"
+	if [ -d "src/$project/$tree" ]; then
+		return 0
 	fi
+
+	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
+	    "src/$project/$tree" "submod"
 }
 
 fetch_project()
