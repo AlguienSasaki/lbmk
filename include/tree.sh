@@ -532,9 +532,7 @@ check_gnu_path()
 
 	if host_gcc_gnat_match "$@"; then
 		return 0
-	fi
-
-	if ! match_gcc_gnat_versions "$@"; then
+	elif ! match_gcc_gnat_versions "$@"; then
 		return 1
 	fi
 }
