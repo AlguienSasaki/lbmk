@@ -1,7 +1,7 @@
-From 6e52d15cd47c849567bfc2cb75ccf3c6513dc688 Mon Sep 17 00:00:00 2001
+From b93835414970c3b3e5a3f9ccaa82e2ae80756f82 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sun, 11 May 2025 16:28:23 -0600
-Subject: [PATCH 43/43] mb/dell/snb_ivb_latitude: Disable EC initiated shutdown
+Subject: [PATCH 2/2] mb/dell/snb_ivb_latitude: Disable EC initiated shutdown
  at 87 degrees
 
 If command 0xBF isn't sent, the EC will shut down the system without
@@ -32,5 +32,5 @@ index ff83db095b..ef385a0a70 100644
 +	mec5035_cmd_bf(0x07);
  }
 -- 
-2.51.2
+2.47.3
 
