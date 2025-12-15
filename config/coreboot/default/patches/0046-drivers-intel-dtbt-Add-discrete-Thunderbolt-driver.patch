@@ -1,7 +1,7 @@
-From 5834c56c0e0314c652fd089d3eb82fe74fd62b14 Mon Sep 17 00:00:00 2001
+From a656a385e2c5b3945ff29a45b4129a2516f4b168 Mon Sep 17 00:00:00 2001
 From: Jeremy Soller <jeremy@system76.com>
 Date: Fri, 31 May 2024 13:58:00 -0600
-Subject: [PATCH] drivers/intel/dtbt: Add discrete Thunderbolt driver
+Subject: [PATCH 1/2] drivers/intel/dtbt: Add discrete Thunderbolt driver
 
 Add a new driver which enables basic TBT support for the Alpine Ridge,
 Titan Ridge, and Maple Ridge discrete Thunderbolt controllers.
@@ -354,5 +354,5 @@ index 0000000000..d01d3a35ef
 +
 +#endif /* _DRIVERS_INTEL_DTBT_H_ */
 -- 
-2.51.2
+2.47.3
 

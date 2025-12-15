@@ -1,15 +1,52 @@
-From ff76bba5543e580afac719ba6d55cea4b89b2364 Mon Sep 17 00:00:00 2001
-From: Hustler One <nine-ball@tutanota.com>
-Date: Wed, 10 Dec 2025 12:01:32 +0100
-Subject: [PATCH 1/2] T480(s): enable TBT support
+From 5249bfd28ffcdab2d54c3c111ec6d3dc567ad090 Mon Sep 17 00:00:00 2001
+From: Matt DeVillier <matt.devillier@gmail.com>
+Date: Fri, 18 Jul 2025 14:24:05 -0500
+Subject: [PATCH 2/2] mb/lenovo/t480(s): Enable TBT support
 
-https://review.coreboot.org/c/coreboot/+/88490
+Select the discrete TBT controller driver, and configure the necessary
+GPIOs for the Alpine Ridge TBT controller to be fully functional.
+Update the documentation w/r/t TBT functionality.
+
+TEST=build/boot Lenovo T480, boot Linux, verify all TBT-related PCI
+devices populated, lower USB-C port works for USB data and PCIe.
+
+Change-Id: Ie5586fa72ed6819b9d1c37373c21605d39bad7b4
+Signed-off-by: Matt DeVillier <matt.devillier@gmail.com>
 ---
+ Documentation/mainboard/lenovo/t480.md                    | 5 ++---
  src/mainboard/lenovo/sklkbl_thinkpad/Kconfig              | 2 ++
  src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c | 8 ++++----
  .../lenovo/sklkbl_thinkpad/variants/t480s/gpio.c          | 8 ++++----
- 3 files changed, 10 insertions(+), 8 deletions(-)
+ 4 files changed, 12 insertions(+), 11 deletions(-)
 
+diff --git a/Documentation/mainboard/lenovo/t480.md b/Documentation/mainboard/lenovo/t480.md
+index 9ebce8ff7d..4c3408c4aa 100644
+--- a/Documentation/mainboard/lenovo/t480.md
++++ b/Documentation/mainboard/lenovo/t480.md
+@@ -162,8 +162,6 @@ binaries if only flashing the `bios` region.
+ 
+ ## Known Issues
+ 
+-- Alpine Ridge Thunderbolt 3 controller does not work
+-  - Lower (right) USB-C port only works for charging/DP alt mode, not USB/PCIe data
+ - Some Fn+F{1-12} keys aren't handled correctly
+ - Nvidia dGPU is finicky
+   - Needs option ROM
+@@ -175,6 +173,7 @@ binaries if only flashing the `bios` region.
+ 
+ ## Verified Working
+ 
++- Alpine Ridge Thunderbolt 3 controller
+ - Integrated graphics init with libgfxinit
+ - video output: internal (eDP), miniDP
+ - ACPI support
+@@ -196,4 +195,4 @@ binaries if only flashing the `bios` region.
+ [from Lenovo's site]: https://pcsupport.lenovo.com/gb/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480s-type-20l7-20l8/solutions/ht508988-critical-intel-thunderbolt-software-and-firmware-updates-thinkpad
+ [how to externally flash the TB3 firmware]: https://libreboot.org/docs/install/t480.html#thunderbolt-issue-read-this-before-flashing
+ [Dell firmware updater]: https://web.archive.org/web/20241110222323/https://dl.dell.com/FOLDER04573471M/1/Inspiron_5468_1.3.0.exe
+-[Dell_PFS_Extract.py]: https://github.com/vuquangtrong/Dell-PFS-BIOS-Assembler/blob/master/Dell_PFS_Extract.py
+\ No newline at end of file
++[Dell_PFS_Extract.py]: https://github.com/vuquangtrong/Dell-PFS-BIOS-Assembler/blob/master/Dell_PFS_Extract.py
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
 index 6036ceb06d..e6fb950d66 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
@@ -30,7 +67,7 @@ index 6036ceb06d..e6fb950d66 100644
  
  if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
-index f337843fd9..2074b9d965 100644
+index f337843fd9..ffd2841e49 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
 @@ -86,7 +86,7 @@ static const struct pad_config gpio_table[] = {
@@ -38,7 +75,7 @@ index f337843fd9..2074b9d965 100644
  	PAD_NC(GPP_C19, NONE),
  	PAD_CFG_GPO(GPP_C20, 0, DEEP),					/* EPRIVACY_ON */
 -	PAD_CFG_GPO(GPP_C21, 0, DEEP),					/* TBT_FORCE_PWR */
-+	PAD_CFG_GPO(GPP_C21, 1, PLTRST),					/* TBT_FORCE_PWR */
++	PAD_CFG_GPO(GPP_C21, 1, PLTRST),				/* TBT_FORCE_PWR */
  	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
  	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
  
@@ -82,5 +119,5 @@ index 4f1c57390d..c24c1abb07 100644
  };
  
 -- 
-2.51.2
+2.47.3
 
