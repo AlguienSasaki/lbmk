@@ -1,0 +1,86 @@
+From ff76bba5543e580afac719ba6d55cea4b89b2364 Mon Sep 17 00:00:00 2001
+From: Hustler One <nine-ball@tutanota.com>
+Date: Wed, 10 Dec 2025 12:01:32 +0100
+Subject: [PATCH 1/2] T480(s): enable TBT support
+
+https://review.coreboot.org/c/coreboot/+/88490
+---
+ src/mainboard/lenovo/sklkbl_thinkpad/Kconfig              | 2 ++
+ src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c | 8 ++++----
+ .../lenovo/sklkbl_thinkpad/variants/t480s/gpio.c          | 8 ++++----
+ 3 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+index 6036ceb06d..e6fb950d66 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+@@ -26,12 +26,14 @@ config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ config BOARD_LENOVO_T480
+ 	bool
+ 	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select DRIVERS_INTEL_DTBT
+ 	select MEC1653_HAS_DEBUG_UNLOCK
+ 	select VARIANT_HAS_DGPU
+ 
+ config BOARD_LENOVO_T480S
+ 	bool
+ 	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select DRIVERS_INTEL_DTBT
+ 	select VARIANT_HAS_DGPU
+ 
+ if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
+index f337843fd9..2074b9d965 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
+@@ -86,7 +86,7 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_C18, NONE),
+ 	PAD_NC(GPP_C19, NONE),
+ 	PAD_CFG_GPO(GPP_C20, 0, DEEP),					/* EPRIVACY_ON */
+-	PAD_CFG_GPO(GPP_C21, 0, DEEP),					/* TBT_FORCE_PWR */
++	PAD_CFG_GPO(GPP_C21, 1, PLTRST),					/* TBT_FORCE_PWR */
+ 	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
+ 	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
+ 
+@@ -191,9 +191,9 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_G1, NONE),
+ 	PAD_NC(GPP_G2, NONE),
+ 	PAD_NC(GPP_G3, NONE),
+-	PAD_CFG_GPO(GPP_G4, 0, DEEP),					/* TBT_RTD3_PWR_EN */
+-	PAD_CFG_GPO(GPP_G5, 0, DEEP),					/* TBT_FORCE_USB_PWR */
+-	PAD_CFG_GPO(GPP_G6, 0, DEEP),					/* -TBT_PERST */
++	PAD_CFG_GPO(GPP_G4, 1, PLTRST),					/* TBT_RTD3_PWR_EN */
++	PAD_CFG_GPO(GPP_G5, 1, PLTRST),					/* TBT_FORCE_USB_PWR */
++	PAD_CFG_GPO(GPP_G6, 1, PLTRST),					/* -TBT_PERST */
+ 	PAD_CFG_GPI_SCI(GPP_G7, NONE, DEEP, LEVEL, INVERT),		/* -TBT_PCIE_WAKE */
+ };
+ 
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/gpio.c
+index 4f1c57390d..c24c1abb07 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/gpio.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480s/gpio.c
+@@ -82,7 +82,7 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_C18, NONE),
+ 	PAD_NC(GPP_C19, NONE),
+ 	PAD_CFG_GPO(GPP_C20, 0, DEEP),					/* EPRIVACY_ON */
+-	PAD_CFG_GPO(GPP_C21, 0, DEEP),					/* TBT_FORCE_PWR */
++	PAD_CFG_GPO(GPP_C21, 1, PLTRST),					/* TBT_FORCE_PWR */
+ 	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
+ 	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
+ 
+@@ -187,9 +187,9 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_G1, NONE),
+ 	PAD_NC(GPP_G2, NONE),
+ 	PAD_NC(GPP_G3, NONE),
+-	PAD_CFG_GPO(GPP_G4, 0, DEEP),					/* TBT_RTD3_PWR_EN */
+-	PAD_CFG_GPO(GPP_G5, 0, DEEP),					/* TBT_FORCE_USB_PWR */
+-	PAD_CFG_GPO(GPP_G6, 0, DEEP),					/* -TBT_PERST */
++	PAD_CFG_GPO(GPP_G4, 1, PLTRST),					/* TBT_RTD3_PWR_EN */
++	PAD_CFG_GPO(GPP_G5, 1, PLTRST),					/* TBT_FORCE_USB_PWR */
++	PAD_CFG_GPO(GPP_G6, 1, PLTRST),					/* -TBT_PERST */
+ 	PAD_CFG_GPI_SCI(GPP_G7, NONE, DEEP, LEVEL, INVERT),		/* -TBT_PCIE_WAKE */
+ };
+ 
+-- 
+2.51.2
+
