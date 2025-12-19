@@ -1,7 +1,7 @@
-From 20921eb7165b23e7b78e4c4126ff5bab8725404b Mon Sep 17 00:00:00 2001
+From e74c4ee6a62ef9f91a8efb257658f627498b91fa Mon Sep 17 00:00:00 2001
 From: Angel Pons <th3fanbus@gmail.com>
 Date: Mon, 10 May 2021 22:40:59 +0200
-Subject: [PATCH 16/40] nb/intel/gm45: Make DDR2 raminit work
+Subject: [PATCH 16/41] nb/intel/gm45: Make DDR2 raminit work
 
 List of changes:
  - Update some timing and ODT values
@@ -20,7 +20,7 @@ Signed-off-by: Angel Pons <th3fanbus@gmail.com>
  3 files changed, 106 insertions(+), 13 deletions(-)
 
 diff --git a/src/northbridge/intel/gm45/gm45.h b/src/northbridge/intel/gm45/gm45.h
-index 5d9ac56606..338260ea7a 100644
+index f68bfdee7a..b76117bc3a 100644
 --- a/src/northbridge/intel/gm45/gm45.h
 +++ b/src/northbridge/intel/gm45/gm45.h
 @@ -420,7 +420,7 @@ void igd_compute_ggc(sysinfo_t *const sysinfo);
@@ -31,9 +31,9 @@ index 5d9ac56606..338260ea7a 100644
 +void raminit_rcomp_calibration(int ddr_type, stepping_t stepping);
  void raminit_reset_readwrite_pointers(void);
  void raminit_receive_enable_calibration(int ddr_type, const timings_t *, const dimminfo_t *);
- void raminit_write_training(const mem_clock_t, const dimminfo_t *, int s3resume);
+ void raminit_write_training(const mem_clock_t, const dimminfo_t *, bool s3resume);
 diff --git a/src/northbridge/intel/gm45/raminit.c b/src/northbridge/intel/gm45/raminit.c
-index b7e013959a..df8f46fbbc 100644
+index def9e1e331..7b091cc567 100644
 --- a/src/northbridge/intel/gm45/raminit.c
 +++ b/src/northbridge/intel/gm45/raminit.c
 @@ -1047,7 +1047,7 @@ static void rcomp_initialization(const int spd_type, const stepping_t stepping,
@@ -70,7 +70,7 @@ index b7e013959a..df8f46fbbc 100644
  		}
  		mchbar_write32(CxODT_HIGH(ch), reg);
  
-@@ -2209,6 +2209,84 @@ void raminit(sysinfo_t *const sysinfo, const int s3resume)
+@@ -2209,6 +2209,84 @@ void raminit(sysinfo_t *const sysinfo, const bool s3resume)
  		raminit_write_training(timings->mem_clock, dimms, s3resume);
  	}
  

@@ -1,7 +1,7 @@
-From df60dac9dbaf0c71008dbead7dc1a8c8881c5e33 Mon Sep 17 00:00:00 2001
+From 09febfb85eb176c8bf0e416412ed0b971dc2cefc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Apr 2025 02:58:47 +0100
-Subject: [PATCH 24/40] nb/intel/*: Disable stack overflow debug options
+Subject: [PATCH 23/41] nb/intel/*: Disable stack overflow debug options
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -34,7 +34,7 @@ index 039a7396f8..ddcb986f10 100644
 +      bool
 +      default n
 diff --git a/src/northbridge/intel/gm45/Kconfig b/src/northbridge/intel/gm45/Kconfig
-index fc5df8b11a..95e3644b73 100644
+index 35e89b0c88..c5456d0ddf 100644
 --- a/src/northbridge/intel/gm45/Kconfig
 +++ b/src/northbridge/intel/gm45/Kconfig
 @@ -58,4 +58,13 @@ config FIXED_DMIBAR_MMIO_BASE
@@ -52,7 +52,7 @@ index fc5df8b11a..95e3644b73 100644
 +
  endif
 diff --git a/src/northbridge/intel/haswell/Kconfig b/src/northbridge/intel/haswell/Kconfig
-index 6191cb6ccf..0f5b5c7241 100644
+index c57f1ec380..0a5181b183 100644
 --- a/src/northbridge/intel/haswell/Kconfig
 +++ b/src/northbridge/intel/haswell/Kconfig
 @@ -10,6 +10,15 @@ config NORTHBRIDGE_INTEL_HASWELL
@@ -93,7 +93,7 @@ index dbb2d7436b..5e9418b6a9 100644
 +
 +endif
 diff --git a/src/northbridge/intel/i945/Kconfig b/src/northbridge/intel/i945/Kconfig
-index 32eff1a611..9479d75c07 100644
+index c4e17f90bf..b12f5be091 100644
 --- a/src/northbridge/intel/i945/Kconfig
 +++ b/src/northbridge/intel/i945/Kconfig
 @@ -89,4 +89,13 @@ config FIXED_DMIBAR_MMIO_BASE
@@ -111,7 +111,7 @@ index 32eff1a611..9479d75c07 100644
 +
  endif
 diff --git a/src/northbridge/intel/ironlake/Kconfig b/src/northbridge/intel/ironlake/Kconfig
-index 2bafebf92e..16b81705bb 100644
+index 39566a6e5f..f46acf6937 100644
 --- a/src/northbridge/intel/ironlake/Kconfig
 +++ b/src/northbridge/intel/ironlake/Kconfig
 @@ -63,4 +63,13 @@ config FIXED_DMIBAR_MMIO_BASE
@@ -129,7 +129,7 @@ index 2bafebf92e..16b81705bb 100644
 +
  endif
 diff --git a/src/northbridge/intel/pineview/Kconfig b/src/northbridge/intel/pineview/Kconfig
-index 59cfcd5e0a..a3ad8d3425 100644
+index a05b866dad..50e3a7cdb9 100644
 --- a/src/northbridge/intel/pineview/Kconfig
 +++ b/src/northbridge/intel/pineview/Kconfig
 @@ -42,4 +42,13 @@ config FIXED_EPBAR_MMIO_BASE
@@ -147,7 +147,7 @@ index 59cfcd5e0a..a3ad8d3425 100644
 +
  endif
 diff --git a/src/northbridge/intel/sandybridge/Kconfig b/src/northbridge/intel/sandybridge/Kconfig
-index 973eed8bbd..6387cf926d 100644
+index 9972a43da0..fe4ac5106c 100644
 --- a/src/northbridge/intel/sandybridge/Kconfig
 +++ b/src/northbridge/intel/sandybridge/Kconfig
 @@ -208,4 +208,13 @@ config IGD_DEFAULT_UMA_INDEX
@@ -165,7 +165,7 @@ index 973eed8bbd..6387cf926d 100644
 +
  endif
 diff --git a/src/northbridge/intel/x4x/Kconfig b/src/northbridge/intel/x4x/Kconfig
-index 6430319f6a..1803ef5733 100644
+index 646af3510b..069fa0244d 100644
 --- a/src/northbridge/intel/x4x/Kconfig
 +++ b/src/northbridge/intel/x4x/Kconfig
 @@ -53,4 +53,13 @@ config FIXED_DMIBAR_MMIO_BASE

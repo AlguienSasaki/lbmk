@@ -1,7 +1,7 @@
-From 732819a85ea6cca637350192fbab9d459dc68439 Mon Sep 17 00:00:00 2001
+From 90332fe96aca0de4d99d58d1593048c77e1bdecf Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sun, 11 May 2025 15:41:22 -0600
-Subject: [PATCH 1/2] ec/dell/mec5035: Add command to disable EC-initiated
+Subject: [PATCH 38/41] ec/dell/mec5035: Add command to disable EC-initiated
  thermal shutdown
 
 If command 0xBF isn't sent, the EC shuts down the system without warning
@@ -39,10 +39,10 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  2 files changed, 21 insertions(+)
 
 diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
-index bdae929a27..b3574611a7 100644
+index c5067c16f6..b316fa4989 100644
 --- a/src/ec/dell/mec5035/mec5035.c
 +++ b/src/ec/dell/mec5035/mec5035.c
-@@ -115,6 +115,25 @@ void mec5035_sleep_enable(void)
+@@ -114,6 +114,25 @@ void mec5035_sleep_enable(void)
  	ec_command(CMD_SLEEP_ENABLE);
  }
  
@@ -69,7 +69,7 @@ index bdae929a27..b3574611a7 100644
  {
  	/* If this isn't sent the EC shuts down the system after about 15
 diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
-index 51422598c4..f1d8c43051 100644
+index 5cd907bf71..71d1a71075 100644
 --- a/src/ec/dell/mec5035/mec5035.h
 +++ b/src/ec/dell/mec5035/mec5035.h
 @@ -14,6 +14,7 @@ enum mec5035_cmd {
@@ -80,7 +80,7 @@ index 51422598c4..f1d8c43051 100644
  	CMD_CPU_OK = 0xc2,
  };
  
-@@ -66,5 +67,6 @@ void mec5035_change_wake(u8 source, enum ec_wake_change change);
+@@ -65,5 +66,6 @@ void mec5035_change_wake(u8 source, enum ec_wake_change change);
  void mec5035_sleep_enable(void);
  
  void mec5035_smi_sleep(int slp_type);

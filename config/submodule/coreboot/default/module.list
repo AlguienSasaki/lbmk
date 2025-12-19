@@ -4,10 +4,10 @@
 3rdparty/libgfxinit
 3rdparty/libhwbase
 3rdparty/vboot
-util/crossgcc/tarballs/binutils-2.44.tar.xz
+util/crossgcc/tarballs/binutils-2.45.tar.xz
 util/crossgcc/tarballs/gcc-14.2.0.tar.xz
 util/crossgcc/tarballs/gmp-6.3.0.tar.xz
 util/crossgcc/tarballs/mpc-1.3.1.tar.gz
 util/crossgcc/tarballs/mpfr-4.2.2.tar.xz
 util/crossgcc/tarballs/nasm-2.16.03.tar.bz2
-util/crossgcc/tarballs/acpica-unix-20250404.tar.gz
+util/crossgcc/tarballs/acpica-unix-20250807.tar.gz

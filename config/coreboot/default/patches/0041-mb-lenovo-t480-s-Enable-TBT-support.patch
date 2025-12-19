@@ -1,7 +1,7 @@
-From 5249bfd28ffcdab2d54c3c111ec6d3dc567ad090 Mon Sep 17 00:00:00 2001
+From 890eafaa914317b2a67a4b0df9c3a5ea04d88f05 Mon Sep 17 00:00:00 2001
 From: Matt DeVillier <matt.devillier@gmail.com>
 Date: Fri, 18 Jul 2025 14:24:05 -0500
-Subject: [PATCH 2/2] mb/lenovo/t480(s): Enable TBT support
+Subject: [PATCH 41/41] mb/lenovo/t480(s): Enable TBT support
 
 Select the discrete TBT controller driver, and configure the necessary
 GPIOs for the Alpine Ridge TBT controller to be fully functional.
@@ -13,17 +13,17 @@ devices populated, lower USB-C port works for USB data and PCIe.
 Change-Id: Ie5586fa72ed6819b9d1c37373c21605d39bad7b4
 Signed-off-by: Matt DeVillier <matt.devillier@gmail.com>
 ---
- Documentation/mainboard/lenovo/t480.md                    | 5 ++---
+ Documentation/mainboard/lenovo/skylake.md                 | 3 +--
  src/mainboard/lenovo/sklkbl_thinkpad/Kconfig              | 2 ++
  src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c | 8 ++++----
  .../lenovo/sklkbl_thinkpad/variants/t480s/gpio.c          | 8 ++++----
- 4 files changed, 12 insertions(+), 11 deletions(-)
+ 4 files changed, 11 insertions(+), 10 deletions(-)
 
-diff --git a/Documentation/mainboard/lenovo/t480.md b/Documentation/mainboard/lenovo/t480.md
-index 9ebce8ff7d..4c3408c4aa 100644
---- a/Documentation/mainboard/lenovo/t480.md
-+++ b/Documentation/mainboard/lenovo/t480.md
-@@ -162,8 +162,6 @@ binaries if only flashing the `bios` region.
+diff --git a/Documentation/mainboard/lenovo/skylake.md b/Documentation/mainboard/lenovo/skylake.md
+index 64e075e2cd..352d91b3ef 100644
+--- a/Documentation/mainboard/lenovo/skylake.md
++++ b/Documentation/mainboard/lenovo/skylake.md
+@@ -193,8 +193,6 @@ binaries if only flashing the `bios` region.
  
  ## Known Issues
  
@@ -32,7 +32,7 @@ index 9ebce8ff7d..4c3408c4aa 100644
  - Some Fn+F{1-12} keys aren't handled correctly
  - Nvidia dGPU is finicky
    - Needs option ROM
-@@ -175,6 +173,7 @@ binaries if only flashing the `bios` region.
+@@ -206,6 +204,7 @@ binaries if only flashing the `bios` region.
  
  ## Verified Working
  
@@ -40,32 +40,26 @@ index 9ebce8ff7d..4c3408c4aa 100644
  - Integrated graphics init with libgfxinit
  - video output: internal (eDP), miniDP
  - ACPI support
-@@ -196,4 +195,4 @@ binaries if only flashing the `bios` region.
- [from Lenovo's site]: https://pcsupport.lenovo.com/gb/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480s-type-20l7-20l8/solutions/ht508988-critical-intel-thunderbolt-software-and-firmware-updates-thinkpad
- [how to externally flash the TB3 firmware]: https://libreboot.org/docs/install/t480.html#thunderbolt-issue-read-this-before-flashing
- [Dell firmware updater]: https://web.archive.org/web/20241110222323/https://dl.dell.com/FOLDER04573471M/1/Inspiron_5468_1.3.0.exe
--[Dell_PFS_Extract.py]: https://github.com/vuquangtrong/Dell-PFS-BIOS-Assembler/blob/master/Dell_PFS_Extract.py
-\ No newline at end of file
-+[Dell_PFS_Extract.py]: https://github.com/vuquangtrong/Dell-PFS-BIOS-Assembler/blob/master/Dell_PFS_Extract.py
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-index 6036ceb06d..e6fb950d66 100644
+index d69d94f638..c60b85af08 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-@@ -26,12 +26,14 @@ config BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
- config BOARD_LENOVO_T480
+@@ -33,6 +33,7 @@ config BOARD_LENOVO_T480
  	bool
  	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 	select SOC_INTEL_KABYLAKE
 +	select DRIVERS_INTEL_DTBT
  	select MEC1653_HAS_DEBUG_UNLOCK
  	select VARIANT_HAS_DGPU
  
- config BOARD_LENOVO_T480S
+@@ -40,6 +41,7 @@ config BOARD_LENOVO_T480S
  	bool
  	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 	select SOC_INTEL_KABYLAKE
 +	select DRIVERS_INTEL_DTBT
  	select VARIANT_HAS_DGPU
  
- if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ config BOARD_LENOVO_T580
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c
 index f337843fd9..ffd2841e49 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t480/gpio.c

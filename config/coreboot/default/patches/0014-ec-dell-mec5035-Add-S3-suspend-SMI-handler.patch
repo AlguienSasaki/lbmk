@@ -1,7 +1,7 @@
-From aadef041f002b9f0504fcc67df39654680d67bdd Mon Sep 17 00:00:00 2001
+From 0a982ec4b606b6c236f71478350b69f532f30719 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 3 May 2024 11:03:32 -0600
-Subject: [PATCH 14/40] ec/dell/mec5035: Add S3 suspend SMI handler
+Subject: [PATCH 14/41] ec/dell/mec5035: Add S3 suspend SMI handler
 
 This is necessary for S3 resume to work on SNB and newer Dell Latitude
 laptops. If a command isn't sent, the EC cuts power to the DIMMs,
@@ -28,10 +28,10 @@ Change-Id: I655868aba46911d128f6c24f410dc6fdf83f3070
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
 ---
  src/ec/dell/mec5035/Makefile.mk  |  1 +
- src/ec/dell/mec5035/mec5035.c    | 14 ++++++++++++++
+ src/ec/dell/mec5035/mec5035.c    | 13 +++++++++++++
  src/ec/dell/mec5035/mec5035.h    | 22 ++++++++++++++++++++++
  src/ec/dell/mec5035/smihandler.c | 17 +++++++++++++++++
- 4 files changed, 54 insertions(+)
+ 4 files changed, 53 insertions(+)
  create mode 100644 src/ec/dell/mec5035/smihandler.c
 
 diff --git a/src/ec/dell/mec5035/Makefile.mk b/src/ec/dell/mec5035/Makefile.mk
@@ -46,13 +46,13 @@ index 4ebdd811f9..be557e4599 100644
  
  endif
 diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
-index dffbb7960c..85c2ab0140 100644
+index 17ac2c1dab..c5067c16f6 100644
 --- a/src/ec/dell/mec5035/mec5035.c
 +++ b/src/ec/dell/mec5035/mec5035.c
-@@ -94,6 +94,20 @@ void mec5035_control_radio(enum ec_radio_dev dev, enum ec_radio_state state)
- 	ec_command(CMD_RADIO_CTRL);
+@@ -100,6 +100,19 @@ static void mec5035_power_button_route(enum ec_power_button_route target)
+ 	write_mailbox_regs(&buf, 2, 1);
+ 	ec_command(CMD_POWER_BUTTON_TO_HOST);
  }
- 
 +void mec5035_change_wake(u8 source, enum ec_wake_change change)
 +{
 +	u8 buf[ACPI_WAKEUP_NUM_ARGS] = {change, source, 0, 0x40};
@@ -66,15 +66,14 @@ index dffbb7960c..85c2ab0140 100644
 +	write_mailbox_regs(buf, 2, SLEEP_EN_NUM_ARGS);
 +	ec_command(CMD_SLEEP_ENABLE);
 +}
-+
+ 
  void mec5035_early_init(void)
  {
- 	/* If this isn't sent the EC shuts down the system after about 15
 diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
-index 32f791cb01..8d4fded28b 100644
+index 5fdf56631b..5cd907bf71 100644
 --- a/src/ec/dell/mec5035/mec5035.h
 +++ b/src/ec/dell/mec5035/mec5035.h
-@@ -4,12 +4,15 @@
+@@ -4,6 +4,7 @@
  #define _EC_DELL_MEC5035_H_
  
  #include <stdint.h>
@@ -82,16 +81,17 @@ index 32f791cb01..8d4fded28b 100644
  
  #define NUM_REGISTERS	32
  
- enum mec5035_cmd {
+@@ -11,6 +12,8 @@ enum mec5035_cmd {
  	CMD_MOUSE_TP = 0x1a,
  	CMD_RADIO_CTRL = 0x2b,
+ 	CMD_POWER_BUTTON_TO_HOST = 0x3e,
 +	CMD_ACPI_WAKEUP_CHANGE = 0x4a,
 +	CMD_SLEEP_ENABLE = 0x64,
  	CMD_CPU_OK = 0xc2,
  };
  
-@@ -33,9 +36,28 @@ enum ec_radio_state {
- 	RADIO_ON
+@@ -39,9 +42,28 @@ enum ec_power_button_route {
+ 	HOST
  };
  
 +#define ACPI_WAKEUP_NUM_ARGS 4

@@ -1,7 +1,7 @@
-From b5fe5366a03f934df87c5537b12f006ccee0d695 Mon Sep 17 00:00:00 2001
+From da433a5d9a7d1d7856b55761b8392864343de5a8 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 6 Aug 2024 00:50:24 +0100
-Subject: [PATCH 17/40] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
+Subject: [PATCH 17/41] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
 
 We add this patch:
 
@@ -32,7 +32,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  2 files changed, 88 insertions(+), 82 deletions(-)
 
 diff --git a/src/northbridge/intel/gm45/raminit.c b/src/northbridge/intel/gm45/raminit.c
-index df8f46fbbc..433db3a68c 100644
+index 7b091cc567..478898564a 100644
 --- a/src/northbridge/intel/gm45/raminit.c
 +++ b/src/northbridge/intel/gm45/raminit.c
 @@ -1117,7 +1117,10 @@ static void dram_program_timings(const int spd_type, const timings_t *const timi
@@ -47,7 +47,7 @@ index df8f46fbbc..433db3a68c 100644
  		} else if (timings->mem_clock != MEM_CLOCK_1067MT) {
  			reg = (reg & ~(0x7 << 15)) | ((9 - timings->CAS) << 15);
  			reg = (reg & ~(0xf << 10)) | ((timings->CAS - 3) << 10);
-@@ -2209,83 +2212,85 @@ void raminit(sysinfo_t *const sysinfo, const int s3resume)
+@@ -2209,83 +2212,85 @@ void raminit(sysinfo_t *const sysinfo, const bool s3resume)
  		raminit_write_training(timings->mem_clock, dimms, s3resume);
  	}
  

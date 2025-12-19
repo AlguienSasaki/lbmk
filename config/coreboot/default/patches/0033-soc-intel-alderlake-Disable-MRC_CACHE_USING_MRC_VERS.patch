@@ -1,7 +1,7 @@
-From 8e191c71f11de4cb3d08fe585537f15043cacb1b Mon Sep 17 00:00:00 2001
+From 2c3a31547a14eb1b1145a5d153289b2eef6d71d8 Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
 Date: Sat, 27 Sep 2025 23:30:46 +0300
-Subject: [PATCH 36/40] soc/intel/alderlake: Disable
+Subject: [PATCH 33/41] soc/intel/alderlake: Disable
  MRC_CACHE_USING_MRC_VERSION
 
 There's some issue with building against the FSP headers in src/vendorcode.
@@ -14,10 +14,10 @@ Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
  1 file changed, 1 deletion(-)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index 51bdf98b9d..739faa3808 100644
+index 97c2ecca70..a2074fe05a 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
-@@ -34,7 +34,6 @@ config SOC_INTEL_ALDERLAKE
+@@ -36,7 +36,6 @@ config SOC_INTEL_ALDERLAKE
  	select INTEL_GMA_VERSION_2
  	select INTEL_TXT_LIB
  	select MP_SERVICES_PPI_V2
