@@ -4,6 +4,7 @@
 3rdparty/libgfxinit
 3rdparty/libhwbase
 3rdparty/vboot
+3rdparty/cmocka
 util/crossgcc/tarballs/binutils-2.45.tar.xz
 util/crossgcc/tarballs/gcc-14.2.0.tar.xz
 util/crossgcc/tarballs/gmp-6.3.0.tar.xz
