@@ -1,0 +1,57 @@
+From 2a9e31b0f0bc22d41dfbc5813aa73176619bff9c Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 22 Dec 2025 11:08:46 +0000
+Subject: [PATCH 1/1] mb/lenovo/t580: Enable TBT support
+
+This is based on the same change made to the ThinkPad T480
+by Matt DeVillier.
+
+I simply applied the same changes myself, on the T580.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/lenovo/sklkbl_thinkpad/Kconfig              | 1 +
+ src/mainboard/lenovo/sklkbl_thinkpad/variants/t580/gpio.c | 8 ++++----
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+index c60b85af08..bad6c500d3 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+@@ -48,6 +48,7 @@ config BOARD_LENOVO_T580
+ 	bool
+ 	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 	select SOC_INTEL_KABYLAKE
++	select DRIVERS_INTEL_DTBT
+ 	select MEC1653_HAS_DEBUG_UNLOCK
+ 	select VARIANT_HAS_DGPU
+ 
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t580/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t580/gpio.c
+index 9c0da3c37e..35ec83152e 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/t580/gpio.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/t580/gpio.c
+@@ -86,7 +86,7 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_C18, NONE),
+ 	PAD_NC(GPP_C19, NONE),
+ 	PAD_CFG_GPO(GPP_C20, 0, DEEP),					/* EPRIVACY_ON */
+-	PAD_CFG_GPO(GPP_C21, 0, DEEP),					/* TBT_FORCE_PWR */
++	PAD_CFG_GPO(GPP_C21, 0, PLTRST),					/* TBT_FORCE_PWR */
+ 	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
+ 	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
+ 
+@@ -191,9 +191,9 @@ static const struct pad_config gpio_table[] = {
+ 	PAD_NC(GPP_G1, NONE),
+ 	PAD_NC(GPP_G2, NONE),
+ 	PAD_NC(GPP_G3, NONE),
+-	PAD_CFG_GPO(GPP_G4, 0, DEEP),					/* TBT_RTD3_PWR_EN */
+-	PAD_CFG_GPO(GPP_G5, 0, DEEP),					/* TBT_FORCE_USB_PWR */
+-	PAD_CFG_GPO(GPP_G6, 0, DEEP),					/* -TBT_PERST */
++	PAD_CFG_GPO(GPP_G4, 0, PLTRST),					/* TBT_RTD3_PWR_EN */
++	PAD_CFG_GPO(GPP_G5, 0, PLTRST),					/* TBT_FORCE_USB_PWR */
++	PAD_CFG_GPO(GPP_G6, 0, PLTRST),					/* -TBT_PERST */
+ 	PAD_CFG_GPI_SCI(GPP_G7, NONE, DEEP, LEVEL, INVERT),		/* -TBT_PCIE_WAKE */
+ };
+ 
+-- 
+2.47.3
+
