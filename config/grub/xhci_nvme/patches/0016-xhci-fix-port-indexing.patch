@@ -1,0 +1,43 @@
+From 9343cdda106d47561f25ce1e39a86d62cb0bfd08 Mon Sep 17 00:00:00 2001
+From: Sven Anderson <sven@anderson.de>
+Date: Mon, 13 Jan 2025 19:51:41 +0100
+Subject: [PATCH 16/20] xhci: fix port indexing
+
+---
+ grub-core/bus/usb/xhci.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/grub-core/bus/usb/xhci.c b/grub-core/bus/usb/xhci.c
+index f4591ffb5..dc89b9619 100644
+--- a/grub-core/bus/usb/xhci.c
++++ b/grub-core/bus/usb/xhci.c
+@@ -2250,7 +2250,7 @@ grub_xhci_detect_dev (grub_usb_controller_t dev, int port, int *changed)
+ 
+   *changed = 0;
+   grub_dprintf("xhci", "%s: dev=%p USB%d_%d port %d\n", __func__, dev,
+-	       x->psids[port-1].major, x->psids[port-1].minor, port);
++	       x->psids[port].major, x->psids[port].minor, port);
+ 
+   /* On shutdown advertise all ports as disconnected. This will trigger
+    * a gracefull detatch. */
+@@ -2285,13 +2285,13 @@ grub_xhci_detect_dev (grub_usb_controller_t dev, int port, int *changed)
+   if (!(portsc & GRUB_XHCI_PORTSC_CCS))
+     return GRUB_USB_SPEED_NONE;
+ 
+-  for (grub_uint8_t i = 0; i < 16 && x->psids[port-1].psids[i].id > 0; i++)
++  for (grub_uint8_t i = 0; i < 16 && x->psids[port].psids[i].id > 0; i++)
+     {
+-      if (x->psids[port-1].psids[i].id == speed)
++      if (x->psids[port].psids[i].id == speed)
+         {
+ 	  grub_dprintf("xhci", "%s: grub_usb_speed = %d\n", __func__,
+-		       x->psids[port-1].psids[i].grub_usb_speed );
+-	  return x->psids[port-1].psids[i].grub_usb_speed;
++		       x->psids[port].psids[i].grub_usb_speed );
++	  return x->psids[port].psids[i].grub_usb_speed;
+ 	}
+     }
+ 
+-- 
+2.47.3
+

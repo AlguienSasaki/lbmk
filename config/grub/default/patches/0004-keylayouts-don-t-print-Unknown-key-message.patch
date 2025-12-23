@@ -1,0 +1,38 @@
+From 22a0e4608428f7f0131789b6bc0e0203b994163f Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 31 Oct 2023 10:33:28 +0000
+Subject: [PATCH 4/8] keylayouts: don't print "Unknown key" message
+
+on keyboards with stuck keys, this results in GRUB just
+spewing it repeatedly, preventing use of GRUB.
+
+in such cases, it's still possible to use the keyboard,
+and we should let the user at least boot.
+
+it often appears when people plug in faulty usb keyboards,
+but can appear for laptop keyboards too; one of my e6400
+has stuck keys.
+
+with this patch, grub should be a bit more reliable in
+terms of user experience, when the keyboard is faulty.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ grub-core/commands/keylayouts.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/grub-core/commands/keylayouts.c b/grub-core/commands/keylayouts.c
+index aa3ba34f2..445fa0601 100644
+--- a/grub-core/commands/keylayouts.c
++++ b/grub-core/commands/keylayouts.c
+@@ -174,7 +174,6 @@ grub_term_map_key (grub_keyboard_key_t code, int status)
+   key = map_key_core (code, status, &alt_gr_consumed);
+ 
+   if (key == 0 || key == GRUB_TERM_SHIFT) {
+-    grub_printf ("Unknown key 0x%x detected\n", code);
+     return GRUB_TERM_NO_KEY;
+   }
+ 
+-- 
+2.47.3
+

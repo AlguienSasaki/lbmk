@@ -1,7 +1,7 @@
-From 6a04ceb244366ddab75ce229afd19687ce35d15a Mon Sep 17 00:00:00 2001
+From 5e70ef9fa3a6474ec827c15329d13c9c984f147a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 31 Oct 2021 03:47:05 +0000
-Subject: [PATCH 01/26] mitigate grub's missing characters for borders/arrow
+Subject: [PATCH 01/20] mitigate grub's missing characters for borders/arrow
  characters
 
 This cleans up the display on the main screen in GRUB.
@@ -86,5 +86,5 @@ index 9c383e64a..8ec1dd1e8 100644
    grub_term_highlight_color = old_color_highlight;
    geo->timeout_y = geo->first_entry_y + geo->num_entries
 -- 
-2.39.5
+2.47.3
 

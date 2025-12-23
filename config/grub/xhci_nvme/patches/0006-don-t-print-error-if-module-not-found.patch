@@ -1,0 +1,34 @@
+From 2da7fd383afee0a91c1eeb5120a46e165b9386c3 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 5 Nov 2023 16:36:22 +0000
+Subject: [PATCH 06/20] don't print error if module not found
+
+still set grub_errno accordingly, and otherwise
+behave the same. in libreboot, we remove a lot of
+modules but then rely on loading a grub.cfg
+provided by a distro; in almost all cases that works,
+but also in almost all cases, that will try to load
+a module we don't actually need, but then it prints
+a message. this can annoy some users, so silence it.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ grub-core/kern/dl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grub-core/kern/dl.c b/grub-core/kern/dl.c
+index eac3ea48d..6d67ba54f 100644
+--- a/grub-core/kern/dl.c
++++ b/grub-core/kern/dl.c
+@@ -510,7 +510,7 @@ grub_dl_resolve_name (grub_dl_t mod, Elf_Ehdr *e)
+ 
+   s = grub_dl_find_section (e, ".modname");
+   if (!s)
+-    return grub_error (GRUB_ERR_BAD_MODULE, "no module name found");
++    return (grub_errno = GRUB_ERR_BAD_MODULE);
+ 
+   mod->name = grub_strdup ((char *) e + s->sh_offset);
+   if (! mod->name)
+-- 
+2.47.3
+
