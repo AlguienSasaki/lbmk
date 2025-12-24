@@ -16,7 +16,7 @@ index de9a3f961..1fabb9c86 100644
    grub_term_cls (term);
  
 -  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
-+  msg_formatted = grub_xasprintf (_("Libreboot 25.06 Luminous Lemon (GRUB menu): https://libreboot.org/"));
++  msg_formatted = grub_xasprintf (_("Libreboot 26.01 RC1 Tenacious Tomato (GRUB menu): https://libreboot.org/"));
    if (!msg_formatted)
      return;
  
