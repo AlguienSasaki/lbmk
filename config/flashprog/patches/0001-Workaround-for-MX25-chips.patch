@@ -1,7 +1,7 @@
-From 9d7b97a0f08a3f0f62c389aee61e92377d82d645 Mon Sep 17 00:00:00 2001
+From f57f12e4aac690ebbfda40d92d1d0c5ff2b74c0a Mon Sep 17 00:00:00 2001
 From: consts <grudnevkv@gmail.com>
 Date: Fri, 2 Mar 2018 07:03:37 +0000
-Subject: [PATCH 1/1] Workaround for MX25 chips
+Subject: [PATCH 1/2] Workaround for MX25 chips
 
 TEST: In-system programming a ThinkPad X200 using a clip and
 pico-serprog works now. It just doesn't without this hack.
@@ -17,7 +17,7 @@ Change-Id: I43a306b67862b59c1dcd02729e189f3bf73f481b
  3 files changed, 16 insertions(+), 1 deletion(-)
 
 diff --git a/cli_classic.c b/cli_classic.c
-index 26253dc..5a80394 100644
+index a49e0458..0b85a80e 100644
 --- a/cli_classic.c
 +++ b/cli_classic.c
 @@ -68,6 +68,7 @@ static void cli_classic_usage(const char *name)
@@ -47,7 +47,7 @@ index 26253dc..5a80394 100644
  			show_progress = true;
  			break;
 diff --git a/include/programmer.h b/include/programmer.h
-index 11d15a8..3b33d5a 100644
+index 11d15a84..3b33d5ae 100644
 --- a/include/programmer.h
 +++ b/include/programmer.h
 @@ -372,6 +372,7 @@ enum ich_chipset {
@@ -59,7 +59,7 @@ index 11d15a8..3b33d5a 100644
  /* ichspi.c */
  #if CONFIG_INTERNAL == 1
 diff --git a/spi.c b/spi.c
-index 748ef99..9bbdee9 100644
+index 748ef994..9bbdee9a 100644
 --- a/spi.c
 +++ b/spi.c
 @@ -27,13 +27,22 @@
@@ -87,5 +87,5 @@ index 748ef99..9bbdee9 100644
  				       readarr);
  }
 -- 
-2.39.5
+2.47.3
 
