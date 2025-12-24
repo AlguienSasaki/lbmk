@@ -45,13 +45,17 @@ ext2 \
 fat \
 f2fs \
 gcry_arcfour \
+gcry_blake2 \
 gcry_blowfish \
 gcry_camellia \
 gcry_cast5 \
 gcry_crc \
 gcry_des \
 gcry_dsa \
+gcry_hwfeatures \
 gcry_idea \
+gcry_kdf \
+gcry_keccak \
 gcry_md4 \
 gcry_md5 \
 gcry_rfc2268 \
@@ -118,6 +122,7 @@ pgp \
 play \
 png \
 procfs \
+pubkey \
 raid5rec \
 raid6rec \
 read \
