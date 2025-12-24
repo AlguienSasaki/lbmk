@@ -5,8 +5,9 @@
 # Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
-export LC_COLLATE=C
-export LC_ALL=C
+export LANG=C.UTF-8
+export LC_COLLATE=C.UTF-8
+export LC_ALL=C.UTF-8
 
 projectname="libreboot"
 projectsite="https://libreboot.org/"
