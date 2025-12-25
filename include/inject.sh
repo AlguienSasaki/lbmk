@@ -40,7 +40,6 @@ inject()
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
 
-	new_mac=""
 	nuke=""
 	xchanged=""
 
