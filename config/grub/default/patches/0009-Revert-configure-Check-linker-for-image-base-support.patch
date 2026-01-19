@@ -1,7 +1,8 @@
-From 52de4ac46b4d384a271d18c33238313334def5bc Mon Sep 17 00:00:00 2001
+From a56ceedd60bd6515ad3c84ec6aa4c3d66a8bac87 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 24 Dec 2025 01:42:17 +0100
-Subject: [PATCH 8/8] Revert "configure: Check linker for --image-base support"
+Subject: [PATCH 09/10] Revert "configure: Check linker for --image-base
+ support"
 
 This reverts commit 1a5417f39a0ccefcdd5440f2a67f84d2d2e26960.
 ---

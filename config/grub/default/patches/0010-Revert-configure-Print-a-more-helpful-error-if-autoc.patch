@@ -1,7 +1,7 @@
-From abf2bf6e2973ccaa994f63ff851ba11cbd45f1eb Mon Sep 17 00:00:00 2001
+From 66028b6bc149a25894fe5ca395b22804f389a18e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 19 Jan 2026 15:27:23 +0000
-Subject: [PATCH 1/1] Revert "configure: Print a more helpful error if
+Subject: [PATCH 10/10] Revert "configure: Print a more helpful error if
  autoconf-archive is not installed"
 
 This reverts commit ac042f3f58d33ce9cd5ff61750f06da1a1d7b0eb.
