@@ -1,7 +1,7 @@
-From d5aead07155d6eeb36971c0a2e5ee1392a025f91 Mon Sep 17 00:00:00 2001
+From fd3e7f0b0f27b22591c12d371e10e1399865c057 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 30 Oct 2023 22:19:21 +0000
-Subject: [PATCH 3/8] at_keyboard coreboot: force scancodes2+translate
+Subject: [PATCH 2/8] at_keyboard coreboot: force scancodes2+translate
 
 Scan code set 2 with translation should be assumed in
 every case, as the default starting position.

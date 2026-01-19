@@ -1,7 +1,7 @@
-From 9343cdda106d47561f25ce1e39a86d62cb0bfd08 Mon Sep 17 00:00:00 2001
+From 3db55ea63bc2c4fb41f7489a77a42c821256bbf5 Mon Sep 17 00:00:00 2001
 From: Sven Anderson <sven@anderson.de>
 Date: Mon, 13 Jan 2025 19:51:41 +0100
-Subject: [PATCH 16/20] xhci: fix port indexing
+Subject: [PATCH 16/21] xhci: fix port indexing
 
 ---
  grub-core/bus/usb/xhci.c | 10 +++++-----

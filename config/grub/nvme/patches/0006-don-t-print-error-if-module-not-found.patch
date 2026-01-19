@@ -1,7 +1,7 @@
-From 198cb517f44ada4eb561e3182e61b1598535c51b Mon Sep 17 00:00:00 2001
+From 9412b6be27bce2d79f154761387d35f44184c069 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 16:36:22 +0000
-Subject: [PATCH 6/9] don't print error if module not found
+Subject: [PATCH 06/10] don't print error if module not found
 
 still set grub_errno accordingly, and otherwise
 behave the same. in libreboot, we remove a lot of

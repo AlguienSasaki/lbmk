@@ -1,7 +1,7 @@
-From 70e4ffed2f1cd9b6871341260cae31a5e68c3081 Mon Sep 17 00:00:00 2001
+From 52de4ac46b4d384a271d18c33238313334def5bc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Wed, 24 Dec 2025 01:42:17 +0100
-Subject: [PATCH 1/1] Revert "configure: Check linker for --image-base support"
+Subject: [PATCH 8/8] Revert "configure: Check linker for --image-base support"
 
 This reverts commit 1a5417f39a0ccefcdd5440f2a67f84d2d2e26960.
 ---
@@ -26,7 +26,7 @@ index 70c1912f8..fa7840f09 100644
  void
  cmain (void)
 diff --git a/configure.ac b/configure.ac
-index a282bf7bf..17937baf4 100644
+index d8ca1b7c1..041cfbab4 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -1461,6 +1461,7 @@ elif test x$grub_cv_target_cc_link_format = x-mi386pe || test x$grub_cv_target_c
@@ -45,9 +45,9 @@ index a282bf7bf..17937baf4 100644
    TARGET_IMG_CFLAGS=
  fi
  
-@@ -1793,18 +1795,6 @@ LIBS=""
- grub_ASM_USCORE
- grub_PROG_TARGET_CC
+@@ -1798,18 +1800,6 @@ grub_PROG_TARGET_CC
+ m4_ifndef([AX_CHECK_LINK_FLAG], [m4_fatal([autoconf-archive is missing. You must install it to generate the configure script.])])
+ 
  if test "x$TARGET_APPLE_LINKER" != x1 ; then
 -AX_CHECK_LINK_FLAG([-Wl,--image-base,0x400000],
 -    [TARGET_IMG_BASE_LDOPT="-Wl,--image-base"],

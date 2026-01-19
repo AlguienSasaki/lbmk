@@ -1,7 +1,7 @@
-From 248018d7623fa1dc0e1b4ef3a430eac04cbe51bf Mon Sep 17 00:00:00 2001
+From 2c953c9160cbed357437891cf1790aeb1c2bd0f5 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 31 Oct 2021 03:47:05 +0000
-Subject: [PATCH 1/9] mitigate grub's missing characters for borders/arrow
+Subject: [PATCH 01/10] mitigate grub's missing characters for borders/arrow
  characters
 
 This cleans up the display on the main screen in GRUB.

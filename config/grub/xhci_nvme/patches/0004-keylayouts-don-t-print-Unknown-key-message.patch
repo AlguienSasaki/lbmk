@@ -1,7 +1,7 @@
-From 1f0c3362178d1ad44998a98782bcb1e412af9d79 Mon Sep 17 00:00:00 2001
+From abe0aa9a6edba181b0f964f3cf4bcd7155322ac1 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 31 Oct 2023 10:33:28 +0000
-Subject: [PATCH 04/20] keylayouts: don't print "Unknown key" message
+Subject: [PATCH 04/21] keylayouts: don't print "Unknown key" message
 
 on keyboards with stuck keys, this results in GRUB just
 spewing it repeatedly, preventing use of GRUB.

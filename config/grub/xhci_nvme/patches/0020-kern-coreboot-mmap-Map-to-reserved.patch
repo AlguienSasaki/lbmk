@@ -1,7 +1,7 @@
-From 4ece79a5e4708b96c2fd06a80b1aac0b6e232675 Mon Sep 17 00:00:00 2001
+From 331af0cc985aa5ec57964c6e3ab69f65c23f6481 Mon Sep 17 00:00:00 2001
 From: Paul Menzel <pmenzel@molgen.mpg.de>
 Date: Mon, 17 May 2021 10:24:36 +0200
-Subject: [PATCH 20/20] kern/coreboot/mmap: Map to reserved
+Subject: [PATCH 20/21] kern/coreboot/mmap: Map to reserved
 
 https://git.savannah.gnu.org/cgit/grub.git/commit/?id=6de9ee86bf9ae50967413e6a73b5dfd13e5ffb50
 

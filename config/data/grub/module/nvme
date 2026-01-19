@@ -33,6 +33,7 @@ configfile \
 cpio \
 cpio_be \
 crc64 \
+crypto_cipher_mode_test \
 crypto \
 cryptodisk \
 diskfilter \
@@ -43,6 +44,7 @@ exfat \
 elf \
 ext2 \
 fat \
+functional_test \
 f2fs \
 gcry_arcfour \
 gcry_blake2 \
