@@ -20,6 +20,7 @@ CONFIG_OPTION_BACKEND_NONE=y
 # CONFIG_USE_CBFS_FILE_OPTION_BACKEND is not set
 CONFIG_COMPRESS_RAMSTAGE_LZMA=y
 # CONFIG_COMPRESS_RAMSTAGE_LZ4 is not set
+# CONFIG_COMPRESS_RAMSTAGE_ZSTD is not set
 CONFIG_COMPRESS_PRERAM_STAGES=y
 CONFIG_COMPRESS_BOOTBLOCK=y
 CONFIG_SEPARATE_ROMSTAGE=y
@@ -138,14 +139,14 @@ CONFIG_MAX_ACPI_TABLE_SIZE_KB=144
 CONFIG_SPI_FLASH_WINBOND=y
 
 #
-# Asurada
+# Asurada (MediaTek Kompanio 820 (MT8192))
 #
 # CONFIG_BOARD_GOOGLE_ASURADA is not set
 # CONFIG_BOARD_GOOGLE_HAYATO is not set
 # CONFIG_BOARD_GOOGLE_SPHERION is not set
 
 #
-# Auron
+# Auron (Intel Broadwell (5th Gen))
 #
 # CONFIG_BOARD_GOOGLE_AURON_PAINE is not set
 # CONFIG_BOARD_GOOGLE_AURON_YUNA is not set
@@ -155,7 +156,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_SAMUS is not set
 
 #
-# Beltino
+# Beltino (Intel Haswell (4th Gen))
 #
 # CONFIG_BOARD_GOOGLE_MCCLOUD is not set
 # CONFIG_BOARD_GOOGLE_MONROE is not set
@@ -164,7 +165,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_ZAKO is not set
 
 #
-# Bluey
+# Bluey (Qualcomm Snapdragon X Plus (X1P-42-100))
 #
 # CONFIG_BOARD_GOOGLE_BLUEY is not set
 # CONFIG_BOARD_GOOGLE_QUENBI is not set
@@ -173,7 +174,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_QUARTZ is not set
 
 #
-# Brox
+# Brox (Intel RaptorLake (13th Gen))
 #
 # CONFIG_BOARD_GOOGLE_BROX is not set
 # CONFIG_BOARD_GOOGLE_BROX_RTK_EC is not set
@@ -185,7 +186,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_LOTSO is not set
 
 #
-# Brya
+# Brya (Intel AlderLake/RaptorLake/TwinLake (12 - 13th Gen))
 #
 # CONFIG_BOARD_GOOGLE_AGAH is not set
 # CONFIG_BOARD_GOOGLE_ANAHERA is not set
@@ -268,19 +269,19 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_PUJJOCENTO is not set
 
 #
-# Butterfly
+# Butterfly (Intel SandyBridge (2nd Gen))
 #
 # CONFIG_BOARD_GOOGLE_BUTTERFLY is not set
 
 #
-# Cherry
+# Cherry (MediaTek Kompanio 1200 (MT8195))
 #
 # CONFIG_BOARD_GOOGLE_CHERRY is not set
 # CONFIG_BOARD_GOOGLE_DOJO is not set
 # CONFIG_BOARD_GOOGLE_TOMATO is not set
 
 #
-# Kingler
+# Kingler (MediaTek Kompanio 520 (MT8186))
 #
 # CONFIG_BOARD_GOOGLE_KINGLER is not set
 # CONFIG_BOARD_GOOGLE_KYOGRE is not set
@@ -290,7 +291,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_VOLTORB is not set
 
 #
-# Krabby
+# Krabby (MediaTek Kompanio 520 (MT8186))
 #
 # CONFIG_BOARD_GOOGLE_CHINCHOU is not set
 # CONFIG_BOARD_GOOGLE_KRABBY is not set
@@ -300,14 +301,14 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_VELUZA is not set
 
 #
-# Staryu
+# Staryu (MediaTek Kompanio 528 (MT8186T))
 #
 # CONFIG_BOARD_GOOGLE_STARMIE is not set
 # CONFIG_BOARD_GOOGLE_WUGTRIO is not set
 # CONFIG_BOARD_GOOGLE_WYRDEER is not set
 
 #
-# Cyan
+# Cyan (Intel Braswell)
 #
 # CONFIG_BOARD_GOOGLE_BANON is not set
 # CONFIG_BOARD_GOOGLE_CELES is not set
@@ -322,12 +323,12 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_WIZPIG is not set
 
 #
-# Daisy
+# Daisy (Samsung Exynos 5250)
 #
 # CONFIG_BOARD_GOOGLE_DAISY is not set
 
 #
-# Dedede
+# Dedede (Intel JasperLake)
 #
 # CONFIG_BOARD_GOOGLE_BEADRIX is not set
 # CONFIG_BOARD_GOOGLE_BLIPPER is not set
@@ -363,17 +364,17 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_AWASUKI is not set
 
 #
-# Drallion
+# Drallion (Intel CometLake (10th Gen) with ISH)
 #
 # CONFIG_BOARD_GOOGLE_DRALLION is not set
 
 #
-# Eve
+# Eve (Intel KabyLake (7th Gen))
 #
 # CONFIG_BOARD_GOOGLE_EVE is not set
 
 #
-# Fatcat
+# Fatcat (Intel PantherLake (Ultra 3rd Gen))
 #
 # CONFIG_BOARD_GOOGLE_FATCAT is not set
 # CONFIG_BOARD_GOOGLE_FATCAT4ES is not set
@@ -392,30 +393,30 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_RUBY is not set
 
 #
-# Fizz
+# Fizz (Intel KabyLake/Kabylake-R (7th/8th Gen))
 #
 # CONFIG_BOARD_GOOGLE_FIZZ is not set
 # CONFIG_BOARD_GOOGLE_KARMA is not set
 # CONFIG_BOARD_GOOGLE_ENDEAVOUR is not set
 
 #
-# Foster
+# Foster (Nvidia Tegra X1 (T210))
 #
 # CONFIG_BOARD_GOOGLE_FOSTER is not set
 
 #
-# Gale
+# Gale (Qualcomm IPQ4019)
 #
 # CONFIG_BOARD_GOOGLE_GALE is not set
 
 #
-# Geralt
+# Geralt (MediaTek Kompanio 838 (MT8188))
 #
 # CONFIG_BOARD_GOOGLE_GERALT is not set
 # CONFIG_BOARD_GOOGLE_CIRI is not set
 
 #
-# Glados
+# Glados (Intel Skylake (6th Gen))
 #
 # CONFIG_BOARD_GOOGLE_ASUKA is not set
 # CONFIG_BOARD_GOOGLE_CAROLINE is not set
@@ -426,7 +427,7 @@ CONFIG_SPI_FLASH_WINBOND=y
 # CONFIG_BOARD_GOOGLE_SENTRY is not set
 
 #
-# Gru
+# Gru (Rockchip RK3399)
 #
 CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_GRU is not set
@@ -436,14 +437,14 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_RAINIER is not set
 
 #
-# Guybrush
+# Guybrush (AMD Ryzen Mobile 5000 (Cezanne))
 #
 # CONFIG_BOARD_GOOGLE_DEWATT is not set
 # CONFIG_BOARD_GOOGLE_GUYBRUSH is not set
 # CONFIG_BOARD_GOOGLE_NIPPERKIN is not set
 
 #
-# Hatch
+# Hatch (Intel CometLake (10th Gen))
 #
 # CONFIG_BOARD_GOOGLE_AKEMI is not set
 # CONFIG_BOARD_GOOGLE_DRATINI is not set
@@ -458,7 +459,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_PALKIA is not set
 
 #
-# Herobrine
+# Herobrine (Qualcomm Snapdragon 7c+ Gen3 (SC7280))
 #
 # CONFIG_BOARD_GOOGLE_HEROBRINE is not set
 # CONFIG_BOARD_GOOGLE_HEROBRINE_REV0 is not set
@@ -471,7 +472,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_ZOMBIE is not set
 
 #
-# Jecht
+# Jecht (Intel Broadwell (5th Gen))
 #
 # CONFIG_BOARD_GOOGLE_GUADO is not set
 # CONFIG_BOARD_GOOGLE_JECHT is not set
@@ -479,7 +480,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_TIDUS is not set
 
 #
-# Kahlee
+# Kahlee (AMD StoneyRidge)
 #
 # CONFIG_BOARD_GOOGLE_ALEENA is not set
 # CONFIG_BOARD_GOOGLE_CAREENA is not set
@@ -489,7 +490,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_TREEYA is not set
 
 #
-# Kukui
+# Kukui (MediaTek Kompanio 500 (MT8183))
 #
 # CONFIG_BOARD_GOOGLE_KUKUI is not set
 # CONFIG_BOARD_GOOGLE_KRANE is not set
@@ -499,7 +500,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_KATSU is not set
 
 #
-# Jacuzzi
+# Jacuzzi (MediaTek Kompanio 500 (MT8183))
 #
 # CONFIG_BOARD_GOOGLE_JACUZZI is not set
 # CONFIG_BOARD_GOOGLE_JUNIPER is not set
@@ -517,44 +518,44 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_PICO is not set
 
 #
-# Link
+# Link (Intel IvyBridge (3rd Gen))
 #
 # CONFIG_BOARD_GOOGLE_LINK is not set
 
 #
-# Mistral
+# Mistral (Qualcomm Dragonwing QCS405)
 #
 # CONFIG_BOARD_GOOGLE_MISTRAL is not set
 
 #
-# Myst
+# Myst (AMD Ryzen Mobile 7000 (Phoenix))
 #
 # CONFIG_BOARD_GOOGLE_MYST is not set
 
 #
-# Nyan
+# Nyan (NVIDIA Tegra K1 (CD570M))
 #
 # CONFIG_BOARD_GOOGLE_NYAN is not set
 
 #
-# Nyan Big
+# Nyan Big (Nvidia Tegra K1 (T124))
 #
 # CONFIG_BOARD_GOOGLE_NYAN_BIG is not set
 
 #
-# Nyan Blaze
+# Nyan Blaze (NVIDIA Tegra K1 (CD570M))
 #
 # CONFIG_BOARD_GOOGLE_NYAN_BLAZE is not set
 
 #
-# Oak
+# Oak (MediaTek Kompanio 500 (MT8173))
 #
 # CONFIG_BOARD_GOOGLE_OAK is not set
 # CONFIG_BOARD_GOOGLE_ELM is not set
 # CONFIG_BOARD_GOOGLE_HANA is not set
 
 #
-# Ocelot
+# Ocelot (Intel WildcatLake (Ultra 3rd Gen))
 #
 # CONFIG_BOARD_GOOGLE_KODKOD is not set
 # CONFIG_BOARD_GOOGLE_MATSU is not set
@@ -568,7 +569,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_OCICAT is not set
 
 #
-# Octopus
+# Octopus (Intel GeminiLake)
 #
 # CONFIG_BOARD_GOOGLE_AMPTON is not set
 # CONFIG_BOARD_GOOGLE_BLOOG is not set
@@ -585,17 +586,17 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_YORP is not set
 
 #
-# Parrot
+# Parrot (Intel SandyBridge (2nd Gen))
 #
 # CONFIG_BOARD_GOOGLE_PARROT is not set
 
 #
-# Peach Pit
+# Peach Pit (Samsung Exynos 5420)
 #
 # CONFIG_BOARD_GOOGLE_PEACH_PIT is not set
 
 #
-# Poppy
+# Poppy (Intel KabyLake/KabyLake-R (7th/8th Gen))
 #
 # CONFIG_BOARD_GOOGLE_ATLAS is not set
 # CONFIG_BOARD_GOOGLE_POPPY is not set
@@ -606,7 +607,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_SORAKA is not set
 
 #
-# Puff
+# Puff (Intel CometLake (10th Gen))
 #
 # CONFIG_BOARD_GOOGLE_AMBASSADOR is not set
 # CONFIG_BOARD_GOOGLE_DOOLY is not set
@@ -623,7 +624,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_WYVERN is not set
 
 #
-# Rambi
+# Rambi (Intel Baytrail)
 #
 # CONFIG_BOARD_GOOGLE_BANJO is not set
 # CONFIG_BOARD_GOOGLE_CANDY is not set
@@ -644,7 +645,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_WINKY is not set
 
 #
-# Rauru
+# Rauru (MediaTek Kompanio Ultra 910 (MT8196))
 #
 # CONFIG_BOARD_GOOGLE_HYLIA is not set
 # CONFIG_BOARD_GOOGLE_NAVI is not set
@@ -652,7 +653,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_SAPPHIRE is not set
 
 #
-# Reef
+# Reef (Intel ApolloLake)
 #
 # CONFIG_BOARD_GOOGLE_REEF is not set
 # CONFIG_BOARD_GOOGLE_PYRO is not set
@@ -661,7 +662,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_CORAL is not set
 
 #
-# Rex
+# Rex (Intel MeteorLake (Ultra 1st Gen))
 #
 # CONFIG_BOARD_GOOGLE_DEKU is not set
 # CONFIG_BOARD_GOOGLE_DEKU4ES is not set
@@ -679,13 +680,13 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_KANIX is not set
 
 #
-# Sarien
+# Sarien (Intel WhiskeyLake (8th Gen))
 #
 # CONFIG_BOARD_GOOGLE_ARCADA is not set
 # CONFIG_BOARD_GOOGLE_SARIEN is not set
 
 #
-# Skyrim
+# Skyrim (AMD Ryzen Mobile 7000 (Mendocino))
 #
 # CONFIG_BOARD_GOOGLE_CRYSTALDRIFT is not set
 # CONFIG_BOARD_GOOGLE_FROSTFLOW is not set
@@ -694,20 +695,22 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_WINTERHOLD is not set
 
 #
-# Skywalker
+# Skywalker (MediaTek Kompanio 540 (MT8189))
 #
 # CONFIG_BOARD_GOOGLE_ANAKIN is not set
 # CONFIG_BOARD_GOOGLE_BAZE is not set
 # CONFIG_BOARD_GOOGLE_DOOKU is not set
 # CONFIG_BOARD_GOOGLE_GROGU is not set
+# CONFIG_BOARD_GOOGLE_MACE is not set
 # CONFIG_BOARD_GOOGLE_OBIWAN is not set
 # CONFIG_BOARD_GOOGLE_PADME is not set
 # CONFIG_BOARD_GOOGLE_SKYWALKER is not set
 # CONFIG_BOARD_GOOGLE_TARKIN is not set
+# CONFIG_BOARD_GOOGLE_VADER is not set
 # CONFIG_BOARD_GOOGLE_YODA is not set
 
 #
-# Slippy
+# Slippy (Intel Haswell (4th Gen))
 #
 # CONFIG_BOARD_GOOGLE_FALCO is not set
 # CONFIG_BOARD_GOOGLE_LEON is not set
@@ -715,22 +718,22 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_WOLF is not set
 
 #
-# Smaug
+# Smaug (Nvidia Tegra X1 (T210))
 #
 # CONFIG_BOARD_GOOGLE_SMAUG is not set
 
 #
-# Storm
+# Storm (Qualcomm IPQ8064)
 #
 # CONFIG_BOARD_GOOGLE_STORM is not set
 
 #
-# Stout
+# Stout (Intel SandyBridge (2nd Gen))
 #
 # CONFIG_BOARD_GOOGLE_STOUT is not set
 
 #
-# Trogdor
+# Trogdor (Qualcomm Snapdragon 7c (SC7180))
 #
 # CONFIG_BOARD_GOOGLE_BUBS is not set
 # CONFIG_BOARD_GOOGLE_COACHZ is not set
@@ -747,7 +750,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_TROGDOR is not set
 
 #
-# Veyron
+# Veyron (Rockchip RK3288)
 #
 # CONFIG_BOARD_GOOGLE_VEYRON_JAQ is not set
 # CONFIG_BOARD_GOOGLE_VEYRON_JERRY is not set
@@ -756,17 +759,17 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_VEYRON_SPEEDY is not set
 
 #
-# Veyron Mickey
+# Veyron Mickey (Rockchip RK3288)
 #
 # CONFIG_BOARD_GOOGLE_VEYRON_MICKEY is not set
 
 #
-# Veyron Rialto
+# Veyron Rialto (Rockchip RK3288)
 #
 # CONFIG_BOARD_GOOGLE_VEYRON_RIALTO is not set
 
 #
-# Volteer
+# Volteer (Intel TigerLake (11th Gen))
 #
 # CONFIG_BOARD_GOOGLE_CHRONICLER is not set
 # CONFIG_BOARD_GOOGLE_COLLIS is not set
@@ -789,7 +792,7 @@ CONFIG_BOARD_GOOGLE_KEVIN=y
 # CONFIG_BOARD_GOOGLE_VOXEL is not set
 
 #
-# Zork
+# Zork (AMD Ryzen Mobile 3000 (Picasso))
 #
 # CONFIG_BOARD_GOOGLE_BERKNIP is not set
 # CONFIG_BOARD_GOOGLE_DALBOZ is not set
@@ -820,10 +823,7 @@ CONFIG_TTYS0_BAUD=115200
 CONFIG_D3COLD_SUPPORT=y
 CONFIG_PC_CMOS_BASE_PORT_BANK1=0x72
 CONFIG_HEAP_SIZE=0x100000
-CONFIG_EC_GPE_SCI=0x6e
-CONFIG_EC_STARLABS_BATTERY_MODEL="Unknown"
-CONFIG_EC_STARLABS_BATTERY_TYPE="LION"
-CONFIG_EC_STARLABS_BATTERY_OEM="Unknown"
+# CONFIG_DRIVERS_EFI_FW_INFO is not set
 # CONFIG_TPM_MEASURED_BOOT is not set
 CONFIG_BOARD_ROMSIZE_KB_8192=y
 # CONFIG_COREBOOT_ROMSIZE_KB_256 is not set
@@ -896,7 +896,6 @@ CONFIG_EC_GOOGLE_CHROMEEC_RTC=y
 # CONFIG_EC_GOOGLE_CHROMEEC_AUTO_FAN_CTRL is not set
 CONFIG_EC_GOOGLE_CHROMEEC_LPC_GENERIC_MEMORY_BASE=0xfe0b0000
 CONFIG_EC_GOOGLE_CHROMEEC_LPC_GENERIC_MEMORY_SIZE=0x10000
-# CONFIG_EC_STARLABS_MERLIN is not set
 CONFIG_MAINBOARD_HAS_CHROMEOS=y
 
 #
@@ -946,7 +945,6 @@ CONFIG_RESOURCE_ALLOCATION_TOP_DOWN=y
 #
 CONFIG_CRB_TPM_BASE_ADDRESS=0xfed40000
 # CONFIG_DRIVERS_EFI_VARIABLE_STORE is not set
-# CONFIG_DRIVERS_EFI_FW_INFO is not set
 # CONFIG_ELOG is not set
 # CONFIG_DRIVERS_HWID_DMI is not set
 # CONFIG_DRIVERS_OPTION_CFR is not set
