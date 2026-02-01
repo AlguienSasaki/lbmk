@@ -1,0 +1,91 @@
+From 5d18c96a22d98d137ea40bfc6aabadce933c2d45 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 1 Feb 2026 20:30:55 +0100
+Subject: [PATCH 1/1] bootstrap: Don't download po files
+
+GRUB doesn't verify checksums at all, and it pulls from
+this URL recursively:
+
+https://translationproject.org/latest/grub/
+
+These files can change at any time, and GRUB is just
+downloading them trustingly. Even if the upstream is
+totally benevolent, what if they got hacked?
+
+I downloaded them, hashed them and decided to mirror
+them on my RSYNC mirror. In this way, Libreboot can now
+use them in a deterministic fashion.
+
+Simply adding them to the GRUB source code would mean
+patching GRUB, which would add 8MB to lbmk. I won't do
+it.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ bootstrap | 31 +++++++++++++------------------
+ 1 file changed, 13 insertions(+), 18 deletions(-)
+
+diff --git a/bootstrap b/bootstrap
+index dc9fb4383..9fc5a5c36 100755
+--- a/bootstrap
++++ b/bootstrap
+@@ -1,5 +1,16 @@
+ #! /bin/sh
+-# DO NOT EDIT! GENERATED AUTOMATICALLY!
++# THIS FILE WAS EDITED BY LIBREBOOT TO REMOVE
++# HACKY GRUB BEHAVIOUR; po files now downloaded
++# by lbmk, via config/submodule/grub/ - so that
++# versioned files are possible, with proper checksum
++# verification, and mirrors are used.
++
++# Yes. This file has been modified. I intend to
++# eventually remove this hacky script. Probably
++# replace the entire GRUB build system.
++
++# Please do fix/edit or (when possible) remove
++# this file. Thank you.
+ 
+ # Bootstrap this package from checked-out sources.
+ 
+@@ -145,13 +156,6 @@ bootstrap_post_import_hook() { :; }
+ # Override it via your own definition in bootstrap.conf.
+ bootstrap_epilogue() { :; }
+ 
+-# The command to download all .po files for a specified domain into a
+-# specified directory.  Fill in the first %s with the destination
+-# directory and the second with the domain name.
+-po_download_command_format=\
+-"wget --mirror --level=1 -nd -nv -A.po -P '%s' \
+- https://translationproject.org/latest/%s/"
+-
+ # When extracting the package name from an AC_INIT invocation,
+ # prefer a non-empty tarname (4th argument of AC_INIT if given), else
+ # fall back to the package name (1st argument with munging).
+@@ -909,14 +913,6 @@ autopull()
+ 
+ # ----------------------------- Get translations. -----------------------------
+ 
+-download_po_files() {
+-  subdir=$1
+-  domain=$2
+-  echo "$me: getting translations into $subdir for $domain..."
+-  cmd=$(printf "$po_download_command_format" "$subdir" "$domain")
+-  eval "$cmd"
+-}
+-
+ # Mirror .po files to $po_dir/.reference and copy only the new
+ # or modified ones into $po_dir.  Also update $po_dir/LINGUAS.
+ # Note po files that exist locally only are left in $po_dir but will
+@@ -932,8 +928,7 @@ update_po_files() {
+   ref_po_dir="$po_dir/.reference"
+ 
+   test -d $ref_po_dir || mkdir $ref_po_dir || return
+-  download_po_files $ref_po_dir $domain \
+-    && ls "$ref_po_dir"/*.po 2>/dev/null |
++  ls "$ref_po_dir"/*.po 2>/dev/null |
+       sed 's|.*/||; s|\.po$||' > "$po_dir/LINGUAS" || return
+ 
+   for po in x $(ls $ref_po_dir | sed -n 's/\.po$//p'); do
+-- 
+2.47.3
+
