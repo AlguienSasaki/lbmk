@@ -1,0 +1,42 @@
+From 47c561cfa7b3970608543f8f2cb7d08b2d1e0e4d Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sat, 14 Feb 2026 19:05:18 +0000
+Subject: [PATCH 3/4] lib/image.py: Disable $FPT checksum check
+
+I don't actually understand what this does, but it doesn't seem to be
+doing anything useful.  It seems to be just checking that some range
+of bytes is all zero, which isn't a checksum.
+
+On my OptiPlex 5050 SFF image (which passes), this range of bytes is
+empty, because self.data[self.HDRLEN_OFF] is 0.  On my Supermicro
+X11SSH-F/LN4F image, self.data[self.HDRLEN_OFF] is 19, which means
+that self.data[self.HEADER_OFF:self.data[self.HDRLEN_OFF]] is
+bytearray(b'$FP'), which makes the check fail.
+
+Without this check, it can generate a working delta for the Supermicro
+X11SSH-F/LN4F.
+
+Change-Id: I16735676fd4ae2a4e065886aeb7a06cead721cdf
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ lib/image.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/image.py b/lib/image.py
+index 21db448..e303e8f 100644
+--- a/lib/image.py
++++ b/lib/image.py
+@@ -84,8 +84,8 @@ class MeImage:
+         # Verify magic and checksum
+         if self.data[self.MARKER_OFF:self.MARKER_OFF+4] != self.MARKER:
+             raise ValueError("Invalid $FPT magic")
+-        if sum(self.data[self.HEADER_OFF:self.data[self.HDRLEN_OFF]]) != 0:
+-            raise ValueError("Invalid $FPT checksum")
++        # if sum(self.data[self.HEADER_OFF:self.data[self.HDRLEN_OFF]]) != 0:
++        #     raise ValueError("Invalid $FPT checksum")
+ 
+         # Parse entries
+         self.entries = {}
+-- 
+2.52.0
+

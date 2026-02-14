@@ -1,0 +1,287 @@
+From 28910ca7d4b227840dbcbbc5ee6ca760746d75a1 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sat, 14 Feb 2026 18:14:31 +0000
+Subject: [PATCH 2/4] data/delta: Add Dell OptiPlex 5050 SFF
+
+Data obtained from a dump of the stock BIOS of my OptiPlex 5050 SFF,
+with ME version 11.8.60.3561.
+
+Change-Id: I13c4ef39a0138ad9e08444b2d3e64f26a4f2586e
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ .../home/bup/bup_sku/emu_fuse_map                 | Bin 0 -> 7 bytes
+ .../home/bup/bup_sku/fuse_ip_base                 | Bin 0 -> 18 bytes
+ .../optiplex_5050sff/home/bup/bup_sku/plat_n_sku  |   1 +
+ data/delta/optiplex_5050sff/home/bup/invokemebx   | Bin 0 -> 4 bytes
+ data/delta/optiplex_5050sff/home/bup/mbp          | Bin 0 -> 52 bytes
+ data/delta/optiplex_5050sff/home/gpio/csme_pins   | Bin 0 -> 60 bytes
+ data/delta/optiplex_5050sff/home/icc/dynregs      | Bin 0 -> 36 bytes
+ data/delta/optiplex_5050sff/home/icc/header       | Bin 0 -> 4 bytes
+ data/delta/optiplex_5050sff/home/icc/namestr      | Bin 0 -> 48 bytes
+ data/delta/optiplex_5050sff/home/icc/prof0        | Bin 0 -> 120 bytes
+ data/delta/optiplex_5050sff/home/icc/prof1        |   0
+ data/delta/optiplex_5050sff/home/icc/prof10       |   0
+ data/delta/optiplex_5050sff/home/icc/prof2        |   0
+ data/delta/optiplex_5050sff/home/icc/prof3        |   0
+ data/delta/optiplex_5050sff/home/icc/prof4        |   0
+ data/delta/optiplex_5050sff/home/icc/prof5        |   0
+ data/delta/optiplex_5050sff/home/icc/prof6        |   0
+ data/delta/optiplex_5050sff/home/icc/prof7        |   0
+ data/delta/optiplex_5050sff/home/icc/prof8        |   0
+ data/delta/optiplex_5050sff/home/icc/prof9        |   0
+ data/delta/optiplex_5050sff/home/mca/eom          |   1 +
+ data/delta/optiplex_5050sff/home/mca/ish_policy   | Bin 0 -> 1 bytes
+ .../delta/optiplex_5050sff/home/mctp/device_ports | Bin 0 -> 4 bytes
+ .../optiplex_5050sff/home/policy/Bist/auto_config | Bin 0 -> 4 bytes
+ .../optiplex_5050sff/home/policy/cfgmgr/cfg_rules | Bin 0 -> 660 bytes
+ .../optiplex_5050sff/home/policy/hci/sysintid1    |   1 +
+ .../optiplex_5050sff/home/policy/hci/sysintid2    |   1 +
+ .../optiplex_5050sff/home/policy/hci/sysintid3    |   1 +
+ .../optiplex_5050sff/home/policy/pwdmgr/segreto   |   1 +
+ 29 files changed, 6 insertions(+)
+ create mode 100644 data/delta/optiplex_5050sff/home/bup/bup_sku/emu_fuse_map
+ create mode 100644 data/delta/optiplex_5050sff/home/bup/bup_sku/fuse_ip_base
+ create mode 100644 data/delta/optiplex_5050sff/home/bup/bup_sku/plat_n_sku
+ create mode 100644 data/delta/optiplex_5050sff/home/bup/invokemebx
+ create mode 100644 data/delta/optiplex_5050sff/home/bup/mbp
+ create mode 100644 data/delta/optiplex_5050sff/home/gpio/csme_pins
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/dynregs
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/header
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/namestr
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof0
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof1
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof10
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof2
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof3
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof4
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof5
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof6
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof7
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof8
+ create mode 100644 data/delta/optiplex_5050sff/home/icc/prof9
+ create mode 100644 data/delta/optiplex_5050sff/home/mca/eom
+ create mode 100644 data/delta/optiplex_5050sff/home/mca/ish_policy
+ create mode 100644 data/delta/optiplex_5050sff/home/mctp/device_ports
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/Bist/auto_config
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/cfgmgr/cfg_rules
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/hci/sysintid1
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/hci/sysintid2
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/hci/sysintid3
+ create mode 100644 data/delta/optiplex_5050sff/home/policy/pwdmgr/segreto
+
+diff --git a/data/delta/optiplex_5050sff/home/bup/bup_sku/emu_fuse_map b/data/delta/optiplex_5050sff/home/bup/bup_sku/emu_fuse_map
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f4f3eb7419b5ea25288c3599be36ed94eb56bb5
+GIT binary patch
+literal 7
+OcmZ>3cVysUU;_XKiUA=2
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/bup/bup_sku/fuse_ip_base b/data/delta/optiplex_5050sff/home/bup/bup_sku/fuse_ip_base
+new file mode 100644
+index 0000000000000000000000000000000000000000..658a9660e31c0501f3e9fba168279fecec236f8b
+GIT binary patch
+literal 18
+ZcmWe&P-3uPSje!M;Q^BeQzX+xCIBG91Q`GT
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/bup/bup_sku/plat_n_sku b/data/delta/optiplex_5050sff/home/bup/bup_sku/plat_n_sku
+new file mode 100644
+index 0000000..b45f3e7
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/bup/bup_sku/plat_n_sku
+@@ -0,0 +1 @@
++-€
+\ No newline at end of file
+diff --git a/data/delta/optiplex_5050sff/home/bup/invokemebx b/data/delta/optiplex_5050sff/home/bup/invokemebx
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/bup/mbp b/data/delta/optiplex_5050sff/home/bup/mbp
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc468268729dcbdc0beb4bb7564e0504dd96e17f
+GIT binary patch
+literal 52
+xcmd;OV_;z9U}69PMph;UB^D<qMkXc(2SGtYMouOM=YW5WY>Z&}1{Mg-003FB1Q!4R
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/gpio/csme_pins b/data/delta/optiplex_5050sff/home/gpio/csme_pins
+new file mode 100644
+index 0000000000000000000000000000000000000000..26f58aa7459be077adca09c86a19b58356c8c165
+GIT binary patch
+literal 60
+lcmZQzU|?W@Vju-(a{y^ZAm#@N00BrI#0SwlKnwyPHUI}S06qW!
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/icc/dynregs b/data/delta/optiplex_5050sff/home/icc/dynregs
+new file mode 100644
+index 0000000000000000000000000000000000000000..23c1ea2751fd4615995e5930e844e1abd9b58557
+GIT binary patch
+literal 36
+jcmY#kU}RuoU|?VpV81gH3Z8yoU{Diaz9V21QU<~Ru6_#V
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/icc/header b/data/delta/optiplex_5050sff/home/icc/header
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b75556082e2c00ea8a888450d05627b20f0ec61
+GIT binary patch
+literal 4
+LcmZQ%U|<9Q00{sC
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/icc/namestr b/data/delta/optiplex_5050sff/home/icc/namestr
+new file mode 100644
+index 0000000000000000000000000000000000000000..6f8c6989c84e6c19cdc026f95c6148b436fd4486
+GIT binary patch
+literal 48
+ecmWG2%1_J8NmVdlKn1}iiFqlBMJcGF3=9Cwn+8(=
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof0 b/data/delta/optiplex_5050sff/home/icc/prof0
+new file mode 100644
+index 0000000000000000000000000000000000000000..dab085a9f50507ce36b5fd1a2c47661f81937372
+GIT binary patch
+literal 120
+zcmWeozo*7wbe=&#T|k`y2r?KL8F+v+a{%L81|x?5f{Ki9nHiWF{2YLMAYe-Z(e?~&
+eDG-`170QRwY#C5KlxE9>@}V@B0OK7Npg912zZd}k
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof1 b/data/delta/optiplex_5050sff/home/icc/prof1
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof10 b/data/delta/optiplex_5050sff/home/icc/prof10
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof2 b/data/delta/optiplex_5050sff/home/icc/prof2
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof3 b/data/delta/optiplex_5050sff/home/icc/prof3
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof4 b/data/delta/optiplex_5050sff/home/icc/prof4
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof5 b/data/delta/optiplex_5050sff/home/icc/prof5
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof6 b/data/delta/optiplex_5050sff/home/icc/prof6
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof7 b/data/delta/optiplex_5050sff/home/icc/prof7
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof8 b/data/delta/optiplex_5050sff/home/icc/prof8
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/icc/prof9 b/data/delta/optiplex_5050sff/home/icc/prof9
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_5050sff/home/mca/eom b/data/delta/optiplex_5050sff/home/mca/eom
+new file mode 100644
+index 0000000..6b2aaa7
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/mca/eom
+@@ -0,0 +1 @@
++
+\ No newline at end of file
+diff --git a/data/delta/optiplex_5050sff/home/mca/ish_policy b/data/delta/optiplex_5050sff/home/mca/ish_policy
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76dd238ade08917e6712764a16a22005a50573d
+GIT binary patch
+literal 1
+IcmZPo000310RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/mctp/device_ports b/data/delta/optiplex_5050sff/home/mctp/device_ports
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/policy/Bist/auto_config b/data/delta/optiplex_5050sff/home/policy/Bist/auto_config
+new file mode 100644
+index 0000000000000000000000000000000000000000..009d73a31973e2082917509b8596bb343d4265ab
+GIT binary patch
+literal 4
+LcmZQ<U|;|M0f+#C
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/policy/cfgmgr/cfg_rules b/data/delta/optiplex_5050sff/home/policy/cfgmgr/cfg_rules
+new file mode 100644
+index 0000000000000000000000000000000000000000..f78854b915d833ecdfdb5a53414ddaf51886a8b0
+GIT binary patch
+literal 660
+zcmY+>OHKko7zE%S9Y6^P<AXN{h%er#uqFcuD-%w@UEFvOF2<5ufK^Ei`CWACOQrko
+zNspOX)+|_r;WQy5>_TRDDI+Y9*(YU$rDXPLtQ%~luUvmEbH)Kfc`x|S=+1pk<{ZpB
+z_j#G$Rgiy?p?pH#$~=1~BkW%0o(Jcmb4ljevW&2b%)TmTkTsbz>vFW&e>db#5JgRy
+zXCIwgFy4soAGYP?=J?Zzd*qY6UTt?>8DY;dXTD&?@A;}8VQ(`3=Q~!sr{~<)9)t~?
+bht4CIXL;Ay^%Li*^M~`N^Oy6?dG7oNWyBYs
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_5050sff/home/policy/hci/sysintid1 b/data/delta/optiplex_5050sff/home/policy/hci/sysintid1
+new file mode 100644
+index 0000000..62822c1
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/policy/hci/sysintid1
+@@ -0,0 +1 @@
++Qó´
+\ No newline at end of file
+diff --git a/data/delta/optiplex_5050sff/home/policy/hci/sysintid2 b/data/delta/optiplex_5050sff/home/policy/hci/sysintid2
+new file mode 100644
+index 0000000..6f65ea4
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/policy/hci/sysintid2
+@@ -0,0 +1 @@
++»[
+\ No newline at end of file
+diff --git a/data/delta/optiplex_5050sff/home/policy/hci/sysintid3 b/data/delta/optiplex_5050sff/home/policy/hci/sysintid3
+new file mode 100644
+index 0000000..43cfddc
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/policy/hci/sysintid3
+@@ -0,0 +1 @@
++w“¯»
+\ No newline at end of file
+diff --git a/data/delta/optiplex_5050sff/home/policy/pwdmgr/segreto b/data/delta/optiplex_5050sff/home/policy/pwdmgr/segreto
+new file mode 100644
+index 0000000..61bb8a0
+--- /dev/null
++++ b/data/delta/optiplex_5050sff/home/policy/pwdmgr/segreto
+@@ -0,0 +1 @@
++ÌˆWß
+\ No newline at end of file
+-- 
+2.52.0
+
