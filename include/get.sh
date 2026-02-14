@@ -272,7 +272,12 @@ try_fetch_file()
 
 try_curl()
 {
-	_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+	case "$2" in
+	https://www.supermicro.com/*)
+		_ua="curl/8.6.0";;
+	*)
+		_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0";;
+	esac
 
 	( x_ curl --location --retry 3 -A "$_ua" "$2" -o "$1" ) \
 	    || ( x_ wget --tries 3 -U "$_ua" "$2" -O "$1" ) \
