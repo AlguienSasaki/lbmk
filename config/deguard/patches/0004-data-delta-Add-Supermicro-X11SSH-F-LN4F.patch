@@ -1,0 +1,280 @@
+From 6fd2bb708e69179768311215a6d724b30974ca13 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sat, 14 Feb 2026 19:07:27 +0000
+Subject: [PATCH 4/4] data/delta: Add Supermicro X11SSH-F/LN4F
+
+Obtained from the latest BIOS update downloadable from
+Supermicro's website:
+
+https://www.supermicro.com/Bios/softfiles/28700/X11SSH-(LN4)F_3.6_AS1.78_SUM2.14.0.zip
+
+Change-Id: I4a97e86b1e26f61fc90ea1b4709de84ac84e6005
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ .../delta/supermicro_x11ssh-f/home/gpio/csme_pins | Bin 0 -> 20 bytes
+ data/delta/supermicro_x11ssh-f/home/icc/namestr   | Bin 0 -> 48 bytes
+ data/delta/supermicro_x11ssh-f/home/icc/prof0     | Bin 0 -> 24 bytes
+ .../delta/supermicro_x11ssh-f/home/mca/ish_policy | Bin 0 -> 1 bytes
+ data/delta/supermicro_x11ssh-f/home/mctp/eid_db   | Bin 0 -> 8 bytes
+ .../home/mon_serv/config/NmMsMgpio                |   1 +
+ .../supermicro_x11ssh-f/home/mon_serv/dev/BmcsCon | Bin 0 -> 73 bytes
+ .../supermicro_x11ssh-f/home/mon_serv/dev/PsusCon | Bin 0 -> 584 bytes
+ .../home/mon_serv/mondata/0000                    |   0
+ .../home/mon_serv/mondata/000a                    | Bin 0 -> 42 bytes
+ .../supermicro_x11ssh-f/home/mon_serv/pdt/0000    |   0
+ .../supermicro_x11ssh-f/home/nmdata/nm_presets    | Bin 0 -> 22 bytes
+ data/delta/supermicro_x11ssh-f/home/ptu/bmc_phase |   0
+ data/delta/supermicro_x11ssh-f/home/ptu/ign_phot  |   0
+ data/delta/supermicro_x11ssh-f/home/ptu/mfg_optin |   0
+ data/delta/supermicro_x11ssh-f/home/ptu/pwr_range |   0
+ data/delta/supermicro_x11ssh-f/home/ptu/verbose   |   0
+ data/delta/supermicro_x11ssh-f/home/sca/FWC       | Bin 0 -> 12 bytes
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0108 | Bin 0 -> 66 bytes
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0134 | Bin 0 -> 66 bytes
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_014E |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_014F |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0156 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0157 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_01A4 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_01A5 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0266 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_0267 |   0
+ .../supermicro_x11ssh-f/home/sensors/sdr/SDR_02B2 |   0
+ .../supermicro_x11ssh-f/home/sku_mgr/sku_cfg      | Bin 0 -> 4 bytes
+ .../supermicro_x11ssh-f/home/trace/me_heartbeat   | Bin 0 -> 3 bytes
+ 31 files changed, 1 insertion(+)
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/gpio/csme_pins
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/icc/namestr
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/icc/prof0
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mca/ish_policy
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mctp/eid_db
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/config/NmMsMgpio
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/dev/BmcsCon
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/dev/PsusCon
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/0000
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/000a
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/mon_serv/pdt/0000
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/nmdata/nm_presets
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/ptu/bmc_phase
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/ptu/ign_phot
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/ptu/mfg_optin
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/ptu/pwr_range
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/ptu/verbose
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sca/FWC
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0108
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0134
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014E
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014F
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0156
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0157
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A4
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A5
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0266
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0267
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_02B2
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/sku_mgr/sku_cfg
+ create mode 100644 data/delta/supermicro_x11ssh-f/home/trace/me_heartbeat
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/gpio/csme_pins b/data/delta/supermicro_x11ssh-f/home/gpio/csme_pins
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9641ea8dcaebaed9f318bc46afdbe3682c5a6c8
+GIT binary patch
+literal 20
+QcmZQzfB<12#Rz2s009616#xJL
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/icc/namestr b/data/delta/supermicro_x11ssh-f/home/icc/namestr
+new file mode 100644
+index 0000000000000000000000000000000000000000..beaac121c8c24137a345ddc39f13d62618a3be5f
+GIT binary patch
+literal 48
+acmWG2%1_J8No7C>!6k`#DTzfX=;8ps`vwC5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/icc/prof0 b/data/delta/supermicro_x11ssh-f/home/icc/prof0
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a2b6688abadc35203172633ecd226c215899b67
+GIT binary patch
+literal 24
+bcmWeozo*7wbe=&#T|k`y2sjuRK@<Z3G?@at
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mca/ish_policy b/data/delta/supermicro_x11ssh-f/home/mca/ish_policy
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76dd238ade08917e6712764a16a22005a50573d
+GIT binary patch
+literal 1
+IcmZPo000310RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mctp/eid_db b/data/delta/supermicro_x11ssh-f/home/mctp/eid_db
+new file mode 100644
+index 0000000000000000000000000000000000000000..f2e1ef249f4e61fb2d20cdc02ce8aea4ad217a8d
+GIT binary patch
+literal 8
+PcmY%3H(;2=z`y_i1la)c
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/config/NmMsMgpio b/data/delta/supermicro_x11ssh-f/home/mon_serv/config/NmMsMgpio
+new file mode 100644
+index 0000000..8663f7d
+--- /dev/null
++++ b/data/delta/supermicro_x11ssh-f/home/mon_serv/config/NmMsMgpio
+@@ -0,0 +1 @@
++ÿÿÿÿÿÿÿÿ
+\ No newline at end of file
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/dev/BmcsCon b/data/delta/supermicro_x11ssh-f/home/mon_serv/dev/BmcsCon
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0524a4a8b2be02b17981db707914b46ea074652
+GIT binary patch
+literal 73
+ncmZQ%U|`^6@M2&D(pW(e!ybks496Mj84fcXVmO9X4M-3G%3=lC
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/dev/PsusCon b/data/delta/supermicro_x11ssh-f/home/mon_serv/dev/PsusCon
+new file mode 100644
+index 0000000000000000000000000000000000000000..e9f219b891a05001e9b35fa6ad060526ae09dd4f
+GIT binary patch
+literal 584
+zcmZw9#|;886a>)Oz;00-=zttHg2aJL4Kzch1SCRb%h=1|OW(eDJk~s*KCz!LME{q#
+z+VF5hfDj9eQ5~M*Peso|?5C_9P>0aTLQ6~tHPu=aenlvALtR2=3$2h4YKfhSfq`;2
+z)FX7U&>AVBms*P=G*ID&`h>0)+8`tJ7CRLi1}fdqfY8lCTjYd3YAuS$KvOp~By_jX
+b4h5mF*r^yBXy%4SgdP^!qa-v}>$>;>ttBWC
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/0000 b/data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/0000
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/000a b/data/delta/supermicro_x11ssh-f/home/mon_serv/mondata/000a
+new file mode 100644
+index 0000000000000000000000000000000000000000..80d189063372bd95b7a8bf26795f18a04caeef89
+GIT binary patch
+literal 42
+gcmd<$;$~1~;Ab#pFk;aCVD`b_gZ>B34-8l!00KV`mH+?%
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/mon_serv/pdt/0000 b/data/delta/supermicro_x11ssh-f/home/mon_serv/pdt/0000
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/nmdata/nm_presets b/data/delta/supermicro_x11ssh-f/home/nmdata/nm_presets
+new file mode 100644
+index 0000000000000000000000000000000000000000..66861c924bf4a8b1283afae028e71e00a8ad38a2
+GIT binary patch
+literal 22
+Ucmb1VNnwD2FN`2)!|;U>03@;mm;e9(
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/ptu/bmc_phase b/data/delta/supermicro_x11ssh-f/home/ptu/bmc_phase
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/ptu/ign_phot b/data/delta/supermicro_x11ssh-f/home/ptu/ign_phot
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/ptu/mfg_optin b/data/delta/supermicro_x11ssh-f/home/ptu/mfg_optin
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/ptu/pwr_range b/data/delta/supermicro_x11ssh-f/home/ptu/pwr_range
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/ptu/verbose b/data/delta/supermicro_x11ssh-f/home/ptu/verbose
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sca/FWC b/data/delta/supermicro_x11ssh-f/home/sca/FWC
+new file mode 100644
+index 0000000000000000000000000000000000000000..ede1e388c36a3bd1b65fd6589cb0089518c66093
+GIT binary patch
+literal 12
+TcmWIb4(4KJU|`_2W?%pS3)TTi
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0108 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0108
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce20a045414d7247199d1775c70110a503765617
+GIT binary patch
+literal 66
+zcmd;J;9v}7wANwZ&}DS}!N|w}1orj}KpMmhU|<gj=Bj5%iH~AnVr60i3S9_r_D~2(
+J%`H%X0st1B3CsWh
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0134 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0134
+new file mode 100644
+index 0000000000000000000000000000000000000000..5b2dd14b08fc108710b2c7b9453af1a3de26c0ee
+GIT binary patch
+literal 66
+ycmXqEFkuX2wANuTVP<gr!NbS^1orkI3d{s?85kPCB!sx&8xo@691v=t00jW)ya$~C
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014E b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014E
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014F b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_014F
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0156 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0156
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0157 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0157
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A4 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A4
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A5 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_01A5
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0266 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0266
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0267 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_0267
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_02B2 b/data/delta/supermicro_x11ssh-f/home/sensors/sdr/SDR_02B2
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/supermicro_x11ssh-f/home/sku_mgr/sku_cfg b/data/delta/supermicro_x11ssh-f/home/sku_mgr/sku_cfg
+new file mode 100644
+index 0000000000000000000000000000000000000000..79b07aac966f6048bcc8eef91b63eb76e313db68
+GIT binary patch
+literal 4
+Lcmd<JW?%pS0O<fp
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/supermicro_x11ssh-f/home/trace/me_heartbeat b/data/delta/supermicro_x11ssh-f/home/trace/me_heartbeat
+new file mode 100644
+index 0000000000000000000000000000000000000000..4227ca4e8736af63036e7457e2db376ddf7e5795
+GIT binary patch
+literal 3
+KcmZQzU;qFB0{{U4
+
+literal 0
+HcmV?d00001
+
+-- 
+2.52.0
+
