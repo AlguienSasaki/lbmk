@@ -1,7 +1,7 @@
-From 66608982981cd8774e44f4918dac03a4027e3287 Mon Sep 17 00:00:00 2001
+From bfd5f6628a69d8704a84b30c4027149fe1b21efa Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Wed, 30 Oct 2024 20:55:25 -0600
-Subject: [PATCH 25/45] mb/dell/optiplex_780: Add USFF variant
+Subject: [PATCH 25/48] mb/dell/optiplex_780: Add USFF variant
 
 Change-Id: I3aa21c743749f4a11a2501f4c121316bd2f1a103
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>

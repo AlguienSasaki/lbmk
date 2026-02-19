@@ -1,0 +1,268 @@
+From 59017de76b9b7bd95e988c65348e0249ede34ab4 Mon Sep 17 00:00:00 2001
+From: Kat Inskip <kat@inskip.me>
+Date: Tue, 17 Feb 2026 13:21:32 -0800
+Subject: [PATCH 1/1] data/delta: Add Lenovo Thinkpad X270.
+
+This patch adds support for Lenovo X270. The deltas have been obtained
+from a machine with machine type model 20HMS2WU03 running IntelME firmware
+version 11.8.86.3909.
+---
+ .../thinkpad_x270/home/bup/bup_sku/emu_fuse_map   | Bin 0 -> 7 bytes
+ .../thinkpad_x270/home/bup/bup_sku/fuse_ip_base   | Bin 0 -> 18 bytes
+ .../thinkpad_x270/home/bup/bup_sku/plat_n_sku     | Bin 0 -> 4 bytes
+ data/delta/thinkpad_x270/home/bup/invokemebx      | Bin 0 -> 4 bytes
+ data/delta/thinkpad_x270/home/bup/mbp             | Bin 0 -> 52 bytes
+ data/delta/thinkpad_x270/home/gpio/csme_pins      |   0
+ data/delta/thinkpad_x270/home/icc/dynregs         | Bin 0 -> 28 bytes
+ data/delta/thinkpad_x270/home/icc/header          | Bin 0 -> 4 bytes
+ data/delta/thinkpad_x270/home/icc/namestr         | Bin 0 -> 48 bytes
+ data/delta/thinkpad_x270/home/icc/prof1           |   0
+ data/delta/thinkpad_x270/home/icc/prof10          |   0
+ data/delta/thinkpad_x270/home/icc/prof2           |   0
+ data/delta/thinkpad_x270/home/icc/prof3           |   0
+ data/delta/thinkpad_x270/home/icc/prof4           |   0
+ data/delta/thinkpad_x270/home/icc/prof5           |   0
+ data/delta/thinkpad_x270/home/icc/prof6           |   0
+ data/delta/thinkpad_x270/home/icc/prof7           |   0
+ data/delta/thinkpad_x270/home/icc/prof8           |   0
+ data/delta/thinkpad_x270/home/icc/prof9           |   0
+ data/delta/thinkpad_x270/home/mca/eom             |   1 +
+ data/delta/thinkpad_x270/home/mca/ish_policy      | Bin 0 -> 1 bytes
+ data/delta/thinkpad_x270/home/mctp/device_ports   | Bin 0 -> 4 bytes
+ .../thinkpad_x270/home/policy/Bist/auto_config    | Bin 0 -> 4 bytes
+ .../thinkpad_x270/home/policy/cfgmgr/cfg_rules    | Bin 0 -> 660 bytes
+ .../delta/thinkpad_x270/home/policy/hci/sysintid1 |   1 +
+ .../delta/thinkpad_x270/home/policy/hci/sysintid2 |   1 +
+ .../delta/thinkpad_x270/home/policy/hci/sysintid3 |   1 +
+ .../thinkpad_x270/home/policy/pwdmgr/segreto      |   1 +
+ 28 files changed, 5 insertions(+)
+ create mode 100644 data/delta/thinkpad_x270/home/bup/bup_sku/emu_fuse_map
+ create mode 100644 data/delta/thinkpad_x270/home/bup/bup_sku/fuse_ip_base
+ create mode 100644 data/delta/thinkpad_x270/home/bup/bup_sku/plat_n_sku
+ create mode 100644 data/delta/thinkpad_x270/home/bup/invokemebx
+ create mode 100644 data/delta/thinkpad_x270/home/bup/mbp
+ create mode 100644 data/delta/thinkpad_x270/home/gpio/csme_pins
+ create mode 100644 data/delta/thinkpad_x270/home/icc/dynregs
+ create mode 100644 data/delta/thinkpad_x270/home/icc/header
+ create mode 100644 data/delta/thinkpad_x270/home/icc/namestr
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof1
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof10
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof2
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof3
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof4
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof5
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof6
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof7
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof8
+ create mode 100644 data/delta/thinkpad_x270/home/icc/prof9
+ create mode 100644 data/delta/thinkpad_x270/home/mca/eom
+ create mode 100644 data/delta/thinkpad_x270/home/mca/ish_policy
+ create mode 100644 data/delta/thinkpad_x270/home/mctp/device_ports
+ create mode 100644 data/delta/thinkpad_x270/home/policy/Bist/auto_config
+ create mode 100644 data/delta/thinkpad_x270/home/policy/cfgmgr/cfg_rules
+ create mode 100644 data/delta/thinkpad_x270/home/policy/hci/sysintid1
+ create mode 100644 data/delta/thinkpad_x270/home/policy/hci/sysintid2
+ create mode 100644 data/delta/thinkpad_x270/home/policy/hci/sysintid3
+ create mode 100644 data/delta/thinkpad_x270/home/policy/pwdmgr/segreto
+
+diff --git a/data/delta/thinkpad_x270/home/bup/bup_sku/emu_fuse_map b/data/delta/thinkpad_x270/home/bup/bup_sku/emu_fuse_map
+new file mode 100644
+index 0000000000000000000000000000000000000000..47c7951cce14177def3ed78de53eab21415e1bdc
+GIT binary patch
+literal 7
+OcmZQ$abVzKm;nF+MF8&r
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/bup/bup_sku/fuse_ip_base b/data/delta/thinkpad_x270/home/bup/bup_sku/fuse_ip_base
+new file mode 100644
+index 0000000000000000000000000000000000000000..756890b668082baad0045ee92ca8d392a133368d
+GIT binary patch
+literal 18
+Zcmb1O&|+|4*uZdzVHZ;{QwGxpCIBLs1R?+c
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/bup/bup_sku/plat_n_sku b/data/delta/thinkpad_x270/home/bup/bup_sku/plat_n_sku
+new file mode 100644
+index 0000000000000000000000000000000000000000..90b277405ee743884b4cd5a6f13b82e14594e855
+GIT binary patch
+literal 4
+LcmZQ&U}yjU0GI%V
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/bup/invokemebx b/data/delta/thinkpad_x270/home/bup/invokemebx
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/bup/mbp b/data/delta/thinkpad_x270/home/bup/mbp
+new file mode 100644
+index 0000000000000000000000000000000000000000..15bb4e67e3c2f00fb14ab1f852ff331a602a0d2f
+GIT binary patch
+literal 52
+zcmd;OV_;z9U}9io0Me{X42mMcPK-=U46Z@nVi`G^7@PzCF|si-0c9B)SRgb50B|4#
+A&j0`b
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/gpio/csme_pins b/data/delta/thinkpad_x270/home/gpio/csme_pins
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/dynregs b/data/delta/thinkpad_x270/home/icc/dynregs
+new file mode 100644
+index 0000000000000000000000000000000000000000..47dcd4b0aa29582c415ddb8477b006da3a5c1eff
+GIT binary patch
+literal 28
+icmb1PU}RuoU|?VpV7)VQ=1c~AAX`m<@s5B|NErY*g9SVQ
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/icc/header b/data/delta/thinkpad_x270/home/icc/header
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b75556082e2c00ea8a888450d05627b20f0ec61
+GIT binary patch
+literal 4
+LcmZQ%U|<9Q00{sC
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/icc/namestr b/data/delta/thinkpad_x270/home/icc/namestr
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0f3735c08f70e800a5dcce8ba8a2ef5ac9b075e
+GIT binary patch
+literal 48
+ZcmeZC&C4&#XTSi#C5d?{iA5>s5&*Dj1*HH0
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/icc/prof1 b/data/delta/thinkpad_x270/home/icc/prof1
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof10 b/data/delta/thinkpad_x270/home/icc/prof10
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof2 b/data/delta/thinkpad_x270/home/icc/prof2
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof3 b/data/delta/thinkpad_x270/home/icc/prof3
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof4 b/data/delta/thinkpad_x270/home/icc/prof4
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof5 b/data/delta/thinkpad_x270/home/icc/prof5
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof6 b/data/delta/thinkpad_x270/home/icc/prof6
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof7 b/data/delta/thinkpad_x270/home/icc/prof7
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof8 b/data/delta/thinkpad_x270/home/icc/prof8
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/icc/prof9 b/data/delta/thinkpad_x270/home/icc/prof9
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/thinkpad_x270/home/mca/eom b/data/delta/thinkpad_x270/home/mca/eom
+new file mode 100644
+index 0000000..6b2aaa7
+--- /dev/null
++++ b/data/delta/thinkpad_x270/home/mca/eom
+@@ -0,0 +1 @@
++
+\ No newline at end of file
+diff --git a/data/delta/thinkpad_x270/home/mca/ish_policy b/data/delta/thinkpad_x270/home/mca/ish_policy
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76dd238ade08917e6712764a16a22005a50573d
+GIT binary patch
+literal 1
+IcmZPo000310RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/mctp/device_ports b/data/delta/thinkpad_x270/home/mctp/device_ports
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/policy/Bist/auto_config b/data/delta/thinkpad_x270/home/policy/Bist/auto_config
+new file mode 100644
+index 0000000000000000000000000000000000000000..009d73a31973e2082917509b8596bb343d4265ab
+GIT binary patch
+literal 4
+LcmZQ<U|;|M0f+#C
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/policy/cfgmgr/cfg_rules b/data/delta/thinkpad_x270/home/policy/cfgmgr/cfg_rules
+new file mode 100644
+index 0000000000000000000000000000000000000000..1b4b0e6f6d93e1a6a7f3fd18a0df1a14f45d5d9c
+GIT binary patch
+literal 660
+zcmZ9|yG}w;6a>(XUPTNd3Mjq>@xem{1ZzPFl?kDT&+$Y2IeQCBU?v&O#NuXFCg<#P
+zvm+w15y@!!GfT;cSd-bU%ZNy1_8T%HHf8o{^OiXyBjO7~`R;$C`|EdP&dgcAEAzkd
+z@&|HHULyBp-Yv+8D9SujG9Q=^W!^2zh&YnjAIsaw6PYtl<?&?kekNCnh2go(yBFq5
+z7&}S^)9+bDew{2*Rrv*ZC6C|cpEVf~*D`0`;Nw2&TlI*zGuPqYoj1%)JJT}Xn;&$Z
+W^B=8m%j`SWcg;`cp1E&+Hm?B15*gzF
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/thinkpad_x270/home/policy/hci/sysintid1 b/data/delta/thinkpad_x270/home/policy/hci/sysintid1
+new file mode 100644
+index 0000000..9615af0
+--- /dev/null
++++ b/data/delta/thinkpad_x270/home/policy/hci/sysintid1
+@@ -0,0 +1 @@
++¿€¦[
+\ No newline at end of file
+diff --git a/data/delta/thinkpad_x270/home/policy/hci/sysintid2 b/data/delta/thinkpad_x270/home/policy/hci/sysintid2
+new file mode 100644
+index 0000000..045e4a8
+--- /dev/null
++++ b/data/delta/thinkpad_x270/home/policy/hci/sysintid2
+@@ -0,0 +1 @@
++z¹­á
+\ No newline at end of file
+diff --git a/data/delta/thinkpad_x270/home/policy/hci/sysintid3 b/data/delta/thinkpad_x270/home/policy/hci/sysintid3
+new file mode 100644
+index 0000000..ba08749
+--- /dev/null
++++ b/data/delta/thinkpad_x270/home/policy/hci/sysintid3
+@@ -0,0 +1 @@
++’>\=
+\ No newline at end of file
+diff --git a/data/delta/thinkpad_x270/home/policy/pwdmgr/segreto b/data/delta/thinkpad_x270/home/policy/pwdmgr/segreto
+new file mode 100644
+index 0000000..23a421c
+--- /dev/null
++++ b/data/delta/thinkpad_x270/home/policy/pwdmgr/segreto
+@@ -0,0 +1 @@
++›$™”
+\ No newline at end of file
+-- 
+2.47.3
+

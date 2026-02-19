@@ -79,6 +79,7 @@ ME11delta=""
 ME11pch=""
 ME11sku=""
 ME11version=""
+MEshrink=""
 ME_bin_hash=""
 MEclean=""
 MRC_bin_hash=""
@@ -278,6 +279,15 @@ extract_intel_me()
 	x_ rm -f "$_metmp" "$xbtmp/a"
 	x_ rm -Rf "$_7ztest"
 
+	# maintain compatibility with older configs
+	# because in the past, shrink was assumed
+	if [ -z "$MEshrink" ]; then
+		MEshrink="y"
+	fi
+	if [ "$MEshrink" != "y" ] && [ "$MEshrink" != "n" ]; then
+		err "MEshrink set badly on '$board' vendor config"
+	fi
+
 	if [ "$ME11bootguard" = "y" ]; then
 		mfs="--whitelist MFS"
 
@@ -327,10 +337,17 @@ find_me()
 		_r=""
 	fi
 
+	if [ "$MEshrink" != "y" ]; then
+		_r=""
+		_trunc=""
+		mfs=""
+	fi
+
 	if [ "$MEclean" = "n" ]; then
 		_keep="-k"
 		_pass="-p"
 		_trunc=""
+		# TODO: should we also blank mfs and _r here?
 	fi
 
 	if "$mecleaner" $mfs $_r $_keep $_pass $_trunc -O "$xbtmp/a" \

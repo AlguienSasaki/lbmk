@@ -1,7 +1,7 @@
-From 0f761363172f0d561cf7ef7aa5fb8d1ed4ae50a2 Mon Sep 17 00:00:00 2001
+From 88d29f792de89bb0a138e671432227cb5679b5ae Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 6 Jan 2026 21:42:21 +0000
-Subject: [PATCH 44/45] topton x2e n150: use old fsp
+Subject: [PATCH 44/48] topton x2e n150: use old fsp
 
 i added the old fsp back, so that we didn't have to
 mess around with vendor files in lbmk, because coreboot

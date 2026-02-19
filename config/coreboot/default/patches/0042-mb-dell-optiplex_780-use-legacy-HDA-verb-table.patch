@@ -1,7 +1,7 @@
-From 75715c75777fbf24c08f2c95b9fcda767f6782dd Mon Sep 17 00:00:00 2001
+From ecbf5a133d839b6c8579e384e9db0a036eca939d Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 23 Dec 2025 18:41:27 +0100
-Subject: [PATCH 42/45] mb/dell/optiplex_780: use legacy HDA verb table
+Subject: [PATCH 42/48] mb/dell/optiplex_780: use legacy HDA verb table
 
 See:
 

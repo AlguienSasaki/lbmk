@@ -1,7 +1,7 @@
-From 9bd0b15f26681f4d74f5ca7c7f6cbeb1465b7416 Mon Sep 17 00:00:00 2001
+From 6a4a79d82df982c2fca859101040e407623f519c Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Oct 2025 04:47:06 +0100
-Subject: [PATCH 37/45] soc/alderlake: disable stack overflow debug option
+Subject: [PATCH 37/48] soc/alderlake: disable stack overflow debug option
 
 same as on other boards. based on this commit:
 

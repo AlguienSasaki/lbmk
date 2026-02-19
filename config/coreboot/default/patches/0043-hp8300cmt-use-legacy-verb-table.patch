@@ -1,7 +1,7 @@
-From b6d7b6b5e9b032a81304f5889c7cc3c506a7b0d1 Mon Sep 17 00:00:00 2001
+From 962bfe1366598145a93cf6a7ed0f78393e5e9ff7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 23 Dec 2025 18:46:45 +0100
-Subject: [PATCH 43/45] hp8300cmt: use legacy verb table
+Subject: [PATCH 43/48] hp8300cmt: use legacy verb table
 
 same as for the 780 optiplex patch
 

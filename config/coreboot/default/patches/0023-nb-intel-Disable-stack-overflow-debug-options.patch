@@ -1,7 +1,7 @@
-From 179f677ab55f05b8cfcaf5539d1bdec93ba710a0 Mon Sep 17 00:00:00 2001
+From c7b136f1f4fa2bc1a783711b5a1ee82c5d9ce69f Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Apr 2025 02:58:47 +0100
-Subject: [PATCH 23/45] nb/intel/*: Disable stack overflow debug options
+Subject: [PATCH 23/48] nb/intel/*: Disable stack overflow debug options
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

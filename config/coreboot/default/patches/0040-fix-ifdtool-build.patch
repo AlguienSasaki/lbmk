@@ -1,7 +1,7 @@
-From ee295fa8156560526ea9821f6140b84f36d5a92c Mon Sep 17 00:00:00 2001
+From dc4036353483c5fc0c140fc269d9bddb0bb7a967 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 20 Dec 2025 20:12:48 +0100
-Subject: [PATCH 40/45] fix ifdtool build
+Subject: [PATCH 40/48] fix ifdtool build
 
 not my mistake. someone messed up.
 

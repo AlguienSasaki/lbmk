@@ -1,7 +1,7 @@
-From 87255c381b1aa3806ca076b11e45b09bfbffca86 Mon Sep 17 00:00:00 2001
+From 7641a4b9b91c385223026cd566e0ffc2a2aa0d8f Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Mon, 12 Aug 2024 02:15:24 +0100
-Subject: [PATCH 19/45] nb/x4x: define INTEL_GMA_DPLL_REF_FREQ
+Subject: [PATCH 19/48] nb/x4x: define INTEL_GMA_DPLL_REF_FREQ
 
 set it to 96MHz. fixes the following build error when
 building for x4x boards e.g. gigabyte ga-g41m-es2l:

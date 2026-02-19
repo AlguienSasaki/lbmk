@@ -1,7 +1,7 @@
-From 18b6f0d1b15e84f9cc3a2eeb86ed6ac7ae4a7886 Mon Sep 17 00:00:00 2001
+From abd26006eff71c9570bc90fdbce3a76f8f559cea Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 4 Oct 2025 22:20:11 +0100
-Subject: [PATCH 36/45] alderlake: don't require full fsp repo for fd path
+Subject: [PATCH 36/48] alderlake: don't require full fsp repo for fd path
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---

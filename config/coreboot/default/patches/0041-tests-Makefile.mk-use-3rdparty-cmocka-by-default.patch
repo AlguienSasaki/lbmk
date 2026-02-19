@@ -1,7 +1,7 @@
-From d0f6949cd4ef3e1d88d4fb2f9cc8ffacc02c7879 Mon Sep 17 00:00:00 2001
+From 5b7bbc6fcc6f737f259906f1919c1e28b6628a7e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 20 Dec 2025 22:36:18 +0100
-Subject: [PATCH 41/45] tests/Makefile.mk: use 3rdparty/cmocka by default
+Subject: [PATCH 41/48] tests/Makefile.mk: use 3rdparty/cmocka by default
 
 (tests)
 
