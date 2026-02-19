@@ -1,7 +1,7 @@
-From 6e084398d4e6847b0f64325dadd4cfee0b43d7ea Mon Sep 17 00:00:00 2001
+From ee295fa8156560526ea9821f6140b84f36d5a92c Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 20 Dec 2025 20:12:48 +0100
-Subject: [PATCH 1/1] fix ifdtool build
+Subject: [PATCH 40/45] fix ifdtool build
 
 not my mistake. someone messed up.
 
@@ -11,7 +11,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
-index ea8dfc788d..33f00436bc 100644
+index cab934c3a5..d181888e0f 100644
 --- a/util/ifdtool/ifdtool.c
 +++ b/util/ifdtool/ifdtool.c
 @@ -2598,7 +2598,7 @@ int main(int argc, char *argv[])

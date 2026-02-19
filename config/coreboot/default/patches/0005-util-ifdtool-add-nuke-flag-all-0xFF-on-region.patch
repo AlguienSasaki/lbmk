@@ -1,7 +1,7 @@
-From a3bc9753261ebd534df6c6752169b3edbb588a97 Mon Sep 17 00:00:00 2001
+From f56c11820745dceffdfb52caaa45f64942200fb7 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
-Subject: [PATCH 05/41] util/ifdtool: add --nuke flag (all 0xFF on region)
+Subject: [PATCH 05/45] util/ifdtool: add --nuke flag (all 0xFF on region)
 
 When this option is used, the region's contents are overwritten
 with all ones (0xFF).
@@ -20,7 +20,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 84 insertions(+), 32 deletions(-)
 
 diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
-index 75238c73b2..ea8dfc788d 100644
+index 0592785bf6..cab934c3a5 100644
 --- a/util/ifdtool/ifdtool.c
 +++ b/util/ifdtool/ifdtool.c
 @@ -2240,6 +2240,7 @@ static void print_usage(const char *name)

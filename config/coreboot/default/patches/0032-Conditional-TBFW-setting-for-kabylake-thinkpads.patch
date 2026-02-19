@@ -1,7 +1,7 @@
-From c25cf16fb0d278354c7e2c19f534a04e27ac46dd Mon Sep 17 00:00:00 2001
+From 0ed0d9a18742655ca26466cade80e6fb406606fc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Apr 2025 05:14:45 +0100
-Subject: [PATCH 32/41] Conditional TBFW setting for kabylake thinkpads
+Subject: [PATCH 32/45] Conditional TBFW setting for kabylake thinkpads
 
 Otherwise, other boards will define it, which
 might trigger the vendor download script, and

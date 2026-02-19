@@ -1,7 +1,7 @@
-From 9ca5c919339049518e842980041f528d48d79124 Mon Sep 17 00:00:00 2001
+From c276f783816f44b445853d7db2ca4845dad053de Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 4 May 2024 02:00:53 +0100
-Subject: [PATCH 15/41] nb/haswell: lock policy regs when disabling IOMMU
+Subject: [PATCH 15/45] nb/haswell: lock policy regs when disabling IOMMU
 
 Angel Pons told me I should do it. See comments here:
 https://review.coreboot.org/c/coreboot/+/81016

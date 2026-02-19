@@ -1,7 +1,7 @@
-From 8eeb1de057b19938f1221b85e00699c58de90069 Mon Sep 17 00:00:00 2001
+From c0625b4e2f9df53e774fe8b8200210b29c52b468 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 28 Sep 2025 03:17:50 +0100
-Subject: [PATCH 34/41] Subject: [PATCH 1/1] Add a -p option (skip FPTR checks)
+Subject: [PATCH 34/45] Subject: [PATCH 1/1] Add a -p option (skip FPTR checks)
 
 if you pass -k (keep fptr modules), don't use -r, don't
 use -t, you can essentially just use me_cleaner to

@@ -1,7 +1,7 @@
-From be79f8b72a098dcd51639210935ba02d2f5ff808 Mon Sep 17 00:00:00 2001
+From 964cd5ff3d0ac07d625b7c40a46a1ee8d51fb7e6 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 4 Oct 2025 21:57:43 +0100
-Subject: [PATCH 35/41] soc/intel/alderlake: Don't compress FSP-S
+Subject: [PATCH 35/45] soc/intel/alderlake: Don't compress FSP-S
 
 Build systems like lbmk need to reproducibly insert
 certain vendor files on release images.
@@ -18,7 +18,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index a2074fe05a..08137d2706 100644
+index e0ab6b10fd..a2e7cff6f6 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
 @@ -16,7 +16,7 @@ config SOC_INTEL_ALDERLAKE

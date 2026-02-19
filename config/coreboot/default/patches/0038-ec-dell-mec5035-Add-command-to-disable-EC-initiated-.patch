@@ -1,7 +1,7 @@
-From 90332fe96aca0de4d99d58d1593048c77e1bdecf Mon Sep 17 00:00:00 2001
+From 357872d4b9c5fdc559d10596b0f21d7065c8fdc5 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sun, 11 May 2025 15:41:22 -0600
-Subject: [PATCH 38/41] ec/dell/mec5035: Add command to disable EC-initiated
+Subject: [PATCH 38/45] ec/dell/mec5035: Add command to disable EC-initiated
  thermal shutdown
 
 If command 0xBF isn't sent, the EC shuts down the system without warning

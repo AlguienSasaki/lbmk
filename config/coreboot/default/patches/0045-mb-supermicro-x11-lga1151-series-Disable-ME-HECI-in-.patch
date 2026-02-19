@@ -1,7 +1,7 @@
-From 6c6b7a71bfb36f9639abe72066851de22aa4f1ca Mon Sep 17 00:00:00 2001
+From 015b268510b2d665be21eec1f5e5f9ac41a31eb2 Mon Sep 17 00:00:00 2001
 From: Ron Nazarov <ron@noisytoot.org>
 Date: Sat, 14 Feb 2026 20:13:01 +0000
-Subject: [PATCH] mb/supermicro/x11-lga1151-series: Disable ME HECI in
+Subject: [PATCH 45/45] mb/supermicro/x11-lga1151-series: Disable ME HECI in
  devicetree
 
 Since we always use me_cleaner, this speeds up boot time by preventing
@@ -27,5 +27,5 @@ index fbf896c6ae..aa09a41f2f 100644
  			register "SataSalpSupport" = "1"
  			register "SataPortsEnable" = "{
 -- 
-2.52.0
+2.47.3
 

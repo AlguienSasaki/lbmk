@@ -1,7 +1,7 @@
-From 0a982ec4b606b6c236f71478350b69f532f30719 Mon Sep 17 00:00:00 2001
+From a1270456f4908f1a4e86d4f1a0b51d4553127cda Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 3 May 2024 11:03:32 -0600
-Subject: [PATCH 14/41] ec/dell/mec5035: Add S3 suspend SMI handler
+Subject: [PATCH 14/45] ec/dell/mec5035: Add S3 suspend SMI handler
 
 This is necessary for S3 resume to work on SNB and newer Dell Latitude
 laptops. If a command isn't sent, the EC cuts power to the DIMMs,

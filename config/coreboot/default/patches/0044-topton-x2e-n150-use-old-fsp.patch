@@ -1,7 +1,7 @@
-From 3bb05d0486186400df8ed9ac66cfadcbff7a48a6 Mon Sep 17 00:00:00 2001
+From 0f761363172f0d561cf7ef7aa5fb8d1ed4ae50a2 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 6 Jan 2026 21:42:21 +0000
-Subject: [PATCH 1/1] topton x2e n150: use old fsp
+Subject: [PATCH 44/45] topton x2e n150: use old fsp
 
 i added the old fsp back, so that we didn't have to
 mess around with vendor files in lbmk, because coreboot
@@ -18,10 +18,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index e9c56fc6b9..43cd6f8efe 100644
+index 06b9199e84..f260d10285 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
-@@ -438,6 +438,7 @@ config FSP_FD_PATH
+@@ -451,6 +451,7 @@ config FSP_FD_PATH
  	default "3rdparty/fsp/RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd"   if FSP_TYPE_IOT && SOC_INTEL_RAPTORLAKE_PCH_S
  	default "3rdparty/fsp/AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd"     if FSP_TYPE_IOT && SOC_INTEL_ALDERLAKE_PCH_P
  	default "3rdparty/fsp/AlderLakeFspBinPkg/IoT/AlderLakeS/Fsp.fd"     if FSP_TYPE_IOT && SOC_INTEL_ALDERLAKE_PCH_S
