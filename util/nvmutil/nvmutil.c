@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2022-2025 Leah Rowe <leah@libreboot.org> */
+/* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 #include <sys/stat.h>
@@ -38,7 +38,7 @@ uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
 size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
-int flags, rfd, fd, part;
+int flags, rfd, fd, part, e = 1;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *filename = NULL;
 
@@ -459,12 +459,10 @@ writeGbe(void)
 void
 swap(int partnum)
 {
-	size_t w, x;
 	uint8_t *n = (uint8_t *) gbe[partnum];
-	int e = 1;
 
-	for (w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1; w < NVM_SIZE;
-	    w += 2, x += 2) {
+	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
+	    w < NVM_SIZE; w += 2, x += 2) {
 		n[w] ^= n[x];
 		n[x] ^= n[w];
 		n[w] ^= n[x];
