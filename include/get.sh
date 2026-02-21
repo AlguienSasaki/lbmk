@@ -272,6 +272,8 @@ try_fetch_file()
 
 try_curl()
 {
+	_ua=""
+
 	case "$2" in
 	https://www.supermicro.com/*)
 		_ua="curl/8.6.0";;
