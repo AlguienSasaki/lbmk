@@ -290,8 +290,6 @@ extract_intel_me()
 	fi
 
 	if [ "$ME11bootguard" = "y" ]; then
-		mfs="--whitelist MFS"
-
 		if [ -z "$ME11delta" ] || [ -z "$ME11version" ] || \
 		    [ -z "$ME11sku" ] || [ -z "$ME11pch" ]; then
 			err "$board: ME11delta/ME11version/ME11sku/ME11pch" \
@@ -334,6 +332,9 @@ find_me()
 	_r="-r" # re-locate modules
 	_trunc="-t" # -t: truncate the ME size
 
+	if [ "$ME11bootguard" = "y" ]; then
+		mfs="--whitelist MFS"
+	fi
 	if [ "$MEclean" = "n" ]; then
 		MEshrink="n"
 
