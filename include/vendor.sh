@@ -333,21 +333,22 @@ find_me()
 	_r="-r" # re-locate modules
 	_trunc="-t" # -t: truncate the ME size
 
-	if [ -n "$mfs" ] || [ "$MEclean" = "n" ]; then
-		_r=""
-	fi
-
-	if [ "$MEshrink" != "y" ]; then
-		_r=""
-		_trunc=""
-		mfs=""
-	fi
-
 	if [ "$MEclean" = "n" ]; then
-		_keep="-k"
-		_pass="-p"
-		_trunc=""
-		# TODO: should we also blank mfs and _r here?
+		MEshrink="n"
+
+		_keep="-k" # keep ME modules, don't delete anything
+		_pass="-p" # skip fptr check
+		mfs="" # no MFS whitelist needed, due to -r:
+	fi
+	if [ "$MEclean" = "n" ] || [ "$MEshrink" != "y" ]; then
+		# MEclean can still be y, this just means don't shrink,
+		# so deleted modules would become padded space
+
+		_r="" # don't re-locate ME modules
+		_trunc="" # don't shrink the me.bin file size
+	fi
+	if [ -n "$mfs" ]; then
+		_r="" # cannot re-locate modules if using --whitelist MFS
 	fi
 
 	if "$mecleaner" $mfs $_r $_keep $_pass $_trunc -O "$xbtmp/a" \
