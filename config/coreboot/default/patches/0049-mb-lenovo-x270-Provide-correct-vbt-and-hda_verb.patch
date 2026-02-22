@@ -1,0 +1,132 @@
+From 9d39437b9447ab6e6164440bddf459111bd4903f Mon Sep 17 00:00:00 2001
+From: Kat Inskip <kat@inskip.me>
+Date: Sat, 21 Feb 2026 19:48:17 +0000
+Subject: [PATCH] mb/lenovo/x270: Provide correct vbt and hda_verb
+
+---
+ .../sklkbl_thinkpad/variants/x270/data.vbt    | Bin 6144 -> 4449 bytes
+ .../sklkbl_thinkpad/variants/x270/hda_verb.c  |  29 +++++++++---------
+ 2 files changed, 15 insertions(+), 14 deletions(-)
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt
+index bfb312850e0ab4ea834c535df35edb45834ed248..c6561a9c57e4e600bc0adb5f6679f2f5d6b6c640 100644
+GIT binary patch
+delta 1043
+zcmZoLc&Ic%f;Calfx%$%L?+>h1_E+-8N?V21pmEaU`SzPl;klqFfjDYD@o1K2+~vt
+z_MVtzqhMg55a6s}XrgCqqM%@?Z)B)%WMF8jpkQcVWoTw)YB_PgJ|n}#S5l0olUW%J
+zmH8bQ7#aQ=F)(m2Ft9K%I51!UfyozHMC%0@m~0uDSQr@8IT+X^kQH$;FffDp4h#xl
+z8bl~CurORpU|?Wi|HJ{}Gcd3-Ft9R!tPx;TV1x)UFbFU>fRs5fu(NPN#30UK;9yW-
+zRA7P#ft0y`jTR8#5QD0NNii@mDnP7fU|>*S5CDk_2ry`1Q#Lt(Nn)}ATY5b+BLl;q
+zDh37ys6!YT7(sx6fsfIEA&*mz!Jk=!p@x}>p^e#sL5t-Cg8-)jgE6N7gBzy+LnNmF
+z!(~=3hP$j>49{7)7(TLcG5lubVqj(CV&G@vVvuCxVo+w|V$fydVlZdpVsK>RV(@0;
+zVhCm9Vu)wsV#s9k=3-zgW%%=-sR0x!3=9knjO-wHGc*W7Xa)fmhCWS(hB;92IZ$!V
+z4=iAHTu_?(1IuJZHeH|p|Jm6Y{{25E!SMe-hb_othYu_u&oR0{ReC^aA27|#8~~;n
+z7(yWG7$Ttj|Nl2@GH+mFWY~O*Rg<|MY#YO>RjXDpFlbI;V0PwG$m9~L=HhDQQdrF;
+zw3mzPIG4g(E}{QiT%6nr`rJZ}++5z=3WeN4&D>nQ+zOkyg^qG_o#$5g$}Pms!zIY0
+zV9q1t$-@=Qqfp5s)Xl>+l}BMWkI-2juIoGse|d!XdATHc73_J10(rTjc@?x9d4(qP
+za?RycILs?_m6z*2uL3KdkT@TgBA<dgpHL(pS27>3mJn+L(*wrIjyy_}&vV92KFDLv
+zD6u(}E1HG>1Or3FDlZ6mhk<$WLq5C7@A-r#%kwKri!pS#F)%QAGH@}3G6XQBFz7H&
+kV|c;Lpl851c_M$+Bmr(DBv}6+5)=${r;WiWnGIq+0Ot0jSpWb4
+
+delta 808
+zcmaE;)L<|{f|X04kilTGBa`q%0|BLr3}Oto`2W3PU`SzPl;klqFf;bdD@o1K2+~vt
+z_V&^DcA6MxqiANV5a6s}XrgCqqM%@4sBdVdZ)9L-si0tBY-MU@WoSNem;S_eVvL59
+zSs4xM*_{{|8U7kE@Nlqra5!jiC`fP!xUe{=uqcSI2n09?BseG-C<yqlIOwn_$Z!Z4
+zC<sJ22t)`t2rw|2GBU9+FsN}b9IIe}0tE(x>s$;B%pfk41A_vHW&l$x4A&AE92giP
+zgh70R>+B2+tPBhcP7Le<j0%ikbs*IaP-R(AWgH9)EFejC1x5uX5Cd!&m?0p*Q3Fyn
+zS&>OpPyu8rNLWCCp${g?0TZ2U$Rsz}l1X5)C6gG8t_NAi%*ep-r;34r0pbFX0T9f`
+zXuz<9Lk_}$k_pTw7~D7%7&18o7-~2K82UK`7&uwE7=&557-U(w7}Qz07z|mt7_3>j
+z7+hJo82nke7$RA@7?N4J7;;&;7|L0>7#dl*7`j=x7^bqaaWTwi<zm?UnRx>frvL*3
+zg8+j7gW=>2Y~q^_vvD!kgT2kLYSpS$3=Eo67?>+L73OmaZRF(I&8hH^Q|L1%*I!Nr
+zWiBC8E-rg6g;Xw~axSh$E`{Y>LOZ#*4s$8I<P!SL#l_04pv^60%gyD^t&qztRL{-T
+z$*r)STj(G+*J*BrkK97cJY2jy3dTG_t~^}+JPM^eLhU?U6L}PrxAO>{<l(x^qwteQ
+zh?|#7lvlx;SIC!_E1XxMmRG2smun{P<b19U?gn-XmIgsS1{-FB$p^Tkh5XGL78F=0
+zIT+cjV-T4mz`!86S)V(ag<n9OA!3!+2?h{(kC|oiMt+OQ`}rj%zvNex5@qOgV_;zL
+yWZ+^5We8wMVbEcm#_)n!Zv(^RK!MiD2L!|>9}tk){DbW~<0kg^a6CDHNgDv8%8_CK
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
+index 089e605eaf..60289355f8 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
+@@ -3,10 +3,10 @@
+ #include <device/azalia_device.h>
+ 
+ const u32 cim_verb_data[] = {
+-	0x10ec0257, // Vendor/Device ID: Realtek ALC257
+-	0x17aa2256, // Subsystem ID
+-	18,
+-	AZALIA_SUBVENDOR(0, 0x17aa2256),
++	0x10ec0298, // Vendor/Device ID: Realtek ALC298
++	0x17aa5062, // Subsystem ID
++	19,
++	AZALIA_SUBVENDOR(0, 0x17aa5062),
+ 
+ 	AZALIA_PIN_CFG(0, 0x12, AZALIA_PIN_DESC(
+ 		AZALIA_INTEGRATED,
+@@ -15,7 +15,7 @@ const u32 cim_verb_data[] = {
+ 		AZALIA_OTHER_DIGITAL,
+ 		AZALIA_COLOR_UNKNOWN,
+ 		AZALIA_NO_JACK_PRESENCE_DETECT,
+-		2, 0
++		4, 0
+ 	)),
+ 	AZALIA_PIN_CFG(0, 0x13, 0x40000000), // does not describe a jack or internal device
+ 	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
+@@ -27,28 +27,29 @@ const u32 cim_verb_data[] = {
+ 		AZALIA_NO_JACK_PRESENCE_DETECT,
+ 		1, 0
+ 	)),
+-	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
+-	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_DESC(
++	AZALIA_PIN_CFG(0, 0x17, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_DESC(
+ 		AZALIA_JACK,
+-		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_RIGHT,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_LEFT,
+ 		AZALIA_MIC_IN,
+ 		AZALIA_STEREO_MONO_1_8,
+ 		AZALIA_BLACK,
+ 		AZALIA_JACK_PRESENCE_DETECT,
+ 		3, 0
+ 	)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
+ 	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
+-	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_CFG_NC(0)),
+-	AZALIA_PIN_CFG(0, 0x1d, 0x40661b45), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1d, 0x40648605), // does not describe a jack or internal device
+ 	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1f, AZALIA_PIN_CFG_NC(0)),
+ 	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
+ 		AZALIA_JACK,
+-		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_RIGHT,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_LEFT,
+ 		AZALIA_HP_OUT,
+ 		AZALIA_STEREO_MONO_1_8,
+ 		AZALIA_BLACK,
+ 		AZALIA_JACK_PRESENCE_DETECT,
+-		1, 15
++		2, 0
+ 	)),
+ 
+ 	//==========Widget node 0x20 - 0 :Hidden register SW reset
+@@ -107,7 +108,7 @@ const u32 cim_verb_data[] = {
+ 		AZALIA_OTHER_DIGITAL,
+ 		AZALIA_COLOR_UNKNOWN,
+ 		AZALIA_JACK_PRESENCE_DETECT,
+-		1, 0
++		2, 0
+ 	)),
+ 	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
+ 		AZALIA_JACK,
+@@ -116,7 +117,7 @@ const u32 cim_verb_data[] = {
+ 		AZALIA_OTHER_DIGITAL,
+ 		AZALIA_COLOR_UNKNOWN,
+ 		AZALIA_JACK_PRESENCE_DETECT,
+-		1, 0
++		3, 0
+ 	)),
+ };
+ 
+-- 
+2.52.0
+
