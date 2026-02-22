@@ -79,9 +79,10 @@ ME11delta=""
 ME11pch=""
 ME11sku=""
 ME11version=""
-MEshrink=""
 ME_bin_hash=""
+MEcheck=""
 MEclean=""
+MEshrink=""
 MRC_bin_hash=""
 MRC_refcode_cbtree=""
 MRC_refcode_gbe=""
@@ -337,15 +338,19 @@ find_me()
 		MEshrink="n"
 
 		_keep="-k" # keep ME modules, don't delete anything
-		_pass="-p" # skip fptr check
 		mfs="" # no MFS whitelist needed, due to -r:
 	fi
 	if [ "$MEclean" = "n" ] || [ "$MEshrink" != "y" ]; then
 		# MEclean can still be y, this just means don't shrink,
-		# so deleted modules would become padded space
+		# so deleted modules would become padded space. this
+		# could also be used alongside --whitelist, if
+		# MEclean is otherwise enabled.
 
 		_r="" # don't re-locate ME modules
 		_trunc="" # don't shrink the me.bin file size
+	fi
+	if [ "$MEcheck" = "n" ]; then
+		_pass="-p" # skip fptr check
 	fi
 	if [ -n "$mfs" ]; then
 		_r="" # cannot re-locate modules if using --whitelist MFS
