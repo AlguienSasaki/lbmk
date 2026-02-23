@@ -198,10 +198,9 @@ void
 nvmalloc(void)
 {
 	/* same operations need the full block, others only 128 bytes */
+	nf = NVM_SIZE;
 	if ((cmd == cmd_swap) || (cmd == cmd_copy))
 		nf = SIZE_4KB;
-	else
-		nf = NVM_SIZE;
 
 	/* only read the part specified, for copy/setchecksum/brick */
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
@@ -307,8 +306,7 @@ hextonum(char ch)
 		return ch - 'a' + 10;
 	else if ((ch == '?') || (ch == 'x') || (ch == 'X'))
 		return rhex(); /* random hex value */
-	else
-		return 16; /* error: invalid character */
+	return 16; /* error: invalid character */
 }
 
 uint8_t
