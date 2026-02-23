@@ -219,13 +219,15 @@ readGbe(void)
 
 		ssize_t nr = pread(fd, (uint8_t *) gbe[p], nf, p * partsize);
 		err_if(nr == -1);
-		if (nr != nf)
-			err(errno == ECANCELED,
-			    "%ld bytes read from '%s', expected %ld bytes\n",
-			    nr, filename, nf);
+		if (nr == nf) {
+			tnr += nr;
+			swap(p); /* handle big-endian host CPU */
+			continue;
+		}
 
-		tnr += nr;
-		swap(p); /* handle big-endian host CPU */
+		err(errno == ECANCELED,
+		    "%ld bytes read from '%s' part %d, expected %ld bytes\n",
+		    nr, filename, p, nf);
 	}
 
 	printf("%ld bytes read from file '%s'\n", tnr, filename);
@@ -431,12 +433,14 @@ writeGbe(void)
 		swap(p); /* swap bytes on big-endian host CPUs */
 		ssize_t nw = pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize);
 		err_if(nw == -1);
-		if (nw != nf)
-			err(errno == ECANCELED,
-			    "%ld bytes written to '%s', expected %ld bytes\n",
-			    nw, filename, nf);
+		if (nw == nf) {
+			tnw += nf;
+			continue;
+		}
 
-		tnw += nf;
+		err(errno == ECANCELED,
+		    "%ld bytes written to '%s' part %d, expected %ld bytes\n",
+		    nw, filename, p, nf);
 	}
 
 	if ((flags != O_RDONLY) && (cmd != cmd_dump)) {
