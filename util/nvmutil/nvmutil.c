@@ -41,7 +41,7 @@ size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part, e = 1;
 
-const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *filename = NULL;
+const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
 
 typedef struct op {
 	char *str;
@@ -58,11 +58,11 @@ op_t op[] = {
 };
 void (*cmd)(void) = NULL;
 
-#define ERR() errno = errno ? errno : ECANCELED
-#define err_if(x) if (x) err(ERR(), "%s", filename)
+#define SET_ERR() errno = errno ? errno : ECANCELED
+#define err_if(x) if (x) err(SET_ERR(), "%s", fname)
 
-#define xopen(f,l,p) if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
-    if (fstat(f, &st) == -1) err(ERR(), "%s", l)
+#define xopen(f,l,p) if ((f = open(l, p)) == -1) err(SET_ERR(), "%s", l); \
+    if (fstat(f, &st) == -1) err(SET_ERR(), "%s", l)
 
 #define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
 #define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
@@ -89,10 +89,10 @@ main(int argc, char *argv[])
 		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE brick 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
-		err(ERR(), "Too few arguments");
+		err(SET_ERR(), "Too few arguments");
 	}
 
-	filename = argv[1];
+	fname = argv[1];
 
 	flags = O_RDWR;
 
@@ -106,23 +106,23 @@ main(int argc, char *argv[])
 	}
 
 	checkdir("/dev/urandom");
-	checkdir(filename);
+	checkdir(fname);
 
 #ifdef __OpenBSD__
 	err_if(unveil("/dev/urandom", "r") == -1);
 
 	if (flags == O_RDONLY) {
-		err_if(unveil(filename, "r") == -1);
+		err_if(unveil(fname, "r") == -1);
 		err_if(unveil(NULL, NULL) == -1);
 		err_if(pledge("stdio rpath", NULL) == -1);
 	} else {
-		err_if(unveil(filename, "rw") == -1);
+		err_if(unveil(fname, "rw") == -1);
 		err_if(unveil(NULL, NULL) == -1);
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
 
-	openFiles(filename);
+	openFiles(fname);
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
@@ -188,7 +188,7 @@ openFiles(const char *path)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(ERR(), "Invalid file size (not 8/16/128KiB)");
+		err(SET_ERR(), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
 
@@ -231,7 +231,7 @@ void
 readGbe_part(int p)
 {
 	if (pread(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-		err(ERR(), "Can't read %ld b from '%s' p%d", nf, filename, p);
+		err(SET_ERR(), "Can't read %ld b from '%s' p%d", nf, fname, p);
 	swap(p); /* handle big-endian host CPU */
 }
 
@@ -418,7 +418,7 @@ goodChecksum(int partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	ERR();
+	SET_ERR();
 	return 0;
 }
 
@@ -437,7 +437,7 @@ writeGbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
 	if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-		err(ERR(), "Can't write %ld b to '%s' p%d", nf, filename, p);
+		err(SET_ERR(), "Can't write %ld b to '%s' p%d", nf, fname, p);
 
 }
 
