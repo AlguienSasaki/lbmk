@@ -223,10 +223,9 @@ nvmalloc(void)
 void
 readGbe(void)
 {
-	for (int p = 0; p < 2; p++) {
+	for (int p = 0; p < 2; p++)
 		if (do_read[p])
 			readGbe_part(p);
-	}
 }
 
 void
@@ -428,10 +427,9 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
-	for (int p = 0; p < 2; p++) {
+	for (int p = 0; p < 2; p++)
 		if ((nvmPartChanged[p]) && (flags != O_RDONLY))
 			writeGbe_part(p);
-	}
 	err_if(close(fd) == -1);
 }
 
