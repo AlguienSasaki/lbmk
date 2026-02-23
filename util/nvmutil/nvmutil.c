@@ -197,19 +197,24 @@ openFiles(const char *path)
 void
 nvmalloc(void)
 {
+	/* same operations need the full block, others only 128 bytes */
 	if ((cmd == cmd_swap) || (cmd == cmd_copy))
 		nf = SIZE_4KB;
 	else
 		nf = NVM_SIZE;
 
+	/* only read the part specified, for copy/setchecksum/brick */
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
 		do_read[part ^ 1] = 0;
 
+	/* only allocate one block if only one part being read */
 	char *buf = malloc(nf << (do_read[0] & do_read[1]));
 	if (buf == NULL)
 		err(errno, NULL);
 
 	gbe[0] = (size_t) buf;
+
+	/* speedhack: for cmd copy, both pointers are set the same */
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
 }
 
