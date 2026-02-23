@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE brick 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
-		err(errno = ECANCELED, "Too few arguments");
+		err(ERR(), "Too few arguments");
 	}
 
 	filename = argv[1];
@@ -187,7 +187,7 @@ openFiles(const char *path)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(errno = ECANCELED, "Invalid file size (not 8/16/128KiB)");
+		err(ERR(), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
 
@@ -415,7 +415,7 @@ goodChecksum(int partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	errno = ECANCELED;
+	ERR();
 	return 0;
 }
 
