@@ -15,10 +15,10 @@
 #include <unistd.h>
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), readGbe(void), checkdir(const char *path),
-    macf(int partnum), hexdump(int partnum), openFiles(const char *path),
-    cmd_copy(void), parseMacString(const char *strMac, uint16_t *mac),
-    cmd_swap(void);
+    cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
+    checkdir(const char *path), macf(int partnum), hexdump(int partnum),
+    parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
+    openFiles(const char *path), cmd_copy(void);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -154,6 +154,7 @@ main(int argc, char *argv[])
 	}
 	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 
+	nvmalloc();
 	readGbe();
 	(*cmd)();
 	writeGbe();
@@ -194,7 +195,7 @@ openFiles(const char *path)
 }
 
 void
-readGbe(void)
+nvmalloc(void)
 {
 	if ((cmd == cmd_swap) || (cmd == cmd_copy))
 		nf = SIZE_4KB;
@@ -210,7 +211,11 @@ readGbe(void)
 
 	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
+}
 
+void
+readGbe(void)
+{
 	for (int p = 0; p < 2; p++) {
 		if (!do_read[p])
 			continue;
