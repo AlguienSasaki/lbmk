@@ -211,8 +211,6 @@ readGbe(void)
 	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
 
-	ssize_t tnr = 0;
-
 	for (int p = 0; p < 2; p++) {
 		if (!do_read[p])
 			continue;
@@ -220,7 +218,6 @@ readGbe(void)
 		ssize_t nr = pread(fd, (uint8_t *) gbe[p], nf, p * partsize);
 		err_if(nr == -1);
 		if (nr == nf) {
-			tnr += nr;
 			swap(p); /* handle big-endian host CPU */
 			continue;
 		}
@@ -229,8 +226,6 @@ readGbe(void)
 		    "%ld bytes read from '%s' part %d, expected %ld bytes\n",
 		    nr, filename, p, nf);
 	}
-
-	printf("%ld bytes read from file '%s'\n", tnr, filename);
 }
 
 void
@@ -424,8 +419,6 @@ goodChecksum(int partnum)
 void
 writeGbe(void)
 {
-	ssize_t tnw = 0;
-
 	for (int p = 0; p < 2; p++) {
 		if ((!nvmPartChanged[p]) || (flags == O_RDONLY))
 			continue;
@@ -433,29 +426,13 @@ writeGbe(void)
 		swap(p); /* swap bytes on big-endian host CPUs */
 		ssize_t nw = pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize);
 		err_if(nw == -1);
-		if (nw == nf) {
-			tnw += nf;
+		if (nw == nf)
 			continue;
-		}
 
 		err(errno == ECANCELED,
 		    "%ld bytes written to '%s' part %d, expected %ld bytes\n",
 		    nw, filename, p, nf);
 	}
-
-	if ((flags != O_RDONLY) && (cmd != cmd_dump)) {
-		if (nvmPartChanged[0] || nvmPartChanged[1])
-			printf("The following nvm words were written:\n");
-		cmd_dump();
-	}
-
-	if ((!tnw) && (flags != O_RDONLY) && (!errno))
-		fprintf(stderr, "No changes needed on file '%s'\n", filename);
-	else if (tnw)
-		printf("%ld bytes written to file '%s'\n", tnw, filename);
-
-	if (tnw)
-		errno = 0;
 
 	err_if(close(fd) == -1);
 }
