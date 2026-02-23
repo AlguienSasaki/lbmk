@@ -216,13 +216,12 @@ readGbe(void)
 			continue;
 
 		ssize_t nr = pread(fd, (uint8_t *) gbe[p], nf, p * partsize);
-		err_if(nr == -1);
 		if (nr == nf) {
 			swap(p); /* handle big-endian host CPU */
 			continue;
 		}
 
-		err(errno == ECANCELED,
+		err(ERR(),
 		    "%ld bytes read from '%s' part %d, expected %ld bytes\n",
 		    nr, filename, p, nf);
 	}
@@ -425,11 +424,10 @@ writeGbe(void)
 
 		swap(p); /* swap bytes on big-endian host CPUs */
 		ssize_t nw = pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize);
-		err_if(nw == -1);
 		if (nw == nf)
 			continue;
 
-		err(errno == ECANCELED,
+		err(ERR(),
 		    "%ld bytes written to '%s' part %d, expected %ld bytes\n",
 		    nw, filename, p, nf);
 	}
