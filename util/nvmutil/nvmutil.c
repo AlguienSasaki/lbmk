@@ -18,7 +18,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(const char *path), cmd_copy(void);
+    openFiles(const char *path), cmd_copy(void), writeGbe_part(int);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -421,16 +421,19 @@ void
 writeGbe(void)
 {
 	for (int p = 0; p < 2; p++) {
-		if ((!nvmPartChanged[p]) || (flags == O_RDONLY))
-			continue;
-
-		swap(p); /* swap bytes on big-endian host CPUs */
-		if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-			err(ERR(), "Couldn't write %ld bytes to '%s' part '%d'",
-			    nf, filename, p);
+		if ((nvmPartChanged[p]) && (flags != O_RDONLY))
+			writeGbe_part(p);
 	}
-
 	err_if(close(fd) == -1);
+}
+
+void
+writeGbe_part(int p)
+{
+	swap(p); /* swap bytes on big-endian host CPUs */
+	if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
+		err(ERR(), "Can't write %ld b to '%s' p%d", nf, filename, p);
+
 }
 
 void
