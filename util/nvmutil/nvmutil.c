@@ -18,7 +18,8 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(const char *path), cmd_copy(void), writeGbe_part(int);
+    openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
+    readGbe_part(int);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -221,13 +222,17 @@ void
 readGbe(void)
 {
 	for (int p = 0; p < 2; p++) {
-		if (!do_read[p])
-			continue;
-		if (pread(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-			err(ERR(), "Couldn't read %ld bytes from '%s' part %d",
-			    nf, filename, p);
-		swap(p); /* handle big-endian host CPU */
+		if (do_read[p])
+			readGbe_part(p);
 	}
+}
+
+void
+readGbe_part(int p)
+{
+	if (pread(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
+		err(ERR(), "Can't read %ld b from '%s' p%d", nf, filename, p);
+	swap(p); /* handle big-endian host CPU */
 }
 
 void
