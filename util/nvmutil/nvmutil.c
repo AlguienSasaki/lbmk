@@ -81,6 +81,7 @@ main(int argc, char *argv[])
 {
 #ifdef __OpenBSD__
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
+	err_if(unveil("/dev/urandom", "r") == -1);
 #endif
 	if (argc < 2)
 		usage(argv[0]);
@@ -90,7 +91,6 @@ main(int argc, char *argv[])
 	checkdir("/dev/urandom");
 	checkdir(fname);
 #ifdef __OpenBSD__
-	err_if(unveil("/dev/urandom", "r") == -1);
 	block_unveil();
 #endif
 	xopen(rfd, "/dev/urandom", O_RDONLY);
