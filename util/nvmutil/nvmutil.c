@@ -19,7 +19,8 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
-    readGbe_part(int), usage(char*), set_io_flags(int, char **);
+    readGbe_part(int), usage(char*), set_io_flags(int, char **),
+    set_cmd(int, char **);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -95,33 +96,7 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 
-	if (argc > 2) {
-		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
-			if (strcmp(COMMAND, op[i].str) != 0)
-				continue;
-			if (argc >= op[i].args) {
-				cmd = op[i].cmd;
-				break;
-			}
-			err(SET_ERR(EINVAL), "Too few args on command '%s'",
-			    op[i].str);
-		}
-	} else {
-		cmd = cmd_setmac;
-	}
-
-	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
-		strMac = COMMAND;
-		cmd = cmd_setmac;
-	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
-		strMac = strRMac; /* random MAC */
-		if (argc > 3)
-			strMac = MAC_ADDRESS;
-	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
-		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
-		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
-	}
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
+	set_cmd(argc, argv);
 
 	nvmalloc();
 	readGbe();
@@ -139,7 +114,6 @@ set_io_flags(int argc, char *argv[])
 	if (argc > 2)
 		if (strcmp(COMMAND, "dump") == 0)
 			flags = O_RDONLY;
-
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY)
 		err_if(pledge("stdio rpath unveil", NULL) == -1);
@@ -175,6 +149,38 @@ openFiles(const char *path)
 	}
 
 	xopen(rfd, "/dev/urandom", O_RDONLY);
+}
+
+void
+set_cmd(int argc, char *argv[])
+{
+	if (argc > 2) {
+		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
+			if (strcmp(COMMAND, op[i].str) != 0)
+				continue;
+			if (argc >= op[i].args) {
+				cmd = op[i].cmd;
+				break;
+			}
+			err(SET_ERR(EINVAL), "Too few args on command '%s'",
+			    op[i].str);
+		}
+	} else {
+		cmd = cmd_setmac;
+	}
+
+	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
+		strMac = COMMAND;
+		cmd = cmd_setmac;
+	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
+		strMac = strRMac; /* random MAC */
+		if (argc > 3)
+			strMac = MAC_ADDRESS;
+	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
+		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
+		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
+	}
+	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 }
 
 void
