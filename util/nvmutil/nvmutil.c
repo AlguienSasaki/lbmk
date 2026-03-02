@@ -90,12 +90,10 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY)
 		err_if(pledge("stdio rpath unveil", NULL) == -1);
+	block_unveil();
 #endif
 	checkdir("/dev/urandom");
 	checkdir(fname);
-#ifdef __OpenBSD__
-	block_unveil();
-#endif
 	xopen(rfd, "/dev/urandom", O_RDONLY);
 	openGbeFile(fname);
 #ifdef __OpenBSD__
