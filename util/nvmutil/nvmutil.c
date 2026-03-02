@@ -25,10 +25,6 @@ int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
 
-#ifdef __OpenBSD__
-void block_unveil(void);
-#endif
-
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
@@ -86,7 +82,15 @@ main(int argc, char *argv[])
 	fname = argv[1];
 	set_io_flags(argc, argv);
 #ifdef __OpenBSD__
-	block_unveil();
+	if (flags == O_RDONLY) {
+		err_if(unveil(fname, "r") == -1);
+		err_if(unveil(NULL, NULL) == -1);
+		err_if(pledge("stdio rpath", NULL) == -1);
+	} else {
+		err_if(unveil(fname, "rw") == -1);
+		err_if(unveil(NULL, NULL) == -1);
+		err_if(pledge("stdio rpath wpath", NULL) == -1);
+	}
 #endif
 	openFiles(fname);
 #ifdef __OpenBSD__
@@ -460,22 +464,6 @@ swap(int partnum)
 		n[w] ^= n[x];
 	}
 }
-
-#ifdef __OpenBSD__
-void
-block_unveil(void)
-{
-	if (flags == O_RDONLY) {
-		err_if(unveil(fname, "r") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath", NULL) == -1);
-	} else {
-		err_if(unveil(fname, "rw") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath wpath", NULL) == -1);
-	}
-}
-#endif
 
 void
 usage(char *util)
