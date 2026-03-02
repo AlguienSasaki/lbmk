@@ -88,8 +88,6 @@ main(int argc, char *argv[])
 	fname = argv[1];
 	set_io_flags(argc, argv);
 #ifdef __OpenBSD__
-	if (flags == O_RDONLY)
-		err_if(pledge("stdio rpath unveil", NULL) == -1);
 	block_unveil();
 #endif
 	checkdir("/dev/urandom");
