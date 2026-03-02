@@ -20,9 +20,10 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
-    set_cmd(int, char **);
+    set_cmd(int, char **), setWord(int, int, uint16_t);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
+uint16_t word(int, int);
 
 #ifdef __OpenBSD__
 void block_unveil(void);
@@ -71,10 +72,6 @@ void (*cmd)(void) = NULL;
 	if ((f = open(l, p)) == -1) \
 	    err(SET_ERR(ECANCELED), "%s", l); \
 	if (fstat(f, &st) == -1) err(SET_ERR(ECANCELED), "%s", l)
-
-#define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
-#define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
-    nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
 
 int
 main(int argc, char *argv[])
@@ -403,6 +400,21 @@ goodChecksum(int partnum)
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
 	SET_ERR(ECANCELED);
 	return 0;
+}
+
+uint16_t
+word(int pos16, int p)
+{
+	return ((uint16_t *) gbe[p])[pos16];
+}
+
+void
+setWord(int pos16, int p, uint16_t val16)
+{
+	if (((uint16_t *) gbe[p])[pos16] != val16) {
+		nvmPartChanged[p] = 1;
+		((uint16_t *) gbe[p])[pos16] = val16;
+	}
 }
 
 void
