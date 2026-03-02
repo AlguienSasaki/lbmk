@@ -87,6 +87,10 @@ main(int argc, char *argv[])
 
 	fname = argv[1];
 	set_io_flags(argc, argv);
+#ifdef __OpenBSD__
+	if (flags == O_RDONLY)
+		err_if(pledge("stdio rpath unveil", NULL) == -1);
+#endif
 	checkdir("/dev/urandom");
 	checkdir(fname);
 #ifdef __OpenBSD__
@@ -148,10 +152,6 @@ set_io_flags(int argc, char *argv[])
 	if (argc > 2)
 		if (strcmp(COMMAND, "dump") == 0)
 			flags = O_RDONLY;
-#ifdef __OpenBSD__
-	if (flags == O_RDONLY)
-		err_if(pledge("stdio rpath unveil", NULL) == -1);
-#endif
 }
 
 void
