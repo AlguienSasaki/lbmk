@@ -425,7 +425,7 @@ check_bounds(int c, int p)
 {
 	if ((p != 0) && (p != 1))
 		err(SET_ERR(EINVAL), "check_bounds: invalid partnum %d", p);
-	if ((c < 0) || (c > nf))
+	if ((c < 0) || (c > ((nf >> 1) - 1)))
 		err(SET_ERR(EINVAL), "check_bounds: out of bounds %d", c);
 }
 
