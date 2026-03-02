@@ -19,7 +19,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
-    readGbe_part(int), usage(char*);
+    readGbe_part(int), usage(char*), set_io_flags(int, char **);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -84,23 +84,12 @@ main(int argc, char *argv[])
 		usage(argv[0]);
 
 	fname = argv[1];
-	flags = O_RDWR;
-	if (argc > 2)
-		if (strcmp(COMMAND, "dump") == 0)
-			flags = O_RDONLY;
-
-#ifdef __OpenBSD__
-	if (flags == O_RDONLY)
-		err_if(pledge("stdio rpath unveil", NULL) == -1);
-#endif
-
+	set_io_flags(argc, argv);
 	checkdir("/dev/urandom");
 	checkdir(fname);
-
 #ifdef __OpenBSD__
 	block_unveil();
 #endif
-
 	openFiles(fname);
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
@@ -141,6 +130,20 @@ main(int argc, char *argv[])
 
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno;
+}
+
+void
+set_io_flags(int argc, char *argv[])
+{
+	flags = O_RDWR;
+	if (argc > 2)
+		if (strcmp(COMMAND, "dump") == 0)
+			flags = O_RDONLY;
+
+#ifdef __OpenBSD__
+	if (flags == O_RDONLY)
+		err_if(pledge("stdio rpath unveil", NULL) == -1);
+#endif
 }
 
 void
