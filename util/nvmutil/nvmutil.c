@@ -19,7 +19,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
-    readGbe_part(int);
+    readGbe_part(int), usage(char*);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
@@ -77,22 +77,8 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 #endif
 
-	if (argc < 2) {
-#ifdef __OpenBSD__
-		err_if(pledge("stdio", NULL) == -1);
-#endif
-		fprintf(stderr, "Modify Intel GbE NVM images e.g. set MAC\n");
-		fprintf(stderr, "USAGE:\n");
-		fprintf(stderr, " %s FILE dump\n", argv[0]);
-		fprintf(stderr, " %s FILE\n # same as setmac without arg\n",
-		    argv[0]);
-		fprintf(stderr, " %s FILE setmac [MAC]\n", argv[0]);
-		fprintf(stderr, " %s FILE swap\n", argv[0]);
-		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
-		fprintf(stderr, " %s FILE brick 0|1\n", argv[0]);
-		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
-		err(SET_ERR(ECANCELED), "Too few arguments");
-	}
+	if (argc < 2)
+		usage(argv[0]);
 
 	fname = argv[1];
 
@@ -454,4 +440,24 @@ swap(int partnum)
 		n[x] ^= n[w];
 		n[w] ^= n[x];
 	}
+}
+
+void
+usage(char *util)
+{
+#ifdef __OpenBSD__
+	err_if(pledge("stdio", NULL) == -1);
+#endif
+	fprintf(stderr,
+	    "Modify Intel GbE NVM images e.g. set MAC\n"
+	    "USAGE:\n"
+	    "%s FILE dump\n"
+	    " %s FILE\n # same as setmac without arg\n"
+	    " %s FILE setmac [MAC]\n"
+	    " %s FILE swap\n"
+	    " %s FILE copy 0|1\n"
+	    " %s FILE brick 0|1\n"
+	    " %s FILE setchecksum 0|1\n",
+	    util, util, util, util, util, util, util);
+	err(SET_ERR(ECANCELED), "Too few arguments");
 }
