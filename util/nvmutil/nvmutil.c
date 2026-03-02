@@ -40,7 +40,8 @@ uint16_t word(int, int);
 
 uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
-size_t partsize, gbe[2];
+size_t partsize;
+uint8_t *gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part, e = 1;
 
@@ -197,11 +198,11 @@ nvmalloc(void)
 		do_read[part ^ 1] = 0;
 
 	/* only allocate one block if only one part being read */
-	char *buf = malloc(nf << (do_read[0] & do_read[1]));
+	uint8_t *buf = (uint8_t *) malloc(nf << (do_read[0] & do_read[1]));
 	if (buf == NULL)
 		err(errno, NULL);
 
-	gbe[0] = (size_t) buf;
+	gbe[0] = buf;
 
 	/* speedhack: for cmd copy, both pointers are set the same */
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
@@ -389,9 +390,9 @@ cmd_swap(void) {
 	err_if(!(goodChecksum(0) || goodChecksum(1)));
 	errno = 0;
 
-	gbe[0] ^= gbe[1];
-	gbe[1] ^= gbe[0];
-	gbe[0] ^= gbe[1];
+	uint8_t *chg = gbe[0];
+	gbe[0] = gbe[1];
+	gbe[1] = chg;
 
 	nvmPartChanged[0] = nvmPartChanged[1] = 1;
 }
@@ -459,7 +460,7 @@ writeGbe_part(int p)
 void
 swap(int partnum)
 {
-	uint8_t *n = (uint8_t *) gbe[partnum];
+	uint8_t *n = gbe[partnum];
 
 	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
 	    w < NVM_SIZE; w += 2, x += 2) {
