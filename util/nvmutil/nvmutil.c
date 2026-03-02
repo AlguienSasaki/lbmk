@@ -20,7 +20,8 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
-    set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int);
+    set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
+    xopen (int *, const char *, int p, struct stat *);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
@@ -42,7 +43,6 @@ ssize_t nf;
 size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part, e = 1;
-struct stat st;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
 
@@ -52,23 +52,17 @@ typedef struct op {
 	int args;
 } op_t;
 op_t op[] = {
-{ .str = "dump", .cmd = cmd_dump, .args = 3},
-{ .str = "setmac", .cmd = cmd_setmac, .args = 3},
-{ .str = "swap", .cmd = cmd_swap, .args = 3},
-{ .str = "copy", .cmd = cmd_copy, .args = 4},
-{ .str = "brick", .cmd = cmd_brick, .args = 4},
-{ .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4},
+{ .str = "dump", .cmd = cmd_dump, .args = 3 },
+{ .str = "setmac", .cmd = cmd_setmac, .args = 3 },
+{ .str = "swap", .cmd = cmd_swap, .args = 3 },
+{ .str = "copy", .cmd = cmd_copy, .args = 4 },
+{ .str = "brick", .cmd = cmd_brick, .args = 4 },
+{ .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4 },
 };
 void (*cmd)(void) = NULL;
 
 #define SET_ERR(x) errno = errno ? errno : x
 #define err_if(x) if (x) err(SET_ERR(ECANCELED), "%s", fname)
-
-#define xopen(f,l,p) \
-	if ((f = open(l, p)) == -1) \
-	    err(SET_ERR(ECANCELED), "%s", l); \
-	if (fstat(f, &st) == -1) \
-	    err(SET_ERR(ECANCELED), "%s", l)
 
 int
 main(int argc, char *argv[])
@@ -96,7 +90,6 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
-
 	nvmalloc();
 	readGbe();
 	(*cmd)();
@@ -162,11 +155,13 @@ checkdir(const char *path)
 void
 openFiles(const char *path)
 {
+	struct stat st;
+
 	checkdir("/dev/urandom");
 	checkdir(fname);
 
-	xopen(rfd, "/dev/urandom", O_RDONLY);
-	xopen(fd, path, flags);
+	xopen(&rfd, "/dev/urandom", O_RDONLY, &st);
+	xopen(&fd, path, flags, &st);
 
 	switch(st.st_size) {
 	case SIZE_8KB:
@@ -178,6 +173,15 @@ openFiles(const char *path)
 		err(SET_ERR(ECANCELED), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
+}
+
+void
+xopen(int *f, const char *l, int p, struct stat *st)
+{
+	if ((*f = open(l, p)) == -1) \
+	    err(SET_ERR(ECANCELED), "%s", l); \
+	if (fstat(*f, st) == -1) \
+	    err(SET_ERR(ECANCELED), "%s", l);
 }
 
 void
