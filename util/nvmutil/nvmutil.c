@@ -23,6 +23,10 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 
+#ifdef __OpenBSD__
+void block_unveil(void);
+#endif
+
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
 #define PARTN argv[3]
@@ -97,17 +101,7 @@ main(int argc, char *argv[])
 	checkdir(fname);
 
 #ifdef __OpenBSD__
-	err_if(unveil("/dev/urandom", "r") == -1);
-
-	if (flags == O_RDONLY) {
-		err_if(unveil(fname, "r") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath", NULL) == -1);
-	} else {
-		err_if(unveil(fname, "rw") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath wpath", NULL) == -1);
-	}
+	block_unveil();
 #endif
 
 	openFiles(fname);
@@ -441,6 +435,24 @@ swap(int partnum)
 		n[w] ^= n[x];
 	}
 }
+
+#ifdef __OpenBSD__
+void
+block_unveil(void)
+{
+	err_if(unveil("/dev/urandom", "r") == -1);
+
+	if (flags == O_RDONLY) {
+		err_if(unveil(fname, "r") == -1);
+		err_if(unveil(NULL, NULL) == -1);
+		err_if(pledge("stdio rpath", NULL) == -1);
+	} else {
+		err_if(unveil(fname, "rw") == -1);
+		err_if(unveil(NULL, NULL) == -1);
+		err_if(pledge("stdio rpath wpath", NULL) == -1);
+	}
+}
+#endif
 
 void
 usage(char *util)
