@@ -18,7 +18,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
+    openGbeFile(const char *path), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
     set_cmd(int, char **);
 int goodChecksum(int partnum);
@@ -45,6 +45,7 @@ ssize_t nf;
 size_t partsize, gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part, e = 1;
+struct stat st;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
 
@@ -92,7 +93,8 @@ main(int argc, char *argv[])
 	err_if(unveil("/dev/urandom", "r") == -1);
 	block_unveil();
 #endif
-	openFiles(fname);
+	xopen(rfd, "/dev/urandom", O_RDONLY);
+	openGbeFile(fname);
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
@@ -132,10 +134,8 @@ checkdir(const char *path)
 }
 
 void
-openFiles(const char *path)
+openGbeFile(const char *path)
 {
-	struct stat st;
-
 	xopen(fd, path, flags);
 
 	switch(st.st_size) {
@@ -148,8 +148,6 @@ openFiles(const char *path)
 		err(SET_ERR(ECANCELED), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
-
-	xopen(rfd, "/dev/urandom", O_RDONLY);
 }
 
 void
