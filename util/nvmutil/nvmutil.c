@@ -83,8 +83,7 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 	err_if(unveil("/dev/urandom", "r") == -1);
 #endif
-	if (argc < 2)
-		usage(argv[0]);
+	set_cmd(argc, argv);
 
 	fname = argv[1];
 	set_io_flags(argc, argv);
@@ -99,8 +98,6 @@ main(int argc, char *argv[])
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 
-	set_cmd(argc, argv);
-
 	nvmalloc();
 	readGbe();
 	(*cmd)();
@@ -108,6 +105,40 @@ main(int argc, char *argv[])
 
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno;
+}
+
+void
+set_cmd(int argc, char *argv[])
+{
+	if (argc < 2) {
+		usage(argv[0]);
+	} else if (argc > 2) {
+		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
+			if (strcmp(COMMAND, op[i].str) != 0)
+				continue;
+			if (argc >= op[i].args) {
+				cmd = op[i].cmd;
+				break;
+			}
+			err(SET_ERR(EINVAL), "Too few args on command '%s'",
+			    op[i].str);
+		}
+	} else { /* argc == 2 */
+		cmd = cmd_setmac;
+	}
+
+	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
+		strMac = COMMAND;
+		cmd = cmd_setmac;
+	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
+		strMac = strRMac; /* random MAC */
+		if (argc > 3)
+			strMac = MAC_ADDRESS;
+	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
+		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
+		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
+	}
+	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 }
 
 void
@@ -148,38 +179,6 @@ openGbeFile(const char *path)
 		err(SET_ERR(ECANCELED), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
-}
-
-void
-set_cmd(int argc, char *argv[])
-{
-	if (argc > 2) {
-		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
-			if (strcmp(COMMAND, op[i].str) != 0)
-				continue;
-			if (argc >= op[i].args) {
-				cmd = op[i].cmd;
-				break;
-			}
-			err(SET_ERR(EINVAL), "Too few args on command '%s'",
-			    op[i].str);
-		}
-	} else {
-		cmd = cmd_setmac;
-	}
-
-	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
-		strMac = COMMAND;
-		cmd = cmd_setmac;
-	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
-		strMac = strRMac; /* random MAC */
-		if (argc > 3)
-			strMac = MAC_ADDRESS;
-	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
-		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
-		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
-	}
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 }
 
 void
