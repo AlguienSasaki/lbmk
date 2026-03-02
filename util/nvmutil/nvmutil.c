@@ -20,7 +20,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
-    set_cmd(int, char **), setWord(int, int, uint16_t);
+    set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
@@ -405,16 +405,27 @@ goodChecksum(int partnum)
 uint16_t
 word(int pos16, int p)
 {
+	check_bounds(pos16, p);
 	return ((uint16_t *) gbe[p])[pos16];
 }
 
 void
 setWord(int pos16, int p, uint16_t val16)
 {
+	check_bounds(pos16, p);
 	if (((uint16_t *) gbe[p])[pos16] != val16) {
 		nvmPartChanged[p] = 1;
 		((uint16_t *) gbe[p])[pos16] = val16;
 	}
+}
+
+void
+check_bounds(int c, int p)
+{
+	if ((p != 0) && (p != 1))
+		err(SET_ERR(EINVAL), "check_bounds: invalid partnum %d", p);
+	if ((c < 0) || (c > nf))
+		err(SET_ERR(EINVAL), "check_bounds: out of bounds %d", c);
 }
 
 void
