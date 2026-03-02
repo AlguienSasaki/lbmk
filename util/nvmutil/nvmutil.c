@@ -89,6 +89,7 @@ main(int argc, char *argv[])
 	checkdir("/dev/urandom");
 	checkdir(fname);
 #ifdef __OpenBSD__
+	err_if(unveil("/dev/urandom", "r") == -1);
 	block_unveil();
 #endif
 	openFiles(fname);
@@ -446,8 +447,6 @@ swap(int partnum)
 void
 block_unveil(void)
 {
-	err_if(unveil("/dev/urandom", "r") == -1);
-
 	if (flags == O_RDONLY) {
 		err_if(unveil(fname, "r") == -1);
 		err_if(unveil(NULL, NULL) == -1);
