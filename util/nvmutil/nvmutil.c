@@ -71,7 +71,8 @@ void (*cmd)(void) = NULL;
 #define xopen(f,l,p) \
 	if ((f = open(l, p)) == -1) \
 	    err(SET_ERR(ECANCELED), "%s", l); \
-	if (fstat(f, &st) == -1) err(SET_ERR(ECANCELED), "%s", l)
+	if (fstat(f, &st) == -1) \
+	    err(SET_ERR(ECANCELED), "%s", l)
 
 int
 main(int argc, char *argv[])
