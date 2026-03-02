@@ -18,7 +18,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openGbeFile(const char *path), cmd_copy(void), writeGbe_part(int),
+    openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
     set_cmd(int, char **);
 int goodChecksum(int partnum);
@@ -90,10 +90,7 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	block_unveil();
 #endif
-	checkdir("/dev/urandom");
-	checkdir(fname);
-	xopen(rfd, "/dev/urandom", O_RDONLY);
-	openGbeFile(fname);
+	openFiles(fname);
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
@@ -161,8 +158,12 @@ checkdir(const char *path)
 }
 
 void
-openGbeFile(const char *path)
+openFiles(const char *path)
 {
+	checkdir("/dev/urandom");
+	checkdir(fname);
+
+	xopen(rfd, "/dev/urandom", O_RDONLY);
 	xopen(fd, path, flags);
 
 	switch(st.st_size) {
