@@ -61,8 +61,8 @@ op_t op[] = {
 };
 void (*cmd)(void) = NULL;
 
-#define SET_ERR(x) errno = errno ? errno : x
-#define err_if(x) if (x) err(SET_ERR(ECANCELED), "%s", fname)
+#define set_err(x) errno = errno ? errno : x
+#define err_if(x) if (x) err(set_err(ECANCELED), "%s", fname)
 
 int
 main(int argc, char *argv[])
@@ -112,7 +112,7 @@ set_cmd(int argc, char *argv[])
 				cmd = op[i].cmd;
 				break;
 			}
-			err(SET_ERR(EINVAL), "Too few args on command '%s'",
+			err(set_err(EINVAL), "Too few args on command '%s'",
 			    op[i].str);
 		}
 	} else { /* argc == 2 */
@@ -146,7 +146,7 @@ void
 checkdir(const char *path)
 {
 	if (opendir(path) != NULL)
-		err(SET_ERR(EISDIR), "%s", path);
+		err(set_err(EISDIR), "%s", path);
 	if (errno == ENOTDIR)
 		errno = 0;
 	err_if(errno);
@@ -170,7 +170,7 @@ openFiles(const char *path)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(SET_ERR(ECANCELED), "Invalid file size (not 8/16/128KiB)");
+		err(set_err(ECANCELED), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
 }
@@ -179,9 +179,9 @@ void
 xopen(int *f, const char *l, int p, struct stat *st)
 {
 	if ((*f = open(l, p)) == -1) \
-	    err(SET_ERR(ECANCELED), "%s", l); \
+	    err(set_err(ECANCELED), "%s", l); \
 	if (fstat(*f, st) == -1) \
-	    err(SET_ERR(ECANCELED), "%s", l);
+	    err(set_err(ECANCELED), "%s", l);
 }
 
 void
@@ -219,7 +219,7 @@ void
 readGbe_part(int p)
 {
 	if (pread(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-		err(SET_ERR(ECANCELED),
+		err(set_err(ECANCELED),
 		    "Can't read %ld b from '%s' p%d", nf, fname, p);
 	swap(p); /* handle big-endian host CPU */
 }
@@ -255,12 +255,12 @@ parseMacString(const char *strMac, uint16_t *mac)
 {
 	uint64_t total = 0;
 	if (strnlen(strMac, 20) != 17)
-		err(SET_ERR(EINVAL), "Invalid MAC address string length");
+		err(set_err(EINVAL), "Invalid MAC address string length");
 
 	for (uint8_t h, i = 0; i < 16; i += 3) {
 		if (i != 15)
 			if (strMac[i + 2] != ':')
-				err(SET_ERR(EINVAL),
+				err(set_err(EINVAL),
 				    "Invalid MAC address separator '%c'",
 				    strMac[i + 2]);
 
@@ -268,7 +268,7 @@ parseMacString(const char *strMac, uint16_t *mac)
 
 		for (int nib = 0; nib < 2; nib++, total += h) {
 			if ((h = hextonum(strMac[i + nib])) > 15)
-				err(SET_ERR(EINVAL), "Invalid character '%c'",
+				err(set_err(EINVAL), "Invalid character '%c'",
 				    strMac[i + nib]);
 
 			/* If random, ensure that local/unicast bits are set */
@@ -284,9 +284,9 @@ parseMacString(const char *strMac, uint16_t *mac)
 	}
 
 	if (total == 0)
-		err(SET_ERR(EINVAL), "Invalid MAC (all-zero MAC address)");
+		err(set_err(EINVAL), "Invalid MAC (all-zero MAC address)");
 	if (mac[0] & 1)
-		err(SET_ERR(EINVAL), "Invalid MAC (multicast bit set)");
+		err(set_err(EINVAL), "Invalid MAC (multicast bit set)");
 }
 
 uint8_t
@@ -407,7 +407,7 @@ goodChecksum(int partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	SET_ERR(ECANCELED);
+	set_err(ECANCELED);
 	return 0;
 }
 
@@ -432,9 +432,9 @@ void
 check_bounds(int c, int p)
 {
 	if ((p != 0) && (p != 1))
-		err(SET_ERR(EINVAL), "check_bounds: invalid partnum %d", p);
+		err(set_err(EINVAL), "check_bounds: invalid partnum %d", p);
 	if ((c < 0) || (c > ((nf >> 1) - 1)))
-		err(SET_ERR(EINVAL), "check_bounds: out of bounds %d", c);
+		err(set_err(EINVAL), "check_bounds: out of bounds %d", c);
 }
 
 void
@@ -451,7 +451,7 @@ writeGbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
 	if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
-		err(SET_ERR(ECANCELED),
+		err(set_err(ECANCELED),
 		    "Can't write %ld b to '%s' p%d", nf, fname, p);
 
 }
@@ -486,5 +486,5 @@ usage(char *util)
 	    " %s FILE brick 0|1\n"
 	    " %s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
-	err(SET_ERR(ECANCELED), "Too few arguments");
+	err(set_err(ECANCELED), "Too few arguments");
 }
