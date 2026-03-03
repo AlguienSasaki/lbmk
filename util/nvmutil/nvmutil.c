@@ -159,7 +159,9 @@ set_cmd(int argc, char *argv[])
 		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
 		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
 	}
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
+
+	if (cmd == NULL)
+		err(set_err(EINVAL), "Bad command");
 }
 
 static void
