@@ -82,18 +82,12 @@ typedef struct op {
 	int args;
 } op_t;
 op_t op[] = {
-	{ .str = "dump",
-	    .cmd = cmd_dump, .args = 3 },
-	{ .str = "setmac",
-	    .cmd = cmd_setmac, .args = 3 },
-	{ .str = "swap",
-	    .cmd = cmd_swap, .args = 3 },
-	{ .str = "copy",
-	    .cmd = cmd_copy, .args = 4 },
-	{ .str = "brick",
-	    .cmd = cmd_brick, .args = 4 },
-	{ .str = "setchecksum",
-	    .cmd = cmd_setchecksum, .args = 4 },
+	{ "dump", cmd_dump, 3 },
+	{ "setmac", cmd_setmac, 3 },
+	{ "swap", cmd_swap, 3 },
+	{ "copy", cmd_copy, 4 },
+	{ "brick", cmd_brick, 4 },
+	{ "setchecksum", cmd_setchecksum, 4 },
 };
 
 void (*cmd)(void) = NULL;
