@@ -42,7 +42,7 @@ uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
 uint8_t *gbe[2];
-uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
+uint8_t nvmPartChanged[2] = {0, 0};
 int flags, rfd, fd, part, e = 1;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
@@ -188,10 +188,6 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 nvmalloc(void)
 {
-	/* only read the part specified, for copy/setchecksum/brick */
-	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
-		do_read[part ^ 1] = 0;
-
 	gbe[0] = buf;
 	gbe[1] = buf + SIZE_4KB;
 }
@@ -200,8 +196,7 @@ void
 readGbe(void)
 {
 	for (int p = 0; p < 2; p++)
-		if (do_read[p])
-			readGbe_part(p);
+		readGbe_part(p);
 }
 
 void
