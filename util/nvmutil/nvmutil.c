@@ -16,7 +16,7 @@
 
 static void set_cmd(int, char **);
 static void set_io_flags(int, char **);
-static void openFiles(void);
+static void open_files(void);
 static void checkdir(const char *);
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
-	openFiles();
+	open_files();
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
@@ -172,7 +172,7 @@ set_io_flags(int argc, char *argv[])
 }
 
 static void
-openFiles(void)
+open_files(void)
 {
 	struct stat st;
 	struct stat st_rfd;
