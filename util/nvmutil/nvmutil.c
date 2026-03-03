@@ -293,11 +293,13 @@ set_mac_byte(int mac_pos, uint64_t *total)
 static void
 check_mac_separator(int mac_pos)
 {
+	char separator;
+
 	if (mac_pos == 15)
 		return;
-	char separator = mac[mac_pos + 2];
-	if (separator == ':')
+	if ((separator = mac[mac_pos + 2]) == ':')
 		return;
+
 	err(set_err(EINVAL), "Invalid MAC address separator '%c'", separator);
 }
 
