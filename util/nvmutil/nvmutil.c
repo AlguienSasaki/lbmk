@@ -139,16 +139,6 @@ set_io_flags(int argc, char *argv[])
 }
 
 void
-checkdir(const char *path)
-{
-	if (opendir(path) != NULL)
-		err(set_err(EISDIR), "%s", path);
-	if (errno == ENOTDIR)
-		errno = 0;
-	err_if(errno);
-}
-
-void
 openFiles(void)
 {
 	struct stat st;
@@ -169,6 +159,18 @@ openFiles(void)
 		err(set_err(ECANCELED), "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
+}
+
+void
+checkdir(const char *path)
+{
+	struct stat st;
+	err_if (stat(path, &st) == -1);
+	if (S_ISDIR(st.st_mode))
+		err(set_err(EISDIR), "%s", path);
+	if (errno == ENOTDIR)
+		errno = 0;
+	err_if(errno);
 }
 
 void
