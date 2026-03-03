@@ -60,15 +60,15 @@ static int set_err(int);
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 static uint8_t buf[SIZE_8KB];
-static uint16_t macbuf[3] = {0, 0, 0};
+static uint16_t macbuf[3];
 static size_t partsize;
 
 static int flags;
 static int rfd;
 static int fd;
 static int part;
-static int invert = 0;
-static int part_modified[2] = {0, 0};
+static int invert;
+static int part_modified[2];
 
 static const char *mac = NULL;
 static const char *rmac = "xx:xx:xx:xx:xx:xx";
