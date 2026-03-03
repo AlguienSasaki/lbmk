@@ -41,7 +41,6 @@ uint16_t word(int, int);
 uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
-uint8_t *gbe[2];
 int flags, rfd, fd, part, e = 1;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
@@ -186,9 +185,6 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 readGbe(void)
 {
-	gbe[0] = buf;
-	gbe[1] = buf + SIZE_4KB;
-
 	for (int p = 0; p < 2; p++)
 		readGbe_part(p);
 }
@@ -196,7 +192,7 @@ readGbe(void)
 void
 readGbe_part(int p)
 {
-	if (pread(fd, (uint8_t *) gbe[p], SIZE_4KB, p * partsize) != SIZE_4KB)
+	if (pread(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize) != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
 	swap(p); /* handle big-endian host CPU */
@@ -391,14 +387,14 @@ uint16_t
 word(int pos16, int p)
 {
 	check_bounds(pos16, p);
-	return ((uint16_t *) gbe[p])[pos16];
+	return ((uint16_t *) (buf + (SIZE_4KB * p)))[pos16];
 }
 
 void
 setWord(int pos16, int p, uint16_t val16)
 {
 	check_bounds(pos16, p);
-	((uint16_t *) gbe[p])[pos16] = val16;
+	((uint16_t *) (buf + (SIZE_4KB * p)))[pos16] = val16;
 }
 
 void
@@ -423,7 +419,7 @@ void
 writeGbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
-	if(pwrite(fd, (uint8_t *) gbe[p], SIZE_4KB, p * partsize) != SIZE_4KB)
+	if(pwrite(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize) != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 }
@@ -431,7 +427,7 @@ writeGbe_part(int p)
 void
 swap(int partnum)
 {
-	uint8_t *n = gbe[partnum];
+	uint8_t *n = buf + (SIZE_4KB * partnum);
 
 	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
 	    w < NVM_SIZE; w += 2, x += 2) {
