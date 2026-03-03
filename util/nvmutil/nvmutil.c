@@ -488,8 +488,14 @@ good_checksum(int partnum)
 static uint16_t
 word(int pos16, int p)
 {
+	uint16_t rval = 0;
 	check_bound(pos16, p);
-	return ((uint16_t *) (buf + (SIZE_4KB * p)))[pos16];
+	(void) memcpy(
+	    (uint8_t *) &rval,
+	    (uint8_t *) (buf + (SIZE_4KB * p) + (pos16 << 1)),
+	    sizeof(uint16_t)
+	);
+	return rval;
 }
 
 static void
@@ -497,7 +503,11 @@ set_word(int pos16, int p, uint16_t val16)
 {
 	check_bound(pos16, p);
 	part_modified[p] = 1;
-	((uint16_t *) (buf + (SIZE_4KB * p)))[pos16] = val16;
+	(void) memcpy(
+	    (uint8_t *) (buf + (SIZE_4KB * p) + (pos16 << 1)),
+	    (uint8_t *) &val16,
+	    sizeof(uint16_t)
+	);
 }
 
 static void
