@@ -98,9 +98,11 @@ static void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	mac = NULL;
-
 	argv0 = argv[0];
+
+	mac = NULL;
+	invert = 0;
+
 	if (argc < 2)
 		usage();
 	fname = argv[1];
