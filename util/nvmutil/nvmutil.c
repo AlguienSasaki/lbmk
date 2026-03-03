@@ -117,8 +117,7 @@ set_cmd(int argc, char *argv[])
 	if (argc < 2) {
 		usage(argv[0]);
 	} else if (argc > 2) {
-		for (long unsigned int i = 0;
-		    (i < items(op)) && (cmd == NULL); i++) {
+		for (size_t i = 0; (i < items(op)) && (cmd == NULL); i++) {
 			if (strcmp(COMMAND, op[i].str) != 0)
 				continue;
 			if (argc >= op[i].args) {
