@@ -44,7 +44,7 @@ uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
 int flags, rfd, fd, part, e = 1;
 
-const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
+const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = "";
 
 typedef struct op {
 	char *str;
