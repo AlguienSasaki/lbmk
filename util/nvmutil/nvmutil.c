@@ -21,7 +21,8 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
     xopen (int *, const char *, int p, struct stat *), checkMacSeparator(int),
-    set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **);
+    set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **),
+    err_if(int);
 int goodChecksum(int partnum), write_mac_part(int), set_err(int);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
@@ -59,8 +60,6 @@ op_t op[] = {
 { .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4 },
 };
 void (*cmd)(void) = NULL;
-
-#define err_if(x) if (x) err(set_err(ECANCELED), "%s", fname)
 
 int
 main(int argc, char *argv[])
@@ -476,6 +475,13 @@ usage(char *util)
 	    " %s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
 	err(set_err(ECANCELED), "Too few arguments");
+}
+
+void
+err_if(int x)
+{
+	if (x)
+		err(set_err(ECANCELED), "%s", fname);
 }
 
 int
