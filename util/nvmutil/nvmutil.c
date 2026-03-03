@@ -148,6 +148,8 @@ reset_global_state(void)
 	part_modified[1] = 0;
 	fname = "";
 	cmd = NULL;
+	fd = 0;
+	part = 0;
 }
 
 static void
