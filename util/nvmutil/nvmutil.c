@@ -69,7 +69,6 @@ static int fd;
 static int part;
 static int invert;
 static int part_modified[2];
-static int max_cmd_length = 50;
 
 static const char *mac = NULL;
 static const char *rmac = "xx:xx:xx:xx:xx:xx";
@@ -143,7 +142,7 @@ set_cmd(int argc, char *argv[])
 	}
 
 	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
-		if (strncmp(argv[2], ops[i].str, max_cmd_length) != 0)
+		if (strcmp(argv[2], ops[i].str) != 0)
 			continue;
 		if (argc >= ops[i].args) {
 			cmd = ops[i].cmd;
@@ -179,7 +178,7 @@ set_io_flags(int argc, char *argv[])
 {
 	flags = O_RDWR;
 	if (argc > 2) {
-		if (strncmp(argv[2], "dump", 50) == 0)
+		if (strcmp(argv[2], "dump") == 0)
 			flags = O_RDONLY;
 	}
 }
