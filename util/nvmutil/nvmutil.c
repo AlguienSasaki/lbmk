@@ -14,38 +14,38 @@
 #include <string.h>
 #include <unistd.h>
 
-void set_cmd(int, char **);
-void set_io_flags(int, char **);
-void openFiles(void);
-void checkdir(const char *);
-void xopen(int *, const char *, int, struct stat *);
-void read_gbe(void);
-void read_gbe_part(int, int);
-void cmd_setmac(void);
-void parse_mac_string(void);
-void set_mac_byte(int, uint64_t *);
-void check_mac_separator(int);
-void set_mac_nib(int, int, uint8_t *);
-uint8_t hextonum(char);
-uint8_t rhex(void);
-int write_mac_part(int);
-void cmd_dump(void);
-void print_mac_address(int);
-void hexdump(int);
-void cmd_setchecksum(void);
-void cmd_brick(void);
-void cmd_copy(void);
-void cmd_swap(void);
-int good_checksum(int);
-uint16_t word(int, int);
-void set_word(int, int, uint16_t);
-void check_bound(int, int);
-void write_gbe(void);
-void write_gbe_part(int);
-void swap(int);
-void usage(char *);
-void err_if(int);
-int set_err(int);
+static void set_cmd(int, char **);
+static void set_io_flags(int, char **);
+static void openFiles(void);
+static void checkdir(const char *);
+static void xopen(int *, const char *, int, struct stat *);
+static void read_gbe(void);
+static void read_gbe_part(int, int);
+static void cmd_setmac(void);
+static void parse_mac_string(void);
+static void set_mac_byte(int, uint64_t *);
+static void check_mac_separator(int);
+static void set_mac_nib(int, int, uint8_t *);
+static uint8_t hextonum(char);
+static uint8_t rhex(void);
+static int write_mac_part(int);
+static void cmd_dump(void);
+static void print_mac_address(int);
+static void hexdump(int);
+static void cmd_setchecksum(void);
+static void cmd_brick(void);
+static void cmd_copy(void);
+static void cmd_swap(void);
+static int good_checksum(int);
+static uint16_t word(int, int);
+static void set_word(int, int, uint16_t);
+static void check_bound(int, int);
+static void write_gbe(void);
+static void write_gbe_part(int);
+static void swap(int);
+static void usage(char *);
+static void err_if(int);
+static int set_err(int);
 
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
@@ -61,27 +61,27 @@ int set_err(int);
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
-uint8_t buf[SIZE_8KB];
-uint16_t macbuf[3] = {0, 0, 0};
-size_t partsize;
+static uint8_t buf[SIZE_8KB];
+static uint16_t macbuf[3] = {0, 0, 0};
+static size_t partsize;
 
-int flags;
-int rfd;
-int fd;
-int part;
-int invert = 0;
-int part_modified[2] = {0, 0};
+static int flags;
+static int rfd;
+static int fd;
+static int part;
+static int invert = 0;
+static int part_modified[2] = {0, 0};
 
-const char *mac = NULL;
-const char *rmac = "xx:xx:xx:xx:xx:xx";
-const char *fname = "";
+static const char *mac = NULL;
+static const char *rmac = "xx:xx:xx:xx:xx:xx";
+static const char *fname = "";
 
 typedef struct op {
 	const char *str;
 	void (*cmd)(void);
 	int args;
 } op_t;
-op_t op[] = {
+static op_t op[] = {
 	{ "dump", cmd_dump, 3 },
 	{ "setmac", cmd_setmac, 3 },
 	{ "swap", cmd_swap, 3 },
@@ -90,7 +90,7 @@ op_t op[] = {
 	{ "setchecksum", cmd_setchecksum, 4 },
 };
 
-void (*cmd)(void) = NULL;
+static void (*cmd)(void) = NULL;
 
 int
 main(int argc, char *argv[])
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
-void
+static void
 set_cmd(int argc, char *argv[])
 {
 	size_t i;
@@ -162,7 +162,7 @@ set_cmd(int argc, char *argv[])
 	err_if((errno = (cmd == NULL) ? EINVAL : errno));
 }
 
-void
+static void
 set_io_flags(int argc, char *argv[])
 {
 	flags = O_RDWR;
@@ -171,7 +171,7 @@ set_io_flags(int argc, char *argv[])
 			flags = O_RDONLY;
 }
 
-void
+static void
 openFiles(void)
 {
 	struct stat st;
@@ -195,7 +195,7 @@ openFiles(void)
 	}
 }
 
-void
+static void
 checkdir(const char *path)
 {
 	struct stat st;
@@ -205,7 +205,7 @@ checkdir(const char *path)
 		err(set_err(EISDIR), "%s", path);
 }
 
-void
+static void
 xopen(int *f, const char *l, int p, struct stat *st)
 {
 	if ((*f = open(l, p)) == -1)
@@ -214,7 +214,7 @@ xopen(int *f, const char *l, int p, struct stat *st)
 		err(set_err(ECANCELED), "%s", l);
 }
 
-void
+static void
 read_gbe(void)
 {
 	int p;
@@ -236,7 +236,7 @@ read_gbe(void)
 			read_gbe_part(p, invert);
 }
 
-void
+static void
 read_gbe_part(int p, int invert)
 {
 	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
@@ -246,7 +246,7 @@ read_gbe_part(int p, int invert)
 	swap(p ^ invert); /* handle big-endian host CPU */
 }
 
-void
+static void
 cmd_setmac(void)
 {
 	int partnum;
@@ -261,7 +261,7 @@ cmd_setmac(void)
 		errno = 0;
 }
 
-void
+static void
 parse_mac_string(void)
 {
 	int mac_pos;
@@ -279,7 +279,7 @@ parse_mac_string(void)
 		err(set_err(EINVAL), "Invalid MAC (multicast bit set)");
 }
 
-void
+static void
 set_mac_byte(int mac_pos, uint64_t *total)
 {
 	int nib;
@@ -290,7 +290,7 @@ set_mac_byte(int mac_pos, uint64_t *total)
 		set_mac_nib(mac_pos, nib, &h);
 }
 
-void
+static void
 check_mac_separator(int mac_pos)
 {
 	if (mac_pos == 15)
@@ -301,7 +301,7 @@ check_mac_separator(int mac_pos)
 	err(set_err(EINVAL), "Invalid MAC address separator '%c'", separator);
 }
 
-void
+static void
 set_mac_nib(int mac_pos, int nib, uint8_t *h)
 {
 	int byte = mac_pos / 3;
@@ -321,7 +321,7 @@ set_mac_nib(int mac_pos, int nib, uint8_t *h)
 	    (4 * (nib ^ 1)));
 }
 
-uint8_t
+static uint8_t
 hextonum(char ch)
 {
 	if ((ch >= '0') && (ch <= '9'))
@@ -335,7 +335,7 @@ hextonum(char ch)
 	return 16; /* error: invalid character */
 }
 
-uint8_t
+static uint8_t
 rhex(void)
 {
 	static uint8_t n = 0, rnum[16];
@@ -344,7 +344,7 @@ rhex(void)
 	return rnum[n--] & 0xf;
 }
 
-int
+static int
 write_mac_part(int partnum)
 {
 	int w;
@@ -363,7 +363,7 @@ write_mac_part(int partnum)
 	return 1;
 }
 
-void
+static void
 cmd_dump(void)
 {
 	int partnum;
@@ -382,7 +382,7 @@ cmd_dump(void)
 		errno = 0;
 }
 
-void
+static void
 print_mac_address(int partnum)
 {
 	int c;
@@ -396,7 +396,7 @@ print_mac_address(int partnum)
 	}
 }
 
-void
+static void
 hexdump(int partnum)
 {
 	int c;
@@ -414,7 +414,7 @@ hexdump(int partnum)
 	}
 }
 
-void
+static void
 cmd_setchecksum(void)
 {
 	int c;
@@ -426,7 +426,7 @@ cmd_setchecksum(void)
 	set_word(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
 }
 
-void
+static void
 cmd_brick(void)
 {
 	if (good_checksum(part))
@@ -434,14 +434,14 @@ cmd_brick(void)
 		    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
 }
 
-void
+static void
 cmd_copy(void)
 {
 	err_if(!good_checksum(part ^ 1));
 	part_modified[part ^ 1] = 1;
 }
 
-void
+static void
 cmd_swap(void) {
 	err_if(!(good_checksum(0) || good_checksum(1)));
 	errno = 0;
@@ -449,7 +449,7 @@ cmd_swap(void) {
 	part_modified[1] = part_modified[0] = 1;
 }
 
-int
+static int
 good_checksum(int partnum)
 {
 	int w;
@@ -466,14 +466,14 @@ good_checksum(int partnum)
 	return 0;
 }
 
-uint16_t
+static uint16_t
 word(int pos16, int p)
 {
 	check_bound(pos16, p);
 	return ((uint16_t *) (buf + (SIZE_4KB * p)))[pos16];
 }
 
-void
+static void
 set_word(int pos16, int p, uint16_t val16)
 {
 	check_bound(pos16, p);
@@ -481,7 +481,7 @@ set_word(int pos16, int p, uint16_t val16)
 	((uint16_t *) (buf + (SIZE_4KB * p)))[pos16] = val16;
 }
 
-void
+static void
 check_bound(int c, int p)
 {
 	if ((p != 0) && (p != 1))
@@ -490,7 +490,7 @@ check_bound(int c, int p)
 		err(set_err(EINVAL), "check_bound: out of bounds %d", c);
 }
 
-void
+static void
 write_gbe(void)
 {
 	int p;
@@ -502,7 +502,7 @@ write_gbe(void)
 	err_if(close(fd) == -1);
 }
 
-void
+static void
 write_gbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
@@ -512,7 +512,7 @@ write_gbe_part(int p)
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 }
 
-void
+static void
 swap(int partnum)
 {
 	size_t w;
@@ -529,7 +529,7 @@ swap(int partnum)
 	}
 }
 
-void
+static void
 usage(char *util)
 {
 #ifdef __OpenBSD__
@@ -549,14 +549,14 @@ usage(char *util)
 	err(set_err(ECANCELED), "Too few arguments");
 }
 
-void
+static void
 err_if(int x)
 {
 	if (x)
 		err(set_err(ECANCELED), "%s", fname);
 }
 
-int
+static int
 set_err(int x)
 {
 	errno = errno ? errno : x;
