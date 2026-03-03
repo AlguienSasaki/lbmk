@@ -27,6 +27,8 @@ static void check_mac_separator(int);
 static void set_mac_nib(int, int, uint8_t *);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
+static void read_urandom(uint8_t *, ssize_t);
+static int valid_read(const char *, ssize_t, ssize_t, int);
 static int write_mac_part(int);
 static void cmd_dump(void);
 static void print_mac_address(int);
@@ -56,6 +58,8 @@ static void set_err(int);
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
+
+#define MAX_RETRY_READ 200
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
@@ -241,10 +245,17 @@ read_gbe(void)
 static void
 read_gbe_part(int p, int invert)
 {
-	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
-	    != (ssize_t) SIZE_4KB)
-		err(ECANCELED,
-		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
+	int retry;
+	ssize_t rval;
+
+	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
+		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
+		    SIZE_4KB, p * partsize);
+
+		if (valid_read(fname, rval, (ssize_t) SIZE_4KB, retry))
+			break;
+	}
+
 	swap(p ^ invert); /* handle big-endian host CPU */
 }
 
@@ -349,12 +360,38 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum) - 1;
-		if (read(rfd, (uint8_t *) &rnum, sizeof(rnum))
-		    != (ssize_t) (sizeof(rnum)))
-			err(ECANCELED, "Could not read from /dev/urandom");
+		read_urandom((uint8_t *) rnum, sizeof(rnum));
 	}
 
 	return rnum[n--] & 0xf;
+}
+
+static void
+read_urandom(uint8_t *rnum, ssize_t rsize)
+{
+	int retry = 0;
+	ssize_t rval;
+
+	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
+		rval = read(rfd, (uint8_t *) rnum, rsize);
+		if (valid_read("/dev/urandom", rval, rsize, retry))
+			break;
+	}
+}
+
+static int
+valid_read(const char *rpath, ssize_t rval, ssize_t rsize, int retry)
+{
+	if (rval == (ssize_t) rsize)
+		return 1;
+	if (rval != -1)
+		err(ECANCELED, "Short read, %lld: %s", rval, rpath);
+	if (errno != EINTR)
+		err(ECANCELED, "read '%s'", rpath);
+	if (retry == MAX_RETRY_READ - 1)
+		err(EINTR, "read: max retries exceeded: %s", rpath);
+
+	return (errno = 0);
 }
 
 static int
