@@ -22,7 +22,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
     xopen (int *, const char *, int p, struct stat *), checkMacSeparator(int),
     set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **);
-int goodChecksum(int partnum);
+int goodChecksum(int partnum), write_mac_part(int);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
 
@@ -206,20 +206,8 @@ cmd_setmac(void)
 
 	printf("MAC address to be written: %s\n", strMac);
 
-	for (int partnum = 0; partnum < 2; partnum++) {
-		if (!goodChecksum(part = partnum))
-			continue;
-
-		for (int w = 0; w < 3; w++)
-			setWord(w, partnum, mac[w]);
-
-		printf("Wrote MAC address to part %d: ", partnum);
-		print_mac_address(partnum);
-
-		cmd_setchecksum();
-		mac_updated = 1;
-	}
-
+	for (int partnum = 0; partnum < 2; partnum++)
+		mac_updated |= write_mac_part(partnum);
 	if (mac_updated)
 		errno = 0;
 }
@@ -302,6 +290,22 @@ rhex(void)
 	if (!n)
 		err_if(pread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0) == -1);
 	return rnum[n--] & 0xf;
+}
+
+int
+write_mac_part(int partnum)
+{
+	if (!goodChecksum(part = partnum))
+		return 0;
+
+	for (int w = 0; w < 3; w++)
+		setWord(w, partnum, mac[w]);
+
+	printf("Wrote MAC address to part %d: ", partnum);
+	print_mac_address(partnum);
+
+	cmd_setchecksum();
+	return 1;
 }
 
 void
