@@ -65,7 +65,7 @@ static void set_err(int);
 
 static uint8_t buf[SIZE_8KB];
 static uint16_t macbuf[3];
-static size_t partsize;
+static off_t partsize;
 
 static int flags;
 static int rfd;
@@ -250,7 +250,7 @@ read_gbe_part(int p, int invert)
 
 	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
-		    SIZE_4KB, p * partsize);
+		    SIZE_4KB, ((off_t ) p) * partsize);
 
 		if (valid_read(fname, rval,
 		    (ssize_t) SIZE_4KB, retry, "pread")) {
@@ -582,7 +582,7 @@ write_gbe_part(int p)
 	swap(p); /* swap bytes on big-endian host CPUs */
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, p * partsize) != (ssize_t) SIZE_4KB) {
+	    SIZE_4KB, ((off_t) p) * partsize) != (ssize_t) SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
