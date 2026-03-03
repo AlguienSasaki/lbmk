@@ -43,10 +43,17 @@ uint16_t word(int, int);
 uint8_t buf[SIZE_8KB];
 uint16_t macbuf[3] = {0, 0, 0};
 size_t partsize;
-int flags, rfd, fd, part, e = 1, invert = 0;
+
+int flags;
+int rfd;
+int fd;
+int part;
+int invert = 0;
 int part_modified[2] = {0, 0};
 
-const char *mac = NULL, *rmac = "xx:xx:xx:xx:xx:xx", *fname = "";
+const char *mac = NULL;
+const char *rmac = "xx:xx:xx:xx:xx:xx";
+const char *fname = "";
 
 typedef struct op {
 	char *str;
@@ -54,13 +61,20 @@ typedef struct op {
 	int args;
 } op_t;
 op_t op[] = {
-{ .str = "dump", .cmd = cmd_dump, .args = 3 },
-{ .str = "setmac", .cmd = cmd_setmac, .args = 3 },
-{ .str = "swap", .cmd = cmd_swap, .args = 3 },
-{ .str = "copy", .cmd = cmd_copy, .args = 4 },
-{ .str = "brick", .cmd = cmd_brick, .args = 4 },
-{ .str = "setchecksum", .cmd = cmd_setchecksum, .args = 4 },
+	{ .str = "dump",
+	    .cmd = cmd_dump, .args = 3 },
+	{ .str = "setmac",
+	    .cmd = cmd_setmac, .args = 3 },
+	{ .str = "swap",
+	    .cmd = cmd_swap, .args = 3 },
+	{ .str = "copy",
+	    .cmd = cmd_copy, .args = 4 },
+	{ .str = "brick",
+	    .cmd = cmd_brick, .args = 4 },
+	{ .str = "setchecksum",
+	    .cmd = cmd_setchecksum, .args = 4 },
 };
+
 void (*cmd)(void) = NULL;
 
 int
@@ -468,6 +482,7 @@ write_gbe_part(int p)
 void
 swap(int partnum)
 {
+	int e = 1;
 	uint8_t *n = buf + (SIZE_4KB * partnum);
 
 	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
