@@ -17,7 +17,6 @@ static void set_cmd(int, char **);
 static void check_cmd_args(int, char **);
 static void set_io_flags(int, char **);
 static void open_files(void);
-static void checkdir(const char *);
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
 static void read_gbe_part(int, int);
@@ -197,9 +196,6 @@ open_files(void)
 	struct stat st;
 	struct stat st_rfd;
 
-	checkdir("/dev/urandom");
-	checkdir(fname);
-
 	xopen(&rfd, "/dev/urandom", O_RDONLY, &st_rfd);
 	xopen(&fd, fname, flags, &st);
 
@@ -213,16 +209,6 @@ open_files(void)
 		err(ECANCELED, "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
-}
-
-static void
-checkdir(const char *path)
-{
-	struct stat st;
-	if (stat(path, &st) == -1)
-		err(ECANCELED, "%s", path);
-	if (S_ISDIR(st.st_mode))
-		err(EISDIR, "%s", path);
 }
 
 static void
