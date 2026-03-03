@@ -104,6 +104,7 @@ main(int argc, char *argv[])
 	invert = 0;
 	part_modified[0] = 0;
 	part_modified[1] = 0;
+	fname = "";
 
 	if (argc < 2)
 		usage();
