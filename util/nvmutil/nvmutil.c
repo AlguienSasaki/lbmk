@@ -630,7 +630,7 @@ err_if(int x)
 }
 
 static void
-err(int errval, const char *msg, ...)
+err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 
@@ -640,7 +640,7 @@ err(int errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	set_err(errval);
+	set_err(nvm_errval);
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
@@ -667,7 +667,7 @@ set_err(int x)
 	if (errno)
 		return;
 	if (x)
-		errno = x; /* TODO: check x against system errno values */
+		errno = x;
 	else
 		errno = ECANCELED;
 }
