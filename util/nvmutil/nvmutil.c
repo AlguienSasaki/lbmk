@@ -356,8 +356,8 @@ void
 cmd_copy(void)
 {
 	err_if(!goodChecksum(part));
-	for (int c = 0; c < SIZE_4KB; c++)
-		gbe[part ^ 1][c] = gbe[part][c];
+	for (int c = 0; c < (SIZE_4KB >> 1); c++)
+		setWord(c, part ^ 1, word(c, part));
 }
 
 void
@@ -365,10 +365,10 @@ cmd_swap(void) {
 	err_if(!(goodChecksum(0) || goodChecksum(1)));
 	errno = 0;
 
-	for (int c = 0; c < SIZE_4KB; c++) {
-		uint8_t chg = gbe[0][c];
-		gbe[0][c] = gbe[1][c];
-		gbe[1][c] = chg;
+	for (int c = 0; c < (SIZE_4KB >> 1); c++) {
+		uint16_t chg = word(c, 0);
+		setWord(c, 0, word(c, 1));
+		setWord(c, 1, chg);
 	}
 }
 
