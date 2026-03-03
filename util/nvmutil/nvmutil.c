@@ -135,7 +135,7 @@ set_cmd(int argc, char *argv[])
 
 	if (argc < 2) {
 		usage(argv[0]);
-	} else if (argc == 2) { /* argc == 2 */
+	} else if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
 	}
