@@ -38,6 +38,8 @@ uint16_t word(int, int);
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
 
+#define items(x) (sizeof((x)) / sizeof((x)[0]))
+
 uint8_t buf[SIZE_8KB];
 uint16_t macbuf[3] = {0, 0, 0};
 size_t partsize;
@@ -101,7 +103,8 @@ set_cmd(int argc, char *argv[])
 	if (argc < 2) {
 		usage(argv[0]);
 	} else if (argc > 2) {
-		for (int i = 0; (i < 6) && (cmd == NULL); i++) {
+		for (long unsigned int i = 0;
+		    (i < items(op)) && (cmd == NULL); i++) {
 			if (strcmp(COMMAND, op[i].str) != 0)
 				continue;
 			if (argc >= op[i].args) {
