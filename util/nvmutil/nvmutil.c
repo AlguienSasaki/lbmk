@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 static void set_cmd(int, char **);
+static void check_cmd_args(int, char **);
 static void set_io_flags(int, char **);
 static void open_files(void);
 static void checkdir(const char *);
@@ -102,6 +103,7 @@ main(int argc, char *argv[])
 	err_if(unveil("/dev/urandom", "r") == -1);
 #endif
 	set_cmd(argc, argv);
+	check_cmd_args(argc, argv);
 	set_io_flags(argc, argv);
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY) {
@@ -147,7 +149,11 @@ set_cmd(int argc, char *argv[])
 	} else { /* argc == 2 */
 		cmd = cmd_setmac;
 	}
+}
 
+static void
+check_cmd_args(int argc, char *argv[])
+{
 	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
 		mac = COMMAND;
 		cmd = cmd_setmac;
