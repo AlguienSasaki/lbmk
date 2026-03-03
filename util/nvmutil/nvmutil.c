@@ -627,5 +627,10 @@ getnvmprogname(void)
 static void
 set_err(int x)
 {
-	errno = errno ? errno : x;
+	if (errno)
+		return;
+	if (x)
+		errno = x; /* TODO: check x against system errno values */
+	else
+		errno = ECANCELED;
 }
