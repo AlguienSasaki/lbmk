@@ -16,12 +16,14 @@
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), readGbe(void),
+    set_mac_nib(int, int, uint8_t *),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(void), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
-    xopen (int *, const char *, int p, struct stat *);
+    xopen (int *, const char *, int p, struct stat *),
+    set_mac_byte(int, uint64_t *), check_mac_separator(int);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
@@ -231,36 +233,54 @@ parseMacString(const char *strMac, uint16_t *mac)
 	if (strnlen(strMac, 20) != 17)
 		err(set_err(EINVAL), "Invalid MAC address string length");
 
-	for (uint8_t h, i = 0; i < 16; i += 3) {
-		if (i != 15)
-			if (strMac[i + 2] != ':')
-				err(set_err(EINVAL),
-				    "Invalid MAC address separator '%c'",
-				    strMac[i + 2]);
-
-		int byte = i / 3;
-
-		for (int nib = 0; nib < 2; nib++, total += h) {
-			if ((h = hextonum(strMac[i + nib])) > 15)
-				err(set_err(EINVAL), "Invalid character '%c'",
-				    strMac[i + nib]);
-
-			/* If random, ensure that local/unicast bits are set */
-			if ((byte == 0) && (nib == 1))
-				if ((strMac[i + nib] == '?') ||
-				    (strMac[i + nib] == 'x') ||
-				    (strMac[i + nib] == 'X')) /* random */
-					h = (h & 0xE) | 2; /* local, unicast */
-
-			mac[byte >> 1] |= ((uint16_t ) h)
-			    << ((8 * (byte % 2)) + (4 * (nib ^ 1)));
-		}
-	}
+	for (int strMacPos = 0; strMacPos < 16; strMacPos += 3)
+		set_mac_byte(strMacPos, &total);
 
 	if (total == 0)
 		err(set_err(EINVAL), "Invalid MAC (all-zero MAC address)");
 	if (mac[0] & 1)
 		err(set_err(EINVAL), "Invalid MAC (multicast bit set)");
+}
+
+void
+set_mac_byte(int strMacPos, uint64_t *total)
+{
+	uint8_t h = 0;
+	check_mac_separator(strMacPos);
+
+	for (int nib = 0; nib < 2; nib++, *total += h)
+		set_mac_nib(strMacPos, nib, &h);
+}
+
+void
+check_mac_separator(int strMacPos)
+{
+	if (strMacPos == 15)
+		return;
+	char separator = strMac[strMacPos + 2];
+	if (separator == ':')
+		return;
+	err(set_err(EINVAL), "Invalid MAC address separator '%c'", separator);
+}
+
+void
+set_mac_nib(int strMacPos, int nib, uint8_t *h)
+{
+	int byte = strMacPos / 3;
+
+	if ((*h = hextonum(strMac[strMacPos + nib])) > 15)
+		err(set_err(EINVAL), "Invalid character '%c'",
+		    strMac[strMacPos + nib]);
+
+	/* If random, ensure that local/unicast bits are set */
+	if ((byte == 0) && (nib == 1))
+		if ((strMac[strMacPos + nib] == '?') ||
+		    (strMac[strMacPos + nib] == 'x') ||
+		    (strMac[strMacPos + nib] == 'X')) /* random */
+			*h = (*h & 0xE) | 2; /* local, unicast */
+
+	mac[byte >> 1] |= ((uint16_t ) *h) << ((8 * (byte % 2)) +
+	    (4 * (nib ^ 1)));
 }
 
 uint8_t
