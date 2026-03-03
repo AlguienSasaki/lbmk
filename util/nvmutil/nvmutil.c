@@ -142,11 +142,12 @@ void
 openFiles(void)
 {
 	struct stat st;
+	struct stat st_rfd;
 
 	checkdir("/dev/urandom");
 	checkdir(fname);
 
-	xopen(&rfd, "/dev/urandom", O_RDONLY, &st);
+	xopen(&rfd, "/dev/urandom", O_RDONLY, &st_rfd);
 	xopen(&fd, fname, flags, &st);
 
 	switch(st.st_size) {
