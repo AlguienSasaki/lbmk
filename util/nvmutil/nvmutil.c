@@ -186,7 +186,8 @@ read_gbe(void)
 {
 	int do_read[2] = {1, 1};
 
-	if ((cmd == cmd_copy) || (cmd == cmd_brick) || (cmd == cmd_setchecksum))
+	if ((cmd == cmd_copy) || (cmd == cmd_brick) ||
+	    (cmd == cmd_setchecksum))
 		do_read[part ^ 1] = 0;
 
 	/*
@@ -411,7 +412,8 @@ good_checksum(int partnum)
 	if (total == NVM_CHECKSUM)
 		return 1;
 
-	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum ^ invert);
+	fprintf(stderr, "WARNING: BAD checksum in part %d\n",
+	    partnum ^ invert);
 	(void) set_err(ECANCELED);
 	return 0;
 }
