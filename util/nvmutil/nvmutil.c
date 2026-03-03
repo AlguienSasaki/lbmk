@@ -136,17 +136,14 @@ static void
 set_cmd(int argc, char *argv[])
 {
 	size_t i;
-	const char *arg_cmd;
 
 	if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
 	}
 
-	arg_cmd = argv[2];
-
 	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
-		if (strncmp(arg_cmd, ops[i].str, max_cmd_length) != 0)
+		if (strncmp(argv[2], ops[i].str, max_cmd_length) != 0)
 			continue;
 		if (argc >= ops[i].args) {
 			cmd = ops[i].cmd;
@@ -160,10 +157,8 @@ set_cmd(int argc, char *argv[])
 static void
 check_cmd_args(int argc, char *argv[])
 {
-	const char *arg_cmd = argv[2];
-
 	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
-		mac = arg_cmd;
+		mac = argv[2];
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
 		mac = rmac; /* random MAC */
@@ -182,11 +177,9 @@ check_cmd_args(int argc, char *argv[])
 static void
 set_io_flags(int argc, char *argv[])
 {
-	const char *arg_cmd = argv[2];
-
 	flags = O_RDWR;
 	if (argc > 2) {
-		if (strncmp(arg_cmd, "dump", 50) == 0)
+		if (strncmp(argv[2], "dump", 50) == 0)
 			flags = O_RDONLY;
 	}
 }
