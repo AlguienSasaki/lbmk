@@ -368,7 +368,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum) - 1;
-		err_if(read(rfd, (uint8_t *) &rnum, n + 1) == -1);
+		err_if(read(rfd, (uint8_t *) &rnum, n + 1) != sizeof(rnum));
 	}
 
 	return rnum[n--] & 0xf;
