@@ -48,9 +48,6 @@ static void usage(const char *);
 static void err_if(int);
 static int set_err(int);
 
-#define COMMAND argv[2]
-#define MAC_ADDRESS argv[3]
-#define PARTN argv[3]
 #define NVM_CHECKSUM 0xBABA
 #define NVM_CHECKSUM_WORD 0x3F
 #define NVM_SIZE 128
@@ -96,8 +93,9 @@ static void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
-	if (argc >= 2)
-		fname = argv[1];
+	if (argc < 2)
+		usage(argv[0]);
+	fname = argv[1];
 #ifdef __OpenBSD__
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 	err_if(unveil("/dev/urandom", "r") == -1);
@@ -132,16 +130,17 @@ static void
 set_cmd(int argc, char *argv[])
 {
 	size_t i;
+	const char *arg_cmd = argv[2];
 
-	if (argc < 2) {
-		usage(argv[0]);
-	} else if (argc == 2) {
+	if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
 	}
 
+	arg_cmd = argv[2];
+
 	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
-		if (strcmp(COMMAND, ops[i].str) != 0)
+		if (strcmp(arg_cmd, ops[i].str) != 0)
 			continue;
 		if (argc >= ops[i].args) {
 			cmd = ops[i].cmd;
@@ -155,16 +154,18 @@ set_cmd(int argc, char *argv[])
 static void
 check_cmd_args(int argc, char *argv[])
 {
+	const char *arg_cmd = argv[2];
+
 	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
-		mac = COMMAND;
+		mac = arg_cmd;
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
 		mac = rmac; /* random MAC */
 		if (argc > 3)
-			mac = MAC_ADDRESS;
+			mac = argv[3];
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
-		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
-		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
+		err_if((errno = (!((part = argv[3][0] - '0') == 0 || part == 1))
+		    || argv[3][1] ? EINVAL : errno)); /* only '0' or '1' */
 	}
 
 	if (cmd == NULL)
@@ -174,9 +175,11 @@ check_cmd_args(int argc, char *argv[])
 static void
 set_io_flags(int argc, char *argv[])
 {
+	const char *arg_cmd = argv[2];
+
 	flags = O_RDWR;
 	if (argc > 2)
-		if (strcmp(COMMAND, "dump") == 0)
+		if (strcmp(arg_cmd, "dump") == 0)
 			flags = O_RDONLY;
 }
 
