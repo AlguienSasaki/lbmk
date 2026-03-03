@@ -18,7 +18,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(const char *path), cmd_copy(void), writeGbe_part(int),
+    openFiles(void), cmd_copy(void), writeGbe_part(int),
     readGbe_part(int), usage(char*), set_io_flags(int, char **),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
     xopen (int *, const char *, int p, struct stat *);
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		err_if(pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
-	openFiles(fname);
+	openFiles();
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
@@ -154,7 +154,7 @@ checkdir(const char *path)
 }
 
 void
-openFiles(const char *path)
+openFiles(void)
 {
 	struct stat st;
 
@@ -162,7 +162,7 @@ openFiles(const char *path)
 	checkdir(fname);
 
 	xopen(&rfd, "/dev/urandom", O_RDONLY, &st);
-	xopen(&fd, path, flags, &st);
+	xopen(&fd, fname, flags, &st);
 
 	switch(st.st_size) {
 	case SIZE_8KB:
