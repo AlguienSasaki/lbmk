@@ -285,6 +285,8 @@ parse_mac_string(void)
 	if (strnlen(mac, 20) != 17)
 		err(EINVAL, "Invalid MAC address string length");
 
+	(void) memset(macbuf, 0, sizeof(macbuf));
+
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos, &total);
 
