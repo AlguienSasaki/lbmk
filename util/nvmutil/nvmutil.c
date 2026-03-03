@@ -114,10 +114,12 @@ main(int argc, char *argv[])
 void
 set_cmd(int argc, char *argv[])
 {
+	size_t i;
+
 	if (argc < 2) {
 		usage(argv[0]);
 	} else if (argc > 2) {
-		for (size_t i = 0; (i < items(op)) && (cmd == NULL); i++) {
+		for (i = 0; (i < items(op)) && (cmd == NULL); i++) {
 			if (strcmp(COMMAND, op[i].str) != 0)
 				continue;
 			if (argc >= op[i].args) {
@@ -200,6 +202,7 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 read_gbe(void)
 {
+	int p;
 	int do_read[2] = {1, 1};
 
 	if ((cmd == cmd_copy) || (cmd == cmd_brick) ||
@@ -213,7 +216,7 @@ read_gbe(void)
 	if ((cmd == cmd_copy) || (cmd == cmd_swap))
 		invert = 1;
 
-	for (int p = 0; p < 2; p++)
+	for (p = 0; p < 2; p++)
 		if (do_read[p])
 			read_gbe_part(p, invert);
 }
@@ -231,12 +234,13 @@ read_gbe_part(int p, int invert)
 void
 cmd_setmac(void)
 {
+	int partnum;
 	int mac_updated = 0;
 	parse_mac_string();
 
 	printf("MAC address to be written: %s\n", mac);
 
-	for (int partnum = 0; partnum < 2; partnum++)
+	for (partnum = 0; partnum < 2; partnum++)
 		mac_updated |= write_mac_part(partnum);
 	if (mac_updated)
 		errno = 0;
@@ -245,11 +249,13 @@ cmd_setmac(void)
 void
 parse_mac_string(void)
 {
+	int mac_pos;
 	uint64_t total = 0;
+
 	if (strnlen(mac, 20) != 17)
 		err(set_err(EINVAL), "Invalid MAC address string length");
 
-	for (int mac_pos = 0; mac_pos < 16; mac_pos += 3)
+	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos, &total);
 
 	if (total == 0)
@@ -261,10 +267,11 @@ parse_mac_string(void)
 void
 set_mac_byte(int mac_pos, uint64_t *total)
 {
+	int nib;
 	uint8_t h = 0;
 	check_mac_separator(mac_pos);
 
-	for (int nib = 0; nib < 2; nib++, *total += h)
+	for (nib = 0; nib < 2; nib++, *total += h)
 		set_mac_nib(mac_pos, nib, &h);
 }
 
@@ -325,11 +332,13 @@ rhex(void)
 int
 write_mac_part(int partnum)
 {
+	int w;
+
 	part = partnum;
 	if (!good_checksum(partnum))
 		return 0;
 
-	for (int w = 0; w < 3; w++)
+	for (w = 0; w < 3; w++)
 		set_word(w, partnum, macbuf[w]);
 
 	printf("Wrote MAC address to part %d: ", partnum);
@@ -342,9 +351,10 @@ write_mac_part(int partnum)
 void
 cmd_dump(void)
 {
+	int partnum;
 	int num_invalid = 0;
 
-	for (int partnum = 0; partnum < 2; partnum++) {
+	for (partnum = 0; partnum < 2; partnum++) {
 		if (!good_checksum(partnum))
 			++num_invalid;
 
@@ -360,7 +370,8 @@ cmd_dump(void)
 void
 print_mac_address(int partnum)
 {
-	for (int c = 0; c < 3; c++) {
+	int c;
+	for (c = 0; c < 3; c++) {
 		uint16_t val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
 		if (c == 2)
@@ -373,9 +384,12 @@ print_mac_address(int partnum)
 void
 hexdump(int partnum)
 {
-	for (int row = 0; row < 8; row++) {
+	int c;
+	int row;
+
+	for (row = 0; row < 8; row++) {
 		printf("%08x ", row << 4);
-		for (int c = 0; c < 8; c++) {
+		for (c = 0; c < 8; c++) {
 			uint16_t val16 = word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
@@ -388,8 +402,10 @@ hexdump(int partnum)
 void
 cmd_setchecksum(void)
 {
+	int c;
 	uint16_t val16 = 0;
-	for (int c = 0; c < NVM_CHECKSUM_WORD; c++)
+
+	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += word(c, part);
 
 	set_word(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
@@ -421,8 +437,9 @@ cmd_swap(void) {
 int
 good_checksum(int partnum)
 {
+	int w;
 	uint16_t total = 0;
-	for(int w = 0; w <= NVM_CHECKSUM_WORD; w++)
+	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
 		total += word(w, partnum);
 
 	if (total == NVM_CHECKSUM)
@@ -461,8 +478,10 @@ check_bound(int c, int p)
 void
 write_gbe(void)
 {
+	int p;
+
 	if (flags != O_RDONLY)
-		for (int p = 0; p < 2; p++)
+		for (p = 0; p < 2; p++)
 			if (part_modified[p])
 				write_gbe_part(p);
 	err_if (close(fd) == -1);
@@ -481,10 +500,13 @@ write_gbe_part(int p)
 void
 swap(int partnum)
 {
+	size_t w;
+	size_t x;
+
 	int e = 1;
 	uint8_t *n = buf + (SIZE_4KB * partnum);
 
-	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
+	for (w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
 	    w < NVM_SIZE; w += 2, x += 2) {
 		uint8_t chg = n[w];
 		n[w] = n[x];
