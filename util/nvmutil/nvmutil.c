@@ -42,7 +42,7 @@ uint16_t word(int, int);
 uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
-int flags, rfd, fd, part, e = 1;
+int flags, rfd, fd, part, e = 1, invert = 0;
 int nvmPartModified[2] = {0, 0};
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = "";
@@ -185,7 +185,6 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 readGbe(void)
 {
-	int invert = 0;
 	int do_read[2] = {1, 1};
 
 	if ((cmd == cmd_copy) || (cmd == cmd_brick) || (cmd == cmd_setchecksum))
@@ -413,7 +412,7 @@ goodChecksum(int partnum)
 	if (total == NVM_CHECKSUM)
 		return 1;
 
-	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
+	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum ^ invert);
 	(void) set_err(ECANCELED);
 	return 0;
 }
