@@ -383,7 +383,8 @@ static int
 valid_read(const char *rpath, ssize_t rval, size_t rsize, int retry)
 {
 	if (rval == (ssize_t) rsize)
-		return 1;
+		return 1; /* Successful read */
+
 	if (rval != -1)
 		err(ECANCELED, "Short read, %zd: %s", rval, rpath);
 	if (errno != EINTR)
@@ -391,6 +392,10 @@ valid_read(const char *rpath, ssize_t rval, size_t rsize, int retry)
 	if (retry == MAX_RETRY_READ - 1)
 		err(EINTR, "read: max retries exceeded: %s", rpath);
 
+	/*
+	 * Bad read, with errno EINTR (syscall interrupted).
+	 * Reset the error state and try again.
+	 */
 	errno = 0;
 	return 0;
 }
