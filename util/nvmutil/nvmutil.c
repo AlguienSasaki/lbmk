@@ -43,6 +43,7 @@ uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
 int flags, rfd, fd, part, e = 1;
+int nvmPartModified[2] = {0, 0};
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = "";
 
@@ -184,8 +185,13 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 readGbe(void)
 {
+	int do_read[2] = {1, 1};
+	if ((cmd == cmd_copy) || (cmd == cmd_brick) || (cmd == cmd_setchecksum))
+		do_read[part ^ 1] = 0;
+
 	for (int p = 0; p < 2; p++)
-		readGbe_part(p);
+		if (do_read[p])
+			readGbe_part(p);
 }
 
 void
@@ -415,6 +421,7 @@ void
 setWord(int pos16, int p, uint16_t val16)
 {
 	check_bounds(pos16, p);
+	nvmPartModified[p] = 1;
 	((uint16_t *) (buf + (SIZE_4KB * p)))[pos16] = val16;
 }
 
@@ -432,7 +439,8 @@ writeGbe(void)
 {
 	if (flags != O_RDONLY)
 		for (int p = 0; p < 2; p++)
-			writeGbe_part(p);
+			if (nvmPartModified[p])
+				writeGbe_part(p);
 	err_if(close(fd) == -1);
 }
 
