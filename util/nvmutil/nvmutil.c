@@ -510,7 +510,7 @@ check_bound(int c, int p)
 {
 	if ((p != 0) && (p != 1))
 		err(EINVAL, "check_bound: invalid partnum %d", p);
-	if ((c < 0) || (c >= (SIZE_4KB >> 1)))
+	if ((c < 0) || (c >= (NVM_SIZE >> 1)))
 		err(EINVAL, "check_bound: out of bounds %d", c);
 }
 
