@@ -178,9 +178,10 @@ set_io_flags(int argc, char *argv[])
 	const char *arg_cmd = argv[2];
 
 	flags = O_RDWR;
-	if (argc > 2)
+	if (argc > 2) {
 		if (strcmp(arg_cmd, "dump") == 0)
 			flags = O_RDONLY;
+	}
 }
 
 static void
@@ -243,9 +244,10 @@ read_gbe(void)
 	if ((cmd == cmd_copy) || (cmd == cmd_swap))
 		invert = 1;
 
-	for (p = 0; p < 2; p++)
+	for (p = 0; p < 2; p++) {
 		if (do_read[p])
 			read_gbe_part(p, invert);
+	}
 }
 
 static void
@@ -325,11 +327,12 @@ set_mac_nib(int mac_pos, int nib, uint8_t *h)
 		    mac[mac_pos + nib]);
 
 	/* If random, ensure that local/unicast bits are set */
-	if ((byte == 0) && (nib == 1))
+	if ((byte == 0) && (nib == 1)) {
 		if ((mac[mac_pos + nib] == '?') ||
 		    (mac[mac_pos + nib] == 'x') ||
 		    (mac[mac_pos + nib] == 'X')) /* random */
 			*h = (*h & 0xE) | 2; /* local, unicast */
+	}
 
 	macbuf[byte >> 1] |= ((uint16_t ) *h) << ((8 * (byte % 2)) +
 	    (4 * (nib ^ 1)));
@@ -346,7 +349,8 @@ hextonum(char ch)
 		return ch - 'a' + 10;
 	else if ((ch == '?') || (ch == 'x') || (ch == 'X'))
 		return rhex(); /* random hex value */
-	return 16; /* error: invalid character */
+	else
+		return 16; /* error: invalid character */
 }
 
 static uint8_t
