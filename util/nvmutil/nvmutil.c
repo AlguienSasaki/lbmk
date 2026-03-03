@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), nvmalloc(void), readGbe(void),
+    cmd_dump(void), cmd_setmac(void), readGbe(void),
     checkdir(const char *path), macf(int partnum), hexdump(int partnum),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(void), cmd_copy(void), writeGbe_part(int),
@@ -91,7 +91,6 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
-	nvmalloc();
 	readGbe();
 	(*cmd)();
 	writeGbe();
@@ -186,15 +185,11 @@ xopen(int *f, const char *l, int p, struct stat *st)
 }
 
 void
-nvmalloc(void)
+readGbe(void)
 {
 	gbe[0] = buf;
 	gbe[1] = buf + SIZE_4KB;
-}
 
-void
-readGbe(void)
-{
 	for (int p = 0; p < 2; p++)
 		readGbe_part(p);
 }
