@@ -122,6 +122,7 @@ main(int argc, char *argv[])
 	write_gbe();
 
 	err_if(close(fd) == -1);
+	err_if(close(rfd) == -1);
 
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
