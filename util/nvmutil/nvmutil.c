@@ -210,7 +210,7 @@ readGbe_part(int p, int invert)
 	    != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
-	swap(p); /* handle big-endian host CPU */
+	swap(p ^ invert); /* handle big-endian host CPU */
 }
 
 void
