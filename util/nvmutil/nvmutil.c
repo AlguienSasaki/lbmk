@@ -43,7 +43,7 @@ static void check_bound(int, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
 static void swap(int);
-static void usage(const char *);
+static void usage(void);
 static void err_if(int);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 {
 	argv0 = argv[0];
 	if (argc < 2)
-		usage(getnvmprogname());
+		usage();
 	fname = argv[1];
 #ifdef __OpenBSD__
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
@@ -572,21 +572,22 @@ swap(int partnum)
 }
 
 static void
-usage(const char *util)
+usage(void)
 {
+	const char *util = getnvmprogname();
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
 	    "USAGE:\n"
-	    "%s FILE dump\n"
-	    " %s FILE\n # same as setmac without arg\n"
-	    " %s FILE setmac [MAC]\n"
-	    " %s FILE swap\n"
-	    " %s FILE copy 0|1\n"
-	    " %s FILE brick 0|1\n"
-	    " %s FILE setchecksum 0|1\n",
+	    "\t%s FILE dump\n"
+	    "\t%s FILE   # same as setmac without [MAC]\n"
+	    "\t%s FILE setmac [MAC]\n"
+	    "\t%s FILE swap\n"
+	    "\t%s FILE copy 0|1\n"
+	    "\t%s FILE brick 0|1\n"
+	    "\t%s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
 	err(set_err(ECANCELED), "Too few arguments");
 }
