@@ -14,17 +14,38 @@
 #include <string.h>
 #include <unistd.h>
 
-void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), cmd_copy(void),
-    set_cmd(int, char **), set_word(int, int, uint16_t), check_bound(int, int),
-    xopen(int *, const char *, int p, struct stat *), check_mac_separator(int),
-    cmd_dump(void), cmd_setmac(void), read_gbe(void), print_mac_address(int),
-    parse_mac_string(void), cmd_swap(void), err_if(int), write_gbe_part(int),
-    set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **),
-    hexdump(int), set_mac_nib(int, int, uint8_t *), checkdir(const char *),
-    openFiles(void), read_gbe_part(int, int), write_gbe(void);
-int good_checksum(int partnum), write_mac_part(int), set_err(int);
-uint8_t hextonum(char chs), rhex(void);
+void set_cmd(int, char **);
+void set_io_flags(int, char **);
+void openFiles(void);
+void checkdir(const char *);
+void xopen(int *, const char *, int, struct stat *);
+void read_gbe(void);
+void read_gbe_part(int, int);
+void cmd_setmac(void);
+void parse_mac_string(void);
+void set_mac_byte(int, uint64_t *);
+void check_mac_separator(int);
+void set_mac_nib(int, int, uint8_t *);
+uint8_t hextonum(char);
+uint8_t rhex(void);
+int write_mac_part(int);
+void cmd_dump(void);
+void print_mac_address(int);
+void hexdump(int);
+void cmd_setchecksum(void);
+void cmd_brick(void);
+void cmd_copy(void);
+void cmd_swap(void);
+int good_checksum(int);
 uint16_t word(int, int);
+void set_word(int, int, uint16_t);
+void check_bound(int, int);
+void write_gbe(void);
+void write_gbe_part(int);
+void swap(int);
+void usage(char *);
+void err_if(int);
+int set_err(int);
 
 #define COMMAND argv[2]
 #define MAC_ADDRESS argv[3]
