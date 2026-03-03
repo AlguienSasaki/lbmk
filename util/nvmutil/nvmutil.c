@@ -44,7 +44,7 @@ static void check_bound(int, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
 static void swap(int);
-static void usage(char *);
+static void usage(const char *);
 static void err_if(int);
 static int set_err(int);
 
@@ -546,7 +546,7 @@ swap(int partnum)
 }
 
 static void
-usage(char *util)
+usage(const char *util)
 {
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
