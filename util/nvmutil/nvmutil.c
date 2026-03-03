@@ -310,7 +310,8 @@ rhex(void)
 int
 write_mac_part(int partnum)
 {
-	if (!goodChecksum(part = partnum))
+	part = partnum;
+	if (!goodChecksum(partnum))
 		return 0;
 
 	for (int w = 0; w < 3; w++)
