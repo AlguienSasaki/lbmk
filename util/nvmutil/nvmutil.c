@@ -130,13 +130,14 @@ static void
 set_cmd(int argc, char *argv[])
 {
 	size_t i;
+	const char *arg_cmd;
 
 	if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
 	}
 
-	const char *arg_cmd = argv[2];
+	arg_cmd = argv[2];
 
 	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
 		if (strcmp(arg_cmd, ops[i].str) != 0)
