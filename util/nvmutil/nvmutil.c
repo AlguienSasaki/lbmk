@@ -242,7 +242,7 @@ static void
 read_gbe_part(int p, int invert)
 {
 	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
-	    != SIZE_4KB)
+	    != (ssize_t) SIZE_4KB)
 		err(ECANCELED,
 		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
 	swap(p ^ invert); /* handle big-endian host CPU */
@@ -350,7 +350,7 @@ rhex(void)
 	if (!n) {
 		n = sizeof(rnum) - 1;
 		if (read(rfd, (uint8_t *) &rnum, sizeof(rnum))
-		    != sizeof(rnum))
+		    != (ssize_t) (sizeof(rnum)))
 			err(ECANCELED, "Could not read from /dev/urandom");
 	}
 
@@ -534,7 +534,7 @@ write_gbe_part(int p)
 	swap(p); /* swap bytes on big-endian host CPUs */
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, p * partsize) != SIZE_4KB) {
+	    SIZE_4KB, p * partsize) != (ssize_t) SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
