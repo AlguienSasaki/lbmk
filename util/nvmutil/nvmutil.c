@@ -326,17 +326,19 @@ write_mac_part(int partnum)
 void
 cmd_dump(void)
 {
-	for (int partnum = 0, numInvalid = 0; partnum < 2; partnum++) {
+	int numInvalid = 0;
+
+	for (int partnum = 0; partnum < 2; partnum++) {
 		if (!goodChecksum(partnum))
 			++numInvalid;
 
 		printf("MAC (part %d): ", partnum);
 		print_mac_address(partnum);
 		hexdump(partnum);
-
-		if ((numInvalid < 2) && (partnum))
-			errno = 0;
 	}
+
+	if ((numInvalid < 2))
+		errno = 0;
 }
 
 void
