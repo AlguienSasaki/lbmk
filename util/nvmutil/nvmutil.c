@@ -122,6 +122,8 @@ main(int argc, char *argv[])
 	(*cmd)();
 	write_gbe();
 
+	err_if(close(fd) == -1);
+
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
 }
@@ -520,21 +522,25 @@ write_gbe(void)
 {
 	int p;
 
-	if (flags != O_RDONLY)
-		for (p = 0; p < 2; p++)
-			if (part_modified[p])
-				write_gbe_part(p);
-	err_if(close(fd) == -1);
+	if (flags == O_RDONLY)
+		return;
+
+	for (p = 0; p < 2; p++) {
+		if (part_modified[p])
+			write_gbe_part(p);
+	}
 }
 
 static void
 write_gbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
-	if(pwrite(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize)
-	    != SIZE_4KB)
+
+	if (pwrite(fd, buf + (SIZE_4KB * p),
+	    SIZE_4KB, p * partsize) != SIZE_4KB) {
 		err(set_err(ECANCELED),
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
+	}
 }
 
 static void
