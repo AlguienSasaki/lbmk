@@ -391,7 +391,8 @@ valid_read(const char *rpath, ssize_t rval, size_t rsize, int retry)
 	if (retry == MAX_RETRY_READ - 1)
 		err(EINTR, "read: max retries exceeded: %s", rpath);
 
-	return (errno = 0);
+	errno = 0;
+	return 0;
 }
 
 static int
