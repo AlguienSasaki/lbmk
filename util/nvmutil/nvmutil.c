@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static void reset_global_state(int, char **);
+static void reset_global_state(void);
 static void set_cmd(int, char **);
 static void check_cmd_args(int, char **);
 static void set_io_flags(int, char **);
@@ -102,7 +102,8 @@ main(int argc, char *argv[])
 	argv0 = argv[0];
 	if (argc < 2)
 		usage();
-	reset_global_state(argc, argv);
+	fname = argv[1];
+	reset_global_state();
 #ifdef __OpenBSD__
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 	err_if(unveil("/dev/urandom", "r") == -1);
@@ -139,7 +140,7 @@ main(int argc, char *argv[])
 }
 
 static void
-reset_global_state(int argc, char *argv[])
+reset_global_state(void)
 {
 	mac = NULL;
 	invert = 0;
@@ -147,8 +148,6 @@ reset_global_state(int argc, char *argv[])
 	part_modified[1] = 0;
 	fname = "";
 	cmd = NULL;
-
-	fname = argv[1];
 }
 
 static void
@@ -306,7 +305,7 @@ parse_mac_string(void)
 		set_mac_byte(mac_pos);
 
 	mac_total = 0;
-	for (c = 0; c < sizeof(macbuf); c++)
+	for (c = 0; c < 3; c++)
 		mac_total += macbuf[c];
 
 	if (mac_total == 0)
