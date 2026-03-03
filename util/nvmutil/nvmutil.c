@@ -82,7 +82,7 @@ typedef struct op {
 	void (*cmd)(void);
 	int args;
 } op_t;
-static op_t op[] = {
+static const op_t op[] = {
 	{ "dump", cmd_dump, 3 },
 	{ "setmac", cmd_setmac, 3 },
 	{ "swap", cmd_swap, 3 },
