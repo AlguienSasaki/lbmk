@@ -42,7 +42,6 @@ uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 size_t partsize;
 uint8_t *gbe[2];
-uint8_t nvmPartChanged[2] = {0, 0};
 int flags, rfd, fd, part, e = 1;
 
 const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = NULL;
@@ -295,10 +294,6 @@ void
 cmd_dump(void)
 {
 	for (int partnum = 0, numInvalid = 0; partnum < 2; partnum++) {
-		if ((cmd != cmd_dump) && (flags != O_RDONLY) &&
-		    (!nvmPartChanged[partnum]))
-			continue;
-
 		if (!goodChecksum(partnum))
 			++numInvalid;
 
@@ -361,9 +356,8 @@ void
 cmd_copy(void)
 {
 	err_if(!goodChecksum(part));
-
-	gbe[part ^ 1] = gbe[part];
-	nvmPartChanged[part ^ 1] = 1;
+	for (int c = 0; c < SIZE_4KB; c++)
+		gbe[part ^ 1][c] = gbe[part][c];
 }
 
 void
@@ -371,11 +365,11 @@ cmd_swap(void) {
 	err_if(!(goodChecksum(0) || goodChecksum(1)));
 	errno = 0;
 
-	uint8_t *chg = gbe[0];
-	gbe[0] = gbe[1];
-	gbe[1] = chg;
-
-	nvmPartChanged[0] = nvmPartChanged[1] = 1;
+	for (int c = 0; c < SIZE_4KB; c++) {
+		uint8_t chg = gbe[0][c];
+		gbe[0][c] = gbe[1][c];
+		gbe[1][c] = chg;
+	}
 }
 
 int
@@ -404,10 +398,7 @@ void
 setWord(int pos16, int p, uint16_t val16)
 {
 	check_bounds(pos16, p);
-	if (((uint16_t *) gbe[p])[pos16] != val16) {
-		nvmPartChanged[p] = 1;
-		((uint16_t *) gbe[p])[pos16] = val16;
-	}
+	((uint16_t *) gbe[p])[pos16] = val16;
 }
 
 void
@@ -422,8 +413,8 @@ check_bounds(int c, int p)
 void
 writeGbe(void)
 {
-	for (int p = 0; p < 2; p++)
-		if ((nvmPartChanged[p]) && (flags != O_RDONLY))
+	if (flags != O_RDONLY)
+		for (int p = 0; p < 2; p++)
 			writeGbe_part(p);
 	err_if(close(fd) == -1);
 }
@@ -435,7 +426,6 @@ writeGbe_part(int p)
 	if(pwrite(fd, (uint8_t *) gbe[p], SIZE_4KB, p * partsize) != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
-
 }
 
 void
