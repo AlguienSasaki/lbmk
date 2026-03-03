@@ -606,7 +606,8 @@ usage(void)
 {
 	const char *util = getnvmprogname();
 #ifdef __OpenBSD__
-	err_if(pledge("stdio", NULL) == -1);
+	if (pledge("stdio", NULL) == -1)
+		err(ECANCELED, NULL);
 #endif
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
