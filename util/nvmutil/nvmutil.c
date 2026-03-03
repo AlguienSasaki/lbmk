@@ -385,7 +385,7 @@ valid_read(const char *rpath, ssize_t rval, ssize_t rsize, int retry)
 	if (rval == (ssize_t) rsize)
 		return 1;
 	if (rval != -1)
-		err(ECANCELED, "Short read, %lld: %s", rval, rpath);
+		err(ECANCELED, "Short read, %zd: %s", rval, rpath);
 	if (errno != EINTR)
 		err(ECANCELED, "read '%s'", rpath);
 	if (retry == MAX_RETRY_READ - 1)
