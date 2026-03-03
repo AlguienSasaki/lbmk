@@ -4,9 +4,9 @@
 
 #include <sys/stat.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +45,8 @@ static void write_gbe_part(int);
 static void swap(int);
 static void usage(const char *);
 static void err_if(int);
+static void err(int, const char *, ...);
+static const char *getnvmprogname(void);
 static int set_err(int);
 
 #define NVM_CHECKSUM 0xBABA
@@ -72,6 +74,7 @@ static int part_modified[2];
 static const char *mac = NULL;
 static const char *rmac = "xx:xx:xx:xx:xx:xx";
 static const char *fname = "";
+static const char *argv0;
 
 struct op {
 	const char *str;
@@ -92,6 +95,7 @@ static void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
+	argv0 = argv[0];
 	if (argc < 2)
 		usage(argv[0]);
 	fname = argv[1];
@@ -592,6 +596,38 @@ err_if(int x)
 {
 	if (x)
 		err(set_err(ECANCELED), "%s", fname);
+}
+
+static void
+err(int rval, const char *msg, ...)
+{
+	va_list args;
+
+	fprintf(stderr, "%s: ", getnvmprogname());
+
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+
+	(void) set_err(ECANCELED);
+	fprintf(stderr, ": %s", strerror(errno));
+
+	fprintf(stderr, "\n");
+	exit(rval);
+}
+
+static const char *
+getnvmprogname(void)
+{
+	const char *p;
+
+	if ((argv0 == NULL) || (*argv0 == '\0'))
+		return "";
+
+	if ((p = strrchr(argv0, '/')))
+		return p + 1;
+	else
+		return argv0;
 }
 
 static int
