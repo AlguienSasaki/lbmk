@@ -81,8 +81,8 @@ typedef struct op {
 	const char *str;
 	void (*cmd)(void);
 	int args;
-} op_t;
-static const op_t op[] = {
+} op;
+static const op ops[] = {
 	{ "dump", cmd_dump, 3 },
 	{ "setmac", cmd_setmac, 3 },
 	{ "swap", cmd_swap, 3 },
@@ -140,15 +140,15 @@ set_cmd(int argc, char *argv[])
 		return;
 	}
 
-	for (i = 0; (i < items(op)) && (cmd == NULL); i++) {
-		if (strcmp(COMMAND, op[i].str) != 0)
+	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
+		if (strcmp(COMMAND, ops[i].str) != 0)
 			continue;
-		if (argc >= op[i].args) {
-			cmd = op[i].cmd;
+		if (argc >= ops[i].args) {
+			cmd = ops[i].cmd;
 			break;
 		}
 		err(set_err(EINVAL), "Too few args on command '%s'",
-		    op[i].str);
+		    ops[i].str);
 	}
 }
 
