@@ -15,15 +15,13 @@
 #include <unistd.h>
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), readGbe(void),
-    set_mac_nib(int, int, uint8_t *),
-    checkdir(const char *path), macf(int partnum), hexdump(int partnum),
+    cmd_dump(void), cmd_setmac(void), readGbe(void), print_mac_address(int),
+    hexdump(int), set_mac_nib(int, int, uint8_t *), checkdir(const char *),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(void), cmd_copy(void), writeGbe_part(int),
-    readGbe_part(int), usage(char*), set_io_flags(int, char **),
+    openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
-    xopen (int *, const char *, int p, struct stat *),
-    set_mac_byte(int, uint64_t *), check_mac_separator(int);
+    xopen (int *, const char *, int p, struct stat *), checkMacSeparator(int),
+    set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **);
 int goodChecksum(int partnum);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
@@ -216,7 +214,7 @@ cmd_setmac(void)
 			setWord(w, partnum, mac[w]);
 
 		printf("Wrote MAC address to part %d: ", partnum);
-		macf(partnum);
+		print_mac_address(partnum);
 
 		cmd_setchecksum();
 		mac_updated = 1;
@@ -246,14 +244,14 @@ void
 set_mac_byte(int strMacPos, uint64_t *total)
 {
 	uint8_t h = 0;
-	check_mac_separator(strMacPos);
+	checkMacSeparator(strMacPos);
 
 	for (int nib = 0; nib < 2; nib++, *total += h)
 		set_mac_nib(strMacPos, nib, &h);
 }
 
 void
-check_mac_separator(int strMacPos)
+checkMacSeparator(int strMacPos)
 {
 	if (strMacPos == 15)
 		return;
@@ -314,7 +312,7 @@ cmd_dump(void)
 			++numInvalid;
 
 		printf("MAC (part %d): ", partnum);
-		macf(partnum);
+		print_mac_address(partnum);
 		hexdump(partnum);
 
 		if ((numInvalid < 2) && (partnum))
@@ -323,7 +321,7 @@ cmd_dump(void)
 }
 
 void
-macf(int partnum)
+print_mac_address(int partnum)
 {
 	for (int c = 0; c < 3; c++) {
 		uint16_t val16 = word(c, partnum);
