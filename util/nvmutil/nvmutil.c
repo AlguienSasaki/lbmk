@@ -135,19 +135,20 @@ set_cmd(int argc, char *argv[])
 
 	if (argc < 2) {
 		usage(argv[0]);
-	} else if (argc > 2) {
-		for (i = 0; (i < items(op)) && (cmd == NULL); i++) {
-			if (strcmp(COMMAND, op[i].str) != 0)
-				continue;
-			if (argc >= op[i].args) {
-				cmd = op[i].cmd;
-				break;
-			}
-			err(set_err(EINVAL), "Too few args on command '%s'",
-			    op[i].str);
-		}
-	} else { /* argc == 2 */
+	} else if (argc == 2) { /* argc == 2 */
 		cmd = cmd_setmac;
+		return;
+	}
+
+	for (i = 0; (i < items(op)) && (cmd == NULL); i++) {
+		if (strcmp(COMMAND, op[i].str) != 0)
+			continue;
+		if (argc >= op[i].args) {
+			cmd = op[i].cmd;
+			break;
+		}
+		err(set_err(EINVAL), "Too few args on command '%s'",
+		    op[i].str);
 	}
 }
 
