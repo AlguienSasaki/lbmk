@@ -18,7 +18,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     cmd_dump(void), cmd_setmac(void), readGbe(void), print_mac_address(int),
     hexdump(int), set_mac_nib(int, int, uint8_t *), checkdir(const char *),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int),
+    openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int, int),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
     xopen(int *, const char *, int p, struct stat *), checkMacSeparator(int),
     set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **),
@@ -185,19 +185,29 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 readGbe(void)
 {
+	int invert = 0;
 	int do_read[2] = {1, 1};
+
 	if ((cmd == cmd_copy) || (cmd == cmd_brick) || (cmd == cmd_setchecksum))
 		do_read[part ^ 1] = 0;
 
+	/*
+	 * speedhack: if copy/swap, flip where data gets written to memory,
+	 * so that cmd_copy and cmd_swap don't have to work on every word
+	 */
+	if ((cmd == cmd_copy) || (cmd == cmd_swap))
+		invert = 1;
+
 	for (int p = 0; p < 2; p++)
 		if (do_read[p])
-			readGbe_part(p);
+			readGbe_part(p, invert);
 }
 
 void
-readGbe_part(int p)
+readGbe_part(int p, int invert)
 {
-	if (pread(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize) != SIZE_4KB)
+	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
+	    != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
 	swap(p); /* handle big-endian host CPU */
@@ -378,9 +388,8 @@ cmd_brick(void)
 void
 cmd_copy(void)
 {
-	err_if(!goodChecksum(part));
-	for (int c = 0; c < (SIZE_4KB >> 1); c++)
-		setWord(c, part ^ 1, word(c, part));
+	err_if(!goodChecksum(part ^ 1));
+	nvmPartModified[part ^ 1] = 1;
 }
 
 void
@@ -388,11 +397,7 @@ cmd_swap(void) {
 	err_if(!(goodChecksum(0) || goodChecksum(1)));
 	errno = 0;
 
-	for (int c = 0; c < (SIZE_4KB >> 1); c++) {
-		uint16_t chg = word(c, 0);
-		setWord(c, 0, word(c, 1));
-		setWord(c, 1, chg);
-	}
+	nvmPartModified[1] = nvmPartModified[0] = 1;
 }
 
 int
