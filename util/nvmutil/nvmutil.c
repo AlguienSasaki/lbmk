@@ -47,7 +47,7 @@ static void usage(void);
 static void err_if(int);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
-static int set_err(int);
+static void set_err(int);
 
 #define NVM_CHECKSUM 0xBABA
 #define NVM_CHECKSUM_WORD 0x3F
@@ -152,7 +152,7 @@ set_cmd(int argc, char *argv[])
 			cmd = ops[i].cmd;
 			break;
 		}
-		err(set_err(EINVAL), "Too few args on command '%s'",
+		err(EINVAL, "Too few args on command '%s'",
 		    ops[i].str);
 	}
 }
@@ -172,11 +172,11 @@ check_cmd_args(int argc, char *argv[])
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
 		part = argv[3][0] - '0';
 		if (!((part == 0 || part == 1) && argv[3][1] == '\0'))
-			err(set_err(EINVAL), "Bad partnum: %s", argv[3]);
+			err(EINVAL, "Bad partnum: %s", argv[3]);
 	}
 
 	if (cmd == NULL)
-		err(set_err(EINVAL), "Bad command");
+		err(EINVAL, "Bad command");
 }
 
 static void
@@ -210,7 +210,7 @@ open_files(void)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(set_err(ECANCELED), "Invalid file size (not 8/16/128KiB)");
+		err(ECANCELED, "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
 }
@@ -220,18 +220,18 @@ checkdir(const char *path)
 {
 	struct stat st;
 	if (stat(path, &st) == -1)
-		err(set_err(ECANCELED), "%s", path);
+		err(ECANCELED, "%s", path);
 	if (S_ISDIR(st.st_mode))
-		err(set_err(EISDIR), "%s", path);
+		err(EISDIR, "%s", path);
 }
 
 static void
 xopen(int *f, const char *l, int p, struct stat *st)
 {
 	if ((*f = open(l, p)) == -1)
-		err(set_err(ECANCELED), "%s", l);
+		err(ECANCELED, "%s", l);
 	if (fstat(*f, st) == -1)
-		err(set_err(ECANCELED), "%s", l);
+		err(ECANCELED, "%s", l);
 }
 
 static void
@@ -262,7 +262,7 @@ read_gbe_part(int p, int invert)
 {
 	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
 	    != SIZE_4KB)
-		err(set_err(ECANCELED),
+		err(ECANCELED,
 		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
 	swap(p ^ invert); /* handle big-endian host CPU */
 }
@@ -289,15 +289,15 @@ parse_mac_string(void)
 	uint64_t total = 0;
 
 	if (strnlen(mac, 20) != 17)
-		err(set_err(EINVAL), "Invalid MAC address string length");
+		err(EINVAL, "Invalid MAC address string length");
 
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos, &total);
 
 	if (total == 0)
-		err(set_err(EINVAL), "Invalid MAC (all-zero MAC address)");
+		err(EINVAL, "Invalid MAC (all-zero MAC address)");
 	if (macbuf[0] & 1)
-		err(set_err(EINVAL), "Invalid MAC (multicast bit set)");
+		err(EINVAL, "Invalid MAC (multicast bit set)");
 }
 
 static void
@@ -321,7 +321,7 @@ check_mac_separator(int mac_pos)
 	if ((separator = mac[mac_pos + 2]) == ':')
 		return;
 
-	err(set_err(EINVAL), "Invalid MAC address separator '%c'", separator);
+	err(EINVAL, "Invalid MAC address separator '%c'", separator);
 }
 
 static void
@@ -330,7 +330,7 @@ set_mac_nib(int mac_pos, int nib, uint8_t *h)
 	int byte = mac_pos / 3;
 
 	if ((*h = hextonum(mac[mac_pos + nib])) > 15)
-		err(set_err(EINVAL), "Invalid character '%c'",
+		err(EINVAL, "Invalid character '%c'",
 		    mac[mac_pos + nib]);
 
 	/* If random, ensure that local/unicast bits are set */
@@ -493,7 +493,7 @@ good_checksum(int partnum)
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n",
 	    partnum ^ invert);
-	(void) set_err(ECANCELED);
+	set_err(ECANCELED);
 	return 0;
 }
 
@@ -516,9 +516,9 @@ static void
 check_bound(int c, int p)
 {
 	if ((p != 0) && (p != 1))
-		err(set_err(EINVAL), "check_bound: invalid partnum %d", p);
+		err(EINVAL, "check_bound: invalid partnum %d", p);
 	if ((c < 0) || (c >= (SIZE_4KB >> 1)))
-		err(set_err(EINVAL), "check_bound: out of bounds %d", c);
+		err(EINVAL, "check_bound: out of bounds %d", c);
 }
 
 static void
@@ -542,7 +542,7 @@ write_gbe_part(int p)
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
 	    SIZE_4KB, p * partsize) != SIZE_4KB) {
-		err(set_err(ECANCELED),
+		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
 }
@@ -589,18 +589,18 @@ usage(void)
 	    "\t%s FILE brick 0|1\n"
 	    "\t%s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
-	err(set_err(ECANCELED), "Too few arguments");
+	err(ECANCELED, "Too few arguments");
 }
 
 static void
 err_if(int x)
 {
 	if (x)
-		err(set_err(ECANCELED), "%s", fname);
+		err(ECANCELED, "%s", fname);
 }
 
 static void
-err(int rval, const char *msg, ...)
+err(int errval, const char *msg, ...)
 {
 	va_list args;
 
@@ -610,11 +610,11 @@ err(int rval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	(void) set_err(ECANCELED);
+	set_err(errval);
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
-	exit(rval);
+	exit(EXIT_FAILURE);
 }
 
 static const char *
@@ -631,9 +631,8 @@ getnvmprogname(void)
 		return argv0;
 }
 
-static int
+static void
 set_err(int x)
 {
 	errno = errno ? errno : x;
-	return EXIT_FAILURE;
 }
