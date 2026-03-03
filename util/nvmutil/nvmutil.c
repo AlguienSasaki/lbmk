@@ -610,7 +610,7 @@ err(int errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	set_err(errval);
+	set_err(errval ? errval : ECANCELED);
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
