@@ -77,7 +77,7 @@ const char *rmac = "xx:xx:xx:xx:xx:xx";
 const char *fname = "";
 
 typedef struct op {
-	char *str;
+	const char *str;
 	void (*cmd)(void);
 	int args;
 } op_t;
