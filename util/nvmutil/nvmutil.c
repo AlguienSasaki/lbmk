@@ -14,16 +14,15 @@
 #include <string.h>
 #include <unistd.h>
 
-void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), readGbe(void), print_mac_address(int),
-    hexdump(int), set_mac_nib(int, int, uint8_t *), checkdir(const char *),
-    parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
-    openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int, int),
-    set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
-    xopen(int *, const char *, int p, struct stat *), checkMacSeparator(int),
+void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), cmd_copy(void),
+    set_cmd(int, char **), set_word(int, int, uint16_t), check_bound(int, int),
+    xopen(int *, const char *, int p, struct stat *), check_mac_separator(int),
+    cmd_dump(void), cmd_setmac(void), read_gbe(void), print_mac_address(int),
+    parse_mac_string(void), cmd_swap(void), err_if(int), write_gbe_part(int),
     set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **),
-    err_if(int);
-int goodChecksum(int partnum), write_mac_part(int), set_err(int);
+    hexdump(int), set_mac_nib(int, int, uint8_t *), checkdir(const char *),
+    openFiles(void), read_gbe_part(int, int), write_gbe(void);
+int good_checksum(int partnum), write_mac_part(int), set_err(int);
 uint8_t hextonum(char chs), rhex(void);
 uint16_t word(int, int);
 
@@ -40,12 +39,12 @@ uint16_t word(int, int);
 #define SIZE_128KB 0x20000
 
 uint8_t buf[SIZE_8KB];
-uint16_t mac[3] = {0, 0, 0};
+uint16_t macbuf[3] = {0, 0, 0};
 size_t partsize;
 int flags, rfd, fd, part, e = 1, invert = 0;
-int nvmPartModified[2] = {0, 0};
+int part_modified[2] = {0, 0};
 
-const char *strMac = NULL, *strRMac = "xx:xx:xx:xx:xx:xx", *fname = "";
+const char *mac = NULL, *rmac = "xx:xx:xx:xx:xx:xx", *fname = "";
 
 typedef struct op {
 	char *str;
@@ -88,9 +87,9 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	err_if(pledge("stdio", NULL) == -1);
 #endif
-	readGbe();
+	read_gbe();
 	(*cmd)();
-	writeGbe();
+	write_gbe();
 
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -117,12 +116,12 @@ set_cmd(int argc, char *argv[])
 	}
 
 	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
-		strMac = COMMAND;
+		mac = COMMAND;
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
-		strMac = strRMac; /* random MAC */
+		mac = rmac; /* random MAC */
 		if (argc > 3)
-			strMac = MAC_ADDRESS;
+			mac = MAC_ADDRESS;
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
 		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
 		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
@@ -183,7 +182,7 @@ xopen(int *f, const char *l, int p, struct stat *st)
 }
 
 void
-readGbe(void)
+read_gbe(void)
 {
 	int do_read[2] = {1, 1};
 
@@ -199,11 +198,11 @@ readGbe(void)
 
 	for (int p = 0; p < 2; p++)
 		if (do_read[p])
-			readGbe_part(p, invert);
+			read_gbe_part(p, invert);
 }
 
 void
-readGbe_part(int p, int invert)
+read_gbe_part(int p, int invert)
 {
 	if (pread(fd, buf + (SIZE_4KB * (p ^ invert)), SIZE_4KB, p * partsize)
 	    != SIZE_4KB)
@@ -216,9 +215,9 @@ void
 cmd_setmac(void)
 {
 	int mac_updated = 0;
-	parseMacString(strMac, mac);
+	parse_mac_string();
 
-	printf("MAC address to be written: %s\n", strMac);
+	printf("MAC address to be written: %s\n", mac);
 
 	for (int partnum = 0; partnum < 2; partnum++)
 		mac_updated |= write_mac_part(partnum);
@@ -227,59 +226,59 @@ cmd_setmac(void)
 }
 
 void
-parseMacString(const char *strMac, uint16_t *mac)
+parse_mac_string(void)
 {
 	uint64_t total = 0;
-	if (strnlen(strMac, 20) != 17)
+	if (strnlen(mac, 20) != 17)
 		err(set_err(EINVAL), "Invalid MAC address string length");
 
-	for (int strMacPos = 0; strMacPos < 16; strMacPos += 3)
-		set_mac_byte(strMacPos, &total);
+	for (int mac_pos = 0; mac_pos < 16; mac_pos += 3)
+		set_mac_byte(mac_pos, &total);
 
 	if (total == 0)
 		err(set_err(EINVAL), "Invalid MAC (all-zero MAC address)");
-	if (mac[0] & 1)
+	if (macbuf[0] & 1)
 		err(set_err(EINVAL), "Invalid MAC (multicast bit set)");
 }
 
 void
-set_mac_byte(int strMacPos, uint64_t *total)
+set_mac_byte(int mac_pos, uint64_t *total)
 {
 	uint8_t h = 0;
-	checkMacSeparator(strMacPos);
+	check_mac_separator(mac_pos);
 
 	for (int nib = 0; nib < 2; nib++, *total += h)
-		set_mac_nib(strMacPos, nib, &h);
+		set_mac_nib(mac_pos, nib, &h);
 }
 
 void
-checkMacSeparator(int strMacPos)
+check_mac_separator(int mac_pos)
 {
-	if (strMacPos == 15)
+	if (mac_pos == 15)
 		return;
-	char separator = strMac[strMacPos + 2];
+	char separator = mac[mac_pos + 2];
 	if (separator == ':')
 		return;
 	err(set_err(EINVAL), "Invalid MAC address separator '%c'", separator);
 }
 
 void
-set_mac_nib(int strMacPos, int nib, uint8_t *h)
+set_mac_nib(int mac_pos, int nib, uint8_t *h)
 {
-	int byte = strMacPos / 3;
+	int byte = mac_pos / 3;
 
-	if ((*h = hextonum(strMac[strMacPos + nib])) > 15)
+	if ((*h = hextonum(mac[mac_pos + nib])) > 15)
 		err(set_err(EINVAL), "Invalid character '%c'",
-		    strMac[strMacPos + nib]);
+		    mac[mac_pos + nib]);
 
 	/* If random, ensure that local/unicast bits are set */
 	if ((byte == 0) && (nib == 1))
-		if ((strMac[strMacPos + nib] == '?') ||
-		    (strMac[strMacPos + nib] == 'x') ||
-		    (strMac[strMacPos + nib] == 'X')) /* random */
+		if ((mac[mac_pos + nib] == '?') ||
+		    (mac[mac_pos + nib] == 'x') ||
+		    (mac[mac_pos + nib] == 'X')) /* random */
 			*h = (*h & 0xE) | 2; /* local, unicast */
 
-	mac[byte >> 1] |= ((uint16_t ) *h) << ((8 * (byte % 2)) +
+	macbuf[byte >> 1] |= ((uint16_t ) *h) << ((8 * (byte % 2)) +
 	    (4 * (nib ^ 1)));
 }
 
@@ -310,11 +309,11 @@ int
 write_mac_part(int partnum)
 {
 	part = partnum;
-	if (!goodChecksum(partnum))
+	if (!good_checksum(partnum))
 		return 0;
 
 	for (int w = 0; w < 3; w++)
-		setWord(w, partnum, mac[w]);
+		set_word(w, partnum, macbuf[w]);
 
 	printf("Wrote MAC address to part %d: ", partnum);
 	print_mac_address(partnum);
@@ -326,18 +325,18 @@ write_mac_part(int partnum)
 void
 cmd_dump(void)
 {
-	int numInvalid = 0;
+	int num_invalid = 0;
 
 	for (int partnum = 0; partnum < 2; partnum++) {
-		if (!goodChecksum(partnum))
-			++numInvalid;
+		if (!good_checksum(partnum))
+			++num_invalid;
 
 		printf("MAC (part %d): ", partnum);
 		print_mac_address(partnum);
 		hexdump(partnum);
 	}
 
-	if ((numInvalid < 2))
+	if ((num_invalid < 2))
 		errno = 0;
 }
 
@@ -376,34 +375,34 @@ cmd_setchecksum(void)
 	for (int c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += word(c, part);
 
-	setWord(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
+	set_word(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
 }
 
 void
 cmd_brick(void)
 {
-	if (goodChecksum(part))
-		setWord(NVM_CHECKSUM_WORD, part,
+	if (good_checksum(part))
+		set_word(NVM_CHECKSUM_WORD, part,
 		    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
 }
 
 void
 cmd_copy(void)
 {
-	err_if(!goodChecksum(part ^ 1));
-	nvmPartModified[part ^ 1] = 1;
+	err_if(!good_checksum(part ^ 1));
+	part_modified[part ^ 1] = 1;
 }
 
 void
 cmd_swap(void) {
-	err_if(!(goodChecksum(0) || goodChecksum(1)));
+	err_if(!(good_checksum(0) || good_checksum(1)));
 	errno = 0;
 
-	nvmPartModified[1] = nvmPartModified[0] = 1;
+	part_modified[1] = part_modified[0] = 1;
 }
 
 int
-goodChecksum(int partnum)
+good_checksum(int partnum)
 {
 	uint16_t total = 0;
 	for(int w = 0; w <= NVM_CHECKSUM_WORD; w++)
@@ -420,42 +419,43 @@ goodChecksum(int partnum)
 uint16_t
 word(int pos16, int p)
 {
-	check_bounds(pos16, p);
+	check_bound(pos16, p);
 	return ((uint16_t *) (buf + (SIZE_4KB * p)))[pos16];
 }
 
 void
-setWord(int pos16, int p, uint16_t val16)
+set_word(int pos16, int p, uint16_t val16)
 {
-	check_bounds(pos16, p);
-	nvmPartModified[p] = 1;
+	check_bound(pos16, p);
+	part_modified[p] = 1;
 	((uint16_t *) (buf + (SIZE_4KB * p)))[pos16] = val16;
 }
 
 void
-check_bounds(int c, int p)
+check_bound(int c, int p)
 {
 	if ((p != 0) && (p != 1))
-		err(set_err(EINVAL), "check_bounds: invalid partnum %d", p);
+		err(set_err(EINVAL), "check_bound: invalid partnum %d", p);
 	if ((c < 0) || (c >= (SIZE_4KB >> 1)))
-		err(set_err(EINVAL), "check_bounds: out of bounds %d", c);
+		err(set_err(EINVAL), "check_bound: out of bounds %d", c);
 }
 
 void
-writeGbe(void)
+write_gbe(void)
 {
 	if (flags != O_RDONLY)
 		for (int p = 0; p < 2; p++)
-			if (nvmPartModified[p])
-				writeGbe_part(p);
+			if (part_modified[p])
+				write_gbe_part(p);
 	err_if(close(fd) == -1);
 }
 
 void
-writeGbe_part(int p)
+write_gbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
-	if(pwrite(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize) != SIZE_4KB)
+	if(pwrite(fd, buf + (SIZE_4KB * p), SIZE_4KB, p * partsize)
+	    != SIZE_4KB)
 		err(set_err(ECANCELED),
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 }
