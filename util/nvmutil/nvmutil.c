@@ -40,7 +40,6 @@ uint16_t word(int, int);
 
 uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
-ssize_t nf;
 size_t partsize;
 uint8_t *gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
@@ -189,19 +188,12 @@ xopen(int *f, const char *l, int p, struct stat *st)
 void
 nvmalloc(void)
 {
-	/* same operations need the full block, others only 128 bytes */
-	nf = NVM_SIZE;
-	if ((cmd == cmd_swap) || (cmd == cmd_copy))
-		nf = SIZE_4KB;
-
 	/* only read the part specified, for copy/setchecksum/brick */
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
 		do_read[part ^ 1] = 0;
 
 	gbe[0] = buf;
-
-	/* speedhack: for cmd copy, both pointers are set the same */
-	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
+	gbe[1] = buf + SIZE_4KB;
 }
 
 void
@@ -215,9 +207,9 @@ readGbe(void)
 void
 readGbe_part(int p)
 {
-	if (pread(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
+	if (pread(fd, (uint8_t *) gbe[p], SIZE_4KB, p * partsize) != SIZE_4KB)
 		err(set_err(ECANCELED),
-		    "Can't read %ld b from '%s' p%d", nf, fname, p);
+		    "Can't read %d b from '%s' p%d", SIZE_4KB, fname, p);
 	swap(p); /* handle big-endian host CPU */
 }
 
@@ -378,7 +370,10 @@ cmd_brick(void)
 void
 cmd_copy(void)
 {
-	nvmPartChanged[part ^ 1] = goodChecksum(part);
+	err_if(!goodChecksum(part));
+
+	gbe[part ^ 1] = gbe[part];
+	nvmPartChanged[part ^ 1] = 1;
 }
 
 void
@@ -430,7 +425,7 @@ check_bounds(int c, int p)
 {
 	if ((p != 0) && (p != 1))
 		err(set_err(EINVAL), "check_bounds: invalid partnum %d", p);
-	if ((c < 0) || (c > ((nf >> 1) - 1)))
+	if ((c < 0) || (c >= (SIZE_4KB >> 1)))
 		err(set_err(EINVAL), "check_bounds: out of bounds %d", c);
 }
 
@@ -447,9 +442,9 @@ void
 writeGbe_part(int p)
 {
 	swap(p); /* swap bytes on big-endian host CPUs */
-	if(pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize) != nf)
+	if(pwrite(fd, (uint8_t *) gbe[p], SIZE_4KB, p * partsize) != SIZE_4KB)
 		err(set_err(ECANCELED),
-		    "Can't write %ld b to '%s' p%d", nf, fname, p);
+		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 
 }
 
