@@ -166,12 +166,10 @@ void
 checkdir(const char *path)
 {
 	struct stat st;
-	err_if (stat(path, &st) == -1);
+	if (stat(path, &st) == -1)
+		err(set_err(ECANCELED), "%s", path);
 	if (S_ISDIR(st.st_mode))
 		err(set_err(EISDIR), "%s", path);
-	if (errno == ENOTDIR)
-		errno = 0;
-	err_if(errno);
 }
 
 void
