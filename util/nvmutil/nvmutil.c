@@ -23,7 +23,7 @@ static void read_gbe(void);
 static void read_gbe_part(int, int);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
-static void set_mac_byte(int, uint64_t *);
+static void set_mac_byte(int);
 static void check_mac_separator(int);
 static void set_mac_nib(int, int, uint8_t *);
 static uint8_t hextonum(char);
@@ -293,8 +293,9 @@ cmd_setmac(void)
 static void
 parse_mac_string(void)
 {
+	size_t c;
 	int mac_pos;
-	uint64_t total = 0;
+	uint64_t mac_total;
 
 	if (strnlen(mac, 20) != 17)
 		err(EINVAL, "Invalid MAC address string length");
@@ -302,22 +303,26 @@ parse_mac_string(void)
 	(void) memset(macbuf, 0, sizeof(macbuf));
 
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
-		set_mac_byte(mac_pos, &total);
+		set_mac_byte(mac_pos);
 
-	if (total == 0)
+	mac_total = 0;
+	for (c = 0; c < sizeof(macbuf); c++)
+		mac_total += macbuf[c];
+
+	if (mac_total == 0)
 		err(EINVAL, "Invalid MAC (all-zero MAC address)");
 	if (macbuf[0] & 1)
 		err(EINVAL, "Invalid MAC (multicast bit set)");
 }
 
 static void
-set_mac_byte(int mac_pos, uint64_t *total)
+set_mac_byte(int mac_pos)
 {
 	int nib;
 	uint8_t h = 0;
 	check_mac_separator(mac_pos);
 
-	for (nib = 0; nib < 2; nib++, *total += h)
+	for (nib = 0; nib < 2; nib++)
 		set_mac_nib(mac_pos, nib, &h);
 }
 
