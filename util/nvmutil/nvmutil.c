@@ -102,8 +102,8 @@ main(int argc, char *argv[])
 	argv0 = argv[0];
 	if (argc < 2)
 		usage();
-	fname = argv[1];
 	reset_global_state();
+	fname = argv[1];
 #ifdef __OpenBSD__
 	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
 	err_if(unveil("/dev/urandom", "r") == -1);
