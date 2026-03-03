@@ -340,9 +340,9 @@ hextonum(char ch)
 static uint8_t
 rhex(void)
 {
-	static uint8_t n = 0, rnum[16];
+	static uint8_t n = 0, rnum[12];
 	if (!n)
-		err_if(read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1);
+		err_if(read(rfd, (uint8_t *) &rnum, (n = 11) + 1) == -1);
 	return rnum[n--] & 0xf;
 }
 
