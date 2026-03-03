@@ -38,6 +38,7 @@ uint16_t word(int, int);
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
 
+uint8_t buf[SIZE_8KB];
 uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
 size_t partsize;
@@ -196,11 +197,6 @@ nvmalloc(void)
 	/* only read the part specified, for copy/setchecksum/brick */
 	if ((cmd == cmd_copy) || (cmd == cmd_setchecksum) || (cmd == cmd_brick))
 		do_read[part ^ 1] = 0;
-
-	/* only allocate one block if only one part being read */
-	uint8_t *buf = (uint8_t *) malloc(nf << (do_read[0] & do_read[1]));
-	if (buf == NULL)
-		err(errno, NULL);
 
 	gbe[0] = buf;
 
