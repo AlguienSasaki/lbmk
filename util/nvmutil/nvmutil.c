@@ -64,13 +64,13 @@ void (*cmd)(void) = NULL;
 int
 main(int argc, char *argv[])
 {
+	if (argc >= 2)
+		fname = argv[1];
 #ifdef __OpenBSD__
 	err_if (pledge("stdio rpath wpath unveil", NULL) == -1);
 	err_if (unveil("/dev/urandom", "r") == -1);
 #endif
 	set_cmd(argc, argv);
-
-	fname = argv[1];
 	set_io_flags(argc, argv);
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY) {
