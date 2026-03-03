@@ -28,7 +28,7 @@ static void set_mac_nib(int, int, uint8_t *);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_urandom(uint8_t *, size_t);
-static int valid_read(const char *, ssize_t, size_t, int);
+static int valid_read(const char *, ssize_t, size_t, int, const char *);
 static int write_mac_part(int);
 static void cmd_dump(void);
 static void print_mac_address(int);
@@ -252,8 +252,10 @@ read_gbe_part(int p, int invert)
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
 		    SIZE_4KB, p * partsize);
 
-		if (valid_read(fname, rval, (ssize_t) SIZE_4KB, retry))
+		if (valid_read(fname, rval,
+		    (ssize_t) SIZE_4KB, retry, "pread")) {
 			break;
+		}
 	}
 
 	swap(p ^ invert); /* handle big-endian host CPU */
@@ -374,23 +376,26 @@ read_urandom(uint8_t *rnum, size_t rsize)
 
 	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
 		rval = read(rfd, (uint8_t *) rnum, rsize);
-		if (valid_read("/dev/urandom", rval, rsize, retry))
+		if (valid_read("/dev/urandom", rval, rsize, retry, "read"))
 			break;
 	}
 }
 
 static int
-valid_read(const char *rpath, ssize_t rval, size_t rsize, int retry)
+valid_read(const char *rpath, ssize_t rval, size_t rsize,
+    int retry, const char *readtype)
 {
 	if (rval == (ssize_t) rsize)
 		return 1; /* Successful read */
 
 	if (rval != -1)
-		err(ECANCELED, "Short read, %zd: %s", rval, rpath);
+		err(ECANCELED, "Short %s, %zd bytes, on file: %s",
+		    readtype, rval, rpath);
 	if (errno != EINTR)
-		err(ECANCELED, "read '%s'", rpath);
+		err(ECANCELED, "Could not %s file: '%s'", readtype, rpath);
 	if (retry == MAX_RETRY_READ - 1)
-		err(EINTR, "read: max retries exceeded: %s", rpath);
+		err(EINTR, "%s: max retries exceeded on file: %s",
+		    readtype, rpath);
 
 	/*
 	 * Bad read, with errno EINTR (syscall interrupted).
