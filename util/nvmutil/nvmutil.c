@@ -400,7 +400,7 @@ goodChecksum(int partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	set_err(ECANCELED);
+	(void) set_err(ECANCELED);
 	return 0;
 }
 
