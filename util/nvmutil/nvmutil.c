@@ -164,8 +164,9 @@ check_cmd_args(int argc, char *argv[])
 		if (argc > 3)
 			mac = argv[3];
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
-		err_if((errno = (!((part = argv[3][0] - '0') == 0 || part == 1))
-		    || argv[3][1] ? EINVAL : errno)); /* only '0' or '1' */
+		part = argv[3][0] - '0';
+		if (!((part == 0 || part == 1) && argv[3][1] == '\0'))
+			err(set_err(EINVAL), "Bad partnum: %s", argv[3]);
 	}
 
 	if (cmd == NULL)
