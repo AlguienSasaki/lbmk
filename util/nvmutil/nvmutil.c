@@ -20,7 +20,7 @@ void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
     parseMacString(const char *strMac, uint16_t *mac), cmd_swap(void),
     openFiles(void), cmd_copy(void), writeGbe_part(int), readGbe_part(int),
     set_cmd(int, char **), setWord(int, int, uint16_t), check_bounds(int, int),
-    xopen (int *, const char *, int p, struct stat *), checkMacSeparator(int),
+    xopen(int *, const char *, int p, struct stat *), checkMacSeparator(int),
     set_mac_byte(int, uint64_t *), usage(char*), set_io_flags(int, char **),
     err_if(int);
 int goodChecksum(int partnum), write_mac_part(int), set_err(int);
@@ -174,10 +174,10 @@ openFiles(void)
 void
 xopen(int *f, const char *l, int p, struct stat *st)
 {
-	if ((*f = open(l, p)) == -1) \
-	    err(set_err(ECANCELED), "%s", l); \
-	if (fstat(*f, st) == -1) \
-	    err(set_err(ECANCELED), "%s", l);
+	if ((*f = open(l, p)) == -1)
+		err(set_err(ECANCELED), "%s", l);
+	if (fstat(*f, st) == -1)
+		err(set_err(ECANCELED), "%s", l);
 }
 
 void
