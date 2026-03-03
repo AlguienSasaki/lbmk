@@ -65,8 +65,8 @@ int
 main(int argc, char *argv[])
 {
 #ifdef __OpenBSD__
-	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
-	err_if(unveil("/dev/urandom", "r") == -1);
+	err_if (pledge("stdio rpath wpath unveil", NULL) == -1);
+	err_if (unveil("/dev/urandom", "r") == -1);
 #endif
 	set_cmd(argc, argv);
 
@@ -74,24 +74,24 @@ main(int argc, char *argv[])
 	set_io_flags(argc, argv);
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY) {
-		err_if(unveil(fname, "r") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath", NULL) == -1);
+		err_if (unveil(fname, "r") == -1);
+		err_if (unveil(NULL, NULL) == -1);
+		err_if (pledge("stdio rpath", NULL) == -1);
 	} else {
-		err_if(unveil(fname, "rw") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath wpath", NULL) == -1);
+		err_if (unveil(fname, "rw") == -1);
+		err_if (unveil(NULL, NULL) == -1);
+		err_if (pledge("stdio rpath wpath", NULL) == -1);
 	}
 #endif
 	openFiles();
 #ifdef __OpenBSD__
-	err_if(pledge("stdio", NULL) == -1);
+	err_if (pledge("stdio", NULL) == -1);
 #endif
 	read_gbe();
 	(*cmd)();
 	write_gbe();
 
-	err_if((errno != 0) && (cmd != cmd_dump));
+	err_if ((errno != 0) && (cmd != cmd_dump));
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
@@ -123,10 +123,10 @@ set_cmd(int argc, char *argv[])
 		if (argc > 3)
 			mac = MAC_ADDRESS;
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
-		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
+		err_if ((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
 		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
 	}
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
+	err_if ((errno = (cmd == NULL) ? EINVAL : errno));
 }
 
 void
@@ -301,7 +301,7 @@ rhex(void)
 {
 	static uint8_t n = 0, rnum[16];
 	if (!n)
-		err_if(read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1);
+		err_if (read(rfd, (uint8_t *) &rnum, (n = 15) + 1) == -1);
 	return rnum[n--] & 0xf;
 }
 
@@ -389,13 +389,13 @@ cmd_brick(void)
 void
 cmd_copy(void)
 {
-	err_if(!good_checksum(part ^ 1));
+	err_if (!good_checksum(part ^ 1));
 	part_modified[part ^ 1] = 1;
 }
 
 void
 cmd_swap(void) {
-	err_if(!(good_checksum(0) || good_checksum(1)));
+	err_if (!(good_checksum(0) || good_checksum(1)));
 	errno = 0;
 
 	part_modified[1] = part_modified[0] = 1;
@@ -447,7 +447,7 @@ write_gbe(void)
 		for (int p = 0; p < 2; p++)
 			if (part_modified[p])
 				write_gbe_part(p);
-	err_if(close(fd) == -1);
+	err_if (close(fd) == -1);
 }
 
 void
@@ -477,7 +477,7 @@ void
 usage(char *util)
 {
 #ifdef __OpenBSD__
-	err_if(pledge("stdio", NULL) == -1);
+	err_if (pledge("stdio", NULL) == -1);
 #endif
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
