@@ -605,6 +605,7 @@ static void
 usage(void)
 {
 	const char *util = getnvmprogname();
+
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		err(ECANCELED, NULL);
@@ -620,6 +621,7 @@ usage(void)
 	    "\t%s FILE brick 0|1\n"
 	    "\t%s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
+
 	err(ECANCELED, "Too few arguments");
 }
 
