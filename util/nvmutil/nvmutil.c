@@ -74,12 +74,12 @@ static const char *mac = NULL;
 static const char *rmac = "xx:xx:xx:xx:xx:xx";
 static const char *fname = "";
 
-typedef struct op {
+struct op {
 	const char *str;
 	void (*cmd)(void);
 	int args;
-} op;
-static const op ops[] = {
+};
+static const struct op ops[] = {
 	{ "dump", cmd_dump, 3 },
 	{ "setmac", cmd_setmac, 3 },
 	{ "swap", cmd_swap, 3 },
