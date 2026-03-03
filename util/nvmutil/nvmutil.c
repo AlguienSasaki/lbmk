@@ -169,8 +169,7 @@ set_cmd(int argc, char *argv[])
 			cmd = ops[i].cmd;
 			break;
 		}
-		err(EINVAL, "Too few args on command '%s'",
-		    ops[i].str);
+		err(EINVAL, "Too few args on command '%s'", ops[i].str);
 	}
 }
 
@@ -263,14 +262,12 @@ read_gbe_part(int p, int invert)
 	int retry;
 	ssize_t rval;
 
-	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
+	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
 		    SIZE_4KB, ((off_t ) p) * partsize);
 
-		if (valid_read(fname, rval,
-		    (ssize_t) SIZE_4KB, retry, "pread")) {
+		if (valid_read(fname, rval, SIZE_4KB, retry, "pread"))
 			break;
-		}
 	}
 
 	swap(p ^ invert); /* handle big-endian host CPU */
@@ -301,7 +298,7 @@ parse_mac_string(void)
 	if (strnlen(mac, 20) != 17)
 		err(EINVAL, "Invalid MAC address string length");
 
-	(void) memset(macbuf, 0, sizeof(macbuf));
+	memset(macbuf, 0, sizeof(macbuf));
 
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos);
@@ -384,7 +381,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum) - 1;
-		read_urandom((uint8_t *) rnum, sizeof(rnum));
+		read_urandom(rnum, sizeof(rnum));
 	}
 
 	return rnum[n--] & 0xf;
@@ -396,8 +393,8 @@ read_urandom(uint8_t *rnum, size_t rsize)
 	int retry = 0;
 	ssize_t rval;
 
-	for (retry = 0; retry < (int) MAX_RETRY_READ; retry++) {
-		rval = read(rfd, (uint8_t *) rnum, rsize);
+	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
+		rval = read(rfd, rnum, rsize);
 		if (valid_read("/dev/urandom", rval, rsize, retry, "read"))
 			break;
 	}
@@ -546,6 +543,7 @@ good_checksum(int partnum)
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n",
 	    partnum ^ invert);
+
 	set_err(ECANCELED);
 	return 0;
 }
@@ -554,12 +552,10 @@ static uint16_t
 word(int pos16, int p)
 {
 	uint16_t rval = 0;
+
 	check_bound(pos16, p);
-	(void) memcpy(
-	    (uint8_t *) &rval,
-	    (uint8_t *) (buf + (SIZE_4KB * p) + (pos16 << 1)),
-	    sizeof(uint16_t)
-	);
+	memcpy(&rval, buf + (SIZE_4KB * p) + (pos16 << 1), sizeof(uint16_t));
+
 	return rval;
 }
 
@@ -567,12 +563,9 @@ static void
 set_word(int pos16, int p, uint16_t val16)
 {
 	check_bound(pos16, p);
+	memcpy(buf + (SIZE_4KB * p) + (pos16 << 1), &val16, sizeof(uint16_t));
+
 	part_modified[p] = 1;
-	(void) memcpy(
-	    (uint8_t *) (buf + (SIZE_4KB * p) + (pos16 << 1)),
-	    (uint8_t *) &val16,
-	    sizeof(uint16_t)
-	);
 }
 
 static void
@@ -604,7 +597,7 @@ write_gbe_part(int p)
 	swap(p); /* swap bytes on big-endian host CPUs */
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, ((off_t) p) * partsize) != (ssize_t) SIZE_4KB) {
+	    SIZE_4KB, ((off_t) p) * partsize) != SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
