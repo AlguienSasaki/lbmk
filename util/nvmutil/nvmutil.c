@@ -452,8 +452,8 @@ swap(int partnum)
 	for (size_t w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
 	    w < NVM_SIZE; w += 2, x += 2) {
 		uint8_t chg = n[w];
-		n[w] ^= n[x];
-		n[x] ^= chg;
+		n[w] = n[x];
+		n[x] = chg;
 	}
 }
 
