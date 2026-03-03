@@ -540,8 +540,15 @@ swap(int partnum)
 	int e = 1;
 	uint8_t *n = buf + (SIZE_4KB * partnum);
 
-	for (w = NVM_SIZE * ((uint8_t *) &e)[0], x = 1;
-	    w < NVM_SIZE; w += 2, x += 2) {
+	if (((uint8_t *) &e)[0] == 1)
+		return; /* Little-endian host CPU; no swap needed. */
+
+	/*
+	 * The host CPU stores bytes in big-endian order.
+	 * GbE files store bytes in little-endian order.
+	 * We will therefore reverse the order in memory:
+	 */
+	for (w = 0, x = 1; w < NVM_SIZE; w += 2, x += 2) {
 		uint8_t chg = n[w];
 		n[w] = n[x];
 		n[x] = chg;
