@@ -105,6 +105,7 @@ main(int argc, char *argv[])
 	part_modified[0] = 0;
 	part_modified[1] = 0;
 	fname = "";
+	cmd = NULL;
 
 	if (argc < 2)
 		usage();
