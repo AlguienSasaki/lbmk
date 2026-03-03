@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	writeGbe();
 
 	err_if((errno != 0) && (cmd != cmd_dump));
-	return errno ? 1 : 0;
+	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 void
@@ -488,5 +488,5 @@ int
 set_err(int x)
 {
 	errno = errno ? errno : x;
-	return 1;
+	return EXIT_FAILURE;
 }
