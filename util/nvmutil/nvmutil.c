@@ -465,7 +465,8 @@ cmd_copy(void)
 }
 
 static void
-cmd_swap(void) {
+cmd_swap(void)
+{
 	err_if(!(good_checksum(0) || good_checksum(1)));
 	errno = 0;
 
