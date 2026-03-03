@@ -27,8 +27,8 @@ static void check_mac_separator(int);
 static void set_mac_nib(int, int, uint8_t *);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
-static void read_urandom(uint8_t *, ssize_t);
-static int valid_read(const char *, ssize_t, ssize_t, int);
+static void read_urandom(uint8_t *, size_t);
+static int valid_read(const char *, ssize_t, size_t, int);
 static int write_mac_part(int);
 static void cmd_dump(void);
 static void print_mac_address(int);
@@ -367,7 +367,7 @@ rhex(void)
 }
 
 static void
-read_urandom(uint8_t *rnum, ssize_t rsize)
+read_urandom(uint8_t *rnum, size_t rsize)
 {
 	int retry = 0;
 	ssize_t rval;
@@ -380,7 +380,7 @@ read_urandom(uint8_t *rnum, ssize_t rsize)
 }
 
 static int
-valid_read(const char *rpath, ssize_t rval, ssize_t rsize, int retry)
+valid_read(const char *rpath, ssize_t rval, size_t rsize, int retry)
 {
 	if (rval == (ssize_t) rsize)
 		return 1;
