@@ -395,10 +395,10 @@ hextonum(char ch)
 static uint8_t
 rhex(void)
 {
-	static uint8_t n = 0;
+	static int n = -1;
 	static uint8_t rnum[12];
 
-	if (!n) {
+	if (n == -1) {
 		n = sizeof(rnum) - 1;
 		read_file_PERFECTLY_or_die(rfd, rnum, sizeof(rnum),
 		    0, "/dev/urandom", NULL);
