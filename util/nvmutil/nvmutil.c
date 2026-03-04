@@ -293,7 +293,7 @@ read_gbe_part(int p, int invert)
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
-		    SIZE_4KB, ((off_t ) p) * partsize);
+		    SIZE_4KB, ((off_t) p) * partsize);
 
 		if (check_read_or_die(fname, rval, SIZE_4KB, retry, "pread"))
 			break;
@@ -560,8 +560,6 @@ cmd_copy(void)
 	 * read_gbe() already performed the copy,
 	 * by virtue of inverted read. We need
 	 * only set the other part as changed.
-	 *
-	 * THIS IS NOT A BUG!
 	 */
 	part_modified[part ^ 1] = 1;
 }
@@ -584,8 +582,6 @@ cmd_swap(void)
 	 * read_gbe() already performed the swap,
 	 * by virtue of inverted read. We need
 	 * only set both parts as changed.
-	 *
-	 * THIS IS NOT A BUG!
 	 */
 	part_modified[1] = part_modified[0] = 1;
 }
