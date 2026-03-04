@@ -301,6 +301,8 @@ read_gbe_part(int p, int invert)
 
 	if (errno)
 		err(errno, "Unhandled error on read of file '%s'", fname);
+	if (rval != (ssize_t) SIZE_4KB)
+		err(ECANCELED, "Unknown error on read of file '%s'", fname);
 
 	swap(p ^ invert); /* handle big-endian host CPU */
 }
@@ -426,6 +428,8 @@ read_urandom(uint8_t *rnum, size_t rsize)
 
 	if (errno)
 		err(errno, "Unhandled error on read of file '/dev/urandom'");
+	if (rval != (ssize_t) rsize)
+		err(ECANCELED, "Unknown error on read of file '/dev/urandom'");
 }
 
 static int
