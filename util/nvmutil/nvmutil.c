@@ -450,9 +450,7 @@ check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
 
 	/*
 	 * Bad read, with errno EINTR (syscall interrupted).
-	 * Reset the error state and try again.
 	 */
-	errno = 0;
 	return 0;
 }
 
