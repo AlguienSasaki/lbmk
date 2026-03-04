@@ -623,6 +623,20 @@ set_word(int pos16, int p, uint16_t val16)
 static void
 check_bound(int c, int p)
 {
+	/*
+	 * NVM_SIZE assumed as the limit, because the
+	 * current design assumes that we will only
+	 * ever modified the NVM area.
+	 *
+	 * The only exception is copy/swap, but these
+	 * do not use word/set_word and therefore do
+	 * not cause check_bound() to be called.
+	 *
+	 * TODO:
+	 * This should be adjusted in the future, if
+	 * we ever wish to work on the Extented NVM.
+	 */
+
 	if ((p != 0) && (p != 1))
 		err(EINVAL, "check_bound: invalid partnum %d", p);
 	if ((c < 0) || (c >= (NVM_SIZE >> 1)))
@@ -655,9 +669,22 @@ write_gbe_part(int p)
 	}
 }
 
+/*
+ * GbE files store bytes in little-endian order.
+ * This function ensures big-endian host CPU support.
+ */
 static void
 swap(int partnum)
 {
+	/*
+	 * NVM_SIZE assumed as the limit; see notes in
+	 * check_bound().
+	 *
+	 * TODO:
+	 * This should be adjusted in the future, if
+	 * we ever wish to work on the Extended NVM.
+	 */
+
 	size_t w;
 	size_t x;
 
@@ -669,7 +696,6 @@ swap(int partnum)
 
 	/*
 	 * The host CPU stores bytes in big-endian order.
-	 * GbE files store bytes in little-endian order.
 	 * We will therefore reverse the order in memory:
 	 */
 	for (w = 0, x = 1; w < NVM_SIZE; w += 2, x += 2) {
