@@ -672,7 +672,7 @@ write_gbe_part(int p)
 	swap(p); /* swap bytes on big-endian host CPUs */
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, ((off_t) p) * partsize) != SIZE_4KB) {
+	    SIZE_4KB, ((off_t) p) * partsize) != (ssize_t) SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
