@@ -165,6 +165,8 @@ main(int argc, char *argv[])
 static void
 reset_global_state(void)
 {
+	errno = 0;
+
 	mac = NULL;
 	invert = 0;
 	part_modified[0] = 0;
