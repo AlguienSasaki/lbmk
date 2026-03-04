@@ -25,7 +25,7 @@ static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(int);
 static void check_mac_separator(int);
-static void set_mac_nib(int, int, uint8_t *);
+static void set_mac_nib(int, int);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_urandom(uint8_t *, size_t);
@@ -344,11 +344,10 @@ static void
 set_mac_byte(int mac_pos)
 {
 	int nib;
-	uint8_t h = 0;
 	check_mac_separator(mac_pos);
 
 	for (nib = 0; nib < 2; nib++)
-		set_mac_nib(mac_pos, nib, &h);
+		set_mac_nib(mac_pos, nib);
 }
 
 static void
@@ -365,11 +364,12 @@ check_mac_separator(int mac_pos)
 }
 
 static void
-set_mac_nib(int mac_pos, int nib, uint8_t *h)
+set_mac_nib(int mac_pos, int nib)
 {
+	uint8_t h;
 	int byte = mac_pos / 3;
 
-	if ((*h = hextonum(mac[mac_pos + nib])) > 15)
+	if ((h = hextonum(mac[mac_pos + nib])) > 15)
 		err(EINVAL, "Invalid character '%c'",
 		    mac[mac_pos + nib]);
 
@@ -378,10 +378,10 @@ set_mac_nib(int mac_pos, int nib, uint8_t *h)
 		if ((mac[mac_pos + nib] == '?') ||
 		    (mac[mac_pos + nib] == 'x') ||
 		    (mac[mac_pos + nib] == 'X')) /* random */
-			*h = (*h & 0xE) | 2; /* local, unicast */
+			h = (h & 0xE) | 2; /* local, unicast */
 	}
 
-	macbuf[byte >> 1] |= ((uint16_t ) *h) << ((8 * (byte % 2)) +
+	macbuf[byte >> 1] |= ((uint16_t ) h) << ((8 * (byte % 2)) +
 	    (4 * (nib ^ 1)));
 }
 
