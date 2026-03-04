@@ -60,7 +60,7 @@ static void set_err(int);
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
 
-#define MAX_RETRY_READ 200
+#define MAX_RETRY_READ 30
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
@@ -445,6 +445,9 @@ check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
 	if (retry == MAX_RETRY_READ - 1)
 		err(EINTR, "%s: max retries exceeded on file: %s",
 		    readtype, rpath);
+
+	/* Prevent CPU hog when on spin-locked reads. */
+	usleep(1);
 
 	/*
 	 * Bad read, with errno EINTR (syscall interrupted).
