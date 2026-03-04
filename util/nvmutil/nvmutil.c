@@ -28,7 +28,8 @@ static void check_mac_separator(int);
 static void set_mac_nib(int, int);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
-static void read_urandom(uint8_t *, size_t);
+static void read_file_PERFECTLY_or_die(int, void *, size_t,
+    off_t, const char *, const char *);
 static int check_read_or_die(const char *,
     ssize_t, size_t, int, const char *);
 static int write_mac_part(int);
@@ -293,23 +294,10 @@ read_gbe(void)
 static void
 read_gbe_part(int p, int invert)
 {
-	int retry;
-	ssize_t rval;
+	read_file_PERFECTLY_or_die(fd, buf + (SIZE_4KB * (p ^ invert)),
+	    SIZE_4KB, ((off_t)p) * partsize, fname, "pread");
 
-	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
-		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
-		    SIZE_4KB, (off_t)p * partsize);
-
-		if (check_read_or_die(fname, rval, SIZE_4KB, retry, "pread"))
-			break;
-	}
-
-	if (errno)
-		err(errno, "Unhandled error on read of file '%s'", fname);
-	if (rval != (ssize_t)SIZE_4KB)
-		err(ECANCELED, "Unknown error on read of file '%s'", fname);
-
-	swap(p ^ invert); /* handle big-endian host CPU */
+	swap(p ^ invert);
 }
 
 static void
@@ -412,29 +400,33 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum) - 1;
-		read_urandom(rnum, sizeof(rnum));
+		read_file_PERFECTLY_or_die(rfd, rnum, sizeof(rnum),
+		    0, "/dev/urandom", NULL);
 	}
 
 	return rnum[n--] & 0xf;
 }
 
 static void
-read_urandom(uint8_t *rnum, size_t rsize)
+read_file_PERFECTLY_or_die(int fd, void *buf, size_t len,
+    off_t off, const char *path, const char *op)
 {
-	int retry = 0;
+	int retry;
 	ssize_t rval;
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
-		rval = read(rfd, rnum, rsize);
-		if (check_read_or_die("/dev/urandom", rval,
-		    rsize, retry, "read"))
-			break;
+		if (op == NULL)
+			rval = read(fd, buf, len);
+		else
+			rval = pread(fd, buf, len, off);
+
+		if (check_read_or_die(path, rval, len, retry,
+		    op ? op : "read"))
+			return;
 	}
 
-	if (errno)
-		err(errno, "Unhandled error on read of file '/dev/urandom'");
-	if (rval != (ssize_t)rsize)
-		err(ECANCELED, "Unknown error on read of file '/dev/urandom'");
+	err(EINTR, "%s: max retries exceeded on file: %s",
+	    op ? op : "read", path);
 }
 
 static int
