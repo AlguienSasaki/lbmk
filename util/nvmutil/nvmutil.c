@@ -29,7 +29,8 @@ static void set_mac_nib(int, int, uint8_t *);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_urandom(uint8_t *, size_t);
-static int valid_read(const char *, ssize_t, size_t, int, const char *);
+static int check_read_or_die(const char *,
+    ssize_t, size_t, int, const char *);
 static int write_mac_part(int);
 static void cmd_dump(void);
 static void print_mac_address(int);
@@ -266,7 +267,7 @@ read_gbe_part(int p, int invert)
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
 		    SIZE_4KB, ((off_t ) p) * partsize);
 
-		if (valid_read(fname, rval, SIZE_4KB, retry, "pread"))
+		if (check_read_or_die(fname, rval, SIZE_4KB, retry, "pread"))
 			break;
 	}
 
@@ -395,13 +396,14 @@ read_urandom(uint8_t *rnum, size_t rsize)
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		rval = read(rfd, rnum, rsize);
-		if (valid_read("/dev/urandom", rval, rsize, retry, "read"))
+		if (check_read_or_die("/dev/urandom", rval,
+		    rsize, retry, "read"))
 			break;
 	}
 }
 
 static int
-valid_read(const char *rpath, ssize_t rval, size_t rsize,
+check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
     int retry, const char *readtype)
 {
 	if (rval == (ssize_t) rsize)
