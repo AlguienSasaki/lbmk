@@ -608,6 +608,13 @@ good_checksum(int partnum)
 	return 0;
 }
 
+/*
+ * NOTE: memcpy is a bit sticky with host endianness,
+ *       but we currently use it only when swap has
+ *	 been handled. just be careful about when the
+ *	 swap() function is called.
+ */
+
 static uint16_t
 word(int pos16, int p)
 {
