@@ -436,8 +436,10 @@ static int
 check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
     int retry, const char *readtype)
 {
-	if (rval == (ssize_t) rsize)
+	if (rval == (ssize_t) rsize) {
+		errno = 0;
 		return 1; /* Successful read */
+	}
 
 	if (rval != -1)
 		err(ECANCELED, "Short %s, %zd bytes, on file: %s",
