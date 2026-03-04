@@ -320,9 +320,7 @@ cmd_setmac(void)
 static void
 parse_mac_string(void)
 {
-	size_t c;
 	int mac_pos;
-	uint64_t mac_total;
 
 	if (strnlen(mac, 20) != 17)
 		err(EINVAL, "MAC address is the wrong length");
@@ -330,11 +328,7 @@ parse_mac_string(void)
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos);
 
-	mac_total = 0;
-	for (c = 0; c < 3; c++)
-		mac_total += macbuf[c];
-
-	if (mac_total == 0)
+	if ((macbuf[0] | macbuf[1] | macbuf[2]) == 0)
 		err(EINVAL, "Must not specify all-zeroes MAC address");
 	if (macbuf[0] & 1)
 		err(EINVAL, "Must not specify multicast MAC address");
