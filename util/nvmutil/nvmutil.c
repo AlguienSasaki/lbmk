@@ -69,8 +69,8 @@ static uint16_t macbuf[3];
 static off_t partsize;
 
 static int flags;
-static int rfd;
-static int fd;
+static int rfd = -1;
+static int fd = -1;
 static int part;
 static int invert;
 static int part_modified[2];
@@ -173,7 +173,8 @@ reset_global_state(void)
 	part_modified[1] = 0;
 	fname = "";
 	cmd = NULL;
-	fd = 0;
+	fd = -1;
+	rfd = -1;
 	part = 0;
 
 	memset(macbuf, 0, sizeof(macbuf));
