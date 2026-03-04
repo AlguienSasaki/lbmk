@@ -47,7 +47,6 @@ static void write_gbe(void);
 static void write_gbe_part(int);
 static void swap(int);
 static void usage(void);
-static void err_if(int);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
 static void set_err(int);
@@ -103,30 +102,46 @@ main(int argc, char *argv[])
 	argv0 = argv[0];
 	if (argc < 2)
 		usage();
+
 	reset_global_state();
 	fname = argv[1];
+
 #ifdef __OpenBSD__
-	err_if(pledge("stdio rpath wpath unveil", NULL) == -1);
-	err_if(unveil("/dev/urandom", "r") == -1);
+	if (pledge("stdio rpath wpath unveil", NULL) == -1)
+		err(ECANCELED, "pledge");
+	if (unveil("/dev/urandom", "r") == -1)
+		err(ECANCELED, "unveil '/dev/urandom'");
 #endif
+
 	set_cmd(argc, argv);
 	check_cmd_args(argc, argv);
 	set_io_flags(argc, argv);
+
 #ifdef __OpenBSD__
 	if (flags == O_RDONLY) {
-		err_if(unveil(fname, "r") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath", NULL) == -1);
+		if (unveil(fname, "r") == -1)
+			err(ECANCELED, "unveil ro '%s'", fname);
+		if (unveil(NULL, NULL) == -1)
+			err(ECANCELED, "unveil block (ro)");
+		if (pledge("stdio rpath", NULL) == -1)
+			err(ECANCELED, "pledge ro (kill unveil)");
 	} else {
-		err_if(unveil(fname, "rw") == -1);
-		err_if(unveil(NULL, NULL) == -1);
-		err_if(pledge("stdio rpath wpath", NULL) == -1);
+		if (unveil(fname, "rw") == -1)
+			err(ECANCELED, "unveil rw '%s'", fname);
+		if (unveil(NULL, NULL) == -1)
+			err(ECANCELED, "unveil block (rw)");
+		if (pledge("stdio rpath wpath", NULL) == -1)
+			err(ECANCELED, "pledge rw (kill unveil)");
 	}
 #endif
+
 	open_files();
+
 #ifdef __OpenBSD__
-	err_if(pledge("stdio", NULL) == -1);
+	if (pledge("stdio", NULL) == -1)
+		err(ECANCELED, "pledge stdio (main)");
 #endif
+
 	read_gbe();
 	(*cmd)();
 	write_gbe();
@@ -136,8 +151,15 @@ main(int argc, char *argv[])
 	if (close(rfd) == -1)
 		err(ECANCELED, "close '/dev/urandom'");
 
-	err_if((errno != 0) && (cmd != cmd_dump));
-	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
+	if (cmd != cmd_dump) {
+		if (errno)
+			err(ECANCELED, "Unhandled error on exit");
+	}
+
+	if (errno)
+		return EXIT_FAILURE;
+	else
+		return EXIT_SUCCESS;
 }
 
 static void
@@ -511,24 +533,52 @@ cmd_setchecksum(void)
 static void
 cmd_brick(void)
 {
-	if (good_checksum(part))
-		set_word(NVM_CHECKSUM_WORD, part,
-		    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
+	if (!good_checksum(part))
+		err(ECANCELED, "brick p%d, file '%s'", part, fname);
+
+	set_word(NVM_CHECKSUM_WORD, part,
+	    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
 }
 
 static void
 cmd_copy(void)
 {
-	err_if(!good_checksum(part ^ 1));
+	if (!good_checksum(part ^ 1))
+		err(ECANCELED, "copy p%d, file '%s'", part ^ 1, fname);
+
+	/*
+	 * SPEED HACK:
+	 *
+	 * read_gbe() already performed the copy,
+	 * by virtue of inverted read. We need
+	 * only set the other part as changed.
+	 *
+	 * THIS IS NOT A BUG!
+	 */
 	part_modified[part ^ 1] = 1;
 }
 
 static void
 cmd_swap(void)
 {
-	err_if(!(good_checksum(0) || good_checksum(1)));
+	if (!(good_checksum(0) || good_checksum(1)))
+		err(ECANCELED, "swap parts, file '%s'", fname);
+
+	/*
+	 * good_checksum() can set errno, if one
+	 * of the parts is bad. We will reset it.
+	 */
 	errno = 0;
 
+	/*
+	 * SPEED HACK:
+	 *
+	 * read_gbe() already performed the swap,
+	 * by virtue of inverted read. We need
+	 * only set both parts as changed.
+	 *
+	 * THIS IS NOT A BUG!
+	 */
 	part_modified[1] = part_modified[0] = 1;
 }
 
@@ -636,7 +686,7 @@ usage(void)
 
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
-		err(ECANCELED, NULL);
+		err(ECANCELED, "pledge");
 #endif
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
@@ -651,13 +701,6 @@ usage(void)
 	    util, util, util, util, util, util, util);
 
 	err(ECANCELED, "Too few arguments");
-}
-
-static void
-err_if(int x)
-{
-	if (x)
-		err(ECANCELED, "%s", fname);
 }
 
 static void
