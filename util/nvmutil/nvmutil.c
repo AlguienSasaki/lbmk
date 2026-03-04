@@ -177,6 +177,7 @@ reset_global_state(void)
 	part = 0;
 
 	memset(macbuf, 0, sizeof(macbuf));
+	memset(buf, 0, sizeof(buf));
 }
 
 static void
