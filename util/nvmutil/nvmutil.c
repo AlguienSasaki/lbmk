@@ -298,7 +298,7 @@ read_gbe_part(int p, int invert)
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		rval = pread(fd, buf + (SIZE_4KB * (p ^ invert)),
-		    SIZE_4KB, ((off_t) p) * partsize);
+		    SIZE_4KB, (off_t)p * partsize);
 
 		if (check_read_or_die(fname, rval, SIZE_4KB, retry, "pread"))
 			break;
@@ -306,7 +306,7 @@ read_gbe_part(int p, int invert)
 
 	if (errno)
 		err(errno, "Unhandled error on read of file '%s'", fname);
-	if (rval != (ssize_t) SIZE_4KB)
+	if (rval != (ssize_t)SIZE_4KB)
 		err(ECANCELED, "Unknown error on read of file '%s'", fname);
 
 	swap(p ^ invert); /* handle big-endian host CPU */
@@ -385,7 +385,7 @@ set_mac_nib(int mac_pos, int nib)
 			h = (h & 0xE) | 2; /* local, unicast */
 	}
 
-	macbuf[byte >> 1] |= ((uint16_t ) h) << ((8 * (byte % 2)) +
+	macbuf[byte >> 1] |= (uint16_t)h << ((8 * (byte % 2)) +
 	    (4 * (nib ^ 1)));
 }
 
@@ -433,7 +433,7 @@ read_urandom(uint8_t *rnum, size_t rsize)
 
 	if (errno)
 		err(errno, "Unhandled error on read of file '/dev/urandom'");
-	if (rval != (ssize_t) rsize)
+	if (rval != (ssize_t)rsize)
 		err(ECANCELED, "Unknown error on read of file '/dev/urandom'");
 }
 
@@ -441,7 +441,7 @@ static int
 check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
     int retry, const char *readtype)
 {
-	if (rval == (ssize_t) rsize) {
+	if (rval == (ssize_t)rsize) {
 		errno = 0;
 		return 1; /* Successful read */
 	}
@@ -518,11 +518,12 @@ hexdump(int partnum)
 {
 	int c;
 	int row;
+	uint16_t val16;
 
 	for (row = 0; row < 8; row++) {
 		printf("%08x ", row << 4);
 		for (c = 0; c < 8; c++) {
-			uint16_t val16 = word((row << 3) + c, partnum);
+			val16 = word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
 			printf(" %02x %02x", val16 & 0xff, val16 >> 8);
@@ -650,7 +651,7 @@ check_bound(int c, int p)
 	 *
 	 * TODO:
 	 * This should be adjusted in the future, if
-	 * we ever wish to work on the Extented NVM.
+	 * we ever wish to work on the extented area.
 	 */
 
 	if ((p != 0) && (p != 1))
@@ -679,7 +680,7 @@ write_gbe_part(int p)
 	swap(p); /* swap bytes on big-endian host CPUs */
 
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, ((off_t) p) * partsize) != (ssize_t) SIZE_4KB) {
+	    SIZE_4KB, (off_t)p * partsize) != (ssize_t)SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
@@ -698,16 +699,16 @@ swap(int partnum)
 	 *
 	 * TODO:
 	 * This should be adjusted in the future, if
-	 * we ever wish to work on the Extended NVM.
+	 * we ever wish to work on the extended area.
 	 */
 
 	size_t w;
 	size_t x;
 
-	int e = 1;
 	uint8_t *n = buf + (SIZE_4KB * partnum);
 
-	if (((uint8_t *) &e)[0] == 1)
+	int e = 1;
+	if (*((uint8_t *)&e) == 1)
 		return; /* Little-endian host CPU; no swap needed. */
 
 	/*
