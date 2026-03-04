@@ -448,9 +448,6 @@ check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
 		err(EINTR, "%s: max retries exceeded on file: %s",
 		    readtype, rpath);
 
-	/* Prevent CPU hog when on spin-locked reads. */
-	usleep(1);
-
 	/*
 	 * Bad read, with errno EINTR (syscall interrupted).
 	 * Reset the error state and try again.
