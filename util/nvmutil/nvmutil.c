@@ -547,11 +547,20 @@ cmd_setchecksum(void)
 static void
 cmd_brick(void)
 {
-	if (!good_checksum(part))
-		err(ECANCELED, "brick p%d, file '%s'", part, fname);
+	uint16_t checksum_word;
 
-	set_word(NVM_CHECKSUM_WORD, part,
-	    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
+	if (!good_checksum(part)) {
+		err(ECANCELED,
+		    "Part %d checksum already invalid in file '%s'",
+		    part, fname);
+	}
+
+	/*
+	 * We know checksum_word is valid, so we need only
+	 * flip one bit to invalidate it.
+	 */
+	checksum_word = word(NVM_CHECKSUM_WORD, part);
+	set_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
 }
 
 static void
