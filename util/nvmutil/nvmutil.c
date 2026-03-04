@@ -132,9 +132,9 @@ main(int argc, char *argv[])
 	write_gbe();
 
 	if (close(fd) == -1)
-		err(ECANCELED, "Could not close '%s'", fname);
+		err(ECANCELED, "close '%s'", fname);
 	if (close(rfd) == -1)
-		err(ECANCELED, "Could not close '/dev/urandom'");
+		err(ECANCELED, "close '/dev/urandom'");
 
 	err_if((errno != 0) && (cmd != cmd_dump));
 	return errno ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -170,7 +170,7 @@ set_cmd(int argc, char *argv[])
 			cmd = ops[i].cmd;
 			break;
 		}
-		err(EINVAL, "Too few args on command '%s'", ops[i].str);
+		err(EINVAL, "Too few args: command '%s'", ops[i].str);
 	}
 }
 
@@ -220,7 +220,7 @@ open_files(void)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(ECANCELED, "Invalid file size (not 8/16/128KiB)");
+		err(ECANCELED, "File size must be 8KB, 16KB or 128KB");
 		break;
 	}
 }
@@ -297,7 +297,7 @@ parse_mac_string(void)
 	uint64_t mac_total;
 
 	if (strnlen(mac, 20) != 17)
-		err(EINVAL, "Invalid MAC address string length");
+		err(EINVAL, "MAC address is the wrong length");
 
 	memset(macbuf, 0, sizeof(macbuf));
 
@@ -309,9 +309,9 @@ parse_mac_string(void)
 		mac_total += macbuf[c];
 
 	if (mac_total == 0)
-		err(EINVAL, "Invalid MAC (all-zero MAC address)");
+		err(EINVAL, "Must not specify all-zeroes MAC address");
 	if (macbuf[0] & 1)
-		err(EINVAL, "Invalid MAC (multicast bit set)");
+		err(EINVAL, "Must not specify multicast MAC address");
 }
 
 static void
