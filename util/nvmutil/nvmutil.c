@@ -162,6 +162,11 @@ main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 }
 
+/*
+ * Currently redundant, because the program only runs
+ * once, but I plan to expand this tool so that it can
+ * work on multiple files, using getop switches as args.
+ */
 static void
 reset_global_state(void)
 {
