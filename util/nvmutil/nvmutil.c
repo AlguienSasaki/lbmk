@@ -299,6 +299,9 @@ read_gbe_part(int p, int invert)
 			break;
 	}
 
+	if (errno)
+		err(errno, "Unhandled error on read of file '%s'", fname);
+
 	swap(p ^ invert); /* handle big-endian host CPU */
 }
 
@@ -420,16 +423,17 @@ read_urandom(uint8_t *rnum, size_t rsize)
 		    rsize, retry, "read"))
 			break;
 	}
+
+	if (errno)
+		err(errno, "Unhandled error on read of file '/dev/urandom'");
 }
 
 static int
 check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
     int retry, const char *readtype)
 {
-	if (rval == (ssize_t) rsize) {
-		errno = 0;
+	if (rval == (ssize_t) rsize)
 		return 1; /* Successful read */
-	}
 
 	if (rval != -1)
 		err(ECANCELED, "Short %s, %zd bytes, on file: %s",
