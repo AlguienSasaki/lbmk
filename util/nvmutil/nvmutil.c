@@ -175,6 +175,8 @@ reset_global_state(void)
 	cmd = NULL;
 	fd = 0;
 	part = 0;
+
+	memset(macbuf, 0, sizeof(macbuf));
 }
 
 static void
@@ -322,8 +324,6 @@ parse_mac_string(void)
 
 	if (strnlen(mac, 20) != 17)
 		err(EINVAL, "MAC address is the wrong length");
-
-	memset(macbuf, 0, sizeof(macbuf));
 
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
 		set_mac_byte(mac_pos);
