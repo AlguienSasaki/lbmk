@@ -100,12 +100,12 @@ static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *fname = "";
 static const char *argv0;
 
-struct op {
+struct commands {
 	const char *str;
 	void (*cmd)(void);
 	int args;
 };
-static const struct op ops[] = {
+static const struct commands command[] = {
 	{ "dump", cmd_dump, 3 },
 	{ "setmac", cmd_setmac, 3 },
 	{ "swap", cmd_swap, 3 },
@@ -234,14 +234,14 @@ set_cmd(int argc, char *argv[])
 		return;
 	}
 
-	for (i = 0; i < items(ops) && cmd == NULL; i++) {
-		if (strcmp(argv[2], ops[i].str) != 0)
+	for (i = 0; i < items(command) && cmd == NULL; i++) {
+		if (strcmp(argv[2], command[i].str) != 0)
 			continue;
-		if (argc >= ops[i].args) {
-			cmd = ops[i].cmd;
+		if (argc >= command[i].args) {
+			cmd = command[i].cmd;
 			break;
 		}
-		err(EINVAL, "Too few args: command '%s'", ops[i].str);
+		err(EINVAL, "Too few args: command '%s'", command[i].str);
 	}
 }
 
