@@ -311,7 +311,6 @@ check_cmd_args(int argc, char *argv[])
 static size_t
 conv_argv_part_num(const char *part_str)
 {
-	size_t rval;
 	unsigned char ch;
 
 	/*
@@ -331,7 +330,7 @@ conv_argv_part_num(const char *part_str)
 	ch = (unsigned char)part_str[0];
 	ch -= '0';
 
-	check_part_num(rval = (size_t)ch);
+	check_part_num((size_t)ch);
 	return (size_t)ch;
 }
 
