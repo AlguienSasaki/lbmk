@@ -93,7 +93,7 @@ static void set_err(int);
 #define GBE_PART_SIZE (GBE_FILE_SIZE >> 1)
 #define NVM_CHECKSUM 0xBABA
 #define NVM_SIZE 128
-#define NVM_WORDS (NVM_SIZE / 2)
+#define NVM_WORDS (NVM_SIZE >> 1)
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
 /*
@@ -753,7 +753,7 @@ check_bound(size_t c, int p)
 
 	if (p != 0 && p != 1)
 		err(EINVAL, "check_bound: invalid partnum %d", p);
-	if (c >= (NVM_SIZE >> 1))
+	if (c >= NVM_WORDS)
 		err(EINVAL, "check_bound: out of bounds %zu", c);
 }
 
