@@ -30,8 +30,6 @@ static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_file_PERFECTLY_or_die(int, void *, size_t,
     off_t, const char *, const char *);
-static int check_read_or_die(const char *,
-    ssize_t, size_t, int, const char *);
 static int write_mac_part(int);
 static void cmd_dump(void);
 static void print_mac_address(int);
@@ -504,46 +502,33 @@ static void
 read_file_PERFECTLY_or_die(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op)
 {
-	int retry;
 	ssize_t rval;
+	int retry;
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
-		if (op == NULL)
-			rval = read(fd, buf, len);
-		else
+		if (op)
 			rval = pread(fd, buf, len, off);
+		else
+			rval = read(fd, buf, len);
 
-		if (check_read_or_die(path, rval, len, retry,
-		    op ? op : "read"))
+		if (rval == (ssize_t)len) {
+			errno = 0;
 			return;
+		}
+
+		if (rval != -1)
+			err(ECANCELED,
+			    "Short %s, %zd bytes, on file: %s",
+			    op ? op : "read", rval, path);
+
+		if (errno != EINTR)
+			err(ECANCELED,
+			    "Could not %s file: '%s'",
+			    op ? op : "read", path);
 	}
 
 	err(EINTR, "%s: max retries exceeded on file: %s",
 	    op ? op : "read", path);
-}
-
-static int
-check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
-    int retry, const char *readtype)
-{
-	if (rval == (ssize_t)rsize) {
-		errno = 0;
-		return 1; /* Successful read */
-	}
-
-	if (rval != -1)
-		err(ECANCELED, "Short %s, %zd bytes, on file: %s",
-		    readtype, rval, rpath);
-	if (errno != EINTR)
-		err(ECANCELED, "Could not %s file: '%s'", readtype, rpath);
-	if (retry == MAX_RETRY_READ - 1)
-		err(EINTR, "%s: max retries exceeded on file: %s",
-		    readtype, rpath);
-
-	/*
-	 * Bad read, with errno EINTR (syscall interrupted).
-	 */
-	return 0;
 }
 
 static int
