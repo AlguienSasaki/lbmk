@@ -422,16 +422,17 @@ set_mac_nib(int mac_pos, int nib)
 static uint8_t
 hextonum(char ch)
 {
-	if (ch >= '0' && ch <= '9')
+	if ((unsigned)(ch - '0') <= 9)
 		return ch - '0';
-	else if (ch >= 'A' && ch <= 'F')
-		return ch - 'A' + 10;
-	else if (ch >= 'a' && ch <= 'f')
+
+	ch |= 0x20;
+
+	if ((unsigned)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
-	else if (ch == '?' || ch == 'x' || ch == 'X')
-		return rhex(); /* random hex value */
+	else if (ch == '?' || ch == 'x')
+		return rhex(); /* random character */
 	else
-		return 16; /* error: invalid character */
+		return 16; /* invalid character */
 }
 
 static uint8_t
