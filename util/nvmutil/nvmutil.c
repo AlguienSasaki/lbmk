@@ -13,11 +13,28 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * On the platforms below, we will use arc4random
+ * for random MAC address generation.
+ *
+ * Later on, the code has fallbacks for other systems.
+ */
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__APPLE__) || \
+    defined(__DragonFly__)
+#ifndef HAVE_ARC4RANDOM
+#define HAVE_ARC4RANDOM
+#endif
+#endif
+
 static void reset_global_state(void);
 static void set_cmd(int, char **);
 static void check_cmd_args(int, char **);
 static void set_io_flags(int, char **);
-static void open_files(void);
+static void open_gbe_file(void);
+#ifndef HAVE_ARC4RANDOM
+static void open_dev_urandom(void);
+#endif
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
 static void read_gbe_part(size_t, unsigned char);
@@ -28,7 +45,7 @@ static void check_mac_separator(size_t);
 static void set_mac_nib(size_t, size_t);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
-static void read_file_PERFECTLY_or_die(int, void *, size_t,
+static void xread(int, void *, size_t,
     off_t, const char *, const char *);
 static int write_mac_part(size_t);
 static void cmd_dump(void);
@@ -52,20 +69,6 @@ static void usage(void);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
 static void set_err(int);
-
-/*
- * On the platforms below, we will use arc4random
- * for random MAC address generation.
- *
- * Later on, the code has fallbacks for other systems.
- */
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__) || \
-    defined(__DragonFly__)
-#ifndef HAVE_ARC4RANDOM
-#define HAVE_ARC4RANDOM
-#endif
-#endif
 
 /*
  * Sizes in bytes:
@@ -201,7 +204,10 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	open_files();
+#ifndef HAVE_ARC4RANDOM
+	open_dev_urandom();
+#endif
+	open_gbe_file();
 
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
@@ -301,18 +307,22 @@ static void
 set_io_flags(int argc, char *argv[])
 {
 	flags = O_RDWR;
+
 	if (argc < 3)
 		return;
+
 	if (strcmp(argv[2], "dump") == 0)
 		flags = O_RDONLY;
 }
 
-static void
-open_files(void)
-{
 #ifndef HAVE_ARC4RANDOM
+static void
+open_dev_urandom(void)
+{
 	struct stat st_rfd;
+
 	rname = newrandom;
+
 	if ((rfd = open(rname, O_RDONLY)) == -1) {
 		/*
 		 * Fall back to /dev/random on old platforms
@@ -321,7 +331,12 @@ open_files(void)
 		rname = oldrandom;
 		xopen(&rfd, rname, O_RDONLY, &st_rfd);
 	}
+}
 #endif
+
+static void
+open_gbe_file(void)
+{
 	xopen(&fd, fname, flags, &st);
 
 	switch(st.st_size) {
@@ -370,7 +385,7 @@ read_gbe(void)
 static void
 read_gbe_part(size_t p, unsigned char invert)
 {
-	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pread"),
+	xread(fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
@@ -410,6 +425,7 @@ static void
 set_mac_byte(size_t mac_pos)
 {
 	size_t nib;
+
 	check_mac_separator(mac_pos);
 
 	for (nib = 0; nib < 2; nib++)
@@ -487,15 +503,15 @@ hextonum(char ch)
 static uint8_t
 rhex(void)
 {
-	static uint8_t rnum[12];
 	static size_t n = 0;
+	static uint8_t rnum[12];
 
 	if (!n) {
 		n = sizeof(rnum);
 #ifdef HAVE_ARC4RANDOM
 		arc4random_buf(rnum, n);
 #else
-		read_file_PERFECTLY_or_die(rfd, rnum, n, 0, rname, NULL);
+		xread(rfd, rnum, n, 0, rname, NULL);
 #endif
 	}
 
@@ -503,11 +519,11 @@ rhex(void)
 }
 
 static void
-read_file_PERFECTLY_or_die(int fd, void *buf, size_t len,
+xread(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op)
 {
-	ssize_t rval;
 	int retry;
+	ssize_t rval;
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		if (op)
@@ -576,6 +592,7 @@ static void
 print_mac_address(size_t partnum)
 {
 	size_t c;
+
 	for (c = 0; c < 3; c++) {
 		uint16_t val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
@@ -688,6 +705,7 @@ good_checksum(size_t partnum)
 {
 	size_t w;
 	uint16_t total = 0;
+
 	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
 		total += word(w, partnum);
 
