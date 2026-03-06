@@ -43,10 +43,10 @@ static void cmd_swap(void);
 static int good_checksum(int);
 static uint16_t word(int, int);
 static void set_word(int, int, uint16_t);
+static int get_word_pos(int, int);
 static void check_bound(int, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
-static void swap(int);
 static void usage(void);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
@@ -296,8 +296,6 @@ read_gbe_part(int p, int invert)
 {
 	read_file_PERFECTLY_or_die(fd, buf + (SIZE_4KB * (p ^ invert)),
 	    SIZE_4KB, ((off_t)p) * partsize, fname, "pread");
-
-	swap(p ^ invert);
 }
 
 static void
@@ -611,31 +609,38 @@ good_checksum(int partnum)
 	return 0;
 }
 
-/*
- * NOTE: memcpy is a bit sticky with host endianness,
- *       but we currently use it only when swap has
- *	 been handled. just be careful about when the
- *	 swap() function is called.
- */
-
 static uint16_t
 word(int pos16, int p)
 {
-	uint16_t rval = 0;
+	int pos;
 
 	check_bound(pos16, p);
-	memcpy(&rval, buf + (SIZE_4KB * p) + (pos16 << 1), sizeof(uint16_t));
+	pos = get_word_pos(pos16, p);
 
-	return rval;
+	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
 }
 
 static void
 set_word(int pos16, int p, uint16_t val16)
 {
+	int pos;
+
 	check_bound(pos16, p);
-	memcpy(buf + (SIZE_4KB * p) + (pos16 << 1), &val16, sizeof(uint16_t));
+	pos = get_word_pos(pos16, p);
+
+	buf[pos++] = (uint8_t)(val16 & 0xff);
+	buf[pos] = (uint8_t)(val16 >> 8);
 
 	part_modified[p] = 1;
+}
+
+static int
+get_word_pos(int pos16, int p)
+{
+	int off = SIZE_4KB * p;
+	int pos = (pos16 << 1) + off;
+
+	return pos;
 }
 
 static void
@@ -678,48 +683,10 @@ write_gbe(void)
 static void
 write_gbe_part(int p)
 {
-	swap(p); /* swap bytes on big-endian host CPUs */
-
 	if (pwrite(fd, buf + (SIZE_4KB * p),
 	    SIZE_4KB, (off_t)p * partsize) != (ssize_t)SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
-	}
-}
-
-/*
- * GbE files store bytes in little-endian order.
- * This function ensures big-endian host CPU support.
- */
-static void
-swap(int partnum)
-{
-	/*
-	 * NVM_SIZE assumed as the limit; see notes in
-	 * check_bound().
-	 *
-	 * TODO:
-	 * This should be adjusted in the future, if
-	 * we ever wish to work on the extended area.
-	 */
-
-	size_t w;
-	size_t x;
-
-	uint8_t *n = buf + (SIZE_4KB * partnum);
-
-	int e = 1;
-	if (*((uint8_t *)&e) == 1)
-		return; /* Little-endian host CPU; no swap needed. */
-
-	/*
-	 * The host CPU stores bytes in big-endian order.
-	 * We will therefore reverse the order in memory:
-	 */
-	for (w = 0, x = 1; w < NVM_SIZE; w += 2, x += 2) {
-		uint8_t chg = n[w];
-		n[w] = n[x];
-		n[x] = chg;
 	}
 }
 
