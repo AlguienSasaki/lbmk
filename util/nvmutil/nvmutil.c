@@ -123,11 +123,11 @@ static uint8_t buf[GBE_FILE_SIZE]; /* 8KB */
 static uint16_t mac_buf[3];
 static off_t partsize;
 
-static int flags;
+static int gbe_flags;
 #ifndef HAVE_ARC4RANDOM
 static int rfd = -1;
 #endif
-static int fd = -1;
+static int gbe_fd = -1;
 static struct stat gbe_st;
 static size_t part;
 static unsigned char invert;
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 	set_io_flags(argc, argv);
 
 #ifdef __OpenBSD__
-	if (flags == O_RDONLY) {
+	if (gbe_flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
 			err(ECANCELED, "unveil ro '%s'", fname);
 		if (unveil(NULL, NULL) == -1)
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 	(*cmd)();
 	write_gbe_file();
 
-	if (close(fd) == -1)
+	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
 #ifndef HAVE_ARC4RANDOM
 	if (close(rfd) == -1)
@@ -255,7 +255,7 @@ reset_global_state(void)
 	part_modified[1] = 0;
 	fname = "";
 	cmd = NULL;
-	fd = -1;
+	gbe_fd = -1;
 #ifndef HAVE_ARC4RANDOM
 	rfd = -1;
 #endif
@@ -311,13 +311,13 @@ check_cmd_args(int argc, char *argv[])
 static void
 set_io_flags(int argc, char *argv[])
 {
-	flags = O_RDWR;
+	gbe_flags = O_RDWR;
 
 	if (argc < 3)
 		return;
 
 	if (strcmp(argv[2], "dump") == 0)
-		flags = O_RDONLY;
+		gbe_flags = O_RDONLY;
 }
 
 #ifndef HAVE_ARC4RANDOM
@@ -342,7 +342,7 @@ open_dev_urandom(void)
 static void
 open_gbe_file(void)
 {
-	xopen(&fd, fname, flags, &gbe_st);
+	xopen(&gbe_fd, fname, gbe_flags, &gbe_st);
 
 	switch(gbe_st.st_size) {
 	case SIZE_8KB:
@@ -356,12 +356,12 @@ open_gbe_file(void)
 }
 
 static void
-xopen(int *f, const char *l, int p, struct stat *st)
+xopen(int *fd, const char *path, int flags, struct stat *st)
 {
-	if ((*f = open(l, p)) == -1)
-		err(ECANCELED, "%s", l);
-	if (fstat(*f, st) == -1)
-		err(ECANCELED, "%s", l);
+	if ((*fd = open(path, flags)) == -1)
+		err(ECANCELED, "%s", path);
+	if (fstat(*fd, st) == -1)
+		err(ECANCELED, "%s", path);
 }
 
 static void
@@ -405,7 +405,7 @@ read_gbe_file(void)
 static void
 read_gbe_file_part(size_t p, unsigned char invert)
 {
-	read_file_exact(fd, gbe_mem_offset(p ^ invert, "pread"),
+	read_file_exact(gbe_fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
@@ -805,7 +805,7 @@ write_gbe_file(void)
 {
 	size_t p;
 
-	if (flags == O_RDONLY)
+	if (gbe_flags == O_RDONLY)
 		return;
 
 	for (p = 0; p < 2; p++) {
@@ -817,7 +817,7 @@ write_gbe_file(void)
 static void
 write_gbe_file_part(size_t p)
 {
-	ssize_t rval = pwrite(fd, gbe_mem_offset(p, "pwrite"),
+	ssize_t rval = pwrite(gbe_fd, gbe_mem_offset(p, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
 
 	if (rval == -1)
