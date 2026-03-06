@@ -125,7 +125,7 @@ static off_t gbe_file_size;
 
 static int gbe_flags;
 #ifndef HAVE_ARC4RANDOM_BUF
-static int rfd = -1;
+static int urandom_fd = -1;
 #endif
 static int gbe_fd = -1;
 static size_t part;
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
 #ifndef HAVE_ARC4RANDOM_BUF
-	if (close(rfd) == -1)
+	if (close(urandom_fd) == -1)
 		err(ECANCELED, "close '%s'", rname);
 #endif
 
@@ -322,11 +322,11 @@ set_io_flags(int argc, char *argv[])
 static void
 open_dev_urandom(void)
 {
-	struct stat st_rfd;
+	struct stat st_urandom_fd;
 
 	rname = newrandom;
 
-	if ((rfd = open(rname, O_RDONLY)) == -1) {
+	if ((urandom_fd = open(rname, O_RDONLY)) == -1) {
 		/*
 		 * Fall back to /dev/random on old platforms
 		 * where /dev/urandom does not exist.
@@ -345,7 +345,7 @@ open_dev_urandom(void)
 		errno = 0;
 
 		rname = oldrandom;
-		xopen(&rfd, rname, O_RDONLY, &st_rfd);
+		xopen(&urandom_fd, rname, O_RDONLY, &st_urandom_fd);
 	}
 }
 #endif
@@ -403,7 +403,7 @@ read_gbe_file(void)
 	 *
 	 * NOTE:
 	 *
-	 * write_gbe_file() will not use this, but the copy/setchecksum commands
+	 * write_gbe_file() will not use this, but copy/setchecksum commands
 	 * will directly manipulate part_modified[], telling write_gbe_file()
 	 * to also write in reverse, as in read_gbe_file().
 	 */
@@ -552,7 +552,7 @@ rhex(void)
 #ifdef HAVE_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
-		read_file_exact(rfd, rnum, n, 0, rname, NULL);
+		read_file_exact(urandom_fd, rnum, n, 0, rname, NULL);
 #endif
 	}
 
