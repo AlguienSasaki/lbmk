@@ -621,7 +621,7 @@ cmd_brick(void)
 
 	if (!good_checksum(part)) {
 		err(ECANCELED,
-		    "Part %d checksum already invalid in file '%s'",
+		    "Part %zu checksum already invalid in file '%s'",
 		    part, fname);
 	}
 
@@ -637,7 +637,7 @@ static void
 cmd_copy(void)
 {
 	if (!good_checksum(part ^ 1))
-		err(ECANCELED, "copy p%d, file '%s'", part ^ 1, fname);
+		err(ECANCELED, "copy p%zu, file '%s'", part ^ 1, fname);
 
 	/*
 	 * SPEED HACK:
@@ -737,7 +737,7 @@ check_bound(size_t c, size_t p)
 	 */
 
 	if (p != 0 && p != 1)
-		err(EINVAL, "check_bound: invalid partnum %d", p);
+		err(EINVAL, "check_bound: invalid partnum %zu", p);
 	if (c >= NVM_WORDS)
 		err(EINVAL, "check_bound: out of bounds %zu", c);
 }
