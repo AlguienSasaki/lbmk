@@ -401,11 +401,14 @@ static void
 set_mac_nib(int mac_pos, int nib)
 {
 	uint8_t h;
-	int byte = mac_pos / 3;
+	int byte;
+	int shift;
 
 	if ((h = hextonum(mac[mac_pos + nib])) > 15)
 		err(EINVAL, "Invalid character '%c'",
 		    mac[mac_pos + nib]);
+
+	byte = mac_pos / 3;
 
 	/* If random, ensure that local/unicast bits are set */
 	if ((byte == 0) && (nib == 1) &&
@@ -421,7 +424,7 @@ set_mac_nib(int mac_pos, int nib)
 	 * we store the MAC address in reverse order
 	 * per 2-byte word (there are 3 of these).
 	 */
-	int shift = (byte & 1) << 3; /* left or right byte? */
+	shift = (byte & 1) << 3; /* left or right byte? */
 	shift |= (nib ^ 1) << 2; /* left or right nib? */
 
 	/*
