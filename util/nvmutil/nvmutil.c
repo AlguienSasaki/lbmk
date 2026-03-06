@@ -512,14 +512,16 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 static uint8_t
 hextonum(char mac_ch)
 {
-	if ((unsigned)(mac_ch - '0') <= 9)
-		return mac_ch - '0';
+	unsigned char ch = (unsigned char)mac_ch;
 
-	mac_ch |= 0x20;
+	if ((unsigned)(ch - '0') <= 9)
+		return ch - '0';
 
-	if ((unsigned)(mac_ch - 'a') <= 5)
-		return mac_ch - 'a' + 10;
-	else if (mac_ch == '?' || mac_ch == 'x')
+	ch |= 0x20;
+
+	if ((unsigned)(ch - 'a') <= 5)
+		return ch - 'a' + 10;
+	else if (ch == '?' || ch == 'x')
 		return rhex(); /* random character */
 	else
 		return 16; /* invalid character */
