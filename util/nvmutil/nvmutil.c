@@ -20,7 +20,7 @@ static void set_io_flags(int, char **);
 static void open_files(void);
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
-static void read_gbe_part(int, int);
+static void read_gbe_part(size_t, int);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(int);
@@ -30,23 +30,23 @@ static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_file_PERFECTLY_or_die(int, void *, size_t,
     off_t, const char *, const char *);
-static int write_mac_part(int);
+static int write_mac_part(size_t);
 static void cmd_dump(void);
-static void print_mac_address(int);
-static void hexdump(int);
+static void print_mac_address(size_t);
+static void hexdump(size_t);
 static void cmd_setchecksum(void);
 static void cmd_brick(void);
 static void cmd_copy(void);
 static void cmd_swap(void);
-static int good_checksum(int);
-static uint16_t word(size_t, int);
-static void set_word(size_t, int, uint16_t);
-static void check_bound(size_t, int);
+static int good_checksum(size_t);
+static uint16_t word(size_t, size_t);
+static void set_word(size_t, size_t, uint16_t);
+static void check_bound(size_t, size_t);
 static void write_gbe(void);
-static void write_gbe_part(int);
-static off_t gbe_file_offset(int, const char *);
-static void *gbe_mem_offset(int p, const char *f_op);
-static off_t gbe_x_offset(int, const char *, const char *, off_t, off_t);
+static void write_gbe_part(size_t);
+static off_t gbe_file_offset(size_t, const char *);
+static void *gbe_mem_offset(size_t, const char *);
+static off_t gbe_x_offset(size_t, const char *, const char *, off_t, off_t);
 static void usage(void);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
@@ -122,7 +122,7 @@ static int rfd = -1;
 #endif
 static int fd = -1;
 static struct stat st;
-static int part;
+static size_t part;
 static int invert;
 static int part_modified[2];
 
@@ -347,7 +347,7 @@ xopen(int *f, const char *l, int p, struct stat *st)
 static void
 read_gbe(void)
 {
-	int p;
+	size_t p;
 	int do_read[2] = {1, 1};
 
 	if (cmd == cmd_copy || cmd == cmd_brick || cmd == cmd_setchecksum)
@@ -367,7 +367,7 @@ read_gbe(void)
 }
 
 static void
-read_gbe_part(int p, int invert)
+read_gbe_part(size_t p, int invert)
 {
 	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
@@ -376,7 +376,7 @@ read_gbe_part(int p, int invert)
 static void
 cmd_setmac(void)
 {
-	int partnum;
+	size_t partnum;
 	int mac_updated = 0;
 
 	parse_mac_string();
@@ -532,7 +532,7 @@ read_file_PERFECTLY_or_die(int fd, void *buf, size_t len,
 }
 
 static int
-write_mac_part(int partnum)
+write_mac_part(size_t partnum)
 {
 	size_t w;
 
@@ -543,7 +543,7 @@ write_mac_part(int partnum)
 	for (w = 0; w < 3; w++)
 		set_word(w, partnum, macbuf[w]);
 
-	printf("Wrote MAC address to part %d: ", partnum);
+	printf("Wrote MAC address to part %zx: ", partnum);
 	print_mac_address(partnum);
 
 	cmd_setchecksum();
@@ -553,14 +553,14 @@ write_mac_part(int partnum)
 static void
 cmd_dump(void)
 {
-	int partnum;
+	size_t partnum;
 	int num_invalid = 0;
 
 	for (partnum = 0; partnum < 2; partnum++) {
 		if (!good_checksum(partnum))
 			++num_invalid;
 
-		printf("MAC (part %d): ", partnum);
+		printf("MAC (part %zx): ", partnum);
 		print_mac_address(partnum);
 		hexdump(partnum);
 	}
@@ -570,7 +570,7 @@ cmd_dump(void)
 }
 
 static void
-print_mac_address(int partnum)
+print_mac_address(size_t partnum)
 {
 	size_t c;
 	for (c = 0; c < 3; c++) {
@@ -584,7 +584,7 @@ print_mac_address(int partnum)
 }
 
 static void
-hexdump(int partnum)
+hexdump(size_t partnum)
 {
 	size_t c;
 	size_t row;
@@ -672,7 +672,7 @@ cmd_swap(void)
 }
 
 static int
-good_checksum(int partnum)
+good_checksum(size_t partnum)
 {
 	size_t w;
 	uint16_t total = 0;
@@ -682,7 +682,7 @@ good_checksum(int partnum)
 	if (total == NVM_CHECKSUM)
 		return 1;
 
-	fprintf(stderr, "WARNING: BAD checksum in part %d\n",
+	fprintf(stderr, "WARNING: BAD checksum in part %zx\n",
 	    partnum ^ invert);
 
 	set_err(ECANCELED);
@@ -695,7 +695,7 @@ good_checksum(int partnum)
  */
 
 static uint16_t
-word(size_t pos16, int p)
+word(size_t pos16, size_t p)
 {
 	size_t pos;
 
@@ -706,7 +706,7 @@ word(size_t pos16, int p)
 }
 
 static void
-set_word(size_t pos16, int p, uint16_t val16)
+set_word(size_t pos16, size_t p, uint16_t val16)
 {
 	size_t pos;
 
@@ -720,7 +720,7 @@ set_word(size_t pos16, int p, uint16_t val16)
 }
 
 static void
-check_bound(size_t c, int p)
+check_bound(size_t c, size_t p)
 {
 	/*
 	 * NVM_SIZE assumed as the limit, because the
@@ -745,7 +745,7 @@ check_bound(size_t c, int p)
 static void
 write_gbe(void)
 {
-	int p;
+	size_t p;
 
 	if (flags == O_RDONLY)
 		return;
@@ -757,7 +757,7 @@ write_gbe(void)
 }
 
 static void
-write_gbe_part(int p)
+write_gbe_part(size_t p)
 {
 	if (pwrite(fd, gbe_mem_offset(p, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite")) != GBE_PART_SIZE) {
@@ -775,7 +775,7 @@ write_gbe_part(int p)
  * This check is called, to ensure just that.
  */
 static off_t
-gbe_file_offset(int p, const char *f_op)
+gbe_file_offset(size_t p, const char *f_op)
 {
 	return gbe_x_offset(p, f_op, "file",
 	    partsize, st.st_size);
@@ -787,7 +787,7 @@ gbe_file_offset(int p, const char *f_op)
  * and it is *also* used during file I/O.
  */
 static void *
-gbe_mem_offset(int p, const char *f_op)
+gbe_mem_offset(size_t p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_FILE_SIZE);
@@ -796,7 +796,7 @@ gbe_mem_offset(int p, const char *f_op)
 }
 
 static off_t
-gbe_x_offset(int p, const char *f_op, const char *d_type,
+gbe_x_offset(size_t p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
 	off_t off = (off_t)p * nsize;
