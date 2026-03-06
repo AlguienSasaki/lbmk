@@ -352,7 +352,6 @@ open_gbe_file(void)
 		break;
 	default:
 		err(ECANCELED, "File size must be 8KB, 16KB or 128KB");
-		break;
 	}
 }
 
