@@ -51,6 +51,13 @@ static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
 static void set_err(int);
 
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__APPLE__)
+#ifndef HAVE_ARC4RANDOM
+#define HAVE_ARC4RANDOM
+#endif
+#endif
+
 #define NVM_CHECKSUM 0xBABA
 #define NVM_CHECKSUM_WORD 0x3F
 #define NVM_SIZE 128
@@ -64,12 +71,20 @@ static void set_err(int);
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
+static const char newrandom[] = "/dev/urandom";
+static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
+#ifndef HAVE_ARC4RANDOM
+static const char *rname = NULL;
+#endif
+
 static uint8_t buf[SIZE_8KB];
 static uint16_t macbuf[3];
 static off_t partsize;
 
 static int flags;
+#ifndef HAVE_ARC4RANDOM
 static int rfd = -1;
+#endif
 static int fd = -1;
 static int part;
 static int invert;
@@ -109,8 +124,22 @@ main(int argc, char *argv[])
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(ECANCELED, "pledge");
+
+	/*
+	 * For restricted filesystem access on early error.
+	 *
+	 * Unveiling the random device early, regardless of
+	 * whether we will use it, prevents operations on any
+	 * GbE files until we permit it, while performing the
+	 * prerequisite error checks.
+	 *
+	 * We don't actually use the random device on platforms
+	 * that have arc4random, which includes OpenBSD.
+	 */
 	if (unveil("/dev/urandom", "r") == -1)
 		err(ECANCELED, "unveil '/dev/urandom'");
+	if (unveil("/dev/random", "r") == -1)
+		err(ECANCELED, "unveil '/dev/random'");
 #endif
 
 	set_cmd(argc, argv);
@@ -148,8 +177,10 @@ main(int argc, char *argv[])
 
 	if (close(fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
+#ifndef HAVE_ARC4RANDOM
 	if (close(rfd) == -1)
-		err(ECANCELED, "close '/dev/urandom'");
+		err(ECANCELED, "close '%s'", rname);
+#endif
 
 	if (cmd != cmd_dump) {
 		if (errno)
@@ -241,9 +272,18 @@ static void
 open_files(void)
 {
 	struct stat st;
+#ifndef HAVE_ARC4RANDOM
 	struct stat st_rfd;
-
-	xopen(&rfd, "/dev/urandom", O_RDONLY, &st_rfd);
+	rname = newrandom;
+	if ((rfd = open(rname, O_RDONLY)) == -1) {
+		/*
+		 * Fall back to /dev/random on old platforms
+		 * where /dev/urandom does not exist.
+		 */
+		rname = oldrandom;
+		xopen(&rfd, rname, O_RDONLY, &st_rfd);
+	}
+#endif
 	xopen(&fd, fname, flags, &st);
 
 	switch(st.st_size) {
@@ -397,8 +437,12 @@ rhex(void)
 
 	if (n == -1) {
 		n = sizeof(rnum) - 1;
+#ifdef HAVE_ARC4RANDOM
+		arc4random_buf(rnum, sizeof(rnum));
+#else
 		read_file_PERFECTLY_or_die(rfd, rnum, sizeof(rnum),
-		    0, "/dev/urandom", NULL);
+		    0, rname, NULL);
+#endif
 	}
 
 	return rnum[n--] & 0xf;
