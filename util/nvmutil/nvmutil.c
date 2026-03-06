@@ -807,11 +807,13 @@ static off_t
 gbe_x_offset(size_t p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
-	off_t off = (off_t)p * nsize;
+	off_t off;
 
 	if (p > 1)
 		err(ECANCELED, "GbE %s %s invalid partnum: %s",
 		    d_type, f_op, fname);
+
+	off = (off_t)p * nsize;
 
 	if (off + GBE_PART_SIZE > ncmp)
 		err(ECANCELED, "GbE %s %s out of bounds: %s",
