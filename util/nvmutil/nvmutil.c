@@ -759,11 +759,16 @@ write_gbe(void)
 static void
 write_gbe_part(size_t p)
 {
-	if (pwrite(fd, gbe_mem_offset(p, "pwrite"),
-	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite")) != GBE_PART_SIZE) {
-		err(ECANCELED,
-		    "Can't write %d b to '%s' p%d", GBE_PART_SIZE, fname, p);
-	}
+	ssize_t rval = pwrite(fd, gbe_mem_offset(p, "pwrite"),
+	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
+
+	if (rval == -1)
+		err(ECANCELED, "Can't write %zx b to '%s' p%zx",
+		    GBE_PART_SIZE, fname, p);
+
+	if (rval != GBE_PART_SIZE)
+		err(ECANCELED, "CORRUPTED WRITE (%zx b) to file '%s' p%zx",
+		    rval, fname, p);
 }
 
 /*
