@@ -12,5 +12,5 @@ p7zip p7zip-plugins pandoc parted pciutils-devel perl perl-libwww-perl \
 python-unversioned-command python3 python3-setuptools rsync sharutils \
 subversion systemd-devel texinfo unifont unifont-fonts uuid-devel \
 unifont-ttf-fonts unzip wget xz zlib-devel ccache swig python3-devel \
-libuuid-devel gnutls-devel tar unar \
+libuuid-devel gnutls-devel tar unar libtool \
 "
