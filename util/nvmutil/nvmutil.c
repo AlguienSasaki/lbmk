@@ -27,7 +27,6 @@
 #endif
 #endif
 
-static void reset_global_state(void);
 static void set_cmd(int argc, char *argv[]);
 static void check_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
@@ -161,7 +160,6 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	reset_global_state();
 	fname = argv[1];
 
 #ifdef __OpenBSD__
@@ -237,32 +235,6 @@ main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	else
 		return EXIT_SUCCESS;
-}
-
-/*
- * Currently redundant, because the program only runs
- * once, but I plan to expand this tool so that it can
- * work on multiple files, using getop switches as args.
- */
-static void
-reset_global_state(void)
-{
-	errno = 0;
-
-	mac_str = NULL;
-	invert = 0;
-	part_modified[0] = 0;
-	part_modified[1] = 0;
-	fname = "";
-	cmd = NULL;
-	gbe_fd = -1;
-#ifndef HAVE_ARC4RANDOM_BUF
-	rfd = -1;
-#endif
-	part = 0;
-
-	memset(mac_buf, 0, sizeof(mac_buf));
-	memset(buf, 0, sizeof(buf));
 }
 
 static void
