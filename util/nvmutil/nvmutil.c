@@ -47,6 +47,8 @@ static void check_bound(size_t, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
 static off_t gbe_file_offset(int, const char *);
+static void *gbe_mem_offset(int p, const char *f_op);
+static off_t gbe_x_offset(int, const char *, const char *, off_t, off_t);
 static void usage(void);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
@@ -87,7 +89,8 @@ static void set_err(int);
  * There is a second 4KB part with the same
  * rules, and it *should* be identical.
  */
-#define GBE_PART_SIZE SIZE_4KB
+#define GBE_FILE_SIZE SIZE_8KB /* for buf */
+#define GBE_PART_SIZE (GBE_FILE_SIZE >> 1)
 #define NVM_CHECKSUM 0xBABA
 #define NVM_SIZE 128
 #define NVM_WORDS (NVM_SIZE / 2)
@@ -111,7 +114,7 @@ static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
 static const char *rname = NULL;
 #endif
 
-static uint8_t buf[SIZE_8KB];
+static uint8_t buf[GBE_FILE_SIZE]; /* 8KB */
 static uint16_t macbuf[3];
 static off_t partsize;
 
@@ -368,7 +371,7 @@ read_gbe(void)
 static void
 read_gbe_part(int p, int invert)
 {
-	read_file_PERFECTLY_or_die(fd, buf + (GBE_PART_SIZE * (p ^ invert)),
+	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
@@ -771,7 +774,7 @@ write_gbe(void)
 static void
 write_gbe_part(int p)
 {
-	if (pwrite(fd, buf + (GBE_PART_SIZE * p),
+	if (pwrite(fd, gbe_mem_offset(p, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite")) != GBE_PART_SIZE) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", GBE_PART_SIZE, fname, p);
@@ -789,13 +792,41 @@ write_gbe_part(int p)
 static off_t
 gbe_file_offset(int p, const char *f_op)
 {
-	off_t off = (off_t)p * partsize;
+	return gbe_x_offset(p, f_op, "file",
+	    partsize, st.st_size);
+}
 
-	if (off + GBE_PART_SIZE > st.st_size)
-		err(ECANCELED, "GbE file %s out of bounds: %s", f_op, fname);
+/*
+ * This one is similar to gbe_file_offset,
+ * but used to check Gbe bounds in memory,
+ * and it is *also* used during file I/O.
+ */
+static void *
+gbe_mem_offset(int p, const char *f_op)
+{
+	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
+	    GBE_PART_SIZE, GBE_FILE_SIZE);
 
-	if (off != 0 && off != st.st_size >> 1)
-		err(ECANCELED, "GbE file %s at bad offset: %s", f_op, fname);
+	return (void *)(buf + gbe_off);
+}
+
+static off_t
+gbe_x_offset(int p, const char *f_op, const char *d_type,
+    off_t nsize, off_t ncmp)
+{
+	off_t off = (off_t)p * nsize;
+
+	if ((unsigned int)p > 1)
+		err(ECANCELED, "GbE %s %s invalid partnum: %s",
+		    d_type, f_op, fname);
+
+	if (off + GBE_PART_SIZE > ncmp)
+		err(ECANCELED, "GbE %s %s out of bounds: %s",
+		    d_type, f_op, fname);
+
+	if (off != 0 && off != ncmp >> 1)
+		err(ECANCELED, "GbE %s %s at bad offset: %s",
+		    d_type, f_op, fname);
 
 	return off;
 }
