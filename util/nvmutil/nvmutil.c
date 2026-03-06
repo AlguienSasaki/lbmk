@@ -30,6 +30,7 @@
 static void reset_global_state(void);
 static void set_cmd(int argc, char *argv[]);
 static void check_cmd_args(int argc, char *argv[]);
+static size_t conv_argv_part_num(const char *part_str);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM
@@ -297,14 +298,41 @@ check_cmd_args(int argc, char *argv[])
 		if (argc > 3)
 			mac_str = argv[3];
 	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
-		part = argv[3][0] - '0';
-		if (argv[3][1] != '\0')
-			err(EINVAL, "Invalid part string: %s", argv[3]);
-		check_part_num(part);
+		part = conv_argv_part_num(argv[3]);
 	}
 
 	if (cmd == NULL)
 		err(EINVAL, "Bad command");
+}
+
+/*
+ * Not to be confused with check_part_num()
+ */
+static size_t
+conv_argv_part_num(const char *part_str)
+{
+	size_t rval;
+	unsigned char ch;
+
+	/*
+	 * Because char signedness is implementation is
+	 * implementation-defined, we must assumed that
+	 * it is signed, and guard accordingly.
+	 *
+	 * Do not use check_part_num() here. The same check
+	 * is done *here*, but on a character, with the
+	 * above caveat in mind.
+	 */
+
+	if (strlen(part_str) != 1)
+		err(EINVAL, "Partnum string '%s' wrong length.",
+		    part_str);
+
+	ch = (unsigned char)part_str[0];
+	ch -= '0';
+
+	check_part_num(rval = (size_t)ch);
+	return (size_t)ch;
 }
 
 static void
@@ -888,11 +916,14 @@ set_part_modified(size_t p)
 	part_modified[p] = 1;
 }
 
+/*
+ * Not to be confused with conv_argv_part_num()
+ */
 static void
 check_part_num(size_t p)
 {
 	if (p > 1)
-		err(ECANCELED, "Bad part number %zu", p);
+		err(EINVAL, "Bad part number (%zu)", p);
 }
 
 static void
