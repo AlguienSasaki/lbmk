@@ -432,20 +432,20 @@ hextonum(char ch)
 static uint8_t
 rhex(void)
 {
-	static int n = -1;
 	static uint8_t rnum[12];
+	static size_t n = 0;
 
-	if (n == -1) {
-		n = sizeof(rnum) - 1;
+	if (!n) {
 #ifdef HAVE_ARC4RANDOM
 		arc4random_buf(rnum, sizeof(rnum));
 #else
 		read_file_PERFECTLY_or_die(rfd, rnum, sizeof(rnum),
 		    0, rname, NULL);
 #endif
+		n = sizeof(rnum);
 	}
 
-	return rnum[n--] & 0xf;
+	return rnum[--n] & 0xf;
 }
 
 static void
