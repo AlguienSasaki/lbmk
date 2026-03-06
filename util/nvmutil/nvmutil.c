@@ -37,7 +37,7 @@ static void open_dev_urandom(void);
 #endif
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
-static void read_gbe_part(size_t, unsigned char);
+static void read_gbe_part(size_t, int);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t);
@@ -45,7 +45,7 @@ static void check_mac_separator(size_t);
 static void set_mac_nib(size_t, size_t);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
-static void xread(int, void *, size_t,
+static void read_file_exact(int, void *, size_t,
     off_t, const char *, const char *);
 static int write_mac_part(size_t);
 static void cmd_dump(void);
@@ -127,7 +127,7 @@ static int rfd = -1;
 static int fd = -1;
 static struct stat st;
 static size_t part;
-static unsigned char invert;
+static int invert;
 static unsigned char part_modified[2];
 
 static const char *mac_str = NULL;
@@ -272,13 +272,16 @@ set_cmd(int argc, char *argv[])
 		return;
 	}
 
-	for (i = 0; i < items(command) && cmd == NULL; i++) {
+	for (i = 0; i < items(command); i++) {
+		if (cmd != NULL)
+			break;
 		if (strcmp(argv[2], command[i].str) != 0)
 			continue;
 		if (argc >= command[i].args) {
 			cmd = command[i].cmd;
 			break;
 		}
+
 		err(EINVAL, "Too few args: command '%s'", command[i].str);
 	}
 }
@@ -364,14 +367,28 @@ static void
 read_gbe(void)
 {
 	size_t p;
-	int do_read[2] = {1, 1};
+	unsigned char do_read[2] = {1, 1};
 
+	/*
+	 * The copy, brick and setchecksum commands need
+	 * only read data from the user-specified part.
+	 *
+	 * We can skip reading the other part, thus:
+	 */
 	if (cmd == cmd_copy || cmd == cmd_brick || cmd == cmd_setchecksum)
 		do_read[part ^ 1] = 0;
 
 	/*
-	 * speedhack: if copy/swap, flip where data gets written to memory,
+	 * SPEED HACK:
+	 *
+	 * On copy/swap commands, flip where data gets written to memory,
 	 * so that cmd_copy and cmd_swap don't have to work on every word
+	 *
+	 * NOTE:
+	 *
+	 * write_gbe() will not use this, but the copy/setchecksum commands
+	 * will directly manipulate part_modified[], telling write_gbe()
+	 * to also write in reverse, as in read_gbe().
 	 */
 	if (cmd == cmd_copy || cmd == cmd_swap)
 		invert = 1;
@@ -383,9 +400,9 @@ read_gbe(void)
 }
 
 static void
-read_gbe_part(size_t p, unsigned char invert)
+read_gbe_part(size_t p, int invert)
 {
-	xread(fd, gbe_mem_offset(p ^ invert, "pread"),
+	read_file_exact(fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
@@ -519,7 +536,7 @@ rhex(void)
 #ifdef HAVE_ARC4RANDOM
 		arc4random_buf(rnum, n);
 #else
-		xread(rfd, rnum, n, 0, rname, NULL);
+		read_file_exact(rfd, rnum, n, 0, rname, NULL);
 #endif
 	}
 
@@ -527,7 +544,7 @@ rhex(void)
 }
 
 static void
-xread(int fd, void *buf, size_t len,
+read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op)
 {
 	int retry;
@@ -574,6 +591,7 @@ write_mac_part(size_t partnum)
 	print_mac_address(partnum);
 
 	set_checksum(partnum);
+
 	return 1;
 }
 
