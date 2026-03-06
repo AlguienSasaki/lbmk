@@ -408,10 +408,10 @@ set_mac_nib(int mac_pos, int nib)
 		    mac[mac_pos + nib]);
 
 	/* If random, ensure that local/unicast bits are set */
-	if (byte == 0 && nib == 1 &&
-	    (mac[mac_pos + nib] == '?') ||
+	if ((byte == 0) && (nib == 1) &&
+	    ((mac[mac_pos + nib] == '?') ||
 	    (mac[mac_pos + nib] == 'x') ||
-	    (mac[mac_pos + nib] == 'X')) /* random */
+	    (mac[mac_pos + nib] == 'X'))) /* random */
 		h = (h & 0xE) | 2; /* local, unicast */
 
 	/* Store the new nibble as part of the new MAC address */
