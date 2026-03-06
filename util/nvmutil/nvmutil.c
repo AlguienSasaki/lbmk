@@ -449,11 +449,14 @@ set_mac_nib(int mac_pos, int nib)
 		h = (h & 0xE) | 2; /* local, unicast */
 
 	/*
-	 * The word is stored big-endian in the file.
-	 * Logically in C, it is stored little-endian,
-	 * because of how we load in read_gbe(), so
-	 * we store the MAC address in reverse order
-	 * per 2-byte word (there are 3 of these).
+	 * Words other than the MAC address are stored little
+	 * endian in the file, and we handle that when reading.
+	 * However, MAC address words are stored big-endian
+	 * in that file, so we write each 2-byte word logically
+	 * in little-endian order, which on little-endian would
+	 * be stored big-endian in memory, and vice versa.
+	 *
+	 * Later code using the MAC string will handle this.
 	 */
 	shift = (byte & 1) << 3; /* left or right byte? */
 	shift |= (nib ^ 1) << 2; /* left or right nib? */
