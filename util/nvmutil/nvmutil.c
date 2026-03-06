@@ -60,8 +60,8 @@ static int good_checksum(size_t partnum);
 static uint16_t word(size_t pos16, size_t part);
 static void set_word(size_t pos16, size_t part, uint16_t val16);
 static void check_bound(size_t pos16, size_t part);
-static void write_gbe(void);
-static void write_gbe_part(size_t part);
+static void write_gbe_file(void);
+static void write_gbe_file_part(size_t part);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static void *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 
 	read_gbe_file();
 	(*cmd)();
-	write_gbe();
+	write_gbe_file();
 
 	if (close(fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
@@ -390,8 +390,8 @@ read_gbe_file(void)
 	 *
 	 * NOTE:
 	 *
-	 * write_gbe() will not use this, but the copy/setchecksum commands
-	 * will directly manipulate part_modified[], telling write_gbe()
+	 * write_gbe_file() will not use this, but the copy/setchecksum commands
+	 * will directly manipulate part_modified[], telling write_gbe_file()
 	 * to also write in reverse, as in read_gbe_file().
 	 */
 	if (cmd == cmd_copy || cmd == cmd_swap)
@@ -800,7 +800,7 @@ check_bound(size_t c, size_t p)
 }
 
 static void
-write_gbe(void)
+write_gbe_file(void)
 {
 	size_t p;
 
@@ -809,12 +809,12 @@ write_gbe(void)
 
 	for (p = 0; p < 2; p++) {
 		if (part_modified[p])
-			write_gbe_part(p);
+			write_gbe_file_part(p);
 	}
 }
 
 static void
-write_gbe_part(size_t p)
+write_gbe_file_part(size_t p)
 {
 	ssize_t rval = pwrite(fd, gbe_mem_offset(p, "pwrite"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
@@ -829,7 +829,7 @@ write_gbe_part(size_t p)
 }
 
 /*
- * Reads to GbE from write_gbe_part and read_gbe_file_part
+ * Reads to GbE from write_gbe_file_part and read_gbe_file_part
  * are filtered through here. These operations must
  * only write from the 0th position or the half position
  * within the GbE file, and write 4KB of data.
