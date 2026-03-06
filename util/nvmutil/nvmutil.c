@@ -61,8 +61,9 @@ static void set_err(int);
 #endif
 
 #define NVM_CHECKSUM 0xBABA
-#define NVM_CHECKSUM_WORD 0x3F
 #define NVM_SIZE 128
+#define NVM_WORDS (NVM_SIZE / 2)
+#define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
 #define SIZE_1KB 1024
 #define SIZE_4KB (4 * SIZE_1KB)
