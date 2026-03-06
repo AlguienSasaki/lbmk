@@ -356,11 +356,11 @@ open_gbe_file(void)
 }
 
 static void
-xopen(int *fd, const char *path, int flags, struct stat *st)
+xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
-	if ((*fd = open(path, flags)) == -1)
+	if ((*fd_ptr = open(path, flags)) == -1)
 		err(ECANCELED, "%s", path);
-	if (fstat(*fd, st) == -1)
+	if (fstat(*fd_ptr, st) == -1)
 		err(ECANCELED, "%s", path);
 }
 
