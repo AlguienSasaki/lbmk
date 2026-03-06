@@ -38,7 +38,7 @@ static void open_dev_urandom(void);
 #endif
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
-static void read_gbe_file_part(size_t part, unsigned char invert);
+static void read_gbe_file_part(size_t part, uint8_t invert);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_str_pos);
@@ -130,7 +130,7 @@ static int rfd = -1;
 #endif
 static int gbe_fd = -1;
 static size_t part;
-static unsigned char invert;
+static uint8_t invert;
 static unsigned char part_modified[2];
 
 static const char *mac_str = NULL;
@@ -433,7 +433,7 @@ read_gbe_file(void)
 }
 
 static void
-read_gbe_file_part(size_t p, unsigned char invert)
+read_gbe_file_part(size_t p, uint8_t invert)
 {
 	read_file_exact(gbe_fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
