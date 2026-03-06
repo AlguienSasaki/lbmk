@@ -36,8 +36,8 @@ static void open_gbe_file(void);
 static void open_dev_urandom(void);
 #endif
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
-static void read_gbe(void);
-static void read_gbe_part(size_t part, unsigned char invert);
+static void read_gbe_file(void);
+static void read_gbe_file_part(size_t part, unsigned char invert);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_str_pos);
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 		err(ECANCELED, "pledge stdio (main)");
 #endif
 
-	read_gbe();
+	read_gbe_file();
 	(*cmd)();
 	write_gbe();
 
@@ -366,7 +366,7 @@ xopen(int *f, const char *l, int p, struct stat *st)
 }
 
 static void
-read_gbe(void)
+read_gbe_file(void)
 {
 	size_t p;
 	unsigned char do_read[2] = {1, 1};
@@ -392,19 +392,19 @@ read_gbe(void)
 	 *
 	 * write_gbe() will not use this, but the copy/setchecksum commands
 	 * will directly manipulate part_modified[], telling write_gbe()
-	 * to also write in reverse, as in read_gbe().
+	 * to also write in reverse, as in read_gbe_file().
 	 */
 	if (cmd == cmd_copy || cmd == cmd_swap)
 		invert = 1;
 
 	for (p = 0; p < 2; p++) {
 		if (do_read[p])
-			read_gbe_part(p, invert);
+			read_gbe_file_part(p, invert);
 	}
 }
 
 static void
-read_gbe_part(size_t p, unsigned char invert)
+read_gbe_file_part(size_t p, unsigned char invert)
 {
 	read_file_exact(fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
@@ -697,7 +697,7 @@ cmd_copy(void)
 	/*
 	 * SPEED HACK:
 	 *
-	 * read_gbe() already performed the copy,
+	 * read_gbe_file() already performed the copy,
 	 * by virtue of inverted read. We need
 	 * only set the other part as changed.
 	 */
@@ -719,7 +719,7 @@ cmd_swap(void)
 	/*
 	 * SPEED HACK:
 	 *
-	 * read_gbe() already performed the swap,
+	 * read_gbe_file() already performed the swap,
 	 * by virtue of inverted read. We need
 	 * only set both parts as changed.
 	 */
@@ -829,7 +829,7 @@ write_gbe_part(size_t p)
 }
 
 /*
- * Reads to GbE from write_gbe_part and read_gbe_part
+ * Reads to GbE from write_gbe_part and read_gbe_file_part
  * are filtered through here. These operations must
  * only write from the 0th position or the half position
  * within the GbE file, and write 4KB of data.
