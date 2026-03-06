@@ -20,7 +20,7 @@ static void set_io_flags(int, char **);
 static void open_files(void);
 static void xopen(int *, const char *, int, struct stat *);
 static void read_gbe(void);
-static void read_gbe_part(size_t, int);
+static void read_gbe_part(size_t, unsigned char);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t);
@@ -124,7 +124,7 @@ static int rfd = -1;
 static int fd = -1;
 static struct stat st;
 static size_t part;
-static int invert;
+static unsigned char invert;
 static unsigned char part_modified[2];
 
 static const char *mac = NULL;
@@ -368,7 +368,7 @@ read_gbe(void)
 }
 
 static void
-read_gbe_part(size_t p, int invert)
+read_gbe_part(size_t p, unsigned char invert)
 {
 	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
