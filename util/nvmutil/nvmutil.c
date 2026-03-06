@@ -412,8 +412,8 @@ set_mac_nib(int mac_pos, int nib)
 			h = (h & 0xE) | 2; /* local, unicast */
 	}
 
-	macbuf[byte >> 1] |= (uint16_t)h << ((8 * (byte % 2)) +
-	    (4 * (nib ^ 1)));
+	macbuf[byte >> 1] |= (uint16_t)h <<
+	    (((byte & 1) << 3) + (4 * (nib ^ 1)));
 }
 
 static uint8_t
