@@ -359,7 +359,7 @@ parse_mac_string(void)
 {
 	int mac_pos;
 
-	if (strnlen(mac, 20) != 17)
+	if (strlen(mac) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
 	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
