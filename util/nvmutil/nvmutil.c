@@ -210,7 +210,9 @@ reset_global_state(void)
 	fname = "";
 	cmd = NULL;
 	fd = -1;
+#ifndef HAVE_ARC4RANDOM
 	rfd = -1;
+#endif
 	part = 0;
 
 	memset(macbuf, 0, sizeof(macbuf));
