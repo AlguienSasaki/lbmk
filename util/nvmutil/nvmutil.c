@@ -229,7 +229,7 @@ set_cmd(int argc, char *argv[])
 		return;
 	}
 
-	for (i = 0; (i < items(ops)) && (cmd == NULL); i++) {
+	for (i = 0; i < items(ops) && cmd == NULL; i++) {
 		if (strcmp(argv[2], ops[i].str) != 0)
 			continue;
 		if (argc >= ops[i].args) {
@@ -243,14 +243,14 @@ set_cmd(int argc, char *argv[])
 static void
 check_cmd_args(int argc, char *argv[])
 {
-	if ((cmd == NULL) && (argc > 2)) { /* nvm gbe [MAC] */
+	if (cmd == NULL && argc > 2) { /* nvm gbe [MAC] */
 		mac = argv[2];
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
 		mac = rmac; /* random MAC */
 		if (argc > 3)
 			mac = argv[3];
-	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
+	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
 		part = argv[3][0] - '0';
 		if (!((part == 0 || part == 1) && argv[3][1] == '\0'))
 			err(EINVAL, "Bad partnum: %s", argv[3]);
@@ -264,10 +264,10 @@ static void
 set_io_flags(int argc, char *argv[])
 {
 	flags = O_RDWR;
-	if (argc > 2) {
-		if (strcmp(argv[2], "dump") == 0)
-			flags = O_RDONLY;
-	}
+	if (argc < 3)
+		return;
+	if (strcmp(argv[2], "dump") == 0)
+		flags = O_RDONLY;
 }
 
 static void
@@ -315,15 +315,14 @@ read_gbe(void)
 	int p;
 	int do_read[2] = {1, 1};
 
-	if ((cmd == cmd_copy) || (cmd == cmd_brick) ||
-	    (cmd == cmd_setchecksum))
+	if (cmd == cmd_copy || cmd == cmd_brick || cmd == cmd_setchecksum)
 		do_read[part ^ 1] = 0;
 
 	/*
 	 * speedhack: if copy/swap, flip where data gets written to memory,
 	 * so that cmd_copy and cmd_swap don't have to work on every word
 	 */
-	if ((cmd == cmd_copy) || (cmd == cmd_swap))
+	if (cmd == cmd_copy || cmd == cmd_swap)
 		invert = 1;
 
 	for (p = 0; p < 2; p++) {
@@ -405,7 +404,7 @@ set_mac_nib(int mac_pos, int nib)
 		    mac[mac_pos + nib]);
 
 	/* If random, ensure that local/unicast bits are set */
-	if ((byte == 0) && (nib == 1)) {
+	if (byte == 0 && nib == 1) {
 		if ((mac[mac_pos + nib] == '?') ||
 		    (mac[mac_pos + nib] == 'x') ||
 		    (mac[mac_pos + nib] == 'X')) /* random */
@@ -419,13 +418,13 @@ set_mac_nib(int mac_pos, int nib)
 static uint8_t
 hextonum(char ch)
 {
-	if ((ch >= '0') && (ch <= '9'))
+	if (ch >= '0' && ch <= '9')
 		return ch - '0';
-	else if ((ch >= 'A') && (ch <= 'F'))
+	else if (ch >= 'A' && ch <= 'F')
 		return ch - 'A' + 10;
-	else if ((ch >= 'a') && (ch <= 'f'))
+	else if (ch >= 'a' && ch <= 'f')
 		return ch - 'a' + 10;
-	else if ((ch == '?') || (ch == 'x') || (ch == 'X'))
+	else if (ch == '?' || ch == 'x' || ch == 'X')
 		return rhex(); /* random hex value */
 	else
 		return 16; /* error: invalid character */
@@ -529,7 +528,7 @@ cmd_dump(void)
 		hexdump(partnum);
 	}
 
-	if ((num_invalid < 2))
+	if (num_invalid < 2)
 		errno = 0;
 }
 
@@ -700,7 +699,7 @@ check_bound(size_t c, int p)
 	 * we ever wish to work on the extented area.
 	 */
 
-	if ((p != 0) && (p != 1))
+	if (p != 0 && p != 1)
 		err(EINVAL, "check_bound: invalid partnum %d", p);
 	if (c >= (NVM_SIZE >> 1))
 		err(EINVAL, "check_bound: out of bounds %zu", c);
@@ -777,10 +776,12 @@ getnvmprogname(void)
 {
 	const char *p;
 
-	if ((argv0 == NULL) || (*argv0 == '\0'))
+	if (argv0 == NULL || *argv0 == '\0')
 		return "";
 
-	if ((p = strrchr(argv0, '/')))
+	p = strrchr(argv0, '/');
+
+	if (p)
 		return p + 1;
 	else
 		return argv0;
