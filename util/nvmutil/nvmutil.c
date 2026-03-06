@@ -91,7 +91,7 @@ static int invert;
 static int part_modified[2];
 
 static const char *mac = NULL;
-static const char *rmac = "xx:xx:xx:xx:xx:xx";
+static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *fname = "";
 static const char *argv0;
 
