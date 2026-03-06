@@ -23,9 +23,9 @@ static void read_gbe(void);
 static void read_gbe_part(size_t, int);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
-static void set_mac_byte(int);
-static void check_mac_separator(int);
-static void set_mac_nib(int, int);
+static void set_mac_byte(size_t);
+static void check_mac_separator(size_t);
+static void set_mac_nib(size_t, size_t);
 static uint8_t hextonum(char);
 static uint8_t rhex(void);
 static void read_file_PERFECTLY_or_die(int, void *, size_t,
@@ -392,7 +392,7 @@ cmd_setmac(void)
 static void
 parse_mac_string(void)
 {
-	int mac_pos;
+	size_t mac_pos;
 
 	if (strlen(mac) != 17)
 		err(EINVAL, "MAC address is the wrong length");
@@ -407,9 +407,9 @@ parse_mac_string(void)
 }
 
 static void
-set_mac_byte(int mac_pos)
+set_mac_byte(size_t mac_pos)
 {
-	int nib;
+	size_t nib;
 	check_mac_separator(mac_pos);
 
 	for (nib = 0; nib < 2; nib++)
@@ -417,7 +417,7 @@ set_mac_byte(int mac_pos)
 }
 
 static void
-check_mac_separator(int mac_pos)
+check_mac_separator(size_t mac_pos)
 {
 	char separator;
 
@@ -430,11 +430,11 @@ check_mac_separator(int mac_pos)
 }
 
 static void
-set_mac_nib(int mac_pos, int nib)
+set_mac_nib(size_t mac_pos, size_t nib)
 {
 	uint8_t h;
-	int byte;
-	int shift;
+	size_t byte;
+	size_t shift;
 
 	if ((h = hextonum(mac[mac_pos + nib])) > 15)
 		err(EINVAL, "Invalid character '%c'",
