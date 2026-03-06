@@ -22,8 +22,8 @@
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
-#ifndef HAVE_ARC4RANDOM
-#define HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
+#define HAVE_ARC4RANDOM_BUF
 #endif
 #endif
 
@@ -33,7 +33,7 @@ static void check_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
 #endif
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
@@ -116,7 +116,7 @@ static void set_err(int errval);
 
 static const char newrandom[] = "/dev/urandom";
 static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 static const char *rname = NULL;
 #endif
 
@@ -125,7 +125,7 @@ static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
 static int gbe_flags;
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 static int rfd = -1;
 #endif
 static int gbe_fd = -1;
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 	}
 #endif
 
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 	open_dev_urandom();
 #endif
 	open_gbe_file();
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 
 	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 	if (close(rfd) == -1)
 		err(ECANCELED, "close '%s'", rname);
 #endif
@@ -256,7 +256,7 @@ reset_global_state(void)
 	fname = "";
 	cmd = NULL;
 	gbe_fd = -1;
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 	rfd = -1;
 #endif
 	part = 0;
@@ -346,7 +346,7 @@ set_io_flags(int argc, char *argv[])
 		gbe_flags = O_RDONLY;
 }
 
-#ifndef HAVE_ARC4RANDOM
+#ifndef HAVE_ARC4RANDOM_BUF
 static void
 open_dev_urandom(void)
 {
@@ -577,7 +577,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-#ifdef HAVE_ARC4RANDOM
+#ifdef HAVE_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
 		read_file_exact(rfd, rnum, n, 0, rname, NULL);
