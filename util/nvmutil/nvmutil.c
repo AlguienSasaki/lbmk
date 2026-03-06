@@ -44,7 +44,7 @@ static int good_checksum(int);
 static uint16_t word(size_t, int);
 static void set_word(size_t, int, uint16_t);
 static size_t get_word_pos(size_t, int);
-static void check_bound(ssize_t, int);
+static void check_bound(size_t, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
 static void usage(void);
@@ -619,7 +619,7 @@ word(size_t pos16, int p)
 {
 	size_t pos;
 
-	check_bound((ssize_t)pos16, p);
+	check_bound(pos16, p);
 	pos = get_word_pos(pos16, p);
 
 	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
@@ -630,7 +630,7 @@ set_word(size_t pos16, int p, uint16_t val16)
 {
 	size_t pos;
 
-	check_bound((ssize_t)pos16, p);
+	check_bound(pos16, p);
 	pos = get_word_pos(pos16, p);
 
 	buf[pos] = (uint8_t)(val16 & 0xff);
@@ -649,8 +649,10 @@ get_word_pos(size_t pos16, int p)
 }
 
 static void
-check_bound(ssize_t c, int p)
+check_bound(size_t c, int p)
 {
+	ssize_t a = (ssize_t) c;
+
 	/*
 	 * NVM_SIZE assumed as the limit, because the
 	 * current design assumes that we will only
@@ -667,8 +669,8 @@ check_bound(ssize_t c, int p)
 
 	if ((p != 0) && (p != 1))
 		err(EINVAL, "check_bound: invalid partnum %d", p);
-	if ((c < 0) || (c >= (NVM_SIZE >> 1)))
-		err(EINVAL, "check_bound: out of bounds %zd", c);
+	if ((a < 0) || (a >= (NVM_SIZE >> 1)))
+		err(EINVAL, "check_bound: out of bounds %zd", a);
 }
 
 static void
