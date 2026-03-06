@@ -35,6 +35,7 @@ static void cmd_dump(void);
 static void print_mac_address(size_t);
 static void hexdump(size_t);
 static void cmd_setchecksum(void);
+static void set_checksum(size_t);
 static void cmd_brick(void);
 static void cmd_copy(void);
 static void cmd_swap(void);
@@ -539,7 +540,6 @@ write_mac_part(size_t partnum)
 {
 	size_t w;
 
-	part = partnum;
 	if (!good_checksum(partnum))
 		return 0;
 
@@ -549,7 +549,7 @@ write_mac_part(size_t partnum)
 	printf("Wrote MAC address to part %zu: ", partnum);
 	print_mac_address(partnum);
 
-	cmd_setchecksum();
+	set_checksum(partnum);
 	return 1;
 }
 
@@ -608,13 +608,19 @@ hexdump(size_t partnum)
 static void
 cmd_setchecksum(void)
 {
+	set_checksum(part);
+}
+
+static void
+set_checksum(size_t p)
+{
 	size_t c;
 	uint16_t val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += word(c, part);
+		val16 += word(c, p);
 
-	set_word(NVM_CHECKSUM_WORD, part, NVM_CHECKSUM - val16);
+	set_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
 }
 
 static void
