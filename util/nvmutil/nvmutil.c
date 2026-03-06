@@ -369,7 +369,7 @@ read_gbe(void)
 static void
 read_gbe_part(size_t p, int invert)
 {
-	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pwrite"),
+	read_file_PERFECTLY_or_die(fd, gbe_mem_offset(p ^ invert, "pread"),
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
