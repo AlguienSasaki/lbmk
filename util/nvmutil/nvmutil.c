@@ -53,7 +53,8 @@ static const char *getnvmprogname(void);
 static void set_err(int);
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__)
+    defined(__NetBSD__) || defined(__APPLE__) || \
+    defined(__DragonFly__)
 #ifndef HAVE_ARC4RANDOM
 #define HAVE_ARC4RANDOM
 #endif
