@@ -126,7 +126,7 @@ static int flags;
 static int rfd = -1;
 #endif
 static int fd = -1;
-static struct stat st;
+static struct stat gbe_st;
 static size_t part;
 static unsigned char invert;
 static unsigned char part_modified[2];
@@ -339,13 +339,13 @@ open_dev_urandom(void)
 static void
 open_gbe_file(void)
 {
-	xopen(&fd, fname, flags, &st);
+	xopen(&fd, fname, flags, &gbe_st);
 
-	switch(st.st_size) {
+	switch(gbe_st.st_size) {
 	case SIZE_8KB:
 	case SIZE_16KB:
 	case SIZE_128KB:
-		partsize = st.st_size >> 1;
+		partsize = gbe_st.st_size >> 1;
 		break;
 	default:
 		err(ECANCELED, "File size must be 8KB, 16KB or 128KB");
@@ -837,7 +837,7 @@ static off_t
 gbe_file_offset(size_t p, const char *f_op)
 {
 	return gbe_x_offset(p, f_op, "file",
-	    partsize, st.st_size);
+	    partsize, gbe_st.st_size);
 }
 
 /*
