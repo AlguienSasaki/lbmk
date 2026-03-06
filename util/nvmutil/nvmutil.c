@@ -41,10 +41,10 @@ static void cmd_brick(void);
 static void cmd_copy(void);
 static void cmd_swap(void);
 static int good_checksum(int);
-static uint16_t word(int, int);
-static void set_word(int, int, uint16_t);
-static int get_word_pos(int, int);
-static void check_bound(int, int);
+static uint16_t word(size_t, int);
+static void set_word(size_t, int, uint16_t);
+static size_t get_word_pos(size_t, int);
+static void check_bound(ssize_t, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
 static void usage(void);
@@ -454,7 +454,7 @@ check_read_or_die(const char *rpath, ssize_t rval, size_t rsize,
 static int
 write_mac_part(int partnum)
 {
-	int w;
+	size_t w;
 
 	part = partnum;
 	if (!good_checksum(partnum))
@@ -492,7 +492,7 @@ cmd_dump(void)
 static void
 print_mac_address(int partnum)
 {
-	int c;
+	size_t c;
 	for (c = 0; c < 3; c++) {
 		uint16_t val16 = word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
@@ -506,12 +506,12 @@ print_mac_address(int partnum)
 static void
 hexdump(int partnum)
 {
-	int c;
-	int row;
+	size_t c;
+	size_t row;
 	uint16_t val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08x ", row << 4);
+		printf("%08lx ", row << 4);
 		for (c = 0; c < 8; c++) {
 			val16 = word((row << 3) + c, partnum);
 			if (c == 4)
@@ -525,7 +525,7 @@ hexdump(int partnum)
 static void
 cmd_setchecksum(void)
 {
-	int c;
+	size_t c;
 	uint16_t val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
@@ -594,7 +594,7 @@ cmd_swap(void)
 static int
 good_checksum(int partnum)
 {
-	int w;
+	size_t w;
 	uint16_t total = 0;
 	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
 		total += word(w, partnum);
@@ -610,22 +610,22 @@ good_checksum(int partnum)
 }
 
 static uint16_t
-word(int pos16, int p)
+word(size_t pos16, int p)
 {
-	int pos;
+	size_t pos;
 
-	check_bound(pos16, p);
+	check_bound((ssize_t)pos16, p);
 	pos = get_word_pos(pos16, p);
 
 	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
 }
 
 static void
-set_word(int pos16, int p, uint16_t val16)
+set_word(size_t pos16, int p, uint16_t val16)
 {
-	int pos;
+	size_t pos;
 
-	check_bound(pos16, p);
+	check_bound((ssize_t)pos16, p);
 	pos = get_word_pos(pos16, p);
 
 	buf[pos++] = (uint8_t)(val16 & 0xff);
@@ -634,17 +634,17 @@ set_word(int pos16, int p, uint16_t val16)
 	part_modified[p] = 1;
 }
 
-static int
-get_word_pos(int pos16, int p)
+static size_t
+get_word_pos(size_t pos16, int p)
 {
-	int off = SIZE_4KB * p;
-	int pos = (pos16 << 1) + off;
+	size_t off = SIZE_4KB * p;
+	size_t pos = (pos16 << 1) + off;
 
 	return pos;
 }
 
 static void
-check_bound(int c, int p)
+check_bound(ssize_t c, int p)
 {
 	/*
 	 * NVM_SIZE assumed as the limit, because the
@@ -663,7 +663,7 @@ check_bound(int c, int p)
 	if ((p != 0) && (p != 1))
 		err(EINVAL, "check_bound: invalid partnum %d", p);
 	if ((c < 0) || (c >= (NVM_SIZE >> 1)))
-		err(EINVAL, "check_bound: out of bounds %d", c);
+		err(EINVAL, "check_bound: out of bounds %zd", c);
 }
 
 static void
