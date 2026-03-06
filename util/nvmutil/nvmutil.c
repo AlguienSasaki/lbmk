@@ -468,10 +468,7 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 	uint8_t mac_ch;
 
 	size_t mac_byte_pos;
-
-	size_t mac_buf_word_pos;
-	size_t mac_buf_byte_pos;
-	size_t mac_buf_nib_pos;
+	size_t mac_word_left_shift;
 
 	if ((mac_ch = hextonum(mac_str[mac_str_pos + mac_nib_pos])) > 15)
 		err(EINVAL, "Invalid character '%c'",
@@ -496,15 +493,15 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 	 *
 	 * Later code using the MAC string will handle this.
 	 */
-	mac_buf_word_pos = mac_byte_pos >> 1;
-	mac_buf_byte_pos = (mac_byte_pos & 1) << 3; /* left or right byte? */
-	mac_buf_nib_pos = (mac_nib_pos ^ 1) << 2; /* left or right nib? */
+	mac_word_left_shift =
+	    ((mac_byte_pos & 1) << 3) /* left or right byte? */
+	     | ((mac_nib_pos ^ 1) << 2); /* left or right nib? */
 
 	/*
 	 * Now we can shift properly, OR'ing the result:
 	 */
-	mac_buf[mac_buf_word_pos] |= (uint16_t)mac_ch <<
-	    (mac_buf_byte_pos | mac_buf_nib_pos);
+	mac_buf[mac_byte_pos >> 1] |=
+	    (uint16_t)mac_ch << mac_word_left_shift;
 }
 
 static uint8_t
