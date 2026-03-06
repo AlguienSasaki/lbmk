@@ -436,13 +436,12 @@ rhex(void)
 	static size_t n = 0;
 
 	if (!n) {
-#ifdef HAVE_ARC4RANDOM
-		arc4random_buf(rnum, sizeof(rnum));
-#else
-		read_file_PERFECTLY_or_die(rfd, rnum, sizeof(rnum),
-		    0, rname, NULL);
-#endif
 		n = sizeof(rnum);
+#ifdef HAVE_ARC4RANDOM
+		arc4random_buf(rnum, n);
+#else
+		read_file_PERFECTLY_or_die(rfd, rnum, n, 0, rname, NULL);
+#endif
 	}
 
 	return rnum[--n] & 0xf;
