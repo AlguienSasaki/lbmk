@@ -609,6 +609,11 @@ good_checksum(int partnum)
 	return 0;
 }
 
+/*
+ * GbE NVM files store 16-bit (2-byte) little-endian words.
+ * We must therefore swap the order when reading or writing.
+ */
+
 static uint16_t
 word(size_t pos16, int p)
 {
