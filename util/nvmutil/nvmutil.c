@@ -117,7 +117,7 @@ static const char *rname = NULL;
 #endif
 
 static uint8_t buf[GBE_FILE_SIZE]; /* 8KB */
-static uint16_t macbuf[3];
+static uint16_t mac_buf[3];
 static off_t partsize;
 
 static int flags;
@@ -130,7 +130,7 @@ static size_t part;
 static unsigned char invert;
 static unsigned char part_modified[2];
 
-static const char *mac = NULL;
+static const char *mac_str = NULL;
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *fname = "";
 static const char *argv0;
@@ -246,7 +246,7 @@ reset_global_state(void)
 {
 	errno = 0;
 
-	mac = NULL;
+	mac_str = NULL;
 	invert = 0;
 	part_modified[0] = 0;
 	part_modified[1] = 0;
@@ -258,7 +258,7 @@ reset_global_state(void)
 #endif
 	part = 0;
 
-	memset(macbuf, 0, sizeof(macbuf));
+	memset(mac_buf, 0, sizeof(mac_buf));
 	memset(buf, 0, sizeof(buf));
 }
 
@@ -287,12 +287,12 @@ static void
 check_cmd_args(int argc, char *argv[])
 {
 	if (cmd == NULL && argc > 2) { /* nvm gbe [MAC] */
-		mac = argv[2];
+		mac_str = argv[2];
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
-		mac = rmac; /* random MAC */
+		mac_str = rmac; /* random MAC */
 		if (argc > 3)
-			mac = argv[3];
+			mac_str = argv[3];
 	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
 		part = argv[3][0] - '0';
 		if (!((part == 0 || part == 1) && argv[3][1] == '\0'))
@@ -396,10 +396,11 @@ cmd_setmac(void)
 	unsigned char mac_updated = 0;
 
 	parse_mac_string();
-	printf("MAC address to be written: %s\n", mac);
+	printf("MAC address to be written: %s\n", mac_str);
 
 	for (partnum = 0; partnum < 2; partnum++)
 		mac_updated |= write_mac_part(partnum);
+
 	if (mac_updated)
 		errno = 0;
 }
@@ -407,63 +408,68 @@ cmd_setmac(void)
 static void
 parse_mac_string(void)
 {
-	size_t mac_pos;
+	size_t mac_str_pos;
 
-	if (strlen(mac) != 17)
+	if (strlen(mac_str) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
-	for (mac_pos = 0; mac_pos < 16; mac_pos += 3)
-		set_mac_byte(mac_pos);
+	for (mac_str_pos = 0; mac_str_pos < 16; mac_str_pos += 3)
+		set_mac_byte(mac_str_pos);
 
-	if ((macbuf[0] | macbuf[1] | macbuf[2]) == 0)
+	if ((mac_buf[0] | mac_buf[1] | mac_buf[2]) == 0)
 		err(EINVAL, "Must not specify all-zeroes MAC address");
-	if (macbuf[0] & 1)
+
+	if (mac_buf[0] & 1)
 		err(EINVAL, "Must not specify multicast MAC address");
 }
 
 static void
-set_mac_byte(size_t mac_pos)
+set_mac_byte(size_t mac_str_pos)
 {
-	size_t nib;
+	size_t mac_nib_pos;
 
-	check_mac_separator(mac_pos);
+	check_mac_separator(mac_str_pos);
 
-	for (nib = 0; nib < 2; nib++)
-		set_mac_nib(mac_pos, nib);
+	for (mac_nib_pos = 0; mac_nib_pos < 2; mac_nib_pos++)
+		set_mac_nib(mac_str_pos, mac_nib_pos);
 }
 
 static void
-check_mac_separator(size_t mac_pos)
+check_mac_separator(size_t mac_str_pos)
 {
 	char separator;
 
-	if (mac_pos == 15)
+	if (mac_str_pos == 15)
 		return;
-	if ((separator = mac[mac_pos + 2]) == ':')
+	if ((separator = mac_str[mac_str_pos + 2]) == ':')
 		return;
 
 	err(EINVAL, "Invalid MAC address separator '%c'", separator);
 }
 
 static void
-set_mac_nib(size_t mac_pos, size_t nib)
+set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 {
-	uint8_t h;
-	size_t byte;
-	size_t shift;
+	uint8_t mac_ch;
 
-	if ((h = hextonum(mac[mac_pos + nib])) > 15)
+	size_t mac_byte_pos;
+
+	size_t mac_buf_word_pos;
+	size_t mac_buf_byte_pos;
+	size_t mac_buf_nib_pos;
+
+	if ((mac_ch = hextonum(mac_str[mac_str_pos + mac_nib_pos])) > 15)
 		err(EINVAL, "Invalid character '%c'",
-		    mac[mac_pos + nib]);
+		    mac_str[mac_str_pos + mac_nib_pos]);
 
-	byte = mac_pos / 3;
+	mac_byte_pos = mac_str_pos / 3;
 
 	/* If random, ensure that local/unicast bits are set */
-	if ((byte == 0) && (nib == 1) &&
-	    ((mac[mac_pos + nib] == '?') ||
-	    (mac[mac_pos + nib] == 'x') ||
-	    (mac[mac_pos + nib] == 'X'))) /* random */
-		h = (h & 0xE) | 2; /* local, unicast */
+	if ((mac_byte_pos == 0) && (mac_nib_pos == 1) &&
+	    ((mac_str[mac_str_pos + mac_nib_pos] == '?') ||
+	    (mac_str[mac_str_pos + mac_nib_pos] == 'x') ||
+	    (mac_str[mac_str_pos + mac_nib_pos] == 'X'))) /* random */
+		mac_ch = (mac_ch & 0xE) | 2; /* local, unicast */
 
 	/*
 	 * Words other than the MAC address are stored little
@@ -475,26 +481,28 @@ set_mac_nib(size_t mac_pos, size_t nib)
 	 *
 	 * Later code using the MAC string will handle this.
 	 */
-	shift = (byte & 1) << 3; /* left or right byte? */
-	shift |= (nib ^ 1) << 2; /* left or right nib? */
+	mac_buf_word_pos = mac_byte_pos >> 1;
+	mac_buf_byte_pos = (mac_byte_pos & 1) << 3; /* left or right byte? */
+	mac_buf_nib_pos = (mac_nib_pos ^ 1) << 2; /* left or right nib? */
 
 	/*
 	 * Now we can shift properly, OR'ing the result:
 	 */
-	macbuf[byte >> 1] |= (uint16_t)h << shift;
+	mac_buf[mac_buf_word_pos] |= (uint16_t)mac_ch <<
+	    (mac_buf_byte_pos | mac_buf_nib_pos);
 }
 
 static uint8_t
-hextonum(char ch)
+hextonum(char mac_ch)
 {
-	if ((unsigned)(ch - '0') <= 9)
-		return ch - '0';
+	if ((unsigned)(mac_ch - '0') <= 9)
+		return mac_ch - '0';
 
-	ch |= 0x20;
+	mac_ch |= 0x20;
 
-	if ((unsigned)(ch - 'a') <= 5)
-		return ch - 'a' + 10;
-	else if (ch == '?' || ch == 'x')
+	if ((unsigned)(mac_ch - 'a') <= 5)
+		return mac_ch - 'a' + 10;
+	else if (mac_ch == '?' || mac_ch == 'x')
 		return rhex(); /* random character */
 	else
 		return 16; /* invalid character */
@@ -560,7 +568,7 @@ write_mac_part(size_t partnum)
 		return 0;
 
 	for (w = 0; w < 3; w++)
-		set_word(w, partnum, macbuf[w]);
+		set_word(w, partnum, mac_buf[w]);
 
 	printf("Wrote MAC address to part %zu: ", partnum);
 	print_mac_address(partnum);
