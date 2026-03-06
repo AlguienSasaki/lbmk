@@ -124,7 +124,7 @@ static int fd = -1;
 static struct stat st;
 static size_t part;
 static int invert;
-static int part_modified[2];
+static unsigned char part_modified[2];
 
 static const char *mac = NULL;
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
