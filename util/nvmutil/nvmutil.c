@@ -373,7 +373,9 @@ read_gbe(void)
 	 *
 	 * We can skip reading the other part, thus:
 	 */
-	if (cmd == cmd_copy || cmd == cmd_brick || cmd == cmd_setchecksum)
+	if (cmd == cmd_copy ||
+	    cmd == cmd_brick ||
+	    cmd == cmd_setchecksum)
 		do_read[part ^ 1] = 0;
 
 	/*
