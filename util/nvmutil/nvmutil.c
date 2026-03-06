@@ -131,7 +131,7 @@ static int rfd = -1;
 static int gbe_fd = -1;
 static size_t part;
 static uint8_t invert;
-static unsigned char part_modified[2];
+static uint8_t part_modified[2];
 
 static const char *mac_str = NULL;
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
