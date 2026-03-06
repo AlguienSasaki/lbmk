@@ -414,9 +414,20 @@ set_mac_nib(int mac_pos, int nib)
 	    (mac[mac_pos + nib] == 'X'))) /* random */
 		h = (h & 0xE) | 2; /* local, unicast */
 
-	/* Store the new nibble as part of the new MAC address */
-	macbuf[byte >> 1] |= (uint16_t)h <<
-	    (((byte & 1) << 3) + (4 * (nib ^ 1)));
+	/*
+	 * The word is stored big-endian in the file.
+	 * Logically in C, it is stored little-endian,
+	 * because of how we load in read_gbe(), so
+	 * we store the MAC address in reverse order
+	 * per 2-byte word (there are 3 of these).
+	 */
+	int shift = (byte & 1) << 3; /* left or right byte? */
+	shift |= (nib ^ 1) << 2; /* left or right nib? */
+
+	/*
+	 * Now we can shift properly, OR'ing the result:
+	 */
+	macbuf[byte >> 1] |= (uint16_t)h << shift;
 }
 
 static uint8_t
