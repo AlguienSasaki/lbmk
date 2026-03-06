@@ -66,6 +66,8 @@ static off_t gbe_file_offset(size_t part, const char *f_op);
 static void *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
+static void set_part_modified(size_t p);
+static void check_part_num(size_t p);
 static void usage(void);
 static void err(int nvm_errval, const char *msg, ...);
 static const char *getnvmprogname(void);
@@ -297,8 +299,9 @@ check_cmd_args(int argc, char *argv[])
 			mac_str = argv[3];
 	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
 		part = argv[3][0] - '0';
-		if (!((part == 0 || part == 1) && argv[3][1] == '\0'))
-			err(EINVAL, "Bad partnum: %s", argv[3]);
+		if (argv[3][1] != '\0')
+			err(EINVAL, "Invalid part string: %s", argv[3]);
+		check_part_num(part);
 	}
 
 	if (cmd == NULL)
@@ -658,8 +661,7 @@ set_checksum(size_t p)
 	size_t c;
 	uint16_t val16 = 0;
 
-	if (p > 1)
-		err(ECANCELED, "Bad part num %zu (must be 0 or 1)", p);
+	check_part_num(p);
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += word(c, p);
@@ -699,7 +701,7 @@ cmd_copy(void)
 	 * by virtue of inverted read. We need
 	 * only set the other part as changed.
 	 */
-	part_modified[part ^ 1] = 1;
+	set_part_modified(part ^ 1);
 }
 
 static void
@@ -721,7 +723,8 @@ cmd_swap(void)
 	 * by virtue of inverted read. We need
 	 * only set both parts as changed.
 	 */
-	part_modified[1] = part_modified[0] = 1;
+	set_part_modified(0);
+	set_part_modified(1);
 }
 
 static int
@@ -770,7 +773,7 @@ set_word(size_t pos16, size_t p, uint16_t val16)
 	buf[pos] = (uint8_t)(val16 & 0xff);
 	buf[pos + 1] = (uint8_t)(val16 >> 8);
 
-	part_modified[p] = 1;
+	set_part_modified(p);
 }
 
 static void
@@ -790,8 +793,8 @@ check_bound(size_t c, size_t p)
 	 * we ever wish to work on the extented area.
 	 */
 
-	if (p != 0 && p != 1)
-		err(EINVAL, "check_bound: invalid partnum %zu", p);
+	check_part_num(p);
+
 	if (c >= NVM_WORDS)
 		err(EINVAL, "check_bound: out of bounds %zu", c);
 }
@@ -860,9 +863,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 {
 	off_t off;
 
-	if (p > 1)
-		err(ECANCELED, "GbE %s %s invalid partnum: %s",
-		    d_type, f_op, fname);
+	check_part_num(p);
 
 	off = (off_t)p * nsize;
 
@@ -875,6 +876,20 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 		    d_type, f_op, fname);
 
 	return off;
+}
+
+static void
+set_part_modified(size_t p)
+{
+	check_part_num(p);
+	part_modified[p] = 1;
+}
+
+static void
+check_part_num(size_t p)
+{
+	if (p > 1)
+		err(ECANCELED, "Bad part number %zu", p);
 }
 
 static void
