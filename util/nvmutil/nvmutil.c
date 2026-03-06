@@ -651,8 +651,6 @@ get_word_pos(size_t pos16, int p)
 static void
 check_bound(size_t c, int p)
 {
-	ssize_t a = (ssize_t) c;
-
 	/*
 	 * NVM_SIZE assumed as the limit, because the
 	 * current design assumes that we will only
@@ -669,8 +667,8 @@ check_bound(size_t c, int p)
 
 	if ((p != 0) && (p != 1))
 		err(EINVAL, "check_bound: invalid partnum %d", p);
-	if ((a < 0) || (a >= (NVM_SIZE >> 1)))
-		err(EINVAL, "check_bound: out of bounds %zd", a);
+	if (c >= (NVM_SIZE >> 1))
+		err(EINVAL, "check_bound: out of bounds %zu", c);
 }
 
 static void
