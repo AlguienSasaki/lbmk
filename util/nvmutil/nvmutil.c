@@ -121,14 +121,13 @@ static const char *rname = NULL;
 
 static uint8_t buf[GBE_FILE_SIZE]; /* 8KB */
 static uint16_t mac_buf[3];
-static off_t partsize;
+static off_t gbe_file_size;
 
 static int gbe_flags;
 #ifndef HAVE_ARC4RANDOM
 static int rfd = -1;
 #endif
 static int gbe_fd = -1;
-static struct stat gbe_st;
 static size_t part;
 static unsigned char invert;
 static unsigned char part_modified[2];
@@ -342,13 +341,16 @@ open_dev_urandom(void)
 static void
 open_gbe_file(void)
 {
+	static struct stat gbe_st;
+
 	xopen(&gbe_fd, fname, gbe_flags, &gbe_st);
 
-	switch(gbe_st.st_size) {
+	gbe_file_size = gbe_st.st_size;
+
+	switch (gbe_file_size) {
 	case SIZE_8KB:
 	case SIZE_16KB:
 	case SIZE_128KB:
-		partsize = gbe_st.st_size >> 1;
 		break;
 	default:
 		err(ECANCELED, "File size must be 8KB, 16KB or 128KB");
@@ -841,7 +843,7 @@ static off_t
 gbe_file_offset(size_t p, const char *f_op)
 {
 	return gbe_x_offset(p, f_op, "file",
-	    partsize, gbe_st.st_size);
+	    gbe_file_size >> 1, gbe_file_size);
 }
 
 /*
