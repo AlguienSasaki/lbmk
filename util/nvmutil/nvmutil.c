@@ -273,8 +273,6 @@ set_cmd(int argc, char *argv[])
 	}
 
 	for (i = 0; i < items(command); i++) {
-		if (cmd != NULL)
-			break;
 		if (strcmp(argv[2], command[i].str) != 0)
 			continue;
 		if (argc >= command[i].args) {
