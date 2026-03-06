@@ -543,7 +543,7 @@ write_mac_part(size_t partnum)
 	for (w = 0; w < 3; w++)
 		set_word(w, partnum, macbuf[w]);
 
-	printf("Wrote MAC address to part %zx: ", partnum);
+	printf("Wrote MAC address to part %zu: ", partnum);
 	print_mac_address(partnum);
 
 	cmd_setchecksum();
@@ -560,7 +560,7 @@ cmd_dump(void)
 		if (!good_checksum(partnum))
 			++num_invalid;
 
-		printf("MAC (part %zx): ", partnum);
+		printf("MAC (part %zu): ", partnum);
 		print_mac_address(partnum);
 		hexdump(partnum);
 	}
@@ -682,7 +682,7 @@ good_checksum(size_t partnum)
 	if (total == NVM_CHECKSUM)
 		return 1;
 
-	fprintf(stderr, "WARNING: BAD checksum in part %zx\n",
+	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
 	    partnum ^ invert);
 
 	set_err(ECANCELED);
@@ -763,11 +763,11 @@ write_gbe_part(size_t p)
 	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
 
 	if (rval == -1)
-		err(ECANCELED, "Can't write %zx b to '%s' p%zx",
+		err(ECANCELED, "Can't write %zu b to '%s' p%zu",
 		    GBE_PART_SIZE, fname, p);
 
 	if (rval != GBE_PART_SIZE)
-		err(ECANCELED, "CORRUPTED WRITE (%zx b) to file '%s' p%zx",
+		err(ECANCELED, "CORRUPTED WRITE (%zu b) to file '%s' p%zu",
 		    rval, fname, p);
 }
 
