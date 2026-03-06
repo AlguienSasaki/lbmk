@@ -64,10 +64,11 @@ static void set_err(int);
 #define NVM_CHECKSUM_WORD 0x3F
 #define NVM_SIZE 128
 
-#define SIZE_4KB 0x1000
-#define SIZE_8KB 0x2000
-#define SIZE_16KB 0x4000
-#define SIZE_128KB 0x20000
+#define SIZE_1KB 1024
+#define SIZE_4KB (4 * SIZE_1KB)
+#define SIZE_8KB (8 * SIZE_1KB)
+#define SIZE_16KB (16 * SIZE_1KB)
+#define SIZE_128KB (128 * SIZE_1KB)
 
 #define MAX_RETRY_READ 30
 
