@@ -59,7 +59,7 @@ static void cmd_swap(void);
 static int good_checksum(size_t partnum);
 static uint16_t word(size_t pos16, size_t part);
 static void set_word(size_t pos16, size_t part, uint16_t val16);
-static void check_bound(size_t pos16, size_t part);
+static void check_nvm_bound(size_t pos16, size_t part);
 static void write_gbe_file(void);
 static void write_gbe_file_part(size_t part);
 static off_t gbe_file_offset(size_t part, const char *f_op);
@@ -759,7 +759,7 @@ word(size_t pos16, size_t p)
 {
 	size_t pos;
 
-	check_bound(pos16, p);
+	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
 	return buf[pos] | (buf[pos + 1] << 8);
@@ -770,7 +770,7 @@ set_word(size_t pos16, size_t p, uint16_t val16)
 {
 	size_t pos;
 
-	check_bound(pos16, p);
+	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
 	buf[pos] = (uint8_t)(val16 & 0xff);
@@ -780,7 +780,7 @@ set_word(size_t pos16, size_t p, uint16_t val16)
 }
 
 static void
-check_bound(size_t c, size_t p)
+check_nvm_bound(size_t c, size_t p)
 {
 	/*
 	 * NVM_SIZE assumed as the limit, because the
@@ -789,7 +789,7 @@ check_bound(size_t c, size_t p)
 	 *
 	 * The only exception is copy/swap, but these
 	 * do not use word/set_word and therefore do
-	 * not cause check_bound() to be called.
+	 * not cause check_nvm_bound() to be called.
 	 *
 	 * TODO:
 	 * This should be adjusted in the future, if
@@ -799,7 +799,7 @@ check_bound(size_t c, size_t p)
 	check_part_num(p);
 
 	if (c >= NVM_WORDS)
-		err(EINVAL, "check_bound: out of bounds %zu", c);
+		err(EINVAL, "check_nvm_bound: out of bounds %zu", c);
 }
 
 static void
