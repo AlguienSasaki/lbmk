@@ -767,7 +767,7 @@ write_gbe_part(size_t p)
 		    GBE_PART_SIZE, fname, p);
 
 	if (rval != GBE_PART_SIZE)
-		err(ECANCELED, "CORRUPTED WRITE (%zu b) to file '%s' p%zu",
+		err(ECANCELED, "CORRUPTED WRITE (%zd b) to file '%s' p%zu",
 		    rval, fname, p);
 }
 
