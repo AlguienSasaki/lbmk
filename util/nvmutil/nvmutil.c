@@ -628,8 +628,8 @@ set_word(size_t pos16, int p, uint16_t val16)
 	check_bound((ssize_t)pos16, p);
 	pos = get_word_pos(pos16, p);
 
-	buf[pos++] = (uint8_t)(val16 & 0xff);
-	buf[pos] = (uint8_t)(val16 >> 8);
+	buf[pos] = (uint8_t)(val16 & 0xff);
+	buf[pos + 1] = (uint8_t)(val16 >> 8);
 
 	part_modified[p] = 1;
 }
