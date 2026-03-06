@@ -28,47 +28,48 @@
 #endif
 
 static void reset_global_state(void);
-static void set_cmd(int, char **);
-static void check_cmd_args(int, char **);
-static void set_io_flags(int, char **);
+static void set_cmd(int argc, char **argv);
+static void check_cmd_args(int argc, char **argv);
+static void set_io_flags(int argc, char **argv);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM
 static void open_dev_urandom(void);
 #endif
-static void xopen(int *, const char *, int, struct stat *);
+static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe(void);
-static void read_gbe_part(size_t, unsigned char);
+static void read_gbe_part(size_t part, unsigned char invert);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
-static void set_mac_byte(size_t);
-static void check_mac_separator(size_t);
-static void set_mac_nib(size_t, size_t);
-static uint8_t hextonum(char);
+static void set_mac_byte(size_t mac_str_pos);
+static void check_mac_separator(size_t mac_str_pos);
+static void set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos);
+static uint8_t hextonum(char mac_ch);
 static uint8_t rhex(void);
-static void read_file_exact(int, void *, size_t,
-    off_t, const char *, const char *);
-static int write_mac_part(size_t);
+static void read_file_exact(int fd, void *buf, size_t len,
+    off_t off, const char *path, const char *op);
+static int write_mac_part(size_t partnum);
 static void cmd_dump(void);
-static void print_mac_address(size_t);
-static void hexdump(size_t);
+static void print_mac_address(size_t partnum);
+static void hexdump(size_t partnum);
 static void cmd_setchecksum(void);
-static void set_checksum(size_t);
+static void set_checksum(size_t part);
 static void cmd_brick(void);
 static void cmd_copy(void);
 static void cmd_swap(void);
-static int good_checksum(size_t);
-static uint16_t word(size_t, size_t);
-static void set_word(size_t, size_t, uint16_t);
-static void check_bound(size_t, size_t);
+static int good_checksum(size_t partnum);
+static uint16_t word(size_t pos16, size_t part);
+static void set_word(size_t pos16, size_t part, uint16_t val16);
+static void check_bound(size_t pos16, size_t part);
 static void write_gbe(void);
-static void write_gbe_part(size_t);
-static off_t gbe_file_offset(size_t, const char *);
-static void *gbe_mem_offset(size_t, const char *);
-static off_t gbe_x_offset(size_t, const char *, const char *, off_t, off_t);
+static void write_gbe_part(size_t part);
+static off_t gbe_file_offset(size_t part, const char *f_op);
+static void *gbe_mem_offset(size_t part, const char *f_op);
+static off_t gbe_x_offset(size_t part, const char *f_op,
+    const char *d_type, off_t nsize, off_t ncmp);
 static void usage(void);
-static void err(int, const char *, ...);
+static void err(int nvm_errval, const char *msg, ...);
 static const char *getnvmprogname(void);
-static void set_err(int);
+static void set_err(int errval);
 
 /*
  * Sizes in bytes:
