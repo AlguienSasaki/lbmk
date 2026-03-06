@@ -617,6 +617,9 @@ set_checksum(size_t p)
 	size_t c;
 	uint16_t val16 = 0;
 
+	if (p > 1)
+		err(ECANCELED, "Bad part num %zu (must be 0 or 1)", p);
+
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += word(c, p);
 
