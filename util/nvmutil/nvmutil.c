@@ -46,6 +46,7 @@ static void set_word(size_t, int, uint16_t);
 static void check_bound(size_t, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
+static off_t gbe_bound(int, const char *);
 static void usage(void);
 static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
@@ -86,6 +87,7 @@ static int flags;
 static int rfd = -1;
 #endif
 static int fd = -1;
+static struct stat st;
 static int part;
 static int invert;
 static int part_modified[2];
@@ -273,7 +275,6 @@ set_io_flags(int argc, char *argv[])
 static void
 open_files(void)
 {
-	struct stat st;
 #ifndef HAVE_ARC4RANDOM
 	struct stat st_rfd;
 	rname = newrandom;
@@ -335,7 +336,7 @@ static void
 read_gbe_part(int p, int invert)
 {
 	read_file_PERFECTLY_or_die(fd, buf + (SIZE_4KB * (p ^ invert)),
-	    SIZE_4KB, ((off_t)p) * partsize, fname, "pread");
+	    SIZE_4KB, gbe_bound(p, "pread"), fname, "pread");
 }
 
 static void
@@ -723,10 +724,32 @@ static void
 write_gbe_part(int p)
 {
 	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, (off_t)p * partsize) != (ssize_t)SIZE_4KB) {
+	    SIZE_4KB, gbe_bound(p, "pwrite")) != (ssize_t)SIZE_4KB) {
 		err(ECANCELED,
 		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
 	}
+}
+
+/*
+ * Reads to GbE from write_gbe_part and read_gbe_part
+ * are filtered through here. These operations must
+ * only write from the 0th position or the half position
+ * within the GbE file, and write 4KB of data.
+ *
+ * This check is called, to ensure just that.
+ */
+static off_t
+gbe_bound(int p, const char *f_op)
+{
+	off_t off = (off_t)p * partsize;
+
+	if (off + SIZE_4KB > st.st_size)
+		err(ECANCELED, "GbE file %s out of bounds: %s", f_op, fname);
+
+	if (off != 0 && off != st.st_size >> 1)
+		err(ECANCELED, "GbE file %s at bad offset: %s", f_op, fname);
+
+	return off;
 }
 
 static void
