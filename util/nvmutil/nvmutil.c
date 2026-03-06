@@ -28,9 +28,9 @@
 #endif
 
 static void reset_global_state(void);
-static void set_cmd(int argc, char **argv);
-static void check_cmd_args(int argc, char **argv);
-static void set_io_flags(int argc, char **argv);
+static void set_cmd(int argc, char *argv[]);
+static void check_cmd_args(int argc, char *argv[]);
+static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM
 static void open_dev_urandom(void);
