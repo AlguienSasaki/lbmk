@@ -43,7 +43,6 @@ static void cmd_swap(void);
 static int good_checksum(int);
 static uint16_t word(size_t, int);
 static void set_word(size_t, int, uint16_t);
-static size_t get_word_pos(size_t, int);
 static void check_bound(size_t, int);
 static void write_gbe(void);
 static void write_gbe_part(int);
@@ -620,7 +619,7 @@ word(size_t pos16, int p)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = get_word_pos(pos16, p);
+	pos = (pos16 << 1) + ((size_t)p * SIZE_4KB);
 
 	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
 }
@@ -631,21 +630,12 @@ set_word(size_t pos16, int p, uint16_t val16)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = get_word_pos(pos16, p);
+	pos = (pos16 << 1) + ((size_t)p * SIZE_4KB);
 
 	buf[pos] = (uint8_t)(val16 & 0xff);
 	buf[pos + 1] = (uint8_t)(val16 >> 8);
 
 	part_modified[p] = 1;
-}
-
-static size_t
-get_word_pos(size_t pos16, int p)
-{
-	size_t off = SIZE_4KB * p;
-	size_t pos = (pos16 << 1) + off;
-
-	return pos;
 }
 
 static void
