@@ -700,9 +700,9 @@ word(size_t pos16, size_t p)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = (pos16 << 1) + ((size_t)p * GBE_PART_SIZE);
+	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
+	return buf[pos] | (buf[pos + 1] << 8);
 }
 
 static void
@@ -711,7 +711,7 @@ set_word(size_t pos16, size_t p, uint16_t val16)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = (pos16 << 1) + ((size_t)p * GBE_PART_SIZE);
+	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
 	buf[pos] = (uint8_t)(val16 & 0xff);
 	buf[pos + 1] = (uint8_t)(val16 >> 8);
@@ -806,7 +806,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 {
 	off_t off = (off_t)p * nsize;
 
-	if ((unsigned int)p > 1)
+	if (p > 1)
 		err(ECANCELED, "GbE %s %s invalid partnum: %s",
 		    d_type, f_op, fname);
 
