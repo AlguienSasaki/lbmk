@@ -96,7 +96,7 @@ static void set_err(int);
 
 /*
  * When reading files, we loop on error EINTR
- * a maximum number of defined defined thus:
+ * a maximum number of times as defined, thus:
  */
 #define MAX_RETRY_READ 30
 
