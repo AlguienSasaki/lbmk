@@ -52,6 +52,12 @@ static void err(int, const char *, ...);
 static const char *getnvmprogname(void);
 static void set_err(int);
 
+/*
+ * On the platforms below, we will use arc4random
+ * for random MAC address generation.
+ *
+ * Later on, the code has fallbacks for other systems.
+ */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
@@ -60,19 +66,43 @@ static void set_err(int);
 #endif
 #endif
 
-#define NVM_CHECKSUM 0xBABA
-#define NVM_SIZE 128
-#define NVM_WORDS (NVM_SIZE / 2)
-#define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
-
+/*
+ * Sizes in bytes:
+ */
 #define SIZE_1KB 1024
 #define SIZE_4KB (4 * SIZE_1KB)
 #define SIZE_8KB (8 * SIZE_1KB)
 #define SIZE_16KB (16 * SIZE_1KB)
 #define SIZE_128KB (128 * SIZE_1KB)
 
+/*
+ * First 128 bytes of a GbE part contains
+ * the regular NVM (Non-Volatile-Memory)
+ * area. All of these bytes must add up,
+ * truncated to 0xBABA.
+ *
+ * The full GbE region is 4KB, but only
+ * the first 128 bytes are used here.
+ *
+ * There is a second 4KB part with the same
+ * rules, and it *should* be identical.
+ */
+#define GBE_PART_SIZE SIZE_4KB
+#define NVM_CHECKSUM 0xBABA
+#define NVM_SIZE 128
+#define NVM_WORDS (NVM_SIZE / 2)
+#define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
+
+/*
+ * When reading files, we loop on error EINTR
+ * a maximum number of defined defined thus:
+ */
 #define MAX_RETRY_READ 30
 
+/*
+ * Portably macro based on BSD nitems.
+ * Used to count the number of commands (see below).
+ */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 static const char newrandom[] = "/dev/urandom";
@@ -338,8 +368,8 @@ read_gbe(void)
 static void
 read_gbe_part(int p, int invert)
 {
-	read_file_PERFECTLY_or_die(fd, buf + (SIZE_4KB * (p ^ invert)),
-	    SIZE_4KB, gbe_bound(p, "pread"), fname, "pread");
+	read_file_PERFECTLY_or_die(fd, buf + (GBE_PART_SIZE * (p ^ invert)),
+	    GBE_PART_SIZE, gbe_bound(p, "pread"), fname, "pread");
 }
 
 static void
@@ -682,7 +712,7 @@ word(size_t pos16, int p)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = (pos16 << 1) + ((size_t)p * SIZE_4KB);
+	pos = (pos16 << 1) + ((size_t)p * GBE_PART_SIZE);
 
 	return (uint16_t)buf[pos] | ((uint16_t)buf[pos + 1] << 8);
 }
@@ -693,7 +723,7 @@ set_word(size_t pos16, int p, uint16_t val16)
 	size_t pos;
 
 	check_bound(pos16, p);
-	pos = (pos16 << 1) + ((size_t)p * SIZE_4KB);
+	pos = (pos16 << 1) + ((size_t)p * GBE_PART_SIZE);
 
 	buf[pos] = (uint8_t)(val16 & 0xff);
 	buf[pos + 1] = (uint8_t)(val16 >> 8);
@@ -741,10 +771,10 @@ write_gbe(void)
 static void
 write_gbe_part(int p)
 {
-	if (pwrite(fd, buf + (SIZE_4KB * p),
-	    SIZE_4KB, gbe_bound(p, "pwrite")) != (ssize_t)SIZE_4KB) {
+	if (pwrite(fd, buf + (GBE_PART_SIZE * p),
+	    GBE_PART_SIZE, gbe_bound(p, "pwrite")) != GBE_PART_SIZE) {
 		err(ECANCELED,
-		    "Can't write %d b to '%s' p%d", SIZE_4KB, fname, p);
+		    "Can't write %d b to '%s' p%d", GBE_PART_SIZE, fname, p);
 	}
 }
 
@@ -761,7 +791,7 @@ gbe_bound(int p, const char *f_op)
 {
 	off_t off = (off_t)p * partsize;
 
-	if (off + SIZE_4KB > st.st_size)
+	if (off + GBE_PART_SIZE > st.st_size)
 		err(ECANCELED, "GbE file %s out of bounds: %s", f_op, fname);
 
 	if (off != 0 && off != st.st_size >> 1)
