@@ -288,7 +288,7 @@ conv_argv_part_num(const char *part_str)
 	 */
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		err(EINVAL, "Partnum string '%s' wrong length.", part_str);
+		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	ch = (unsigned char)part_str[0] - '0';
 
