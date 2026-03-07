@@ -875,8 +875,10 @@ write_gbe_file_part(size_t p)
 static off_t
 gbe_file_offset(size_t p, const char *f_op)
 {
+	off_t gbe_file_half_size = gbe_file_size >> 1;
+
 	return gbe_x_offset(p, f_op, "file",
-	    gbe_file_size >> 1, gbe_file_size);
+	    gbe_file_half_size, gbe_file_size);
 }
 
 /*
