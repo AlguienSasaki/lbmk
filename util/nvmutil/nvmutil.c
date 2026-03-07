@@ -267,7 +267,7 @@ set_cmd(int argc, char *argv[])
 
 	/*
 	 * No extra args: ./nvmutil gbe.bin
-	 * Equivalent: ./nvm gbe.bin setmac xx:xx:xx:xx:xx:xx
+	 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
 	 */
 	if (argc == 2) {
 		cmd = cmd_setmac;
