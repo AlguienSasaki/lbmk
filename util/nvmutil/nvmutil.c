@@ -326,17 +326,9 @@ open_dev_urandom(void)
 		 * Fall back to /dev/random on old platforms
 		 * where /dev/urandom does not exist.
 		 *
-		 * In general, we can assume that any system
-		 * that would have urandom, probably has the
-		 * other device (/dev/urandom).
-		 *
-		 * Given that on many modern systems, urandom
-		 * and random are essentially the same, this
-		 * also provides some fault-tolerance there,
-		 * while still ultimately being strict under
-		 * fallback conditions, thus:
+		 * We must reset the error condition first,
+		 * to prevent stale error status later.
 		 */
-
 		errno = 0;
 
 		rname = oldrandom;
