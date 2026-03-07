@@ -286,8 +286,8 @@ check_cmd_args(int argc, char *argv[])
 		 * supplied by the user, which could also
 		 * contain one or more random characters.
 		 *
-		 * This is intentionaly, because a lot of
-		 * users would run something like:
+		 * This is intentional, because a lot of
+		 * users might run something like:
 		 *
 		 * ./nvmutil gbe.bin xx:1f:16:??:??:??
 		 *
