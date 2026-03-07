@@ -42,7 +42,7 @@ static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_byte_pos);
 static void set_mac_nib(size_t mac_str_pos,
-   size_t mac_byte_pos, size_t mac_nib_pos);
+    size_t mac_byte_pos, size_t mac_nib_pos);
 static uint8_t hextonum(char ch_s);
 static uint8_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
