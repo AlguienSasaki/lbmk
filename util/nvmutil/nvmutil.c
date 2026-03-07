@@ -43,7 +43,7 @@ static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_str_pos);
 static void check_mac_separator(size_t mac_str_pos);
 static void set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos);
-static uint8_t hextonum(char mac_ch);
+static uint8_t hextonum(char ch_s);
 static uint8_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
@@ -132,9 +132,9 @@ static size_t part;
 static uint8_t invert;
 static uint8_t part_modified[2];
 
-static const char *mac_str = NULL;
+static const char *mac_str;
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
-static const char *fname = "";
+static const char *fname;
 static const char *argv0;
 
 struct commands {
@@ -284,7 +284,7 @@ conv_argv_part_num(const char *part_str)
 
 	/*
 	 * Because char signedness is implementation-defined,
-	 * it is assumed to be signed, and handled accordingly.
+	 * we cast to unsigned char before arithmetic.
 	 */
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
@@ -466,12 +466,14 @@ check_mac_separator(size_t mac_str_pos)
 static void
 set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 {
-	uint8_t mac_ch;
-
+	char mac_ch;
+	uint16_t hex_num;
 	size_t mac_byte_pos;
-	size_t mac_word_left_shift;
 
-	if ((mac_ch = hextonum(mac_str[mac_str_pos + mac_nib_pos])) > 15)
+	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
+	hex_num = hextonum(mac_ch);
+
+	if (hex_num > 15)
 		err(EINVAL, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
 
@@ -479,10 +481,9 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 
 	/* If random, ensure that local/unicast bits are set */
 	if ((mac_byte_pos == 0) && (mac_nib_pos == 1) &&
-	    ((mac_str[mac_str_pos + mac_nib_pos] == '?') ||
-	    (mac_str[mac_str_pos + mac_nib_pos] == 'x') ||
-	    (mac_str[mac_str_pos + mac_nib_pos] == 'X'))) /* random */
-		mac_ch = (mac_ch & 0xE) | 2; /* local, unicast */
+	     ((mac_ch | 0x20) == 'x' ||
+	     (mac_ch == '?')))
+		hex_num = (hex_num & 0xE) | 2; /* local, unicast */
 
 	/*
 	 * Words other than the MAC address are stored little
@@ -494,21 +495,16 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 	 *
 	 * Later code using the MAC string will handle this.
 	 */
-	mac_word_left_shift =
-	    ((mac_byte_pos & 1) << 3) /* left or right byte? */
-	     | ((mac_nib_pos ^ 1) << 2); /* left or right nib? */
 
-	/*
-	 * Now we can shift properly, OR'ing the result:
-	 */
-	mac_buf[mac_byte_pos >> 1] |=
-	    (uint16_t)mac_ch << mac_word_left_shift;
+	mac_buf[mac_byte_pos >> 1] |= hex_num <<
+	    (((mac_byte_pos & 1) << 3) /* left or right byte? */
+	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
 static uint8_t
-hextonum(char mac_ch)
+hextonum(char ch_s)
 {
-	unsigned char ch = (unsigned char)mac_ch;
+	unsigned char ch = (unsigned char)ch_s;
 
 	if ((unsigned)(ch - '0') <= 9)
 		return ch - '0';
