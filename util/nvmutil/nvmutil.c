@@ -43,8 +43,8 @@ static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_byte_pos);
 static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
-static uint8_t hextonum(char ch_s);
-static uint8_t rhex(void);
+static uint16_t hextonum(char ch_s);
+static uint16_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
 static int write_mac_part(size_t partnum);
@@ -510,8 +510,7 @@ set_mac_nib(size_t mac_str_pos,
 
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
-	hex_num = hextonum(mac_ch);
-	if (hex_num > 15)
+	if ((hex_num = hextonum(mac_ch)) > 15)
 		err(EINVAL, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
 
@@ -537,7 +536,7 @@ set_mac_nib(size_t mac_str_pos,
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
-static uint8_t
+static uint16_t
 hextonum(char ch_s)
 {
 	/*
@@ -560,7 +559,7 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-static uint8_t
+static uint16_t
 rhex(void)
 {
 	static size_t n = 0;
@@ -575,7 +574,7 @@ rhex(void)
 #endif
 	}
 
-	return rnum[--n] & 0xf;
+	return (uint16_t)(rnum[--n] & 0xf);
 }
 
 static void
