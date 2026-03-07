@@ -41,9 +41,8 @@ static void read_gbe_file_part(size_t part, uint8_t invert);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_byte_pos);
-static void check_mac_separator(size_t mac_str_pos);
 static void set_mac_nib(size_t mac_str_pos,
-    size_t mac_byte_pos, size_t mac_nib_pos);
+   size_t mac_byte_pos, size_t mac_nib_pos);
 static uint8_t hextonum(char ch_s);
 static uint8_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
@@ -485,36 +484,29 @@ set_mac_byte(size_t mac_byte_pos)
 {
 	size_t mac_str_pos = mac_byte_pos * 3;
 	size_t mac_nib_pos;
+	char separator;
 
-	check_mac_separator(mac_str_pos);
+	if (mac_str_pos < 15) {
+		separator = mac_str[mac_str_pos + 2];
+		if (mac_str[mac_str_pos + 2] != ':')
+			err(EINVAL, "Invalid MAC address separator '%c'",
+			    separator);
+	}
 
 	for (mac_nib_pos = 0; mac_nib_pos < 2; mac_nib_pos++)
 		set_mac_nib(mac_str_pos, mac_byte_pos, mac_nib_pos);
 }
 
 static void
-check_mac_separator(size_t mac_str_pos)
-{
-	char separator;
-
-	if (mac_str_pos == 15)
-		return;
-	if ((separator = mac_str[mac_str_pos + 2]) == ':')
-		return;
-
-	err(EINVAL, "Invalid MAC address separator '%c'", separator);
-}
-
-static void
 set_mac_nib(size_t mac_str_pos,
-    size_t mac_byte_pos, size_t mac_nib_pos)
+   size_t mac_byte_pos, size_t mac_nib_pos)
 {
 	char mac_ch;
 	uint16_t hex_num;
 
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
-	hex_num = hextonum(mac_ch);
 
+	hex_num = hextonum(mac_ch);
 	if (hex_num > 15)
 		err(EINVAL, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
