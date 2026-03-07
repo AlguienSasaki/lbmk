@@ -277,9 +277,6 @@ check_cmd_args(int argc, char *argv[])
 		err(EINVAL, "Bad command");
 }
 
-/*
- * Not to be confused with check_part_num()
- */
 static size_t
 conv_argv_part_num(const char *part_str)
 {
@@ -290,12 +287,10 @@ conv_argv_part_num(const char *part_str)
 	 * it is assumed to be signed, and handled accordingly.
 	 */
 
-	if (strlen(part_str) != 1)
-		err(EINVAL, "Partnum string '%s' wrong length.",
-		    part_str);
+	if (part_str[0] == '\0' || part_str[1] != '\0')
+		err(EINVAL, "Partnum string '%s' wrong length.", part_str);
 
-	ch = (unsigned char)part_str[0];
-	ch -= '0';
+	ch = (unsigned char)part_str[0] - '0';
 
 	check_part_num((size_t)ch);
 	return (size_t)ch;
@@ -887,9 +882,6 @@ set_part_modified(size_t p)
 	part_modified[p] = 1;
 }
 
-/*
- * Not to be confused with conv_argv_part_num()
- */
 static void
 check_part_num(size_t p)
 {
