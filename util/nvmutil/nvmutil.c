@@ -266,16 +266,18 @@ set_cmd(int argc, char *argv[])
 	size_t i;
 
 	/*
-	 * Example: ./nvmutil gbe.bin
-	 *
-	 * Here, we assume that the user
-	 * wants a randomised MAC address.
+	 * No extra args: ./nvmutil gbe.bin
+	 * Equivalent: ./nvm gbe.bin setmac xx:xx:xx:xx:xx:xx
 	 */
 	if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
 	}
 
+	/*
+	 * Three or more args.
+	 * Example: ./nvmutil gbe.bin copy 0
+	 */
 	for (i = 0; i < items(command); i++) {
 		if (strcmp(argv[2], command[i].str) != 0)
 			continue;
@@ -293,28 +295,14 @@ check_cmd_args(int argc, char *argv[])
 {
 	if (cmd == NULL && argc > 2) {
 		/*
-		 * Here, no valid command was found, but a
-		 * 3rd argument is available, which tells
-		 * us that the 3rd argument is a MAC address
-		 * supplied by the user, which could also
-		 * contain one or more random characters.
-		 *
-		 * This is intentional, because a lot of
-		 * users might run something like:
-		 *
-		 * ./nvmutil gbe.bin xx:1f:16:??:??:??
-		 *
-		 * Instead of (more properly):
-		 *
-		 * ./nvmutil gbe.bin setmac xx:1f:16:??:??:??
-		 *
-		 * This quirk makes the tool easier to use.
+		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
+		 * Eqivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = argv[2];
 		cmd = cmd_setmac;
 	} else if (cmd == cmd_setmac) {
 		/*
-		 * ./nvmutil gbe.bin setmac [MAC]
+		 * Example: ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = rmac; /* random MAC */
 		if (argc > 3)
