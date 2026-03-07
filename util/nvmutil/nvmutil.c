@@ -331,10 +331,12 @@ conv_argv_part_num(const char *part_str)
 	if (part_str[0] == '\0' || part_str[1] != '\0')
 		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
-	ch = (unsigned char)part_str[0] - '0';
+	ch = (unsigned char)part_str[0];
 
-	check_part_num((size_t)ch);
-	return (size_t)ch;
+	if (ch < '0' || ch > '1')
+		err(EINVAL, "Bad part number (%c)", ch);
+
+	return (size_t)(ch - '0');
 }
 
 static void
