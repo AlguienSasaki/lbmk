@@ -119,7 +119,17 @@ static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
 static const char *rname = NULL;
 #endif
 
-static uint8_t buf[GBE_FILE_SIZE]; /* 8KB */
+/*
+ * GbE files can be 8KB, 16KB or 128KB,
+ * but we only need the two 4KB parts
+ * from offset zero and offset 64KB in
+ * a 128KB file, or zero and 8KB in a 16KB
+ * file, or zero and 4KB in an 8KB file.
+ *
+ * The code will handle this properly.
+ */
+static uint8_t buf[GBE_FILE_SIZE];
+
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
@@ -504,6 +514,10 @@ set_mac_nib(size_t mac_str_pos, size_t mac_nib_pos)
 static uint8_t
 hextonum(char ch_s)
 {
+	/*
+	 * We assume char is signed, hence ch_s.
+	 * We explicitly cast to unsigned:
+	 */
 	unsigned char ch = (unsigned char)ch_s;
 
 	if ((unsigned)(ch - '0') <= 9)
