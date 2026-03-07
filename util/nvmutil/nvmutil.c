@@ -462,7 +462,7 @@ static void
 cmd_setmac(void)
 {
 	size_t partnum;
-	unsigned char mac_updated = 0;
+	uint8_t mac_updated = 0;
 
 	parse_mac_string();
 	printf("MAC address to be written: %s\n", mac_str);
