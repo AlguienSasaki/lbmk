@@ -464,13 +464,13 @@ cmd_setmac(void)
 static void
 parse_mac_string(void)
 {
-	size_t mac_str_pos;
+	size_t mac_byte;
 
 	if (strlen(mac_str) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
-	for (mac_str_pos = 0; mac_str_pos < 16; mac_str_pos += 3)
-		set_mac_byte(mac_str_pos);
+	for (mac_byte = 0; mac_byte < 6; mac_byte++)
+		set_mac_byte(mac_byte);
 
 	if ((mac_buf[0] | mac_buf[1] | mac_buf[2]) == 0)
 		err(EINVAL, "Must not specify all-zeroes MAC address");
@@ -480,8 +480,9 @@ parse_mac_string(void)
 }
 
 static void
-set_mac_byte(size_t mac_str_pos)
+set_mac_byte(size_t mac_byte)
 {
+	size_t mac_str_pos = mac_byte * 3;
 	size_t mac_nib_pos;
 
 	check_mac_separator(mac_str_pos);
