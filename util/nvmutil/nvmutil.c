@@ -252,6 +252,12 @@ set_cmd(int argc, char *argv[])
 {
 	size_t i;
 
+	/*
+	 * Example: ./nvmutil gbe.bin
+	 *
+	 * Here, we assume that the user
+	 * wants a randomised MAC address.
+	 */
 	if (argc == 2) {
 		cmd = cmd_setmac;
 		return;
@@ -272,14 +278,38 @@ set_cmd(int argc, char *argv[])
 static void
 check_cmd_args(int argc, char *argv[])
 {
-	if (cmd == NULL && argc > 2) { /* nvm gbe [MAC] */
+	if (cmd == NULL && argc > 2) {
+		/*
+		 * Here, no valid command was found, but a
+		 * 3rd argument is available, which tells
+		 * us that the 3rd argument is a MAC address
+		 * supplied by the user, which could also
+		 * contain one or more random characters.
+		 *
+		 * This is intentionaly, because a lot of
+		 * users would run something like:
+		 *
+		 * ./nvmutil gbe.bin xx:1f:16:??:??:??
+		 *
+		 * Instead of (more properly):
+		 *
+		 * ./nvmutil gbe.bin setmac xx:1f:16:??:??:??
+		 *
+		 * This quirk makes the tool easier to use.
+		 */
 		mac_str = argv[2];
 		cmd = cmd_setmac;
-	} else if (cmd == cmd_setmac) { /* nvm gbe setmac [MAC] */
+	} else if (cmd == cmd_setmac) {
+		/*
+		 * ./nvmutil gbe.bin setmac [MAC]
+		 */
 		mac_str = rmac; /* random MAC */
 		if (argc > 3)
 			mac_str = argv[3];
 	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
+		/*
+		 * Example: ./nvmutil gbe.bin copy 0
+		 */
 		part = conv_argv_part_num(argv[3]);
 	}
 
