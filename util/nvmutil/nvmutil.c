@@ -296,7 +296,7 @@ check_cmd_args(int argc, char *argv[])
 	if (cmd == NULL && argc > 2) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
-		 * Eqivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
+		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = argv[2];
 		cmd = cmd_setmac;
@@ -501,7 +501,7 @@ set_mac_byte(size_t mac_byte_pos)
 
 static void
 set_mac_nib(size_t mac_str_pos,
-   size_t mac_byte_pos, size_t mac_nib_pos)
+    size_t mac_byte_pos, size_t mac_nib_pos)
 {
 	char mac_ch;
 	uint16_t hex_num;
@@ -551,10 +551,11 @@ hextonum(char ch_s)
 
 	if ((unsigned)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
-	else if (ch == '?' || ch == 'x')
+
+	if (ch == '?' || ch == 'x')
 		return rhex(); /* random character */
-	else
-		return 16; /* invalid character */
+
+	return 16; /* invalid character */
 }
 
 static uint8_t
