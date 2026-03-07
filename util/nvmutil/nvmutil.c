@@ -487,8 +487,7 @@ set_mac_byte(size_t mac_byte_pos)
 	char separator;
 
 	if (mac_str_pos < 15) {
-		separator = mac_str[mac_str_pos + 2];
-		if (mac_str[mac_str_pos + 2] != ':')
+		if ((separator = mac_str[mac_str_pos + 2]) != ':')
 			err(EINVAL, "Invalid MAC address separator '%c'",
 			    separator);
 	}
