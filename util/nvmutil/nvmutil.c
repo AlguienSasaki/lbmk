@@ -108,7 +108,7 @@ static void set_err(int errval);
 #define MAX_RETRY_READ 30
 
 /*
- * Portably macro based on BSD nitems.
+ * Portable macro based on BSD nitems.
  * Used to count the number of commands (see below).
  */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
