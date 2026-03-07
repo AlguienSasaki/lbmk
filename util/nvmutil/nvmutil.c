@@ -236,6 +236,19 @@ main(int argc, char *argv[])
 		err(ECANCELED, "close '%s'", rname);
 #endif
 
+	/*
+	 * We still exit with non-zero status if
+	 * errno is set, but we don't need to print
+	 * the error on dump commands, because they
+	 * already print errors.
+	 *
+	 * If both parts have bad checksums, then
+	 * cmd_dump will cause non-zero exit. If at
+	 * least one part is valid, it resets errno.
+	 *
+	 * However, if we're not using cmd_dump, then
+	 * we have a bug somewhere in the code.
+	 */
 	if (cmd != cmd_dump) {
 		if (errno)
 			err(ECANCELED, "Unhandled error on exit");
