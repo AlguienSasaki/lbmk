@@ -357,21 +357,24 @@ open_dev_urandom(void)
 {
 	struct stat st_urandom_fd;
 
+	/*
+	 * Try /dev/urandom first
+	 */
 	rname = newrandom;
+	if ((urandom_fd = open(rname, O_RDONLY)) != -1)
+		return;
 
-	if ((urandom_fd = open(rname, O_RDONLY)) == -1) {
-		/*
-		 * Fall back to /dev/random on old platforms
-		 * where /dev/urandom does not exist.
-		 *
-		 * We must reset the error condition first,
-		 * to prevent stale error status later.
-		 */
-		errno = 0;
+	/*
+	 * Fall back to /dev/random on old platforms
+	 * where /dev/urandom does not exist.
+	 *
+	 * We must reset the error condition first,
+	 * to prevent stale error status later.
+	 */
+	errno = 0;
 
-		rname = oldrandom;
-		xopen(&urandom_fd, rname, O_RDONLY, &st_urandom_fd);
-	}
+	rname = oldrandom;
+	xopen(&urandom_fd, rname, O_RDONLY, &st_urandom_fd);
 }
 #endif
 
