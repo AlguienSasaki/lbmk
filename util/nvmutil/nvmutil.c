@@ -286,13 +286,8 @@ conv_argv_part_num(const char *part_str)
 	unsigned char ch;
 
 	/*
-	 * Because char signedness is implementation is
-	 * implementation-defined, we must assumed that
-	 * it is signed, and guard accordingly.
-	 *
-	 * Do not use check_part_num() here. The same check
-	 * is done *here*, but on a character, with the
-	 * above caveat in mind.
+	 * Because char signedness is implementation-defined,
+	 * it is assumed to be signed, and handled accordingly.
 	 */
 
 	if (strlen(part_str) != 1)
