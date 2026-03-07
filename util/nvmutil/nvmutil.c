@@ -113,9 +113,9 @@ static void set_err(int errval);
  */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
+#ifndef HAVE_ARC4RANDOM_BUF
 static const char newrandom[] = "/dev/urandom";
 static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
-#ifndef HAVE_ARC4RANDOM_BUF
 static const char *rname = NULL;
 #endif
 
