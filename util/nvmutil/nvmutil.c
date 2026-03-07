@@ -353,7 +353,7 @@ open_dev_urandom(void)
 static void
 open_gbe_file(void)
 {
-	static struct stat gbe_st;
+	struct stat gbe_st;
 
 	xopen(&gbe_fd, fname, gbe_flags, &gbe_st);
 
