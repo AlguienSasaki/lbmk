@@ -404,7 +404,7 @@ static void
 read_gbe_file(void)
 {
 	size_t p;
-	unsigned char do_read[2] = {1, 1};
+	uint8_t do_read[2] = {1, 1};
 
 	/*
 	 * The copy, brick and setchecksum commands need
