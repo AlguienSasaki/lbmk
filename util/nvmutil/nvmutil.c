@@ -1378,7 +1378,7 @@ set_err(int x)
 {
 	if (errno)
 		return;
-	if (x)
+	if (x > 0)
 		errno = x;
 	else
 		errno = ECANCELED;
