@@ -252,7 +252,8 @@ main(int argc, char *argv[])
 	if (cmd == CMD_SETMAC)
 		printf("Randomisation method: arc4random_buf\n");
 #else
-	open_dev_urandom();
+	if (cmd == CMD_SETMAC)
+		open_dev_urandom();
 #endif
 	open_gbe_file();
 
@@ -407,8 +408,7 @@ open_dev_urandom(void)
 {
 	struct stat st_urandom_fd;
 
-	if (cmd == CMD_SETMAC)
-		printf("Randomisation method: %s\n", newrandom);
+	printf("Randomisation method: %s\n", newrandom);
 
 	/*
 	 * Try /dev/urandom first
@@ -417,9 +417,8 @@ open_dev_urandom(void)
 	if ((urandom_fd = open(rname, O_RDONLY)) != -1)
 		return;
 
-	if (cmd == CMD_SETMAC)
-		fprintf(stderr, "Can't open %s (will use %s instead)\n",
-		    newrandom, oldrandom);
+	fprintf(stderr, "Can't open %s (will use %s instead)\n",
+	    newrandom, oldrandom);
 
 	/*
 	 * Fall back to /dev/random on old platforms
@@ -630,6 +629,9 @@ read_file_exact(int fd, void *buf, size_t len,
 {
 	int retry;
 	ssize_t rval;
+
+	if (fd == -1)
+		err(ECANCELED, "Trying to open bad fd: %s", path);
 
 	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
 		if (op)
