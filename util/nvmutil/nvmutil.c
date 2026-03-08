@@ -152,6 +152,7 @@ static int urandom_fd = -1;
 static int gbe_fd = -1;
 static size_t part;
 static uint8_t part_modified[2];
+static uint8_t part_valid[2];
 
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *mac_str;
@@ -685,11 +686,6 @@ read_gbe_file_part(size_t p)
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
-/*
- * This is the first defense, but individual
- * commands should still perform checksum
- * verification where indicated, as a fallback.
- */
 static void
 read_checksums(void)
 {
@@ -719,7 +715,9 @@ read_checksums(void)
 		if (arg_part && (p == skip_part))
 			continue;
 
-		if (!good_checksum(p))
+		if (good_checksum(p))
+			part_valid[p] = 1;
+		else
 			++num_invalid;
 	}
 
@@ -740,7 +738,6 @@ static void
 cmd_setmac(void)
 {
 	size_t partnum;
-	uint8_t mac_updated = 0;
 
 	#ifdef HAVE_ARC4RANDOM_BUF
 		printf("Randomisation method: arc4random_buf\n");
@@ -752,10 +749,7 @@ cmd_setmac(void)
 	parse_mac_string();
 
 	for (partnum = 0; partnum < 2; partnum++)
-		mac_updated |= write_mac_part(partnum);
-
-	if (mac_updated)
-		errno = 0;
+		write_mac_part(partnum);
 }
 
 static void
@@ -912,7 +906,8 @@ write_mac_part(size_t partnum)
 {
 	size_t w;
 
-	if (!good_checksum(partnum))
+	check_bin(partnum, "part number");
+	if (!part_valid[partnum])
 		return 0;
 
 	for (w = 0; w < 3; w++)
@@ -1019,21 +1014,13 @@ cmd_brick(void)
 static void
 cmd_copy(void)
 {
-	if (!good_checksum(part ^ 1))
-		err(ECANCELED, "copy p%zu, file '%s'", part ^ 1, fname);
+	return;
 }
 
 static void
 cmd_swap(void)
 {
-	if (!(good_checksum(0) || good_checksum(1)))
-		err(ECANCELED, "swap parts, file '%s'", fname);
-
-	/*
-	 * good_checksum() can set errno, if one
-	 * of the parts is bad. We will reset it.
-	 */
-	errno = 0;
+	return;
 }
 
 static int
