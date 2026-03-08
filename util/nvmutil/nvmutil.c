@@ -350,8 +350,21 @@ set_cmd_args(int argc, char *argv[])
 		part = conv_argv_part_num(argv[3]);
 	}
 
-	if (cmd == CMD_NULL)
-		err(EINVAL, "Bad command");
+	/*
+	 * This will never actually run.
+	 * It's put here as a guard against
+	 * future regressions by maintainers.
+	 *
+	 * The reason this shouldn't run is
+	 * because when a bad command (or no
+	 * command) is given, either the command
+	 * should be treated as a MAC address,
+	 * or if no command is given, a random
+	 * MAC address is used.
+	 */
+
+	if ((size_t)cmd >= items(command))
+		err(EINVAL, "Unhandled command error");
 }
 
 static size_t
