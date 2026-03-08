@@ -50,7 +50,7 @@ static void read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
 static int write_mac_part(size_t partnum);
 static void cmd_dump(void);
-static void print_mac_address(size_t partnum);
+static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 static void cmd_setchecksum(void);
 static void set_checksum(size_t part);
@@ -671,7 +671,7 @@ write_mac_part(size_t partnum)
 		set_word(w, partnum, mac_buf[w]);
 
 	printf("Wrote MAC address to part %zu: ", partnum);
-	print_mac_address(partnum);
+	print_mac_from_nvm(partnum);
 
 	set_checksum(partnum);
 
@@ -689,7 +689,7 @@ cmd_dump(void)
 			++num_invalid;
 
 		printf("MAC (part %zu): ", partnum);
-		print_mac_address(partnum);
+		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
 
@@ -698,7 +698,7 @@ cmd_dump(void)
 }
 
 static void
-print_mac_address(size_t partnum)
+print_mac_from_nvm(size_t partnum)
 {
 	size_t c;
 
