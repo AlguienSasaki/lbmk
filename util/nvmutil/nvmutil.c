@@ -150,8 +150,18 @@ static const char *mac_str;
 static const char *fname;
 static const char *argv0;
 
+/*
+ * Use these for .invert in command[]:
+ */
 #define PART_INVERT 1
+    /* if used: read GbE parts swapped */
+    /* e.g. part0 read (file) to part1 (mem) */
 #define NO_INVERT 0
+    /* don't swap. e.g. part0 read (file) to part0 (mem) */
+
+/*
+ * Use these for .argc in command[]:
+ */
 #define ARGC_3 3
 #define ARGC_4 4
 
