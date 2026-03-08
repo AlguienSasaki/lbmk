@@ -255,9 +255,6 @@ static size_t cmd_index = CMD_NULL;
 int
 main(int argc, char *argv[])
 {
-#ifdef HAVE_STRNLEN
-	err(1, "TEST");
-#endif
 	argv0 = argv[0];
 	if (argc < 2)
 		usage(1);
