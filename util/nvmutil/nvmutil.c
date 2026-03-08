@@ -1130,7 +1130,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 {
 	size_t i;
 
-	if (!a || !b)
+	if (a == NULL || b == NULL)
 		err(EINVAL, "NULL input to xstrxcmp");
 
 	if (*a == '\0' || *b == '\0')
@@ -1144,6 +1144,9 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 			return 0;
 	}
 
+	/*
+	 * We reached maxlen, so assume unterminated string.
+	 */
 	err(EINVAL, "Unterminated string in xstrxcmp");
 
 	/*
