@@ -696,6 +696,7 @@ static void
 read_checksums(void)
 {
 	size_t p;
+	size_t skip_part;
 	uint8_t invert;
 	uint8_t arg_part;
 	uint8_t num_invalid;
@@ -718,7 +719,8 @@ read_checksums(void)
 		/*
 		 * Only verify a part if it was *read*
 		 */
-		if (arg_part && (p == (part ^ 1 ^ invert)))
+		skip_part = part ^ 1 ^ invert;
+		if (arg_part && (p == skip_part))
 			continue;
 
 		if (!good_checksum(p))
