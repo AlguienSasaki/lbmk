@@ -147,8 +147,17 @@ static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *fname;
 static const char *argv0;
 
+#define PART_INVERT 1
+#define NO_INVERT 0
+#define ARGC_3 3
+#define ARGC_4 4
+
 /*
  * Used as indices for command[]
+ *
+ * MUST be in the same order as entries in
+ * command[] - or run_cmd() will detect this,
+ * and cause a non-zero exit (err).
  */
 enum {
 	CMD_DUMP,
@@ -160,17 +169,6 @@ enum {
 };
 #define CMD_NULL -1
 
-/*
- * Those enum values are used for .chk in
- * the command struct. Then, even if an index
- * is valid, if it doesn't match .chk, run_cmd()
- * will fail. This mitigates against the possibility
- * of a maintainer (read: you) screwing up the enum,
- * which otherwise enables easier understanding.
- *
- * In other words: the order of the CMD enum must
- * precisely match the order of the command struct.
- */
 struct commands {
 	size_t chk; /* use by in later check on run_cmd,
 		against cmd index, to verify correct enum order */
@@ -179,15 +177,23 @@ struct commands {
 	int args;
 	uint8_t invert;
 };
+
+/*
+ * Pointers used for running nvmutil commands
+ */
 static const struct commands command[] = {
-	{ CMD_DUMP, "dump", cmd_dump, 3, 0 },
-	{ CMD_SETMAC, "setmac", cmd_setmac, 3, 0 },
-	{ CMD_SWAP, "swap", cmd_swap, 3, 1 },
-	{ CMD_COPY, "copy", cmd_copy, 4, 1 },
-	{ CMD_BRICK, "brick", cmd_brick, 4, 0 },
-	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, 4, 0 },
+	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT },
+	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT },
+	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT },
+	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT },
+	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, PART_INVERT },
+	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum,
+	    ARGC_4, PART_INVERT },
 };
 
+/*
+ * Index in command[], will be set later
+ */
 static ssize_t cmd = CMD_NULL;
 
 int
