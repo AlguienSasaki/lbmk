@@ -292,7 +292,11 @@ main(int argc, char *argv[])
 
 	read_gbe_file();
 	run_cmd(cmd_index);
-	write_gbe_file();
+
+	if (errno)
+		err(errno, "Unhandled error: will not write file: %s", fname);
+	else
+		write_gbe_file();
 
 	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
