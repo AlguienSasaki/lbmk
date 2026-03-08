@@ -207,7 +207,8 @@ static const struct commands command[] = {
 };
 
 #define MAX_CMD_LEN 50
-#define CMD_NULL items(command)
+#define N_COMMANDS items(command)
+#define CMD_NULL N_COMMANDS
 
 /*
  * Index in command[], will be set later
@@ -472,7 +473,7 @@ check_command_num(size_t c)
 static uint8_t
 valid_command(size_t c)
 {
-	if (c >= items(command))
+	if (c >= N_COMMANDS)
 		return 0;
 
 	if (c != command[c].chk)
