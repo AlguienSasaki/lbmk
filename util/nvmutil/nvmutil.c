@@ -342,6 +342,7 @@ main(int argc, char *argv[])
 
 	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
+
 #ifndef HAVE_ARC4RANDOM_BUF
 	if (urandom_fd > -1) {
 		if (close(urandom_fd) == -1)
@@ -458,11 +459,19 @@ set_cmd_args(int argc, char *argv[])
 		mac_str = rmac;
 		cmd_index = CMD_SETMAC;
 	} else if (valid_command(cmd_index) && argc >= 4) {
-		/*
-		 * User-supplied partnum.
-		 * Example: ./nvmutil gbe.bin copy 0
-		 */
-		part = conv_argv_part_num(argv[3]);
+		if (command[cmd_index].arg_part) {
+			/*
+			 * User-supplied partnum.
+			 * Example: ./nvmutil gbe.bin copy 0
+			 */
+			part = conv_argv_part_num(argv[3]);
+		} else {
+			err(ECANCELED, "Bad command: %s %s",
+			    argv[2], argv[3]);
+		}
+	} else if (valid_command(cmd_index) && argc >= 3) {
+		if (cmd_index == CMD_SETMAC)
+			mac_str = rmac;
 	}
 
 	/*
