@@ -62,8 +62,8 @@ static void cmd_brick(void);
 static void cmd_copy(void);
 static void cmd_swap(void);
 static int good_checksum(size_t partnum);
-static uint16_t word(size_t pos16, size_t part);
-static void set_word(size_t pos16, size_t part, uint16_t val16);
+static uint16_t nvm_word(size_t pos16, size_t part);
+static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void write_gbe_file(void);
 static void write_gbe_file_part(size_t part);
@@ -762,7 +762,7 @@ write_mac_part(size_t partnum)
 		return 0;
 
 	for (w = 0; w < 3; w++)
-		set_word(w, partnum, mac_buf[w]);
+		set_nvm_word(w, partnum, mac_buf[w]);
 
 	printf("Wrote MAC address to part %zu: ", partnum);
 	print_mac_from_nvm(partnum);
@@ -797,7 +797,7 @@ print_mac_from_nvm(size_t partnum)
 	size_t c;
 
 	for (c = 0; c < 3; c++) {
-		uint16_t val16 = word(c, partnum);
+		uint16_t val16 = nvm_word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
 		if (c == 2)
 			printf("\n");
@@ -816,7 +816,7 @@ hexdump(size_t partnum)
 	for (row = 0; row < 8; row++) {
 		printf("%08zx ", row << 4);
 		for (c = 0; c < 8; c++) {
-			val16 = word((row << 3) + c, partnum);
+			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
 			printf(" %02x %02x", val16 & 0xff, val16 >> 8);
@@ -840,9 +840,9 @@ set_checksum(size_t p)
 	check_part_num(p);
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += word(c, p);
+		val16 += nvm_word(c, p);
 
-	set_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
+	set_nvm_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
 }
 
 static void
@@ -860,8 +860,8 @@ cmd_brick(void)
 	 * We know checksum_word is valid, so we need only
 	 * flip one bit to invalidate it.
 	 */
-	checksum_word = word(NVM_CHECKSUM_WORD, part);
-	set_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
+	checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
+	set_nvm_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
 }
 
 static void
@@ -910,7 +910,7 @@ good_checksum(size_t partnum)
 	uint16_t total = 0;
 
 	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
-		total += word(w, partnum);
+		total += nvm_word(w, partnum);
 
 	if (total == NVM_CHECKSUM)
 		return 1;
@@ -928,7 +928,7 @@ good_checksum(size_t partnum)
  */
 
 static uint16_t
-word(size_t pos16, size_t p)
+nvm_word(size_t pos16, size_t p)
 {
 	size_t pos;
 
@@ -939,7 +939,7 @@ word(size_t pos16, size_t p)
 }
 
 static void
-set_word(size_t pos16, size_t p, uint16_t val16)
+set_nvm_word(size_t pos16, size_t p, uint16_t val16)
 {
 	size_t pos;
 
