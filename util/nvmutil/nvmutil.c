@@ -1152,6 +1152,14 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * Should never reach here. This keeps compilers happy.
 	 */
+
+	/*
+	 * If we do reach here, we want some way to crash
+	 * nvmutil before writing anything to disk.
+	 *
+	 * It checks errno extremely obsessively.
+	 */
+	errno = EINVAL;
 	return -1;
 }
 
