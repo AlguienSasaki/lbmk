@@ -212,18 +212,16 @@ main(int argc, char *argv[])
 	/*
 	 * For restricted filesystem access on early error.
 	 *
-	 * Unveiling the random device early, regardless of
-	 * whether we will use it, prevents operations on any
-	 * GbE files until we permit it, while performing the
-	 * prerequisite error checks.
+	 * This prevents access to /dev/urandom, which we
+	 * should never use in OpenBSD (we use arc4random),
+	 * thus guarding against any future bugs there.
 	 *
-	 * We don't actually use the random device on platforms
-	 * that have arc4random, which includes OpenBSD.
+	 * This also prevents early reads to the GbE file,
+	 * while performing other checks; we will later
+	 * unveil the GbE file, to allow access.
 	 */
-	if (unveil("/dev/urandom", "r") == -1)
-		err(ECANCELED, "unveil '/dev/urandom'");
-	if (unveil("/dev/random", "r") == -1)
-		err(ECANCELED, "unveil '/dev/random'");
+	if (unveil("/dev/null", "r") == -1)
+		err(ECANCELED, "unveil '/dev/null'");
 #endif
 
 	set_cmd(argc, argv);
