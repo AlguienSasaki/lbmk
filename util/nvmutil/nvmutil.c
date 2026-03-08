@@ -349,11 +349,12 @@ main(int argc, char *argv[])
 #endif
 
 #ifndef HAVE_ARC4RANDOM_BUF
-	open_dev_urandom();
-#elif defined(__OpenBSD__) || defined(__FreeBSD__) || \
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
 	err(ECANCELED, "Maintainer error: arc4random disabled on BSD/MacOS");
+#endif
+	open_dev_urandom();
 #endif
 
 	open_gbe_file();
