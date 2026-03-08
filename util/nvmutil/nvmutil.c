@@ -668,11 +668,16 @@ read_checksums(void)
 	if (arg_part)
 		max_invalid = 1;
 
+	/*
+	 * Skip verification on this part,
+	 * but only when arg_part is set.
+	 */
+	skip_part = part ^ 1 ^ invert;
+
 	for (p = 0; p < 2; p++) {
 		/*
 		 * Only verify a part if it was *read*
 		 */
-		skip_part = part ^ 1 ^ invert;
 		if (arg_part && (p == skip_part))
 			continue;
 
