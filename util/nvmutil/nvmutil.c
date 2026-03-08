@@ -109,7 +109,7 @@ static void close_files(void);
  * When reading files, we loop on error EINTR
  * a maximum number of times as defined, thus:
  */
-#define MAX_RETRY_READ 30
+#define MAX_RETRY_RW 30
 
 /*
  * Portable macro based on BSD nitems.
@@ -796,7 +796,7 @@ read_file_exact(int fd, void *buf, size_t len,
 	if (fd == -1)
 		err(ECANCELED, "Trying to open bad fd: %s", path);
 
-	for (retry = 0; retry < MAX_RETRY_READ; retry++) {
+	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
 		if (op)
 			rval = pread(fd, buf, len, off);
 		else
@@ -1036,16 +1036,32 @@ override_part_modified(void)
 static void
 write_gbe_file_part(size_t p)
 {
-	ssize_t rval = pwrite(gbe_fd, gbe_mem_offset(p, "pwrite"),
-	    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
+	int retry;
+	ssize_t rval;
 
-	if (rval == -1)
-		err(ECANCELED, "Can't write %zu b to '%s' p%zu",
-		    GBE_PART_SIZE, fname, p);
+	if (gbe_fd == -1)
+		err(ECANCELED, "Trying to write bad gbe_fd: %s", fname);
 
-	if (rval != GBE_PART_SIZE)
-		err(ECANCELED, "CORRUPTED WRITE (%zd b) to file '%s' p%zu",
-		    rval, fname, p);
+	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
+		rval = pwrite(gbe_fd, gbe_mem_offset(p, "pwrite"),
+		    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
+
+		if (rval == GBE_PART_SIZE) {
+			errno = 0;
+			return;
+		}
+
+		if (rval != -1)
+			err(ECANCELED,
+			    "Short pwrite, %zd bytes, on file: %s",
+			    rval, fname);
+
+		if (errno != EINTR)
+			err(ECANCELED,
+			    "Could not pwrite file: '%s'", fname);
+	}
+
+	err(EINTR, "pwrite: max retries exceeded on file: %s", fname);
 }
 
 /*
