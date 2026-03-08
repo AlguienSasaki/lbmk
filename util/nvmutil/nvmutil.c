@@ -1127,7 +1127,7 @@ static void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err(ECANCELED, "%s above 1", a_name);
+		err(ECANCELED, "%s must be 0 or 1, but is %zu", a_name, a);
 }
 
 static void
