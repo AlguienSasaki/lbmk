@@ -270,17 +270,12 @@ main(int argc, char *argv[])
 	}
 #endif
 
-#ifdef HAVE_ARC4RANDOM_BUF
-	if (cmd_index == CMD_SETMAC)
-		printf("Randomisation method: arc4random_buf\n");
-#else
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+#ifndef HAVE_ARC4RANDOM_BUF
+	open_dev_urandom();
+#elif defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
 	err(ECANCELED, "Maintainer error: arc4random disabled on BSD/MacOS");
-#endif
-	if (cmd_index == CMD_SETMAC)
-		open_dev_urandom();
 #endif
 
 	open_gbe_file();
@@ -505,8 +500,6 @@ open_dev_urandom(void)
 {
 	struct stat st_urandom_fd;
 
-	printf("Randomisation method: %s\n", newrandom);
-
 	/*
 	 * Try /dev/urandom first
 	 */
@@ -597,6 +590,12 @@ cmd_setmac(void)
 {
 	size_t partnum;
 	uint8_t mac_updated = 0;
+
+	#ifdef HAVE_ARC4RANDOM_BUF
+		printf("Randomisation method: arc4random_buf\n");
+	#else
+		printf("Randomisation method: %s\n", rname);
+	#endif
 
 	printf("MAC address to be written: %s\n", mac_str);
 	parse_mac_string();
