@@ -38,7 +38,7 @@ static void open_dev_urandom(void);
 #endif
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
-static void read_gbe_file_part(size_t part, uint8_t invert);
+static void read_gbe_file_part(size_t part);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_byte_pos);
@@ -140,7 +140,6 @@ static int urandom_fd = -1;
 #endif
 static int gbe_fd = -1;
 static size_t part;
-static uint8_t invert;
 static uint8_t part_modified[2];
 
 static const char *mac_str;
@@ -152,14 +151,15 @@ struct commands {
 	const char *str;
 	void (*run)(void);
 	int args;
+	uint8_t invert;
 };
 static const struct commands command[] = {
-	{ "dump", cmd_dump, 3 },
-	{ "setmac", cmd_setmac, 3 },
-	{ "swap", cmd_swap, 3 },
-	{ "copy", cmd_copy, 4 },
-	{ "brick", cmd_brick, 4 },
-	{ "setchecksum", cmd_setchecksum, 4 },
+	{ "dump", cmd_dump, 3, 0 },
+	{ "setmac", cmd_setmac, 3, 0 },
+	{ "swap", cmd_swap, 3, 1 },
+	{ "copy", cmd_copy, 4, 1 },
+	{ "brick", cmd_brick, 4, 0 },
+	{ "setchecksum", cmd_setchecksum, 4, 0 },
 };
 #define CMD_NULL -1
 #define CMD_DUMP 0
@@ -441,31 +441,18 @@ read_gbe_file(void)
 	    cmd == CMD_SETCHECKSUM)
 		do_read[part ^ 1] = 0;
 
-	/*
-	 * SPEED HACK:
-	 *
-	 * On copy/swap commands, flip where data gets written to memory,
-	 * so that cmd_copy and cmd_swap don't have to work on every word
-	 *
-	 * NOTE:
-	 *
-	 * write_gbe_file() will not use this, but copy/setchecksum commands
-	 * will directly manipulate part_modified[], telling write_gbe_file()
-	 * to also write in reverse, as in read_gbe_file().
-	 */
-	if (cmd == CMD_COPY || cmd == CMD_SWAP)
-		invert = 1;
-
 	for (p = 0; p < 2; p++) {
 		if (do_read[p])
-			read_gbe_file_part(p, invert);
+			read_gbe_file_part(p);
 	}
 }
 
 static void
-read_gbe_file_part(size_t p, uint8_t invert)
+read_gbe_file_part(size_t p)
 {
-	read_file_exact(gbe_fd, gbe_mem_offset(p ^ invert, "pread"),
+	void *mem_offset = gbe_mem_offset(p ^ command[cmd].invert, "pread");
+
+	read_file_exact(gbe_fd, mem_offset,
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
@@ -794,7 +781,7 @@ good_checksum(size_t partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
-	    partnum ^ invert);
+	    partnum ^ command[cmd].invert);
 
 	set_err(ECANCELED);
 	return 0;
