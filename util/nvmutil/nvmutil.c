@@ -414,6 +414,12 @@ sanitize_command_index(size_t c)
 
 	if (command[c].arg_part > 1)
 		err(ECANCELED, "cmd index %zu: arg_part above 1", c);
+
+	if (ARG_NOPART)
+		err(ECANCELED, "ARG_NOPART is non-zero");
+
+	if (ARG_PART != 1)
+		err(ECANCELED, "ARG_PART is a value other than one");
 }
 
 static void
