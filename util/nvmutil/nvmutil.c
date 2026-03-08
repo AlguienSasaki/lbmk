@@ -74,6 +74,7 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
 static void set_part_modified(size_t p);
 static void check_part_num(size_t p);
 static void usage(void);
+static size_t xstrxlen(const char *scmp, size_t maxlen);
 static void err(int nvm_errval, const char *msg, ...);
 static const char *getnvmprogname(void);
 static void set_err(int errval);
@@ -215,6 +216,9 @@ static size_t cmd_index = CMD_NULL;
 int
 main(int argc, char *argv[])
 {
+#ifdef HAVE_STRNLEN
+	err(1, "TEST");
+#endif
 	argv0 = argv[0];
 	if (argc < 2)
 		usage();
@@ -348,7 +352,7 @@ sanitize_command_index(size_t c)
 	if (*command[c].str == '\0')
 		err(ECANCELED, "cmd index %zu: empty str", c);
 
-	if (strnlen(command[c].str, MAX_CMD_LEN + 1) >
+	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
 		err(ECANCELED, "cmd index %zu: str too long: %s",
 		    c, command[c].str);
@@ -1085,6 +1089,33 @@ usage(void)
 	    util, util, util, util, util, util, util);
 
 	err(ECANCELED, "Too few arguments");
+}
+
+/*
+ * strnlen() but aborts on NULL input, and empty strings.
+ * Our version also prohibits unterminated strings.
+ * strnlen() was standardized in POSIX.1-2008 and is not
+ * available on some older systems, so we provide our own.
+ */
+static size_t
+xstrxlen(const char *scmp, size_t maxlen)
+{
+	size_t xstr_index;
+
+	if (scmp == NULL)
+		err(EINVAL, "NULL input to xstrxlen");
+
+	if (*scmp == '\0')
+		err(EINVAL, "Empty string in xstrxlen");
+
+	for (xstr_index = 0;
+	    xstr_index < maxlen && scmp[xstr_index] != '\0';
+	    xstr_index++);
+
+	if (xstr_index == maxlen)
+		err(EINVAL, "Unterminated string in xstrxlen");
+
+	return xstr_index;
 }
 
 static void
