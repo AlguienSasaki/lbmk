@@ -28,7 +28,7 @@
 #endif
 
 static void set_cmd(int argc, char *argv[]);
-static void check_cmd_args(int argc, char *argv[]);
+static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static void run_cmd(ssize_t c);
 static void set_io_flags(int argc, char *argv[]);
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 #endif
 
 	set_cmd(argc, argv);
-	check_cmd_args(argc, argv);
+	set_cmd_args(argc, argv);
 	set_io_flags(argc, argv);
 
 #ifdef __OpenBSD__
@@ -327,7 +327,7 @@ set_cmd(int argc, char *argv[])
 }
 
 static void
-check_cmd_args(int argc, char *argv[])
+set_cmd_args(int argc, char *argv[])
 {
 	if (cmd == CMD_NULL && argc > 2) {
 		/*
