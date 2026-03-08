@@ -28,7 +28,7 @@
 #endif
 
 static void sanitize_command_list(void);
-static void sanitize_command(size_t c);
+static void sanitize_command_index(size_t c);
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
@@ -198,7 +198,7 @@ static const struct commands command[] = {
 /*
  * Index in command[], will be set later
  */
-static size_t cmd = items(command);
+static size_t cmd_index = items(command);
 
 int
 main(int argc, char *argv[])
@@ -253,10 +253,10 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef HAVE_ARC4RANDOM_BUF
-	if (cmd == CMD_SETMAC)
+	if (cmd_index == CMD_SETMAC)
 		printf("Randomisation method: arc4random_buf\n");
 #else
-	if (cmd == CMD_SETMAC)
+	if (cmd_index == CMD_SETMAC)
 		open_dev_urandom();
 #endif
 	open_gbe_file();
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 #endif
 
 	read_gbe_file();
-	run_cmd(cmd);
+	run_cmd(cmd_index);
 	write_gbe_file();
 
 	if (close(gbe_fd) == -1)
@@ -292,7 +292,7 @@ main(int argc, char *argv[])
 	 * However, if we're not using cmd_dump, then
 	 * we have a bug somewhere in the code.
 	 */
-	if (cmd != CMD_DUMP) {
+	if (cmd_index != CMD_DUMP) {
 		if (errno)
 			err(ECANCELED, "Unhandled error on exit");
 	}
@@ -311,13 +311,12 @@ sanitize_command_list(void)
 {
 	size_t c;
 
-	for (c = 0; c < items(command); c++) {
-		sanitize_command(c);
-	}
+	for (c = 0; c < items(command); c++)
+		sanitize_command_index(c);
 }
 
 static void
-sanitize_command(size_t c)
+sanitize_command_index(size_t c)
 {
 	check_command_num(c);
 
@@ -347,46 +346,48 @@ sanitize_command(size_t c)
 static void
 set_cmd(int argc, char *argv[])
 {
-	for (cmd = 0; cmd < items(command); cmd++) {
+	for (cmd_index = 0; cmd_index < items(command); cmd_index++) {
 		if (argc < 3)
 			break;
 
-		if (strcmp(argv[2], command[cmd].str) != 0)
+		if (strcmp(argv[2], command[cmd_index].str) != 0)
 			continue;
 
-		if (argc >= command[cmd].argc)
+		if (argc >= command[cmd_index].argc)
 			return;
 
-		err(EINVAL, "Too few args: command '%s'", command[cmd].str);
+		err(EINVAL, "Too few args: command '%s'",
+		    command[cmd_index].str);
 	}
 
-	cmd = items(command);
+	cmd_index = items(command);
 }
 
 static void
 set_cmd_args(int argc, char *argv[])
 {
-	if (cmd == CMD_SETMAC && argc >= 4) {
+	if (cmd_index == CMD_SETMAC && argc >= 4) {
 		/*
 		 * 4th arg e.g.: ./nvmutil gbe.bin setmac 00:xx:11:22:xx:xx
 		 */
 		mac_str = argv[3];
-	} else if (cmd >= items(command) && argc >= 3) {
+	} else if (cmd_index >= items(command) && argc >= 3) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
 		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = argv[2];
-		cmd = CMD_SETMAC;
+		cmd_index = CMD_SETMAC;
 	} else if (argc == 2) {
 		/*
 		 * No extra args: ./nvmutil gbe.bin
 		 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
 		 */
 		mac_str = rmac;
-		cmd = CMD_SETMAC;
-	} else if (cmd < items(command) && argc > 3) { /* user-supplied partnum */
+		cmd_index = CMD_SETMAC;
+	} else if (cmd_index < items(command) && argc > 3) {
 		/*
+		 * User-supplied partnum.
 		 * Example: ./nvmutil gbe.bin copy 0
 		 */
 		part = conv_argv_part_num(argv[3]);
@@ -405,7 +406,7 @@ set_cmd_args(int argc, char *argv[])
 	 * MAC address is used.
 	 */
 
-	if (cmd >= items(command))
+	if (cmd_index >= items(command))
 		err(EINVAL, "Unhandled command error");
 }
 
@@ -532,9 +533,9 @@ read_gbe_file(void)
 	 *
 	 * We can skip reading the other part, thus:
 	 */
-	if (cmd == CMD_COPY ||
-	    cmd == CMD_BRICK ||
-	    cmd == CMD_SETCHECKSUM)
+	if (cmd_index == CMD_COPY ||
+	    cmd_index == CMD_BRICK ||
+	    cmd_index == CMD_SETCHECKSUM)
 		do_read[part ^ 1] = 0;
 
 	for (p = 0; p < 2; p++) {
@@ -546,7 +547,8 @@ read_gbe_file(void)
 static void
 read_gbe_file_part(size_t p)
 {
-	void *mem_offset = gbe_mem_offset(p ^ command[cmd].invert, "pread");
+	void *mem_offset =
+	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
 	read_file_exact(gbe_fd, mem_offset,
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
@@ -880,7 +882,7 @@ good_checksum(size_t partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
-	    partnum ^ command[cmd].invert);
+	    partnum ^ command[cmd_index].invert);
 
 	set_err(ECANCELED);
 	return 0;
