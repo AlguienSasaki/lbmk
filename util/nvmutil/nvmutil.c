@@ -74,7 +74,7 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void set_part_modified(size_t p);
 static void check_part_num(size_t p);
-static void usage(void);
+static void usage(uint8_t usage_exit);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 static void err(int nvm_errval, const char *msg, ...);
@@ -216,7 +216,6 @@ struct commands {
  * Pointers used for running nvmutil commands
  */
 static const struct commands command[] = {
-
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT,
 	    SET_MOD_OFF },
 
@@ -261,7 +260,7 @@ main(int argc, char *argv[])
 #endif
 	argv0 = argv[0];
 	if (argc < 2)
-		usage();
+		usage(1);
 
 	fname = argv[1];
 
@@ -483,8 +482,10 @@ set_cmd_args(int argc, char *argv[])
 	 * MAC address is used.
 	 */
 
-	if (!valid_command(cmd_index))
+	if (!valid_command(cmd_index)) {
+		usage(0);
 		err(EINVAL, "Unhandled command error");
+	}
 }
 
 static size_t
@@ -1140,7 +1141,7 @@ check_part_num(size_t p)
 }
 
 static void
-usage(void)
+usage(uint8_t usage_exit)
 {
 	const char *util = getnvmprogname();
 
@@ -1160,7 +1161,8 @@ usage(void)
 	    "\t%s FILE setchecksum 0|1\n",
 	    util, util, util, util, util, util, util);
 
-	err(ECANCELED, "Too few arguments");
+	if (usage_exit)
+		err(ECANCELED, "Too few arguments");
 }
 
 /*
