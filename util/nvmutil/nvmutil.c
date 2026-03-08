@@ -29,6 +29,9 @@
 
 static void sanitize_command_list(void);
 static void sanitize_command_index(size_t c);
+static void check_bin(size_t a, const char *a_name);
+static void check_enum_bin(size_t a, const char *a_name,
+    size_t b, const char *b_name);
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
@@ -74,7 +77,6 @@ static void *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void set_part_modified(size_t p);
-static void check_part_num(size_t p);
 static void usage(uint8_t usage_exit);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
@@ -407,7 +409,6 @@ sanitize_command_index(size_t c)
 
 	if (command[c].str == NULL)
 		err(ECANCELED, "cmd index %zu: NULL str", c);
-
 	if (*command[c].str == '\0')
 		err(ECANCELED, "cmd index %zu: empty str", c);
 
@@ -419,10 +420,6 @@ sanitize_command_index(size_t c)
 
 	if (command[c].run == NULL)
 		err(ECANCELED, "cmd index %zu: NULL ptr(run)", c);
-
-	if (command[c].invert > 1)
-		err(ECANCELED, "cmd index %zu: invert above 1", c);
-
 
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
@@ -437,26 +434,26 @@ sanitize_command_index(size_t c)
 			    mod_type);
 	}
 
-	if (command[c].arg_part > 1)
-		err(ECANCELED, "cmd index %zu: arg_part above 1", c);
-	if (ARG_NOPART)
-		err(ECANCELED, "ARG_NOPART is non-zero");
-	if (ARG_PART != 1)
-		err(ECANCELED, "ARG_PART is a value other than 1");
+	check_bin(command[c].invert, "cmd.invert");
+	check_bin(command[c].arg_part, "cmd.arg_part");
+	check_bin(command[c].chksum_read, "cmd.chksum_read");
+	check_bin(command[c].chksum_write, "cmd.chksum_write");
 
-	if (command[c].chksum_read > 1)
-		err(ECANCELED, "cmd index %zu: chksum_read above 1", c);
-	if (SKIP_CHECKSUM_READ)
-		err(ECANCELED, "SKIP_CHECKSUM_READ is non-zero");
-	if (CHECKSUM_READ != 1)
-		err(ECANCELED, "CHECKSUM_READ is a value other than 1");
+	check_enum_bin(ARG_NOPART, "ARG_NOPART", ARG_PART, "ARG_NOPART");
+	check_enum_bin(SKIP_CHECKSUM_READ, "SKIP_CHECKSUM_READ",
+	    CHECKSUM_READ, "CHECKSUM_READ");
+	check_enum_bin(SKIP_CHECKSUM_WRITE, "SKIP_CHECKSUM_WRITE",
+	    CHECKSUM_WRITE, "CHECKSUM_WRITE");
+}
 
-	if (command[c].chksum_write > 1)
-		err(ECANCELED, "cmd index %zu: chksum_write above 1", c);
-	if (SKIP_CHECKSUM_WRITE)
-		err(ECANCELED, "SKIP_CHECKSUM_WRITE is non-zero");
-	if (CHECKSUM_WRITE != 1)
-		err(ECANCELED, "CHECKSUM_WRITE is a value other than 1");
+static void
+check_enum_bin(size_t a, const char *a_name,
+    size_t b, const char *b_name)
+{
+	if (a)
+		err(ECANCELED, "%s is non-zero", a_name);
+	if (b != 1)
+		err(ECANCELED, "%s is a value other than 1", b_name);
 }
 
 static void
@@ -715,8 +712,6 @@ read_checksums(void)
 		max_invalid = 1;
 
 	for (p = 0; p < 2; p++) {
-		check_part_num(p);
-
 		/*
 		 * Only verify a part if it was *read*
 		 */
@@ -996,8 +991,6 @@ set_checksum(size_t p)
 	size_t c;
 	uint16_t val16 = 0;
 
-	check_part_num(p);
-
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += nvm_word(c, p);
 
@@ -1109,7 +1102,7 @@ check_nvm_bound(size_t c, size_t p)
 	 * we ever wish to work on the extended area.
 	 */
 
-	check_part_num(p);
+	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
 		err(EINVAL, "check_nvm_bound: out of bounds %zu", c);
@@ -1213,7 +1206,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 {
 	off_t off;
 
-	check_part_num(p);
+	check_bin(p, "part number");
 
 	off = (off_t)p * nsize;
 
@@ -1231,15 +1224,15 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 static void
 set_part_modified(size_t p)
 {
-	check_part_num(p);
+	check_bin(p, "part number");
 	part_modified[p] = 1;
 }
 
 static void
-check_part_num(size_t p)
+check_bin(size_t a, const char *a_name)
 {
-	if (p > 1)
-		err(EINVAL, "Bad part number (%zu)", p);
+	if (a > 1)
+		err(ECANCELED, "%s above 1", a_name);
 }
 
 static void
