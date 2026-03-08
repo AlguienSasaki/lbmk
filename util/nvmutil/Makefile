@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2022,2025 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2022,2026 Leah Rowe <leah@libreboot.org>
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC?=cc
@@ -8,17 +8,28 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
+# nvm is the old binary name,
+# but it was renamed to nvmutil
+# to avoid conflict with a certain
+# package manager by that name!
+
 nvm: nvmutil.c
-	$(CC) $(CFLAGS) nvmutil.c -o nvm
+	rm -f nvm
+	$(CC) $(CFLAGS) nvmutil.c -o nvmutil
 
 install:
-	$(INSTALL) nvm $(DESTDIR)$(PREFIX)/bin/nvm
+	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/nvmutil
+
+# do not delete *bin/nvm because
+# there is a package manager by
+# that name. this makefile now
+# treats nvmutil as the binary
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/nvm
+	rm -f $(DESTDIR)$(PREFIX)/bin/nvmutil
 
 distclean:
-	rm -f nvm
+	rm -f nvm nvmutil
 
 clean:
-	rm -f nvm
+	rm -f nvm nvmutil

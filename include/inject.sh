@@ -6,7 +6,7 @@
 
 cbcfgsdir="config/coreboot"
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
-nvm="util/nvmutil/nvm"
+nvmutil="util/nvmutil/nvmutil"
 ifdtool="elf/coreboot/default/ifdtool"
 
 checkvars="CONFIG_GBE_BIN_PATH"
@@ -200,13 +200,13 @@ modify_mac()
 		x_ make -C util/nvmutil clean
 		x_ make -C util/nvmutil
 
-		x_ "$nvm" "$xbtmp/gbe" setmac "$new_mac"
+		x_ "$nvmutil" "$xbtmp/gbe" setmac "$new_mac"
 	fi
 
 	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
 
 	printf "\nThe following GbE NVM data will be written:\n"
-	x_ "$nvm" "$xbtmp/gbe" dump | grep -v "bytes read from file" || :
+	x_ "$nvmutil" "$xbtmp/gbe" dump | grep -v "bytes read from file" || :
 }
 
 newmac()
