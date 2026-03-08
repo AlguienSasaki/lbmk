@@ -27,10 +27,13 @@
 #endif
 #endif
 
+static void sanitize_command_list(void);
+static void sanitize_command(size_t c);
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static void run_cmd(size_t c);
+static void check_command_num(size_t c);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM_BUF
@@ -190,6 +193,8 @@ static const struct commands command[] = {
 	    ARGC_4, NO_INVERT },
 };
 
+#define MAX_CMD_LEN 50
+
 /*
  * Index in command[], will be set later
  */
@@ -222,6 +227,8 @@ main(int argc, char *argv[])
 	if (unveil("/dev/null", "r") == -1)
 		err(ECANCELED, "unveil '/dev/null'");
 #endif
+
+	sanitize_command_list();
 
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
@@ -294,6 +301,47 @@ main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	else
 		return EXIT_SUCCESS;
+}
+
+/*
+ * Guard against regressions by maintainers (command table)
+ */
+static void
+sanitize_command_list(void)
+{
+	size_t c;
+
+	for (c = 0; c < items(command); c++) {
+		sanitize_command(c);
+	}
+}
+
+static void
+sanitize_command(size_t c)
+{
+	check_command_num(c);
+
+	if (command[c].argc < 2)
+		err(ECANCELED, "cmd index %zu: argc below 2, %d",
+		    c, command[c].argc);
+
+	if (command[c].str == NULL)
+		err(ECANCELED, "cmd index %zu: NULL str", c);
+
+	if (*command[c].str == '\0')
+		err(ECANCELED, "cmd index %zu: empty str", c);
+
+	if (strnlen(command[c].str, MAX_CMD_LEN + 1) >
+	    MAX_CMD_LEN) {
+		err(ECANCELED, "cmd index %zu: str too long: %s",
+		    c, command[c].str);
+	}
+
+	if (command[c].run == NULL)
+		err(ECANCELED, "cmd index %zu: NULL ptr(run)", c);
+
+	if (command[c].invert > 1)
+		err(ECANCELED, "cmd index %zu: invert above 1", c);
 }
 
 static void
@@ -385,14 +433,19 @@ conv_argv_part_num(const char *part_str)
 static void
 run_cmd(size_t c)
 {
+	check_command_num(c);
+	command[c].run();
+}
+
+static void
+check_command_num(size_t c)
+{
 	if (c >= items(command))
-		err(ECANCELED, "run_cmd: Invalid run_cmd arg: %zu", c);
+		err(ECANCELED, "Invalid run_cmd arg: %zu", c);
 
 	if (c != command[c].chk)
-		err(ECANCELED, "run_cmd: Invalid chk value (%zu) vs arg: %zu",
+		err(ECANCELED, "Invalid cmd chk value (%zu) vs arg: %zu",
 		    command[c].chk, c);
-
-	command[c].run();
 }
 
 static void
