@@ -268,9 +268,15 @@ main(int argc, char *argv[])
 	if (cmd_index == CMD_SETMAC)
 		printf("Randomisation method: arc4random_buf\n");
 #else
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__APPLE__) || \
+    defined(__DragonFly__)
+	err(ECANCELED, "Maintainer error: arc4random disabled on BSD/MacOS");
+#endif
 	if (cmd_index == CMD_SETMAC)
 		open_dev_urandom();
 #endif
+
 	open_gbe_file();
 
 #ifdef __OpenBSD__
