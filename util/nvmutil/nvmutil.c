@@ -147,27 +147,46 @@ static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *fname;
 static const char *argv0;
 
+/*
+ * Used as indices for command[]
+ */
+enum {
+	CMD_DUMP,
+	CMD_SETMAC,
+	CMD_SWAP,
+	CMD_COPY,
+	CMD_BRICK,
+	CMD_SETCHECKSUM
+};
+#define CMD_NULL -1
+
+/*
+ * Those enum values are used for .chk in
+ * the command struct. Then, even if an index
+ * is valid, if it doesn't match .chk, run_cmd()
+ * will fail. This mitigates against the possibility
+ * of a maintainer (read: you) screwing up the enum,
+ * which otherwise enables easier understanding.
+ *
+ * In other words: the order of the CMD enum must
+ * precisely match the order of the command struct.
+ */
 struct commands {
+	size_t chk; /* use by in later check on run_cmd,
+		against cmd index, to verify correct enum order */
 	const char *str;
 	void (*run)(void);
 	int args;
 	uint8_t invert;
 };
 static const struct commands command[] = {
-	{ "dump", cmd_dump, 3, 0 },
-	{ "setmac", cmd_setmac, 3, 0 },
-	{ "swap", cmd_swap, 3, 1 },
-	{ "copy", cmd_copy, 4, 1 },
-	{ "brick", cmd_brick, 4, 0 },
-	{ "setchecksum", cmd_setchecksum, 4, 0 },
+	{ CMD_DUMP, "dump", cmd_dump, 3, 0 },
+	{ CMD_SETMAC, "setmac", cmd_setmac, 3, 0 },
+	{ CMD_SWAP, "swap", cmd_swap, 3, 1 },
+	{ CMD_COPY, "copy", cmd_copy, 4, 1 },
+	{ CMD_BRICK, "brick", cmd_brick, 4, 0 },
+	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, 4, 0 },
 };
-#define CMD_NULL -1
-#define CMD_DUMP 0
-#define CMD_SETMAC 1
-#define CMD_SWAP 2
-#define CMD_COPY 3
-#define CMD_BRICK 4
-#define CMD_SETCHECKSUM 5
 
 static ssize_t cmd = CMD_NULL;
 
@@ -352,7 +371,11 @@ run_cmd(ssize_t c)
 	size_t d = (size_t)c;
 
 	if (d >= items(command))
-		err(ECANCELED, "Invalid run_cmd arg: %zd", c);
+		err(ECANCELED, "run_cmd: Invalid run_cmd arg: %zd", c);
+
+	if (d != command[d].chk)
+		err(ECANCELED, "run_cmd: Invalid chk value (%zu) vs arg: %zd",
+		    command[d].chk, c);
 
 	command[d].run();
 }
