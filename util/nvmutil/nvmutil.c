@@ -43,6 +43,7 @@ static void open_dev_urandom(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
+static void read_checksums(void);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
 static void set_mac_byte(size_t mac_byte_pos);
@@ -206,6 +207,16 @@ enum {
 	ARG_PART
 };
 
+enum {
+	SKIP_CHECKSUM_READ,
+	CHECKSUM_READ
+};
+
+enum {
+	SKIP_CHECKSUM_WRITE,
+	CHECKSUM_WRITE
+};
+
 struct commands {
 	size_t chk; /* use by in later check on run_cmd,
 		against cmd index, to verify correct enum order */
@@ -217,44 +228,62 @@ struct commands {
 		/* affected by invert */
 	uint8_t arg_part; /* 0: no part given. 1: part given */
 		/* if set, only the user-specified part is read */
+	uint8_t chksum_read;
+		/* if set: validate checksum before operation */
+		/* affected by invert */
+	uint8_t chksum_write;
+		/* if set: update checksum before write */
+		/* affected by invert */
 };
 
 /*
  * Pointers used for running nvmutil commands
  */
 static const struct commands command[] = {
-	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT,
-	    SET_MOD_OFF, ARG_NOPART },
+	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_NOPART,
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
-	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT,
-	    SET_MOD_OFF, ARG_NOPART },
+	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_NOPART,
+	    CHECKSUM_READ, CHECKSUM_WRITE },
 
 	/*
 	 * Invert read and set both parts modified.
 	 * No actual copying in memory is performed.
 	 */
-	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT,
-	    SET_MOD_BOTH, ARG_NOPART },
+	{ CMD_SWAP, "swap", cmd_swap, ARGC_3,
+	    PART_INVERT, SET_MOD_BOTH,
+	    ARG_NOPART,
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
 	 * Invert read and set the copied part modified.
 	 * No actual copying in memory is performed.
 	 * arg_part set: we only need to read the specified part.
 	 */
-	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT,
-	    SET_MOD_N, ARG_PART },
+	{ CMD_COPY, "copy", cmd_copy, ARGC_4,
+	    PART_INVERT, SET_MOD_N,
+	    ARG_PART,
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
 	 * arg_part set: we need only read the specified part.
 	 */
-	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, NO_INVERT,
-	    SET_MOD_OFF, ARG_PART },
+	{ CMD_BRICK, "brick", cmd_brick, ARGC_4,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_PART,
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
 	 * arg_part set: we need only read the specified part.
 	 */
-	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum,
-	    ARGC_4, NO_INVERT, SET_MOD_OFF, ARG_PART },
+	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, ARGC_4,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_PART,
+	    SKIP_CHECKSUM_READ, CHECKSUM_WRITE },
 };
 
 #define MAX_CMD_LEN 50
@@ -334,6 +363,8 @@ main(int argc, char *argv[])
 #endif
 
 	read_gbe_file();
+	read_checksums();
+
 	run_cmd(cmd_index);
 
 	if (errno)
@@ -414,12 +445,24 @@ sanitize_command_index(size_t c)
 
 	if (command[c].arg_part > 1)
 		err(ECANCELED, "cmd index %zu: arg_part above 1", c);
-
 	if (ARG_NOPART)
 		err(ECANCELED, "ARG_NOPART is non-zero");
-
 	if (ARG_PART != 1)
-		err(ECANCELED, "ARG_PART is a value other than one");
+		err(ECANCELED, "ARG_PART is a value other than 1");
+
+	if (command[c].chksum_read > 1)
+		err(ECANCELED, "cmd index %zu: chksum_read above 1", c);
+	if (SKIP_CHECKSUM_READ)
+		err(ECANCELED, "SKIP_CHECKSUM_READ is non-zero");
+	if (CHECKSUM_READ != 1)
+		err(ECANCELED, "CHECKSUM_READ is a value other than 1");
+
+	if (command[c].chksum_write > 1)
+		err(ECANCELED, "cmd index %zu: chksum_write above 1", c);
+	if (SKIP_CHECKSUM_WRITE)
+		err(ECANCELED, "SKIP_CHECKSUM_WRITE is non-zero");
+	if (CHECKSUM_WRITE != 1)
+		err(ECANCELED, "CHECKSUM_WRITE is a value other than 1");
 }
 
 static void
@@ -649,6 +692,52 @@ read_gbe_file_part(size_t p)
 
 	read_file_exact(gbe_fd, mem_offset,
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
+}
+
+static void
+read_checksums(void)
+{
+	size_t p;
+	uint8_t invert;
+	uint8_t arg_part;
+	uint8_t num_invalid;
+	uint8_t max_invalid;
+
+	if (!command[cmd_index].chksum_read)
+		return;
+
+	num_invalid = 0;
+	max_invalid = 2;
+
+	invert = command[cmd_index].invert;
+	arg_part = command[cmd_index].arg_part;
+	if (arg_part)
+		max_invalid = 1;
+
+	for (p = 0; p < 2; p++) {
+		check_part_num(p);
+
+		/*
+		 * Only verify a part if it was *read*
+		 */
+		if (arg_part && (p == (part ^ 1 ^ invert)))
+			continue;
+
+		if (!good_checksum(p))
+			++num_invalid;
+	}
+
+	/*
+	 * If at least one checksum is valid,
+	 * we can reset errno. This matters,
+	 * because good_checksum() sets it.
+	 */
+	if (num_invalid < max_invalid)
+		errno = 0;
+
+	if (num_invalid >= max_invalid)
+		err(ECANCELED, "No valid checksum found in file: %s",
+		    fname);
 }
 
 static void
