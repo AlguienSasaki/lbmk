@@ -81,6 +81,7 @@ static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 static void err(int nvm_errval, const char *msg, ...);
 static const char *getnvmprogname(void);
 static void set_err(int errval);
+static void close_files(void);
 
 /*
  * Sizes in bytes:
@@ -372,17 +373,7 @@ main(int argc, char *argv[])
 	else if (gbe_flags != O_RDONLY)
 		write_gbe_file();
 
-	if (gbe_fd > -1) {
-		if (close(gbe_fd) == -1)
-			err(ECANCELED, "close '%s'", fname);
-	}
-
-#ifndef HAVE_ARC4RANDOM_BUF
-	if (urandom_fd > -1) {
-		if (close(urandom_fd) == -1)
-			err(ECANCELED, "close '%s'", rname);
-	}
-#endif
+	close_files();
 
 	if (errno)
 		err(ECANCELED, "Unhandled error on exit");
@@ -1345,6 +1336,9 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 static void
 err(int nvm_errval, const char *msg, ...)
 {
+	if (nvm_errval != -1)
+		close_files();
+
 	va_list args;
 
 	fprintf(stderr, "%s: ", getnvmprogname());
@@ -1385,4 +1379,20 @@ set_err(int x)
 		errno = x;
 	else
 		errno = ECANCELED;
+}
+
+static void
+close_files(void)
+{
+	if (gbe_fd > -1) {
+		if (close(gbe_fd) == -1)
+			err(-1, "close '%s'", fname);
+	}
+
+#ifndef HAVE_ARC4RANDOM_BUF
+	if (urandom_fd > -1) {
+		if (close(urandom_fd) == -1)
+			err(-1, "close '%s'", rname);
+	}
+#endif
 }
