@@ -214,6 +214,7 @@ struct commands {
 	uint8_t arg_part;
 	uint8_t chksum_read;
 	uint8_t chksum_write;
+	size_t rw_size; /* within the 4KB GbE part */
 };
 
 /*
@@ -223,12 +224,14 @@ static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
-	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    NVM_SIZE },
 
 	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
-	    CHECKSUM_READ, CHECKSUM_WRITE },
+	    CHECKSUM_READ, CHECKSUM_WRITE,
+	    NVM_SIZE },
 
 	/*
 	 * OPTIMISATION: Read inverted, so no copying is needed.
@@ -236,7 +239,8 @@ static const struct commands command[] = {
 	{ CMD_SWAP, "swap", NULL, ARGC_3,
 	    PART_INVERT, SET_MOD_BOTH,
 	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    GBE_PART_SIZE },
 
 	/*
 	 * OPTIMISATION: Read inverted, so no copying is needed.
@@ -245,7 +249,8 @@ static const struct commands command[] = {
 	{ CMD_COPY, "copy", NULL, ARGC_4,
 	    PART_INVERT, SET_MOD_N,
 	    ARG_PART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    GBE_PART_SIZE },
 
 	/*
 	 * The non-target part will not be read.
@@ -253,7 +258,8 @@ static const struct commands command[] = {
 	{ CMD_BRICK, "brick", cmd_brick, ARGC_4,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_PART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    NVM_SIZE },
 
 	/*
 	 * The non-target part will not be read.
@@ -261,7 +267,8 @@ static const struct commands command[] = {
 	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, ARGC_4,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_PART,
-	    SKIP_CHECKSUM_READ, CHECKSUM_WRITE },
+	    SKIP_CHECKSUM_READ, CHECKSUM_WRITE,
+	    NVM_SIZE },
 };
 
 #define MAX_CMD_LEN 50
@@ -364,6 +371,7 @@ static void
 sanitize_command_index(size_t c)
 {
 	uint8_t mod_type;
+	size_t gbe_rw_size;
 
 	check_command_num(c);
 
@@ -384,15 +392,14 @@ sanitize_command_index(size_t c)
 
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
-		case SET_MOD_0:
-		case SET_MOD_1:
-		case SET_MOD_N:
-		case SET_MOD_BOTH:
-		case SET_MOD_OFF:
-			break;
-		default:
-			err(EINVAL, "Unsupported set_mod type: %u",
-			    mod_type);
+	case SET_MOD_0:
+	case SET_MOD_1:
+	case SET_MOD_N:
+	case SET_MOD_BOTH:
+	case SET_MOD_OFF:
+		break;
+	default:
+		err(EINVAL, "Unsupported set_mod type: %u", mod_type);
 	}
 
 	check_bin(command[c].invert, "cmd.invert");
@@ -405,6 +412,20 @@ sanitize_command_index(size_t c)
 	    CHECKSUM_READ, "CHECKSUM_READ");
 	check_enum_bin(SKIP_CHECKSUM_WRITE, "SKIP_CHECKSUM_WRITE",
 	    CHECKSUM_WRITE, "CHECKSUM_WRITE");
+
+	gbe_rw_size = command[c].rw_size;
+
+	switch (gbe_rw_size) {
+	case GBE_PART_SIZE:
+	case NVM_SIZE:
+		break;
+	default:
+		err(EINVAL, "Unsupported rw_size: %zu", gbe_rw_size);
+	}
+
+	if (gbe_rw_size > GBE_PART_SIZE)
+		err(EINVAL, "rw_size larger than GbE part: %zu",
+		    gbe_rw_size);
 }
 
 static void
@@ -614,11 +635,16 @@ read_gbe_file(void)
 static void
 read_gbe_file_part(size_t p)
 {
+	size_t gbe_rw_size = command[cmd_index].rw_size;
+
 	void *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
 	read_file_exact(gbe_fd, mem_offset,
-	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
+	    gbe_rw_size, gbe_file_offset(p, "pread"), fname, "pread");
+
+	printf("Read %zu bytes from part %zu: %s\n",
+	    gbe_rw_size, p, fname);
 }
 
 static void
@@ -1038,16 +1064,21 @@ write_gbe_file_part(size_t p)
 {
 	int retry;
 	ssize_t rval;
+	size_t gbe_rw_size;
 
 	if (gbe_fd == -1)
 		err(ECANCELED, "Trying to write bad gbe_fd: %s", fname);
 
+	gbe_rw_size = command[cmd_index].rw_size;
+
 	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
 		rval = pwrite(gbe_fd, gbe_mem_offset(p, "pwrite"),
-		    GBE_PART_SIZE, gbe_file_offset(p, "pwrite"));
+		    gbe_rw_size, gbe_file_offset(p, "pwrite"));
 
-		if (rval == GBE_PART_SIZE) {
+		if (rval == (ssize_t)gbe_rw_size) {
 			errno = 0;
+			printf("Wrote %zu bytes to part %zu: %s\n",
+			    gbe_rw_size, p, fname);
 			return;
 		}
 
