@@ -201,6 +201,11 @@ enum {
 	SET_MOD_BOTH /* set both parts modified */
 };
 
+enum {
+	ARG_NOPART,
+	ARG_PART
+};
+
 struct commands {
 	size_t chk; /* use by in later check on run_cmd,
 		against cmd index, to verify correct enum order */
@@ -210,6 +215,7 @@ struct commands {
 	uint8_t invert;
 	uint8_t set_modified; /* both, one part, both or neither */
 		/* affected by invert */
+	uint8_t arg_part; /* 0: no part given. 1: part given */
 };
 
 /*
@@ -217,30 +223,37 @@ struct commands {
  */
 static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT,
-	    SET_MOD_OFF },
+	    SET_MOD_OFF, ARG_NOPART },
 
 	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT,
-	    SET_MOD_OFF },
+	    SET_MOD_OFF, ARG_NOPART },
 
 	/*
 	 * Invert read and set both parts modified.
 	 * No actual copying in memory is performed.
 	 */
 	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT,
-	    SET_MOD_BOTH },
+	    SET_MOD_BOTH, ARG_NOPART },
 
 	/*
 	 * Invert read and set the copied part modified.
 	 * No actual copying in memory is performed.
+	 * arg_part set: we only need to read the specified part.
 	 */
 	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT,
-	    SET_MOD_N },
+	    SET_MOD_N, ARG_PART },
 
+	/*
+	 * arg_part set: we need only read the specified part.
+	 */
 	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, NO_INVERT,
-	    SET_MOD_OFF },
+	    SET_MOD_OFF, ARG_PART },
 
+	/*
+	 * arg_part set: we need only read the specified part.
+	 */
 	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum,
-	    ARGC_4, NO_INVERT, SET_MOD_OFF },
+	    ARGC_4, NO_INVERT, SET_MOD_OFF, ARG_PART },
 };
 
 #define MAX_CMD_LEN 50
@@ -401,6 +414,7 @@ sanitize_command_index(size_t c)
 	if (command[c].invert > 1)
 		err(ECANCELED, "cmd index %zu: invert above 1", c);
 
+
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
 		case SET_MOD_0:
@@ -413,6 +427,9 @@ sanitize_command_index(size_t c)
 			err(EINVAL, "Unsupported set_mod type: %u",
 			    mod_type);
 	}
+
+	if (command[c].arg_part > 1)
+		err(ECANCELED, "cmd index %zu: arg_part above 1", c);
 }
 
 static void
@@ -615,9 +632,7 @@ read_gbe_file(void)
 	 *
 	 * We can skip reading the other part, thus:
 	 */
-	if (cmd_index == CMD_COPY ||
-	    cmd_index == CMD_BRICK ||
-	    cmd_index == CMD_SETCHECKSUM)
+	if (command[cmd_index].arg_part)
 		do_read[part ^ 1] = 0;
 
 	for (p = 0; p < 2; p++) {
