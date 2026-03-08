@@ -407,7 +407,7 @@ sanitize_command_index(size_t c)
 	check_bin(command[c].chksum_read, "cmd.chksum_read");
 	check_bin(command[c].chksum_write, "cmd.chksum_write");
 
-	check_enum_bin(ARG_NOPART, "ARG_NOPART", ARG_PART, "ARG_NOPART");
+	check_enum_bin(ARG_NOPART, "ARG_NOPART", ARG_PART, "ARG_PART");
 	check_enum_bin(SKIP_CHECKSUM_READ, "SKIP_CHECKSUM_READ",
 	    CHECKSUM_READ, "CHECKSUM_READ");
 	check_enum_bin(SKIP_CHECKSUM_WRITE, "SKIP_CHECKSUM_WRITE",
