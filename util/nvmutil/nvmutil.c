@@ -606,7 +606,7 @@ parse_mac_string(void)
 {
 	size_t mac_byte;
 
-	if (strlen(mac_str) != 17)
+	if (xstrxlen(mac_str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
 	memset(mac_buf, 0, sizeof(mac_buf));
