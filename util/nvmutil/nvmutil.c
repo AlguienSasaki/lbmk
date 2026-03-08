@@ -267,8 +267,10 @@ main(int argc, char *argv[])
 	if (close(gbe_fd) == -1)
 		err(ECANCELED, "close '%s'", fname);
 #ifndef HAVE_ARC4RANDOM_BUF
-	if (close(urandom_fd) == -1)
-		err(ECANCELED, "close '%s'", rname);
+	if (urandom_fd > -1) {
+		if (close(urandom_fd) == -1)
+			err(ECANCELED, "close '%s'", rname);
+	}
 #endif
 
 	/*
