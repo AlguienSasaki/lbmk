@@ -13,12 +13,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
- * On the platforms below, we will use arc4random
- * for random MAC address generation.
- *
- * Later on, the code has fallbacks for other systems.
- */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
@@ -159,12 +153,10 @@ static const char *argv0;
 
 /*
  * Use these for .invert in command[]:
+ * If set to 1: read/write inverter (p0->p1, p1->p0)
  */
 #define PART_INVERT 1
-    /* if used: read GbE parts swapped */
-    /* e.g. part0 read (file) to part1 (mem) */
 #define NO_INVERT 0
-    /* don't swap. e.g. part0 read (file) to part0 (mem) */
 
 /*
  * Use these for .argc in command[]:
@@ -174,10 +166,7 @@ static const char *argv0;
 
 /*
  * Used as indices for command[]
- *
- * MUST be in the same order as entries in
- * command[] - or run_cmd() will detect this,
- * and cause a non-zero exit (err).
+ * MUST be in the same order as entries in command[]
  */
 enum {
 	CMD_DUMP,
@@ -189,11 +178,7 @@ enum {
 };
 
 /*
- * Set this in command[].mod entries.
- * If set, a given part will always
- * be set to modified.
- *
- * NOTE: Make sure to verify checksum first.
+ * If set, a given part will always be written.
  */
 enum {
 	SET_MOD_OFF, /* don't manually set part modified */
@@ -220,26 +205,19 @@ enum {
 };
 
 struct commands {
-	size_t chk; /* use by in later check on run_cmd,
-		against cmd index, to verify correct enum order */
+	size_t chk;
 	const char *str;
 	void (*run)(void);
 	int argc;
 	uint8_t invert;
-	uint8_t set_modified; /* both, one part, both or neither */
-		/* affected by invert */
-	uint8_t arg_part; /* 0: no part given. 1: part given */
-		/* if set, only the user-specified part is read */
+	uint8_t set_modified;
+	uint8_t arg_part;
 	uint8_t chksum_read;
-		/* if set: validate checksum before operation */
-		/* affected by invert */
 	uint8_t chksum_write;
-		/* if set: update checksum before write */
-		/* affected by invert */
 };
 
 /*
- * Pointers used for running nvmutil commands
+ * Command table, for nvmutil commands
  */
 static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
@@ -253,8 +231,7 @@ static const struct commands command[] = {
 	    CHECKSUM_READ, CHECKSUM_WRITE },
 
 	/*
-	 * Invert read and set both parts modified.
-	 * No actual copying in memory is performed.
+	 * OPTIMISATION: Read inverted, so no copying is needed.
 	 */
 	{ CMD_SWAP, "swap", NULL, ARGC_3,
 	    PART_INVERT, SET_MOD_BOTH,
@@ -262,9 +239,8 @@ static const struct commands command[] = {
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
-	 * Invert read and set the copied part modified.
-	 * No actual copying in memory is performed.
-	 * arg_part set: we only need to read the specified part.
+	 * OPTIMISATION: Read inverted, so no copying is needed.
+	 * The non-target part will not be read.
 	 */
 	{ CMD_COPY, "copy", NULL, ARGC_4,
 	    PART_INVERT, SET_MOD_N,
@@ -272,7 +248,7 @@ static const struct commands command[] = {
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
-	 * arg_part set: we need only read the specified part.
+	 * The non-target part will not be read.
 	 */
 	{ CMD_BRICK, "brick", cmd_brick, ARGC_4,
 	    NO_INVERT, SET_MOD_OFF,
@@ -280,7 +256,7 @@ static const struct commands command[] = {
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
 
 	/*
-	 * arg_part set: we need only read the specified part.
+	 * The non-target part will not be read.
 	 */
 	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, ARGC_4,
 	    NO_INVERT, SET_MOD_OFF,
@@ -310,17 +286,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(ECANCELED, "pledge");
 
-	/*
-	 * For restricted filesystem access on early error.
-	 *
-	 * This prevents access to /dev/urandom, which we
-	 * should never use in OpenBSD (we use arc4random),
-	 * thus guarding against any future bugs there.
-	 *
-	 * This also prevents early reads to the GbE file,
-	 * while performing other checks; we will later
-	 * unveil the GbE file, to allow access.
-	 */
 	if (unveil("/dev/null", "r") == -1)
 		err(ECANCELED, "unveil '/dev/null'");
 #endif
@@ -448,6 +413,7 @@ check_enum_bin(size_t a, const char *a_name,
 {
 	if (a)
 		err(ECANCELED, "%s is non-zero", a_name);
+
 	if (b != 1)
 		err(ECANCELED, "%s is a value other than 1", b_name);
 }
@@ -512,21 +478,6 @@ set_cmd_args(int argc, char *argv[])
 	}
 
 	if (!valid_command(cmd_index)) {
-		/*
-		 * This should never actually run.
-		 * It's put here as a guard against
-		 * future regressions by maintainers.
-		 *
-		 * The reason this shouldn't run is
-		 * because when a bad command (or no
-		 * command) is given, either the command
-		 * should be treated as a MAC address,
-		 * or if no command is given, a random
-		 * MAC address is used.
-		 *
-		 * Therefore, a valid command should
-		 * always exist at this point.
-		 */
 		usage(0);
 		err(EINVAL, "Unhandled command error");
 	}
@@ -537,16 +488,11 @@ conv_argv_part_num(const char *part_str)
 {
 	unsigned char ch;
 
-	/*
-	 * Because char signedness is implementation-defined,
-	 * we cast to unsigned char before arithmetic.
-	 */
-
 	if (part_str[0] == '\0' || part_str[1] != '\0')
 		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
+	/* char signedness is implementation-defined */
 	ch = (unsigned char)part_str[0];
-
 	if (ch < '0' || ch > '1')
 		err(EINVAL, "Bad part number (%c)", ch);
 
@@ -599,23 +545,17 @@ open_dev_urandom(void)
 {
 	struct stat st_urandom_fd;
 
-	/*
-	 * Try /dev/urandom first
-	 */
 	rname = newrandom;
 	if ((urandom_fd = open(rname, O_RDONLY)) != -1)
 		return;
 
+	/*
+	 * Fall back to /dev/random on very old Unix.
+	 */
+
 	fprintf(stderr, "Can't open %s (will use %s instead)\n",
 	    newrandom, oldrandom);
 
-	/*
-	 * Fall back to /dev/random on old platforms
-	 * where /dev/urandom does not exist.
-	 *
-	 * We must reset the error condition first,
-	 * to prevent stale error status later.
-	 */
 	errno = 0;
 
 	rname = oldrandom;
@@ -647,6 +587,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
 	if ((*fd_ptr = open(path, flags)) == -1)
 		err(ECANCELED, "%s", path);
+
 	if (fstat(*fd_ptr, st) == -1)
 		err(ECANCELED, "%s", path);
 }
@@ -658,10 +599,8 @@ read_gbe_file(void)
 	uint8_t do_read[2] = {1, 1};
 
 	/*
-	 * The copy, brick and setchecksum commands need
-	 * only read data from the user-specified part.
-	 *
-	 * We can skip reading the other part, thus:
+	 * Commands specifying a partnum only
+	 * need the given GbE part to be read.
 	 */
 	if (command[cmd_index].arg_part)
 		do_read[part ^ 1] = 0;
@@ -717,11 +656,6 @@ read_checksums(void)
 			++num_invalid;
 	}
 
-	/*
-	 * If at least one checksum is valid,
-	 * we can reset errno. This matters,
-	 * because good_checksum() sets it.
-	 */
 	if (num_invalid < max_invalid)
 		errno = 0;
 
@@ -798,23 +732,18 @@ set_mac_nib(size_t mac_str_pos,
 		err(EINVAL, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
 
-	/* If random, ensure that local/unicast bits are set */
+	/*
+	 * If random, ensure that local/unicast bits are set.
+	 */
 	if ((mac_byte_pos == 0) && (mac_nib_pos == 1) &&
 	    ((mac_ch | 0x20) == 'x' ||
 	    (mac_ch == '?')))
 		hex_num = (hex_num & 0xE) | 2; /* local, unicast */
 
 	/*
-	 * Words other than the MAC address are stored little
-	 * endian in the file, and we handle that when reading.
-	 * However, MAC address words are stored big-endian
-	 * in that file, so we write each 2-byte word logically
-	 * in little-endian order, which on little-endian would
-	 * be stored big-endian in memory, and vice versa.
-	 *
-	 * Later code using the MAC string will handle this.
+	 * MAC words stored big endian in-file, little-endian
+	 * logically, so we reverse the order.
 	 */
-
 	mac_buf[mac_byte_pos >> 1] |= hex_num <<
 	    (((mac_byte_pos & 1) << 3) /* left or right byte? */
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
@@ -823,10 +752,6 @@ set_mac_nib(size_t mac_str_pos,
 static uint16_t
 hextonum(char ch_s)
 {
-	/*
-	 * We assume char is signed, hence ch_s.
-	 * We explicitly cast to unsigned:
-	 */
 	unsigned char ch = (unsigned char)ch_s;
 
 	if ((unsigned)(ch - '0') <= 9)
@@ -991,29 +916,9 @@ set_checksum(size_t p)
 static void
 cmd_brick(void)
 {
-	uint16_t checksum_word;
-
-	if (!good_checksum(part)) {
-		err(ECANCELED,
-		    "Part %zu checksum already invalid in file '%s'",
-		    part, fname);
-	}
-
-	/*
-	 * We know checksum_word is valid, so we need only
-	 * flip one bit to invalidate it.
-	 */
-	checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
+	uint16_t checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
 	set_nvm_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
 }
-
-/*
- * cmd_copy and cmd_swap don't exist, because
- * their operations are handled during reading
- * by virtue of command[x].invert, and then
- * set modified accordingly, while having the
- * same centralised checksum verification.
- */
 
 static int
 good_checksum(size_t partnum)
@@ -1037,6 +942,9 @@ good_checksum(size_t partnum)
 /*
  * GbE NVM files store 16-bit (2-byte) little-endian words.
  * We must therefore swap the order when reading or writing.
+ *
+ * NOTE: The MAC address words are stored big-endian in the
+ * file, but we assume otherwise and adapt accordingly.
  */
 
 static uint16_t
@@ -1068,17 +976,9 @@ static void
 check_nvm_bound(size_t c, size_t p)
 {
 	/*
-	 * NVM_SIZE assumed as the limit, because the
+	 * NVM_SIZE assumed as the limit, because this
 	 * current design assumes that we will only
 	 * ever modified the NVM area.
-	 *
-	 * The only exception is copy/swap, but these
-	 * do not use word/set_word and therefore do
-	 * not cause check_nvm_bound() to be called.
-	 *
-	 * TODO:
-	 * This should be adjusted in the future, if
-	 * we ever wish to work on the extended area.
 	 */
 
 	check_bin(p, "part number");
@@ -1296,13 +1196,6 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 
 	/*
 	 * Should never reach here. This keeps compilers happy.
-	 */
-
-	/*
-	 * If we do reach here, we want some way to crash
-	 * nvmutil before writing anything to disk.
-	 *
-	 * It checks errno extremely obsessively.
 	 */
 	errno = EINVAL;
 	return -1;
