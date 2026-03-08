@@ -174,7 +174,7 @@ struct commands {
 		against cmd index, to verify correct enum order */
 	const char *str;
 	void (*run)(void);
-	int args;
+	int argc;
 	uint8_t invert;
 };
 
@@ -312,7 +312,7 @@ set_cmd(int argc, char *argv[])
 	for (cmd = 0; cmd < (ssize_t)items(command); cmd++) {
 		if (strcmp(argv[2], command[cmd].str) != 0)
 			continue;
-		if (argc >= command[cmd].args) {
+		if (argc >= command[cmd].argc) {
 			return;
 		}
 
