@@ -186,9 +186,9 @@ static const struct commands command[] = {
 	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT },
 	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT },
 	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT },
-	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, PART_INVERT },
+	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, NO_INVERT },
 	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum,
-	    ARGC_4, PART_INVERT },
+	    ARGC_4, NO_INVERT },
 };
 
 /*
