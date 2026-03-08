@@ -326,7 +326,7 @@ check_cmd_args(int argc, char *argv[])
 		 */
 		mac_str = argv[2];
 		cmd = CMD_SETMAC;
-	} else if (cmd == CMD_SETMAC) { /* 1 is setmac */
+	} else if (cmd == CMD_SETMAC) {
 		/*
 		 * Example: ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
