@@ -66,6 +66,7 @@ static uint16_t nvm_word(size_t pos16, size_t part);
 static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void write_gbe_file(void);
+static void override_part_modified(void);
 static void write_gbe_file_part(size_t part);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static void *gbe_mem_offset(size_t part, const char *f_op);
@@ -184,6 +185,22 @@ enum {
 	CMD_SETCHECKSUM
 };
 
+/*
+ * Set this in command[].mod entries.
+ * If set, a given part will always
+ * be set to modified.
+ *
+ * NOTE: Make sure to verify checksum first.
+ */
+enum {
+	SET_MOD_OFF, /* don't manually set part modified */
+	SET_MOD_0, /* set part 0 modified */
+	SET_MOD_1, /* set part 1 modified */
+	SET_MOD_N, /* set user-specified part modified */
+		/* affected by command[].invert */
+	SET_MOD_BOTH /* set both parts modified */
+};
+
 struct commands {
 	size_t chk; /* use by in later check on run_cmd,
 		against cmd index, to verify correct enum order */
@@ -191,19 +208,40 @@ struct commands {
 	void (*run)(void);
 	int argc;
 	uint8_t invert;
+	uint8_t set_modified; /* both, one part, both or neither */
+		/* affected by invert */
 };
 
 /*
  * Pointers used for running nvmutil commands
  */
 static const struct commands command[] = {
-	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT },
-	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT },
-	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT },
-	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT },
-	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, NO_INVERT },
+
+	{ CMD_DUMP, "dump", cmd_dump, ARGC_3, NO_INVERT,
+	    SET_MOD_OFF },
+
+	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3, NO_INVERT,
+	    SET_MOD_OFF },
+
+	/*
+	 * Invert read and set both parts modified.
+	 * No actual copying in memory is performed.
+	 */
+	{ CMD_SWAP, "swap", cmd_swap, ARGC_3, PART_INVERT,
+	    SET_MOD_BOTH },
+
+	/*
+	 * Invert read and set the copied part modified.
+	 * No actual copying in memory is performed.
+	 */
+	{ CMD_COPY, "copy", cmd_copy, ARGC_4, PART_INVERT,
+	    SET_MOD_N },
+
+	{ CMD_BRICK, "brick", cmd_brick, ARGC_4, NO_INVERT,
+	    SET_MOD_OFF },
+
 	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum,
-	    ARGC_4, NO_INVERT },
+	    ARGC_4, NO_INVERT, SET_MOD_OFF },
 };
 
 #define MAX_CMD_LEN 50
@@ -341,6 +379,8 @@ sanitize_command_list(void)
 static void
 sanitize_command_index(size_t c)
 {
+	uint8_t mod_type;
+
 	check_command_num(c);
 
 	if (command[c].argc < 2)
@@ -364,6 +404,19 @@ sanitize_command_index(size_t c)
 
 	if (command[c].invert > 1)
 		err(ECANCELED, "cmd index %zu: invert above 1", c);
+
+	mod_type = command[c].set_modified;
+	switch (mod_type) {
+		case SET_MOD_0:
+		case SET_MOD_1:
+		case SET_MOD_N:
+		case SET_MOD_BOTH:
+		case SET_MOD_OFF:
+			break;
+		default:
+			err(EINVAL, "Unsupported set_mod type: %u",
+			    mod_type);
+	}
 }
 
 static void
@@ -872,15 +925,6 @@ cmd_copy(void)
 {
 	if (!good_checksum(part ^ 1))
 		err(ECANCELED, "copy p%zu, file '%s'", part ^ 1, fname);
-
-	/*
-	 * SPEED HACK:
-	 *
-	 * read_gbe_file() already performed the copy,
-	 * by virtue of inverted read. We need
-	 * only set the other part as changed.
-	 */
-	set_part_modified(part ^ 1);
 }
 
 static void
@@ -894,16 +938,6 @@ cmd_swap(void)
 	 * of the parts is bad. We will reset it.
 	 */
 	errno = 0;
-
-	/*
-	 * SPEED HACK:
-	 *
-	 * read_gbe_file() already performed the swap,
-	 * by virtue of inverted read. We need
-	 * only set both parts as changed.
-	 */
-	set_part_modified(0);
-	set_part_modified(1);
 }
 
 static int
@@ -969,7 +1003,7 @@ check_nvm_bound(size_t c, size_t p)
 	 *
 	 * TODO:
 	 * This should be adjusted in the future, if
-	 * we ever wish to work on the extented area.
+	 * we ever wish to work on the extended area.
 	 */
 
 	check_part_num(p);
@@ -982,13 +1016,45 @@ static void
 write_gbe_file(void)
 {
 	size_t p;
+	size_t partnum;
 
 	if (gbe_flags == O_RDONLY)
 		return;
 
+	override_part_modified();
+
 	for (p = 0; p < 2; p++) {
-		if (part_modified[p])
-			write_gbe_file_part(p);
+		partnum = p ^ command[cmd_index].invert;
+
+		if (part_modified[partnum])
+			write_gbe_file_part(partnum);
+	}
+}
+
+static void
+override_part_modified(void)
+{
+	uint8_t mod_type = command[cmd_index].set_modified;
+
+	switch (mod_type) {
+	case SET_MOD_0:
+		set_part_modified(0);
+		break;
+	case SET_MOD_1:
+		set_part_modified(1);
+		break;
+	case SET_MOD_N:
+		set_part_modified(part ^ command[cmd_index].invert);
+		break;
+	case SET_MOD_BOTH:
+		set_part_modified(0);
+		set_part_modified(1);
+		break;
+	case SET_MOD_OFF:
+		break;
+	default:
+		err(EINVAL, "Unsupported set_mod type: %u",
+		    mod_type);
 	}
 }
 
