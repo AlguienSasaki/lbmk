@@ -63,8 +63,6 @@ static void hexdump(size_t partnum);
 static void cmd_setchecksum(void);
 static void set_checksum(size_t part);
 static void cmd_brick(void);
-static void cmd_copy(void);
-static void cmd_swap(void);
 static int good_checksum(size_t partnum);
 static uint16_t nvm_word(size_t pos16, size_t part);
 static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
@@ -258,7 +256,7 @@ static const struct commands command[] = {
 	 * Invert read and set both parts modified.
 	 * No actual copying in memory is performed.
 	 */
-	{ CMD_SWAP, "swap", cmd_swap, ARGC_3,
+	{ CMD_SWAP, "swap", NULL, ARGC_3,
 	    PART_INVERT, SET_MOD_BOTH,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
@@ -268,7 +266,7 @@ static const struct commands command[] = {
 	 * No actual copying in memory is performed.
 	 * arg_part set: we only need to read the specified part.
 	 */
-	{ CMD_COPY, "copy", cmd_copy, ARGC_4,
+	{ CMD_COPY, "copy", NULL, ARGC_4,
 	    PART_INVERT, SET_MOD_N,
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE },
@@ -419,9 +417,6 @@ sanitize_command_index(size_t c)
 		    c, command[c].str);
 	}
 
-	if (command[c].run == NULL)
-		err(ECANCELED, "cmd index %zu: NULL ptr(run)", c);
-
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
 		case SET_MOD_0:
@@ -562,7 +557,8 @@ static void
 run_cmd(size_t c)
 {
 	check_command_num(c);
-	command[c].run();
+	if (command[c].run)
+		command[c].run();
 }
 
 static void
@@ -1011,17 +1007,13 @@ cmd_brick(void)
 	set_nvm_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
 }
 
-static void
-cmd_copy(void)
-{
-	return;
-}
-
-static void
-cmd_swap(void)
-{
-	return;
-}
+/*
+ * cmd_copy and cmd_swap don't exist, because
+ * their operations are handled during reading
+ * by virtue of command[x].invert, and then
+ * set modified accordingly, while having the
+ * same centralised checksum verification.
+ */
 
 static int
 good_checksum(size_t partnum)
