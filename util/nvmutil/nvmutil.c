@@ -75,6 +75,7 @@ static void set_part_modified(size_t p);
 static void check_part_num(size_t p);
 static void usage(void);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
+static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 static void err(int nvm_errval, const char *msg, ...);
 static const char *getnvmprogname(void);
 static void set_err(int errval);
@@ -372,7 +373,8 @@ set_cmd(int argc, char *argv[])
 		if (argc < 3)
 			break;
 
-		if (strcmp(argv[2], command[cmd_index].str) != 0)
+		if (xstrxcmp(argv[2], command[cmd_index].str,
+		    MAX_CMD_LEN) != 0)
 			continue;
 
 		if (argc >= command[cmd_index].argc)
@@ -488,7 +490,7 @@ set_io_flags(int argc, char *argv[])
 	if (argc < 3)
 		return;
 
-	if (strcmp(argv[2], "dump") == 0)
+	if (xstrxcmp(argv[2], "dump", MAX_CMD_LEN) == 0)
 		gbe_flags = O_RDONLY;
 }
 
@@ -1116,6 +1118,37 @@ xstrxlen(const char *scmp, size_t maxlen)
 		err(EINVAL, "Unterminated string in xstrxlen");
 
 	return xstr_index;
+}
+
+/*
+ * Portable, secure strcmp() with the same mentality
+ * as our xstrxlen
+ */
+static int
+xstrxcmp(const char *a, const char *b, size_t maxlen)
+{
+	size_t i;
+
+	if (!a || !b)
+		err(EINVAL, "NULL input to xstrxcmp");
+
+	if (*a == '\0' || *b == '\0')
+		err(EINVAL, "Empty string in xstrxcmp");
+
+	for (i = 0; i < maxlen; i++) {
+		if (a[i] != b[i])
+			return (unsigned char)a[i] - (unsigned char)b[i];
+
+		if (a[i] == '\0')
+			return 0;
+	}
+
+	err(EINVAL, "Unterminated string in xstrxcmp");
+
+	/*
+	 * Should never reach here. This keeps compilers happy.
+	 */
+	return -1;
 }
 
 static void
