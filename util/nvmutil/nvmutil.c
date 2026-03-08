@@ -462,8 +462,8 @@ cmd_setmac(void)
 	size_t partnum;
 	uint8_t mac_updated = 0;
 
-	parse_mac_string();
 	printf("MAC address to be written: %s\n", mac_str);
+	parse_mac_string();
 
 	for (partnum = 0; partnum < 2; partnum++)
 		mac_updated |= write_mac_part(partnum);
