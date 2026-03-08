@@ -372,7 +372,7 @@ set_cmd(int argc, char *argv[])
 		    command[cmd_index].str);
 	}
 
-	cmd_index = items(command);
+	cmd_index = CMD_NULL;
 }
 
 static void
