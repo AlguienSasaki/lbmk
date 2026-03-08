@@ -349,28 +349,10 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	/*
-	 * We still exit with non-zero status if
-	 * errno is set, but we don't need to print
-	 * the error on dump commands, because they
-	 * already print errors.
-	 *
-	 * If both parts have bad checksums, then
-	 * cmd_dump will cause non-zero exit. If at
-	 * least one part is valid, it resets errno.
-	 *
-	 * However, if we're not using cmd_dump, then
-	 * we have a bug somewhere in the code.
-	 */
-	if (cmd_index != CMD_DUMP) {
-		if (errno)
-			err(ECANCELED, "Unhandled error on exit");
-	}
-
 	if (errno)
-		return EXIT_FAILURE;
-	else
-		return EXIT_SUCCESS;
+		err(ECANCELED, "Unhandled error on exit");
+
+	return EXIT_SUCCESS;
 }
 
 /*
