@@ -216,6 +216,7 @@ struct commands {
 	uint8_t set_modified; /* both, one part, both or neither */
 		/* affected by invert */
 	uint8_t arg_part; /* 0: no part given. 1: part given */
+		/* if set, only the user-specified part is read */
 };
 
 /*
@@ -474,20 +475,22 @@ set_cmd_args(int argc, char *argv[])
 			mac_str = rmac;
 	}
 
-	/*
-	 * This will never actually run.
-	 * It's put here as a guard against
-	 * future regressions by maintainers.
-	 *
-	 * The reason this shouldn't run is
-	 * because when a bad command (or no
-	 * command) is given, either the command
-	 * should be treated as a MAC address,
-	 * or if no command is given, a random
-	 * MAC address is used.
-	 */
-
 	if (!valid_command(cmd_index)) {
+		/*
+		 * This should never actually run.
+		 * It's put here as a guard against
+		 * future regressions by maintainers.
+		 *
+		 * The reason this shouldn't run is
+		 * because when a bad command (or no
+		 * command) is given, either the command
+		 * should be treated as a MAC address,
+		 * or if no command is given, a random
+		 * MAC address is used.
+		 *
+		 * Therefore, a valid command should
+		 * always exist at this point.
+		 */
 		usage(0);
 		err(EINVAL, "Unhandled command error");
 	}
