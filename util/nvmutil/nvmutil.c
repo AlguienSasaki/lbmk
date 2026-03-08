@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 
 	if (errno)
 		err(errno, "Unhandled error: will not write file: %s", fname);
-	else
+	else if (gbe_flags != O_RDONLY)
 		write_gbe_file();
 
 	if (close(gbe_fd) == -1)
