@@ -30,7 +30,7 @@
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
-static void run_cmd(ssize_t c);
+static void run_cmd(size_t c);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM_BUF
@@ -167,7 +167,6 @@ enum {
 	CMD_BRICK,
 	CMD_SETCHECKSUM
 };
-#define CMD_NULL -1
 
 struct commands {
 	size_t chk; /* use by in later check on run_cmd,
@@ -194,7 +193,7 @@ static const struct commands command[] = {
 /*
  * Index in command[], will be set later
  */
-static ssize_t cmd = CMD_NULL;
+static size_t cmd = items(command);
 
 int
 main(int argc, char *argv[])
@@ -300,7 +299,7 @@ main(int argc, char *argv[])
 static void
 set_cmd(int argc, char *argv[])
 {
-	for (cmd = 0; cmd < (ssize_t)items(command); cmd++) {
+	for (cmd = 0; cmd < items(command); cmd++) {
 		if (argc < 3)
 			break;
 
@@ -313,7 +312,7 @@ set_cmd(int argc, char *argv[])
 		err(EINVAL, "Too few args: command '%s'", command[cmd].str);
 	}
 
-	cmd = CMD_NULL;
+	cmd = items(command);
 }
 
 static void
@@ -324,7 +323,7 @@ set_cmd_args(int argc, char *argv[])
 		 * 4th arg e.g.: ./nvmutil gbe.bin setmac 00:xx:11:22:xx:xx
 		 */
 		mac_str = argv[3];
-	} else if (cmd == CMD_NULL && argc >= 3) {
+	} else if (cmd >= items(command) && argc >= 3) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
 		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
@@ -338,7 +337,7 @@ set_cmd_args(int argc, char *argv[])
 		 */
 		mac_str = rmac;
 		cmd = CMD_SETMAC;
-	} else if (cmd != CMD_NULL && argc > 3) { /* user-supplied partnum */
+	} else if (cmd < items(command) && argc > 3) { /* user-supplied partnum */
 		/*
 		 * Example: ./nvmutil gbe.bin copy 0
 		 */
@@ -358,7 +357,7 @@ set_cmd_args(int argc, char *argv[])
 	 * MAC address is used.
 	 */
 
-	if ((size_t)cmd >= items(command))
+	if (cmd >= items(command))
 		err(EINVAL, "Unhandled command error");
 }
 
@@ -384,18 +383,16 @@ conv_argv_part_num(const char *part_str)
 }
 
 static void
-run_cmd(ssize_t c)
+run_cmd(size_t c)
 {
-	size_t d = (size_t)c;
+	if (c >= items(command))
+		err(ECANCELED, "run_cmd: Invalid run_cmd arg: %zu", c);
 
-	if (d >= items(command))
-		err(ECANCELED, "run_cmd: Invalid run_cmd arg: %zd", c);
+	if (c != command[c].chk)
+		err(ECANCELED, "run_cmd: Invalid chk value (%zu) vs arg: %zu",
+		    command[c].chk, c);
 
-	if (d != command[d].chk)
-		err(ECANCELED, "run_cmd: Invalid chk value (%zu) vs arg: %zd",
-		    command[d].chk, c);
-
-	command[d].run();
+	command[c].run();
 }
 
 static void
