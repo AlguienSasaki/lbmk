@@ -372,8 +372,10 @@ main(int argc, char *argv[])
 	else if (gbe_flags != O_RDONLY)
 		write_gbe_file();
 
-	if (close(gbe_fd) == -1)
-		err(ECANCELED, "close '%s'", fname);
+	if (gbe_fd > -1) {
+		if (close(gbe_fd) == -1)
+			err(ECANCELED, "close '%s'", fname);
+	}
 
 #ifndef HAVE_ARC4RANDOM_BUF
 	if (urandom_fd > -1) {
@@ -694,6 +696,11 @@ read_gbe_file_part(size_t p)
 	    GBE_PART_SIZE, gbe_file_offset(p, "pread"), fname, "pread");
 }
 
+/*
+ * This is the first defense, but individual
+ * commands should still perform checksum
+ * verification where indicated, as a fallback.
+ */
 static void
 read_checksums(void)
 {
