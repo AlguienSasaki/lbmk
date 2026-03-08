@@ -50,7 +50,7 @@ static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
-static int write_mac_part(size_t partnum);
+static void write_mac_part(size_t partnum);
 static void cmd_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
@@ -853,14 +853,14 @@ read_file_exact(int fd, void *buf, size_t len,
 	    op ? op : "read", path);
 }
 
-static int
+static void
 write_mac_part(size_t partnum)
 {
 	size_t w;
 
 	check_bin(partnum, "part number");
 	if (!part_valid[partnum])
-		return 0;
+		return;
 
 	for (w = 0; w < 3; w++)
 		set_nvm_word(w, partnum, mac_buf[w]);
@@ -869,8 +869,6 @@ write_mac_part(size_t partnum)
 	print_mac_from_nvm(partnum);
 
 	set_checksum(partnum);
-
-	return 1;
 }
 
 static void
