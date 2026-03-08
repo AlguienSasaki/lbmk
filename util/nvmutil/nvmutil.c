@@ -142,8 +142,8 @@ static int gbe_fd = -1;
 static size_t part;
 static uint8_t part_modified[2];
 
-static const char *mac_str;
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
+static const char *mac_str;
 static const char *fname;
 static const char *argv0;
 
@@ -300,25 +300,15 @@ main(int argc, char *argv[])
 static void
 set_cmd(int argc, char *argv[])
 {
-	/*
-	 * No extra args: ./nvmutil gbe.bin
-	 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
-	 */
-	if (argc == 2) {
-		cmd = CMD_SETMAC;
-		return;
-	}
-
-	/*
-	 * Three or more args.
-	 * Example: ./nvmutil gbe.bin copy 0
-	 */
 	for (cmd = 0; cmd < (ssize_t)items(command); cmd++) {
+		if (argc < 3)
+			break;
+
 		if (strcmp(argv[2], command[cmd].str) != 0)
 			continue;
-		if (argc >= command[cmd].argc) {
+
+		if (argc >= command[cmd].argc)
 			return;
-		}
 
 		err(EINVAL, "Too few args: command '%s'", command[cmd].str);
 	}
@@ -329,20 +319,25 @@ set_cmd(int argc, char *argv[])
 static void
 set_cmd_args(int argc, char *argv[])
 {
-	if (cmd == CMD_NULL && argc > 2) {
+	if (cmd == CMD_SETMAC && argc >= 4) {
+		/*
+		 * 4th arg e.g.: ./nvmutil gbe.bin setmac 00:xx:11:22:xx:xx
+		 */
+		mac_str = argv[3];
+	} else if (cmd == CMD_NULL && argc >= 3) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
 		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = argv[2];
 		cmd = CMD_SETMAC;
-	} else if (cmd == CMD_SETMAC) {
+	} else if (argc == 2) {
 		/*
-		 * Example: ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
+		 * No extra args: ./nvmutil gbe.bin
+		 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
 		 */
-		mac_str = rmac; /* random MAC */
-		if (argc > 3)
-			mac_str = argv[3];
+		mac_str = rmac;
+		cmd = CMD_SETMAC;
 	} else if (cmd != CMD_NULL && argc > 3) { /* user-supplied partnum */
 		/*
 		 * Example: ./nvmutil gbe.bin copy 0
