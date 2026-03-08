@@ -30,6 +30,7 @@
 static void set_cmd(int argc, char *argv[]);
 static void check_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
+static void run_cmd(ssize_t c);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM_BUF
@@ -149,7 +150,7 @@ static const char *argv0;
 
 struct commands {
 	const char *str;
-	void (*cmd)(void);
+	void (*run)(void);
 	int args;
 };
 static const struct commands command[] = {
@@ -160,8 +161,15 @@ static const struct commands command[] = {
 	{ "brick", cmd_brick, 4 },
 	{ "setchecksum", cmd_setchecksum, 4 },
 };
+#define CMD_NULL -1
+#define CMD_DUMP 0
+#define CMD_SETMAC 1
+#define CMD_SWAP 2
+#define CMD_COPY 3
+#define CMD_BRICK 4
+#define CMD_SETCHECKSUM 5
 
-static void (*cmd)(void) = NULL;
+static ssize_t cmd = CMD_NULL;
 
 int
 main(int argc, char *argv[])
@@ -226,7 +234,7 @@ main(int argc, char *argv[])
 #endif
 
 	read_gbe_file();
-	(*cmd)();
+	run_cmd(cmd);
 	write_gbe_file();
 
 	if (close(gbe_fd) == -1)
@@ -249,7 +257,7 @@ main(int argc, char *argv[])
 	 * However, if we're not using cmd_dump, then
 	 * we have a bug somewhere in the code.
 	 */
-	if (cmd != cmd_dump) {
+	if (cmd != CMD_DUMP) {
 		if (errno)
 			err(ECANCELED, "Unhandled error on exit");
 	}
@@ -263,14 +271,12 @@ main(int argc, char *argv[])
 static void
 set_cmd(int argc, char *argv[])
 {
-	size_t i;
-
 	/*
 	 * No extra args: ./nvmutil gbe.bin
 	 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
 	 */
 	if (argc == 2) {
-		cmd = cmd_setmac;
+		cmd = CMD_SETMAC;
 		return;
 	}
 
@@ -278,43 +284,44 @@ set_cmd(int argc, char *argv[])
 	 * Three or more args.
 	 * Example: ./nvmutil gbe.bin copy 0
 	 */
-	for (i = 0; i < items(command); i++) {
-		if (strcmp(argv[2], command[i].str) != 0)
+	for (cmd = 0; cmd < (ssize_t)items(command); cmd++) {
+		if (strcmp(argv[2], command[cmd].str) != 0)
 			continue;
-		if (argc >= command[i].args) {
-			cmd = command[i].cmd;
-			break;
+		if (argc >= command[cmd].args) {
+			return;
 		}
 
-		err(EINVAL, "Too few args: command '%s'", command[i].str);
+		err(EINVAL, "Too few args: command '%s'", command[cmd].str);
 	}
+
+	cmd = CMD_NULL;
 }
 
 static void
 check_cmd_args(int argc, char *argv[])
 {
-	if (cmd == NULL && argc > 2) {
+	if (cmd == CMD_NULL && argc > 2) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
 		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = argv[2];
-		cmd = cmd_setmac;
-	} else if (cmd == cmd_setmac) {
+		cmd = CMD_SETMAC;
+	} else if (cmd == CMD_SETMAC) { /* 1 is setmac */
 		/*
 		 * Example: ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
 		 */
 		mac_str = rmac; /* random MAC */
 		if (argc > 3)
 			mac_str = argv[3];
-	} else if (cmd != NULL && argc > 3) { /* user-supplied partnum */
+	} else if (cmd != CMD_NULL && argc > 3) { /* user-supplied partnum */
 		/*
 		 * Example: ./nvmutil gbe.bin copy 0
 		 */
 		part = conv_argv_part_num(argv[3]);
 	}
 
-	if (cmd == NULL)
+	if (cmd == CMD_NULL)
 		err(EINVAL, "Bad command");
 }
 
@@ -337,6 +344,17 @@ conv_argv_part_num(const char *part_str)
 		err(EINVAL, "Bad part number (%c)", ch);
 
 	return (size_t)(ch - '0');
+}
+
+static void
+run_cmd(ssize_t c)
+{
+	size_t d = (size_t)c;
+
+	if (d >= items(command))
+		err(ECANCELED, "Invalid run_cmd arg: %zd", c);
+
+	command[d].run();
 }
 
 static void
@@ -418,9 +436,9 @@ read_gbe_file(void)
 	 *
 	 * We can skip reading the other part, thus:
 	 */
-	if (cmd == cmd_copy ||
-	    cmd == cmd_brick ||
-	    cmd == cmd_setchecksum)
+	if (cmd == CMD_COPY ||
+	    cmd == CMD_BRICK ||
+	    cmd == CMD_SETCHECKSUM)
 		do_read[part ^ 1] = 0;
 
 	/*
@@ -435,7 +453,7 @@ read_gbe_file(void)
 	 * will directly manipulate part_modified[], telling write_gbe_file()
 	 * to also write in reverse, as in read_gbe_file().
 	 */
-	if (cmd == cmd_copy || cmd == cmd_swap)
+	if (cmd == CMD_COPY || cmd == CMD_SWAP)
 		invert = 1;
 
 	for (p = 0; p < 2; p++) {
