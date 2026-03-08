@@ -34,6 +34,7 @@ static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static void run_cmd(size_t c);
 static void check_command_num(size_t c);
+static uint8_t valid_command(size_t c);
 static void set_io_flags(int argc, char *argv[]);
 static void open_gbe_file(void);
 #ifndef HAVE_ARC4RANDOM_BUF
@@ -204,11 +205,12 @@ static const struct commands command[] = {
 };
 
 #define MAX_CMD_LEN 50
+#define CMD_NULL items(command)
 
 /*
  * Index in command[], will be set later
  */
-static size_t cmd_index = items(command);
+static size_t cmd_index = CMD_NULL;
 
 int
 main(int argc, char *argv[])
@@ -321,7 +323,7 @@ sanitize_command_list(void)
 {
 	size_t c;
 
-	for (c = 0; c < items(command); c++)
+	for (c = 0; valid_command(c); c++)
 		sanitize_command_index(c);
 }
 
@@ -356,7 +358,7 @@ sanitize_command_index(size_t c)
 static void
 set_cmd(int argc, char *argv[])
 {
-	for (cmd_index = 0; cmd_index < items(command); cmd_index++) {
+	for (cmd_index = 0; valid_command(cmd_index); cmd_index++) {
 		if (argc < 3)
 			break;
 
@@ -381,7 +383,7 @@ set_cmd_args(int argc, char *argv[])
 		 * 4th arg e.g.: ./nvmutil gbe.bin setmac 00:xx:11:22:xx:xx
 		 */
 		mac_str = argv[3];
-	} else if (cmd_index >= items(command) && argc >= 3) {
+	} else if (!valid_command(cmd_index) && argc >= 3) {
 		/*
 		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
 		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
@@ -395,7 +397,7 @@ set_cmd_args(int argc, char *argv[])
 		 */
 		mac_str = rmac;
 		cmd_index = CMD_SETMAC;
-	} else if (cmd_index < items(command) && argc > 3) {
+	} else if (valid_command(cmd_index) && argc >= 4) {
 		/*
 		 * User-supplied partnum.
 		 * Example: ./nvmutil gbe.bin copy 0
@@ -416,7 +418,7 @@ set_cmd_args(int argc, char *argv[])
 	 * MAC address is used.
 	 */
 
-	if (cmd_index >= items(command))
+	if (!valid_command(cmd_index))
 		err(EINVAL, "Unhandled command error");
 }
 
@@ -451,12 +453,21 @@ run_cmd(size_t c)
 static void
 check_command_num(size_t c)
 {
-	if (c >= items(command))
+	if (!valid_command(c))
 		err(ECANCELED, "Invalid run_cmd arg: %zu", c);
+}
+
+static uint8_t
+valid_command(size_t c)
+{
+	if (c >= items(command))
+		return 0;
 
 	if (c != command[c].chk)
 		err(ECANCELED, "Invalid cmd chk value (%zu) vs arg: %zu",
 		    command[c].chk, c);
+
+	return 1;
 }
 
 static void
