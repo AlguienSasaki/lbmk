@@ -683,14 +683,16 @@ read_gbe_file(void)
 static void
 read_gbe_file_part(size_t p)
 {
-	size_t gbe_rw_size = command[cmd_index].rw_size;
+	ssize_t rc;
 
+	size_t gbe_rw_size = command[cmd_index].rw_size;
 	void *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
-	if ((size_t)read_gbe_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pread")) !=
-	    gbe_rw_size)
+	rc = read_gbe_file_exact(gbe_fd, mem_offset,
+	    gbe_rw_size, gbe_file_offset(p, "pread"));
+
+	if (rc != (ssize_t)gbe_rw_size)
 		err(ECANCELED, "%s: Partial read from p%zu", fname, p);
 
 	printf("%s: Read %zu bytes from p%zu\n",
