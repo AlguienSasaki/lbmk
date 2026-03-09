@@ -100,6 +100,8 @@ static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
+static ssize_t read_gbe_file_exact(int fd, void *buf, size_t len,
+    off_t off);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
 static void cmd_helper_setmac(void);
@@ -110,8 +112,10 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
-static ssize_t read_gbe_file_exact(int fd, void *buf, size_t len,
-    off_t off, const char *path, const char *op);
+#ifndef NVMUTIL_ARC4RANDOM_BUF
+static ssize_t read_dev_urandom(int fd, void *buf,
+    size_t len);
+#endif
 static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
@@ -713,12 +717,43 @@ read_gbe_file_part(size_t p)
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
 	if ((size_t)read_gbe_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pread"), fname, "pread") !=
+	    gbe_rw_size, gbe_file_offset(p, "pread")) !=
 	    gbe_rw_size)
 		err(ECANCELED, "%s: Partial read from p%zu", fname, p);
 
 	printf("%s: Read %zu bytes from p%zu\n",
 	    fname, gbe_rw_size, p);
+}
+
+static ssize_t
+read_gbe_file_exact(int fd,
+    void *buf, size_t len, off_t off)
+{
+	int retry;
+	ssize_t rval;
+
+	if (fd == -1)
+		err(ECANCELED, "Trying to open bad fd: %s", fname);
+
+	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
+		rval = pread(fd, buf, len, off);
+
+		if (rval == (ssize_t)len) {
+			errno = 0;
+			return rval;
+		} else if (rval != -1) {
+			err(ECANCELED,
+			    "%s: Short pread of %zd bytes",
+			    fname, rval);
+		} else if (errno != EINTR) {
+			err(ECANCELED,
+			    "%s: Could not pread", fname);
+		}
+	}
+
+	err(EINTR, "%s: pread: max retries exceeded", fname);
+
+	return -1;
 }
 
 static void
@@ -930,82 +965,44 @@ rhex(void)
 {
 	static size_t n = 0;
 	static uint8_t rnum[12];
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-	int max_retries;
-#endif
 
-#ifdef NVMUTIL_ARC4RANDOM_BUF
 	if (!n) {
+#ifdef NVMUTIL_ARC4RANDOM_BUF
 		n = sizeof(rnum);
 		arc4random_buf(rnum, n);
-	}
 #else
-	for (max_retries = 0; max_retries < 50 && !n; max_retries++)
-		n = (size_t)read_gbe_file_exact(urandom_fd,
-		    rnum, sizeof(rnum), 0, rname, NULL);
-	if (!n || n > sizeof(rnum))
-		err(ECANCELED, "Randomisation failure");
+		n = (size_t)read_dev_urandom(
+		    urandom_fd, rnum, sizeof(rnum));
 #endif
+	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
 }
 
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 static ssize_t
-read_gbe_file_exact(int fd, void *buf, size_t len,
-    off_t off, const char *path, const char *op)
+read_dev_urandom(int fd, void *buf, size_t len)
 {
 	int retry;
 	ssize_t rval;
 
 	if (fd == -1)
-		err(ECANCELED, "Trying to open bad fd: %s", path);
+		err(ECANCELED, "Trying to open bad fd: %s", rname);
 
 	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
-		if (op)
-			rval = pread(fd, buf, len, off);
-		else
-			rval = read(fd, buf, len);
+		rval = read(fd, buf, len);
 
-		if (rval == (ssize_t)len) {
+		if (rval && (size_t)rval <= len) {
 			errno = 0;
 			return rval;
 		}
-
-		if (rval != -1) {
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-			if (fd == urandom_fd) {
-				/*
-				 * /dev/[u]random reads can still return
-				 * partial reads legally, on some weird
-				 * Unix systems (especially older ones).
-				 *
-				 * We use a circular buffer for random
-				 * bytes in rhex(), so we can just use
-				 * the smaller amount of bytes and call
-				 * read_gbe_file_exact again if necessary.
-				 */
-				if (rval > 0) {
-					errno = 0;
-					return rval;
-				}
-			}
-#endif
-			err(ECANCELED,
-			    "Short %s, %zd bytes, on file: %s",
-			    op ? op : "read", rval, path);
-		}
-
-		if (errno != EINTR)
-			err(ECANCELED,
-			    "Could not %s file: '%s'",
-			    op ? op : "read", path);
 	}
 
-	err(EINTR, "%s: max retries exceeded on file: %s",
-	    op ? op : "read", path);
+	err(EINTR, "%s: read: max retries exceeded: %s", rname);
 
 	return -1;
 }
+#endif
 
 static void
 write_mac_part(size_t partnum)
