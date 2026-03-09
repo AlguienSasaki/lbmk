@@ -1146,7 +1146,8 @@ nvm_word(size_t pos16, size_t p)
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (uint16_t)buf[pos] | (uint16_t)(buf[pos + 1] << 8);
+	return (uint16_t)buf[pos] |
+	    ((uint16_t)buf[pos + 1] << 8);
 }
 
 static void
