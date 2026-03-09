@@ -18,6 +18,7 @@ nvmutil: nvmutil.c
 	$(CC) $(CFLAGS) nvmutil.c -o nvmutil
 
 install:
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/nvmutil
 
 # do not delete *bin/nvm because
