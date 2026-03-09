@@ -19,6 +19,10 @@
 #define _XOPEN_SOURCE 500
 #endif
 
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
