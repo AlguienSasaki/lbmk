@@ -935,10 +935,10 @@ rhex(void)
 #endif
 
 #ifdef NVMUTIL_ARC4RANDOM_BUF
-if (!n) {
-	n = sizeof(rnum);
-	arc4random_buf(rnum, n);
-}
+	if (!n) {
+		n = sizeof(rnum);
+		arc4random_buf(rnum, n);
+	}
 #else
 	for (max_retries = 0; max_retries < 50 && !n; max_retries++)
 		n = (size_t)read_gbe_file_exact(urandom_fd,
