@@ -3,9 +3,15 @@
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 /*
- * Written for portability among the Unices (Linux, BSD etc)
+ * This tool lets you modify Intel GbE NVM (Gigabit Ethernet
+ * Non-Volatile Memory) images, e.g. change the MAC address.
+ * These images configure your Intel Gigabit Ethernet adapter.
  *
- * Use these CFLAGS:
+ * This code is designed to be portable, running on as many
+ * Unix and Unix-like systems as possible (mainly BSD/Linux).
+ *
+ * Recommended CFLAGS for Clang/GCC:
+ *
  * -Os -Wall -Wextra -Werror -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L
  */
 
