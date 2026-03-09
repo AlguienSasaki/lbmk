@@ -1321,12 +1321,14 @@ close_files(void)
 	if (gbe_fd > -1) {
 		if (close(gbe_fd) == -1)
 			err(-1, "%s: close failed", fname);
+		gbe_fd = -1;
 	}
 
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 	if (urandom_fd > -1) {
 		if (close(urandom_fd) == -1)
 			err(-1, "%s: close failed", rname);
+		urandom_fd = -1;
 	}
 #endif
 }
