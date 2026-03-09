@@ -85,7 +85,6 @@ static void write_mac_part(size_t partnum);
 static void cmd_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
-static void cmd_brick(void);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -201,7 +200,6 @@ enum {
 	CMD_SETMAC,
 	CMD_SWAP,
 	CMD_COPY,
-	CMD_BRICK,
 };
 
 /*
@@ -282,15 +280,6 @@ static const struct commands command[] = {
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
-
-	/*
-	 * The non-target part will not be read.
-	 */
-	{ CMD_BRICK, "brick", cmd_brick, ARGC_4,
-	    NO_INVERT, SET_MOD_OFF,
-	    ARG_PART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    NVM_SIZE },
 };
 
 #define MAX_CMD_LEN 50
@@ -1036,13 +1025,6 @@ hexdump(size_t partnum)
 }
 
 static void
-cmd_brick(void)
-{
-	uint16_t checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
-	set_nvm_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
-}
-
-static void
 write_gbe_file(void)
 {
 	size_t p;
@@ -1342,10 +1324,8 @@ usage(uint8_t usage_exit)
 	    "\t%s FILE   # same as setmac without [MAC]\n"
 	    "\t%s FILE setmac [MAC]\n"
 	    "\t%s FILE swap\n"
-	    "\t%s FILE copy 0|1\n"
-	    "\t%s FILE brick 0|1\n"
-	    "\t%s FILE setchecksum 0|1\n",
-	    util, util, util, util, util, util, util);
+	    "\t%s FILE copy 0|1\n",
+	    util, util, util, util, util);
 
 	if (usage_exit)
 		err(ECANCELED, "Too few arguments");
