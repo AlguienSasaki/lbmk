@@ -34,3 +34,5 @@ distclean:
 
 clean:
 	rm -f nvm nvmutil
+
+.PHONY: install uninstall clean distclean
