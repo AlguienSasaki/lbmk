@@ -8,31 +8,21 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
-# nvm is the old binary name,
-# but it was renamed to nvmutil
-# to avoid conflict with a certain
-# package manager by that name!
+BIN=nvmutil
 
-nvmutil: nvmutil.c
-	rm -f nvm
-	$(CC) $(CFLAGS) nvmutil.c -o nvmutil
+$(BIN): nvmutil.c
+	$(CC) $(CFLAGS) nvmutil.c -o $(BIN)
 
-install:
+install: $(BIN)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/
-
-# do not delete *bin/nvm because
-# there is a package manager by
-# that name. this makefile now
-# treats nvmutil as the binary
+	$(INSTALL) $(BIN) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/nvmutil
-
-distclean:
-	rm -f nvm nvmutil
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN)
 
 clean:
-	rm -f nvm nvmutil
+	rm -f $(BIN)
+
+distclean: clean
 
 .PHONY: install uninstall clean distclean
