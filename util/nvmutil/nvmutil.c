@@ -34,8 +34,11 @@
 /*
  * The BSD versions that could realistically build
  * nvmutil almost certainly have arc4random (first
- * introduced in 1990s or early 2000s in most of
- * them - you can just patch as needed, on old BSD.
+ * introduced in 1990s to early 2000s).
+ *
+ * If you want it on another platform, e.g. Linux,
+ * just patch this accordingly. Or patch it to remove
+ * arc4random on old/weird Unix systems.
  */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
