@@ -25,8 +25,8 @@
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
-#ifndef HAVE_ARC4RANDOM_BUF
-#define HAVE_ARC4RANDOM_BUF 1
+#ifndef NVMUTIL_ARC4RANDOM_BUF
+#define NVMUTIL_ARC4RANDOM_BUF 1
 #endif
 #endif
 
@@ -57,20 +57,23 @@ static void check_enum_bin(size_t a, const char *a_name,
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
+static void set_io_flags(int argc, char *argv[]);
 static void run_cmd(size_t c);
 static void check_command_num(size_t c);
 static uint8_t valid_command(size_t c);
-static void set_io_flags(int argc, char *argv[]);
-static void open_gbe_file(void);
-#ifndef HAVE_ARC4RANDOM_BUF
+static int xstrxcmp(const char *a, const char *b, size_t maxlen);
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
 #endif
+static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
 static void read_checksums(void);
+static int good_checksum(size_t partnum);
 static void cmd_setmac(void);
 static void parse_mac_string(void);
+static size_t xstrxlen(const char *scmp, size_t maxlen);
 static void set_mac_byte(size_t mac_byte_pos);
 static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
@@ -83,7 +86,6 @@ static void cmd_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 static void cmd_brick(void);
-static int good_checksum(size_t partnum);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -97,13 +99,11 @@ static off_t gbe_file_offset(size_t part, const char *f_op);
 static void *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static void usage(uint8_t usage_exit);
-static size_t xstrxlen(const char *scmp, size_t maxlen);
-static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 static void err(int nvm_errval, const char *msg, ...);
+static void close_files(void);
 static const char *getnvmprogname(void);
 static void set_err(int errval);
-static void close_files(void);
+static void usage(uint8_t usage_exit);
 
 /*
  * Sizes in bytes:
@@ -145,7 +145,7 @@ static void close_files(void);
  */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
-#ifndef HAVE_ARC4RANDOM_BUF
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 static const char newrandom[] = "/dev/urandom";
 static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
 static const char *rname = NULL;
@@ -166,7 +166,7 @@ static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
 static int gbe_flags;
-#ifndef HAVE_ARC4RANDOM_BUF
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 static int urandom_fd = -1;
 #endif
 static int gbe_fd = -1;
@@ -252,7 +252,7 @@ static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
-	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    NVM_SIZE },
 
 	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3,
@@ -360,7 +360,7 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-#ifndef HAVE_ARC4RANDOM_BUF
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
@@ -414,8 +414,13 @@ sanitize_command_index(size_t c)
 
 	check_command_num(c);
 
-	if (command[c].argc < 2)
-		err(ECANCELED, "cmd index %zu: argc below 2, %d",
+	if (ARGC_3 != 3)
+		err(ECANCELED, "ARGC_3 is not equal to 3");
+	if (ARGC_4 != 4)
+		err(ECANCELED, "ARGC_4 is not equal to 4");
+
+	if (command[c].argc < 3)
+		err(ECANCELED, "cmd index %zu: argc below 3, %d",
 		    c, command[c].argc);
 
 	if (command[c].str == NULL)
@@ -560,6 +565,18 @@ conv_argv_part_num(const char *part_str)
 }
 
 static void
+set_io_flags(int argc, char *argv[])
+{
+	gbe_flags = O_RDWR;
+
+	if (argc < 3)
+		return;
+
+	if (xstrxcmp(argv[2], "dump", MAX_CMD_LEN) == 0)
+		gbe_flags = O_RDONLY;
+}
+
+static void
 run_cmd(size_t c)
 {
 	check_command_num(c);
@@ -587,19 +604,42 @@ valid_command(size_t c)
 	return 1;
 }
 
-static void
-set_io_flags(int argc, char *argv[])
+/*
+ * Portable strcmp() but blocks NULL/empty/unterminated
+ * strings. Even stricter than strncmp().
+ */
+static int
+xstrxcmp(const char *a, const char *b, size_t maxlen)
 {
-	gbe_flags = O_RDWR;
+	size_t i;
 
-	if (argc < 3)
-		return;
+	if (a == NULL || b == NULL)
+		err(EINVAL, "NULL input to xstrxcmp");
 
-	if (xstrxcmp(argv[2], "dump", MAX_CMD_LEN) == 0)
-		gbe_flags = O_RDONLY;
+	if (*a == '\0' || *b == '\0')
+		err(EINVAL, "Empty string in xstrxcmp");
+
+	for (i = 0; i < maxlen; i++) {
+		if (a[i] != b[i])
+			return (unsigned char)a[i] - (unsigned char)b[i];
+
+		if (a[i] == '\0')
+			return 0;
+	}
+
+	/*
+	 * We reached maxlen, so assume unterminated string.
+	 */
+	err(EINVAL, "Unterminated string in xstrxcmp");
+
+	/*
+	 * Should never reach here. This keeps compilers happy.
+	 */
+	errno = EINVAL;
+	return -1;
 }
 
-#ifndef HAVE_ARC4RANDOM_BUF
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 static void
 open_dev_urandom(void)
 {
@@ -734,12 +774,31 @@ read_checksums(void)
 		    fname);
 }
 
+static int
+good_checksum(size_t partnum)
+{
+	size_t w;
+	uint16_t total = 0;
+
+	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
+		total += nvm_word(w, partnum);
+
+	if (total == NVM_CHECKSUM)
+		return 1;
+
+	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
+	    partnum ^ command[cmd_index].invert);
+
+	set_err(ECANCELED);
+	return 0;
+}
+
 static void
 cmd_setmac(void)
 {
 	size_t partnum;
 
-	#ifdef HAVE_ARC4RANDOM_BUF
+	#ifdef NVMUTIL_ARC4RANDOM_BUF
 		printf("Randomisation method: arc4random_buf\n");
 	#else
 		printf("Randomisation method: %s\n", rname);
@@ -770,6 +829,33 @@ parse_mac_string(void)
 
 	if (mac_buf[0] & 1)
 		err(EINVAL, "Must not specify multicast MAC address");
+}
+
+/*
+ * strnlen() but aborts on NULL input, and empty strings.
+ * Our version also prohibits unterminated strings.
+ * strnlen() was standardized in POSIX.1-2008 and is not
+ * available on some older systems, so we provide our own.
+ */
+static size_t
+xstrxlen(const char *scmp, size_t maxlen)
+{
+	size_t xstr_index;
+
+	if (scmp == NULL)
+		err(EINVAL, "NULL input to xstrxlen");
+
+	if (*scmp == '\0')
+		err(EINVAL, "Empty string in xstrxlen");
+
+	for (xstr_index = 0;
+	    xstr_index < maxlen && scmp[xstr_index] != '\0';
+	    xstr_index++);
+
+	if (xstr_index == maxlen)
+		err(EINVAL, "Unterminated string in xstrxlen");
+
+	return xstr_index;
 }
 
 static void
@@ -846,7 +932,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-#ifdef HAVE_ARC4RANDOM_BUF
+#ifdef NVMUTIL_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
 		read_file_exact(urandom_fd, rnum, n, 0, rname, NULL);
@@ -912,19 +998,13 @@ static void
 cmd_dump(void)
 {
 	size_t partnum;
-	int num_invalid = 0;
 
 	for (partnum = 0; partnum < 2; partnum++) {
-		if (!good_checksum(partnum))
-			++num_invalid;
 
 		printf("MAC (part %zu): ", partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
-
-	if (num_invalid < 2)
-		errno = 0;
 }
 
 static void
@@ -966,25 +1046,6 @@ cmd_brick(void)
 {
 	uint16_t checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
 	set_nvm_word(NVM_CHECKSUM_WORD, part, checksum_word ^ 1);
-}
-
-static int
-good_checksum(size_t partnum)
-{
-	size_t w;
-	uint16_t total = 0;
-
-	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
-		total += nvm_word(w, partnum);
-
-	if (total == NVM_CHECKSUM)
-		return 1;
-
-	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
-	    partnum ^ command[cmd_index].invert);
-
-	set_err(ECANCELED);
-	return 0;
 }
 
 static void
@@ -1208,93 +1269,6 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 }
 
 static void
-usage(uint8_t usage_exit)
-{
-	const char *util = getnvmprogname();
-
-#ifdef NVMUTIL_PLEDGE
-	if (pledge("stdio", NULL) == -1)
-		err(ECANCELED, "pledge");
-#endif
-	fprintf(stderr,
-	    "Modify Intel GbE NVM images e.g. set MAC\n"
-	    "USAGE:\n"
-	    "\t%s FILE dump\n"
-	    "\t%s FILE   # same as setmac without [MAC]\n"
-	    "\t%s FILE setmac [MAC]\n"
-	    "\t%s FILE swap\n"
-	    "\t%s FILE copy 0|1\n"
-	    "\t%s FILE brick 0|1\n"
-	    "\t%s FILE setchecksum 0|1\n",
-	    util, util, util, util, util, util, util);
-
-	if (usage_exit)
-		err(ECANCELED, "Too few arguments");
-}
-
-/*
- * strnlen() but aborts on NULL input, and empty strings.
- * Our version also prohibits unterminated strings.
- * strnlen() was standardized in POSIX.1-2008 and is not
- * available on some older systems, so we provide our own.
- */
-static size_t
-xstrxlen(const char *scmp, size_t maxlen)
-{
-	size_t xstr_index;
-
-	if (scmp == NULL)
-		err(EINVAL, "NULL input to xstrxlen");
-
-	if (*scmp == '\0')
-		err(EINVAL, "Empty string in xstrxlen");
-
-	for (xstr_index = 0;
-	    xstr_index < maxlen && scmp[xstr_index] != '\0';
-	    xstr_index++);
-
-	if (xstr_index == maxlen)
-		err(EINVAL, "Unterminated string in xstrxlen");
-
-	return xstr_index;
-}
-
-/*
- * Portable, secure strcmp() with the same mentality
- * as our xstrxlen
- */
-static int
-xstrxcmp(const char *a, const char *b, size_t maxlen)
-{
-	size_t i;
-
-	if (a == NULL || b == NULL)
-		err(EINVAL, "NULL input to xstrxcmp");
-
-	if (*a == '\0' || *b == '\0')
-		err(EINVAL, "Empty string in xstrxcmp");
-
-	for (i = 0; i < maxlen; i++) {
-		if (a[i] != b[i])
-			return (unsigned char)a[i] - (unsigned char)b[i];
-
-		if (a[i] == '\0')
-			return 0;
-	}
-
-	/*
-	 * We reached maxlen, so assume unterminated string.
-	 */
-	err(EINVAL, "Unterminated string in xstrxcmp");
-
-	/*
-	 * Should never reach here. This keeps compilers happy.
-	 */
-	errno = EINVAL;
-	return -1;
-}
-
-static void
 err(int nvm_errval, const char *msg, ...)
 {
 	if (nvm_errval != -1)
@@ -1313,6 +1287,22 @@ err(int nvm_errval, const char *msg, ...)
 
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
+}
+
+static void
+close_files(void)
+{
+	if (gbe_fd > -1) {
+		if (close(gbe_fd) == -1)
+			err(-1, "close '%s'", fname);
+	}
+
+#ifndef NVMUTIL_ARC4RANDOM_BUF
+	if (urandom_fd > -1) {
+		if (close(urandom_fd) == -1)
+			err(-1, "close '%s'", rname);
+	}
+#endif
 }
 
 static const char *
@@ -1343,17 +1333,26 @@ set_err(int x)
 }
 
 static void
-close_files(void)
+usage(uint8_t usage_exit)
 {
-	if (gbe_fd > -1) {
-		if (close(gbe_fd) == -1)
-			err(-1, "close '%s'", fname);
-	}
+	const char *util = getnvmprogname();
 
-#ifndef HAVE_ARC4RANDOM_BUF
-	if (urandom_fd > -1) {
-		if (close(urandom_fd) == -1)
-			err(-1, "close '%s'", rname);
-	}
+#ifdef NVMUTIL_PLEDGE
+	if (pledge("stdio", NULL) == -1)
+		err(ECANCELED, "pledge");
 #endif
+	fprintf(stderr,
+	    "Modify Intel GbE NVM images e.g. set MAC\n"
+	    "USAGE:\n"
+	    "\t%s FILE dump\n"
+	    "\t%s FILE   # same as setmac without [MAC]\n"
+	    "\t%s FILE setmac [MAC]\n"
+	    "\t%s FILE swap\n"
+	    "\t%s FILE copy 0|1\n"
+	    "\t%s FILE brick 0|1\n"
+	    "\t%s FILE setchecksum 0|1\n",
+	    util, util, util, util, util, util, util);
+
+	if (usage_exit)
+		err(ECANCELED, "Too few arguments");
 }
