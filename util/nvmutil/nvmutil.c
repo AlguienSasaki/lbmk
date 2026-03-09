@@ -71,7 +71,7 @@ static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
-static void cmd_setmac(void);
+static void cmd_helper_setmac(void);
 static void parse_mac_string(void);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
 static void set_mac_byte(size_t mac_byte_pos);
@@ -82,7 +82,7 @@ static uint16_t rhex(void);
 static void read_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
 static void write_mac_part(size_t partnum);
-static void cmd_dump(void);
+static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 static void write_gbe_file(void);
@@ -250,13 +250,13 @@ static const struct commands command[] = {
 	 * Unlike older versions, we now require
 	 * both checksums to be valid for "dump".
 	 */
-	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
+	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    NVM_SIZE },
 
-	{ CMD_SETMAC, "setmac", cmd_setmac, ARGC_3,
+	{ CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, CHECKSUM_WRITE,
@@ -756,7 +756,7 @@ good_checksum(size_t partnum)
 }
 
 static void
-cmd_setmac(void)
+cmd_helper_setmac(void)
 {
 	size_t partnum;
 
@@ -957,7 +957,7 @@ write_mac_part(size_t partnum)
 }
 
 static void
-cmd_dump(void)
+cmd_helper_dump(void)
 {
 	size_t partnum;
 
