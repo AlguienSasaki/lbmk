@@ -38,6 +38,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#if __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(uint16_t) == 2, "uint16_t must be 16 bits");
+#else
+typedef char static_assert_uint16_t_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
+#endif
+
 /*
  * The BSD versions that could realistically build
  * nvmutil almost certainly have arc4random (first
