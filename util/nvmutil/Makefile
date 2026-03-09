@@ -19,7 +19,7 @@ nvmutil: nvmutil.c
 
 install:
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/nvmutil
+	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/
 
 # do not delete *bin/nvm because
 # there is a package manager by
