@@ -1,8 +1,8 @@
-/* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
-/* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
-
-/*
+/* SPDX-License-Identifier: MIT
+ *
+ * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
+ * Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+ *
  * This tool lets you modify Intel GbE NVM (Gigabit Ethernet
  * Non-Volatile Memory) images, e.g. change the MAC address.
  * These images configure your Intel Gigabit Ethernet adapter.
