@@ -121,6 +121,10 @@ static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 static void cmd_helper_cat(void);
+static void cmd_helper_cat16(void);
+static void cmd_helper_cat128(void);
+static void gbe_catn(size_t n);
+static void gbe_cat(uint8_t *b);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -197,6 +201,7 @@ static const char *rname = NULL;
  * The code will handle this properly.
  */
 static uint8_t buf[GBE_FILE_SIZE];
+static uint8_t pad[GBE_PART_SIZE];
 
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
@@ -237,7 +242,9 @@ enum {
 	CMD_SETMAC,
 	CMD_SWAP,
 	CMD_COPY,
-	CMD_CAT
+	CMD_CAT,
+	CMD_CAT16,
+	CMD_CAT128
 };
 
 /*
@@ -320,6 +327,18 @@ static const struct commands command[] = {
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
+
+	{ CMD_CAT16, "cat16", cmd_helper_cat16, ARGC_3,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_NOPART,
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    GBE_PART_SIZE },
+
+	{ CMD_CAT128, "cat128", cmd_helper_cat128, ARGC_3,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_NOPART,
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    GBE_PART_SIZE },
 };
 
 #define MAX_CMD_LEN 50
@@ -398,6 +417,11 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(ECANCELED, "pledge stdio (main)");
 #endif
+
+	/*
+	 * Used by CMD_CAT, for padding
+	 */
+	memset(pad, 0xff, sizeof(pad));
 
 	read_gbe_file();
 	read_checksums();
@@ -1087,13 +1111,57 @@ hexdump(size_t partnum)
 static void
 cmd_helper_cat(void)
 {
-	size_t wc = 0;
-	ssize_t w;
+	gbe_catn(8);
+}
+
+static void
+cmd_helper_cat16(void)
+{
+	gbe_catn(16);
+}
+
+static void
+cmd_helper_cat128(void)
+{
+	gbe_catn(128);
+}
+
+static void
+gbe_catn(size_t n)
+{
+	size_t p;
+	size_t ff;
+
+	switch (n) {
+	case 8:
+	case 16:
+	case 128:
+		break;
+	default:
+		err(ECANCELED, "gbe_catn: Invalid GBE KB size: %zu", n);
+	}
 
 	fflush(NULL);
 
-	for (wc = 0; wc < sizeof(buf); wc += w)
-		if ((w = write(STDOUT_FILENO, buf + wc, sizeof(buf) - wc)) < 1)
+	n -= 8;
+	n >>= 3;
+
+	for (p = 0; p < 2; p++) {
+		gbe_cat(buf + (p * GBE_PART_SIZE));
+
+		for (ff = 0; ff < n; ff++)
+			gbe_cat(pad);
+	}
+}
+
+static void
+gbe_cat(uint8_t *b)
+{
+	size_t wc = 0;
+	ssize_t w;
+
+	for (wc = 0; wc < GBE_PART_SIZE; wc += w)
+		if ((w = write(STDOUT_FILENO, b + wc, GBE_PART_SIZE - wc)) < 1)
 			err(EIO, "%s: stdout", fname);
 }
 
@@ -1403,8 +1471,11 @@ usage(uint8_t usage_exit)
 	    "\t%s FILE setmac [MAC]\n"
 	    "\t%s FILE swap\n"
 	    "\t%s FILE copy 0|1\n"
-	    "\t%s FILE cat\n",
-	    util, util, util, util, util);
+	    "\t%s FILE cat\n"
+	    "\t%s FILE cat16\n"
+	    "\t%s FILE cat128\n",
+	    util, util, util, util,
+	    util, util, util);
 
 	if (usage_exit)
 		err(EINVAL, "Too few arguments");
