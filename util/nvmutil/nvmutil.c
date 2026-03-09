@@ -22,6 +22,7 @@
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <errno.h>
