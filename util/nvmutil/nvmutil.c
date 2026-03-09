@@ -9,6 +9,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -88,6 +89,7 @@ static void hexdump(size_t partnum);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
+static uint16_t calculated_checksum(size_t p);
 static uint16_t nvm_word(size_t pos16, size_t part);
 static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
 static void set_part_modified(size_t p);
@@ -739,17 +741,23 @@ read_checksums(void)
 static int
 good_checksum(size_t partnum)
 {
-	size_t w;
-	uint16_t total = 0;
+	uint16_t expected_checksum = calculated_checksum(partnum);
+	uint16_t current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
 
-	for (w = 0; w <= NVM_CHECKSUM_WORD; w++)
-		total += nvm_word(w, partnum);
+	size_t real_partnum = partnum ^ command[cmd_index].invert;
 
-	if (total == NVM_CHECKSUM)
+	if (current_checksum == expected_checksum)
 		return 1;
 
-	fprintf(stderr, "WARNING: BAD checksum in part %zu\n",
-	    partnum ^ command[cmd_index].invert);
+	fprintf(stderr,
+	    "WARNING: BAD checksum in part %zu\n"
+	    "EXPECTED checksum in part %zu: %04x\n"
+	    "CURRENT checksum in part %zu: %04x\n",
+	    real_partnum,
+	    real_partnum,
+	    expected_checksum,
+	    real_partnum,
+	    current_checksum);
 
 	set_err(ECANCELED);
 	return 0;
@@ -1060,17 +1068,20 @@ override_part_modified(void)
 static void
 set_checksum(size_t p)
 {
-	size_t c;
-	uint16_t val16;
-
 	check_bin(p, "part number");
+	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
+}
 
-	val16 = 0;
+static uint16_t
+calculated_checksum(size_t p)
+{
+	size_t c;
+	uint16_t val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += nvm_word(c, p);
 
-	set_nvm_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
+	return NVM_CHECKSUM - val16;
 }
 
 /*
