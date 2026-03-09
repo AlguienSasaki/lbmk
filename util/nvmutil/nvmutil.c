@@ -2,6 +2,9 @@
 /* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
+#ifdef __OpenBSD__
+#include <sys/param.h>
+#endif
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -13,11 +16,37 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * The BSD versions that could realistically build
+ * nvmutil almost certainly have arc4random (first
+ * introduced in 1990s or early 2000s in most of
+ * them - you can just patch as needed, on old BSD.
+ */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)
 #ifndef HAVE_ARC4RANDOM_BUF
-#define HAVE_ARC4RANDOM_BUF
+#define HAVE_ARC4RANDOM_BUF 1
+#endif
+#endif
+
+/*
+ * Older versions of BSD to the early 2000s
+ * could compile nvmutil, but pledge was
+ * added in the 2010s. Therefore, for extra
+ * portability, we will only pledge/unveil
+ * on OpenBSD versions that have it.
+ */
+#if defined(__OpenBSD__) && defined(OpenBSD)
+#if OpenBSD >= 604
+#ifndef NVMUTIL_UNVEIL
+#define NVMUTIL_UNVEIL 1
+#endif
+#endif
+#if OpenBSD >= 509
+#ifndef NVMUTIL_PLEDGE
+#define NVMUTIL_PLEDGE 1
+#endif
 #endif
 #endif
 
@@ -289,12 +318,16 @@ main(int argc, char *argv[])
 
 	fname = argv[1];
 
-#ifdef __OpenBSD__
+#ifdef NVMUTIL_PLEDGE
+#ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(ECANCELED, "pledge");
-
 	if (unveil("/dev/null", "r") == -1)
 		err(ECANCELED, "unveil '/dev/null'");
+#else
+	if (pledge("stdio rpath wpath", NULL) == -1)
+		err(ECANCELED, "pledge");
+#endif
 #endif
 
 	sanitize_command_list();
@@ -303,7 +336,8 @@ main(int argc, char *argv[])
 	set_cmd_args(argc, argv);
 	set_io_flags(argc, argv);
 
-#ifdef __OpenBSD__
+#ifdef NVMUTIL_PLEDGE
+#ifdef NVMUTIL_UNVEIL
 	if (gbe_flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
 			err(ECANCELED, "unveil ro '%s'", fname);
@@ -319,6 +353,12 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath wpath", NULL) == -1)
 			err(ECANCELED, "pledge rw (kill unveil)");
 	}
+#else
+	if (gbe_flags == O_RDONLY) {
+		if (pledge("stdio rpath", NULL) == -1)
+			err(ECANCELED, "pledge ro");
+	}
+#endif
 #endif
 
 #ifndef HAVE_ARC4RANDOM_BUF
@@ -332,7 +372,7 @@ main(int argc, char *argv[])
 
 	open_gbe_file();
 
-#ifdef __OpenBSD__
+#ifdef NVMUTIL_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(ECANCELED, "pledge stdio (main)");
 #endif
@@ -1169,7 +1209,7 @@ usage(uint8_t usage_exit)
 {
 	const char *util = getnvmprogname();
 
-#ifdef __OpenBSD__
+#ifdef NVMUTIL_PLEDGE
 	if (pledge("stdio", NULL) == -1)
 		err(ECANCELED, "pledge");
 #endif
