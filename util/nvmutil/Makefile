@@ -13,7 +13,7 @@ INSTALL?=install
 # to avoid conflict with a certain
 # package manager by that name!
 
-nvm: nvmutil.c
+nvmutil: nvmutil.c
 	rm -f nvm
 	$(CC) $(CFLAGS) nvmutil.c -o nvmutil
 
