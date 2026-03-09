@@ -89,9 +89,6 @@ static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static void set_io_flags(int argc, char *argv[]);
-static void run_cmd(size_t c);
-static void check_command_num(size_t c);
-static uint8_t valid_command(size_t c);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
@@ -104,6 +101,9 @@ static ssize_t read_gbe_file_exact(int fd, void *buf, size_t len,
     off_t off);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
+static void run_cmd(size_t c);
+static void check_command_num(size_t c);
+static uint8_t valid_command(size_t c);
 static void cmd_helper_setmac(void);
 static void parse_mac_string(void);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
@@ -573,34 +573,6 @@ set_io_flags(int argc, char *argv[])
 		gbe_flags = O_RDONLY;
 }
 
-static void
-run_cmd(size_t c)
-{
-	check_command_num(c);
-	if (command[c].run)
-		command[c].run();
-}
-
-static void
-check_command_num(size_t c)
-{
-	if (!valid_command(c))
-		err(ECANCELED, "Invalid run_cmd arg: %zu", c);
-}
-
-static uint8_t
-valid_command(size_t c)
-{
-	if (c >= N_COMMANDS)
-		return 0;
-
-	if (c != command[c].chk)
-		err(ECANCELED, "Invalid cmd chk value (%zu) vs arg: %zu",
-		    command[c].chk, c);
-
-	return 1;
-}
-
 /*
  * Portable strcmp() but blocks NULL/empty/unterminated
  * strings. Even stricter than strncmp().
@@ -827,6 +799,34 @@ good_checksum(size_t partnum)
 
 	set_err(ECANCELED);
 	return 0;
+}
+
+static void
+run_cmd(size_t c)
+{
+	check_command_num(c);
+	if (command[c].run)
+		command[c].run();
+}
+
+static void
+check_command_num(size_t c)
+{
+	if (!valid_command(c))
+		err(ECANCELED, "Invalid run_cmd arg: %zu", c);
+}
+
+static uint8_t
+valid_command(size_t c)
+{
+	if (c >= N_COMMANDS)
+		return 0;
+
+	if (c != command[c].chk)
+		err(ECANCELED, "Invalid cmd chk value (%zu) vs arg: %zu",
+		    command[c].chk, c);
+
+	return 1;
 }
 
 static void
