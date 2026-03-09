@@ -945,7 +945,7 @@ read_gbe_file_exact(int fd, void *buf, size_t len,
 		}
 
 		if (rval != -1) {
-			if (path == oldrandom || path == newrandom) {
+			if (fd == urandom_fd) {
 				/*
 				 * /dev/[u]random reads can still return
 				 * partial reads legally, on some weird
