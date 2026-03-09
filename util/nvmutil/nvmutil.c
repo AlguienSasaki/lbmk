@@ -767,11 +767,11 @@ cmd_helper_setmac(void)
 {
 	size_t partnum;
 
-	#ifdef NVMUTIL_ARC4RANDOM_BUF
-		printf("Randomisation method: arc4random_buf\n");
-	#else
-		printf("Randomisation method: %s\n", rname);
-	#endif
+#ifdef NVMUTIL_ARC4RANDOM_BUF
+	printf("Randomisation method: arc4random_buf\n");
+#else
+	printf("Randomisation method: %s\n", rname);
+#endif
 
 	printf("MAC address to be written: %s\n", mac_str);
 	parse_mac_string();
