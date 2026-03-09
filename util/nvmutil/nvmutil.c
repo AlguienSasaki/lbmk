@@ -970,6 +970,7 @@ read_gbe_file_exact(int fd, void *buf, size_t len,
 		}
 
 		if (rval != -1) {
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 			if (fd == urandom_fd) {
 				/*
 				 * /dev/[u]random reads can still return
@@ -986,7 +987,7 @@ read_gbe_file_exact(int fd, void *buf, size_t len,
 					return rval;
 				}
 			}
-
+#endif
 			err(ECANCELED,
 			    "Short %s, %zd bytes, on file: %s",
 			    op ? op : "read", rval, path);
