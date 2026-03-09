@@ -992,10 +992,17 @@ read_dev_urandom(int fd, void *buf, size_t len)
 	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
 		rval = read(fd, buf, len);
 
-		if (rval && (size_t)rval <= len) {
-			errno = 0;
-			return rval;
+		if (rval == -1) {
+			if (errno == EINTR)
+				continue;
+			err(errno, "%s", rname);
 		}
+
+		if (!rval || (size_t)rval > len)
+			continue;
+
+		errno = 0;
+		return rval;
 	}
 
 	err(EINTR, "%s: read: max retries exceeded: %s", rname);
@@ -1228,7 +1235,7 @@ write_gbe_file_part(size_t p)
 
 		if (rval != -1)
 			err(ECANCELED,
-			    "%s: Short pwrite, %zd bytes",
+			    "%s: Short pwrite of %zd bytes",
 			    fname, rval);
 
 		if (errno != EINTR)
