@@ -52,7 +52,6 @@
 
 static void sanitize_command_list(void);
 static void sanitize_command_index(size_t c);
-static void check_bin(size_t a, const char *a_name);
 static void check_enum_bin(size_t a, const char *a_name,
     size_t b, const char *b_name);
 static void set_cmd(int argc, char *argv[]);
@@ -83,21 +82,21 @@ static void write_mac_part(size_t partnum);
 static void cmd_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
-static void cmd_setchecksum(void);
-static void set_checksum(size_t part);
 static void cmd_brick(void);
 static int good_checksum(size_t partnum);
-static uint16_t nvm_word(size_t pos16, size_t part);
-static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
-static void check_nvm_bound(size_t pos16, size_t part);
 static void write_gbe_file(void);
 static void override_part_modified(void);
+static void set_checksum(size_t part);
+static uint16_t nvm_word(size_t pos16, size_t part);
+static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
+static void set_part_modified(size_t p);
+static void check_nvm_bound(size_t pos16, size_t part);
+static void check_bin(size_t a, const char *a_name);
 static void write_gbe_file_part(size_t part);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static void *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static void set_part_modified(size_t p);
 static void usage(uint8_t usage_exit);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
@@ -293,8 +292,8 @@ static const struct commands command[] = {
 	/*
 	 * The non-target part will not be read.
 	 */
-	{ CMD_SETCHECKSUM, "setchecksum", cmd_setchecksum, ARGC_4,
-	    NO_INVERT, SET_MOD_OFF,
+	{ CMD_SETCHECKSUM, "setchecksum", NULL, ARGC_4,
+	    NO_INVERT, SET_MOD_N,
 	    ARG_PART,
 	    SKIP_CHECKSUM_READ, CHECKSUM_WRITE,
 	    NVM_SIZE },
@@ -907,8 +906,6 @@ write_mac_part(size_t partnum)
 
 	printf("Wrote MAC address to part %zu: ", partnum);
 	print_mac_from_nvm(partnum);
-
-	set_checksum(partnum);
 }
 
 static void
@@ -965,24 +962,6 @@ hexdump(size_t partnum)
 }
 
 static void
-cmd_setchecksum(void)
-{
-	set_checksum(part);
-}
-
-static void
-set_checksum(size_t p)
-{
-	size_t c;
-	uint16_t val16 = 0;
-
-	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += nvm_word(c, p);
-
-	set_nvm_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
-}
-
-static void
 cmd_brick(void)
 {
 	uint16_t checksum_word = nvm_word(NVM_CHECKSUM_WORD, part);
@@ -1006,6 +985,76 @@ good_checksum(size_t partnum)
 
 	set_err(ECANCELED);
 	return 0;
+}
+
+static void
+write_gbe_file(void)
+{
+	size_t p;
+	size_t partnum;
+	uint8_t update_checksum;
+
+	if (gbe_flags == O_RDONLY)
+		return;
+
+	update_checksum = command[cmd_index].chksum_write;
+
+	override_part_modified();
+
+	for (p = 0; p < 2; p++) {
+		partnum = p ^ command[cmd_index].invert;
+
+		if (!part_modified[partnum])
+			continue;
+
+		if (update_checksum)
+			set_checksum(partnum);
+
+		write_gbe_file_part(partnum);
+	}
+}
+
+static void
+override_part_modified(void)
+{
+	uint8_t mod_type = command[cmd_index].set_modified;
+
+	switch (mod_type) {
+	case SET_MOD_0:
+		set_part_modified(0);
+		break;
+	case SET_MOD_1:
+		set_part_modified(1);
+		break;
+	case SET_MOD_N:
+		set_part_modified(part ^ command[cmd_index].invert);
+		break;
+	case SET_MOD_BOTH:
+		set_part_modified(0);
+		set_part_modified(1);
+		break;
+	case SET_MOD_OFF:
+		break;
+	default:
+		err(EINVAL, "Unsupported set_mod type: %u",
+		    mod_type);
+	}
+}
+
+static void
+set_checksum(size_t p)
+{
+	size_t c;
+	uint16_t val16;
+
+	check_bin(p, "part number");
+
+	val16 = 0;
+
+	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
+		val16 += nvm_word(c, p);
+
+	set_nvm_word(NVM_CHECKSUM_WORD, p, NVM_CHECKSUM - val16);
 }
 
 /*
@@ -1042,6 +1091,13 @@ set_nvm_word(size_t pos16, size_t p, uint16_t val16)
 }
 
 static void
+set_part_modified(size_t p)
+{
+	check_bin(p, "part number");
+	part_modified[p] = 1;
+}
+
+static void
 check_nvm_bound(size_t c, size_t p)
 {
 	/*
@@ -1057,49 +1113,10 @@ check_nvm_bound(size_t c, size_t p)
 }
 
 static void
-write_gbe_file(void)
+check_bin(size_t a, const char *a_name)
 {
-	size_t p;
-	size_t partnum;
-
-	if (gbe_flags == O_RDONLY)
-		return;
-
-	override_part_modified();
-
-	for (p = 0; p < 2; p++) {
-		partnum = p ^ command[cmd_index].invert;
-
-		if (part_modified[partnum])
-			write_gbe_file_part(partnum);
-	}
-}
-
-static void
-override_part_modified(void)
-{
-	uint8_t mod_type = command[cmd_index].set_modified;
-
-	switch (mod_type) {
-	case SET_MOD_0:
-		set_part_modified(0);
-		break;
-	case SET_MOD_1:
-		set_part_modified(1);
-		break;
-	case SET_MOD_N:
-		set_part_modified(part ^ command[cmd_index].invert);
-		break;
-	case SET_MOD_BOTH:
-		set_part_modified(0);
-		set_part_modified(1);
-		break;
-	case SET_MOD_OFF:
-		break;
-	default:
-		err(EINVAL, "Unsupported set_mod type: %u",
-		    mod_type);
-	}
+	if (a > 1)
+		err(ECANCELED, "%s must be 0 or 1, but is %zu", a_name, a);
 }
 
 static void
@@ -1188,20 +1205,6 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 		    d_type, f_op, fname);
 
 	return off;
-}
-
-static void
-set_part_modified(size_t p)
-{
-	check_bin(p, "part number");
-	part_modified[p] = 1;
-}
-
-static void
-check_bin(size_t a, const char *a_name)
-{
-	if (a > 1)
-		err(ECANCELED, "%s must be 0 or 1, but is %zu", a_name, a);
 }
 
 static void
