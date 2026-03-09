@@ -289,7 +289,7 @@ static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    NVM_SIZE },
 
 	{ CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
@@ -1037,8 +1037,12 @@ cmd_helper_dump(void)
 {
 	size_t partnum;
 
-	for (partnum = 0; partnum < 2; partnum++) {
+	int errval = good_checksum(0);
+	errval |= good_checksum(1);
+	if (errval)
+		errno = 0;
 
+	for (partnum = 0; partnum < 2; partnum++) {
 		printf("MAC (part %zu): ", partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
