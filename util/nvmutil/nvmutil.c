@@ -942,8 +942,10 @@ rhex(void)
 #endif
 	}
 
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 	if (!n)
 		err(ECANCELED, "Randomisation failure");
+#endif
 
 	return (uint16_t)(rnum[--n] & 0xf);
 }
