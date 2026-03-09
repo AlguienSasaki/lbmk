@@ -962,8 +962,10 @@ read_gbe_file_exact(int fd, void *buf, size_t len,
 				 * the smaller amount of bytes and call
 				 * read_gbe_file_exact again if necessary.
 				 */
-				if (rval > 0)
+				if (rval > 0) {
+					errno = 0;
 					return rval;
+				}
 			}
 
 			err(ECANCELED,
@@ -979,6 +981,7 @@ read_gbe_file_exact(int fd, void *buf, size_t len,
 
 	err(EINTR, "%s: max retries exceeded on file: %s",
 	    op ? op : "read", path);
+
 	return -1;
 }
 
