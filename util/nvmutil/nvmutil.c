@@ -930,8 +930,9 @@ rhex(void)
 {
 	static size_t n = 0;
 	static uint8_t rnum[12];
+	int max_retries;
 
-	if (!n) {
+	for (max_retries = 0; max_retries < 50 && !n; max_retries++) {
 		n = sizeof(rnum);
 #ifdef NVMUTIL_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
@@ -940,6 +941,9 @@ rhex(void)
 		    rnum, n, 0, rname, NULL);
 #endif
 	}
+
+	if (!n)
+		err(ECANCELED, "Randomisation failure");
 
 	return (uint16_t)(rnum[--n] & 0xf);
 }
