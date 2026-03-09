@@ -284,10 +284,6 @@ struct commands {
  * Command table, for nvmutil commands
  */
 static const struct commands command[] = {
-	/*
-	 * Unlike older versions, we require at least
-	 * one checksum to be valid when running dump.
-	 */
 	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
