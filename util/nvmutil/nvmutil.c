@@ -89,7 +89,7 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
-static void read_file_exact(int fd, void *buf, size_t len,
+static ssize_t read_gbe_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op);
 static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
@@ -691,8 +691,10 @@ read_gbe_file_part(size_t p)
 	void *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
-	read_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pread"), fname, "pread");
+	if ((size_t)read_gbe_file_exact(gbe_fd, mem_offset,
+	    gbe_rw_size, gbe_file_offset(p, "pread"), fname, "pread") !=
+	    gbe_rw_size)
+		err(ECANCELED, "Partial read p%zu, file %s", p, fname);
 
 	printf("Read %zu bytes from part %zu: %s\n",
 	    gbe_rw_size, p, fname);
@@ -913,15 +915,16 @@ rhex(void)
 #ifdef NVMUTIL_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
-		read_file_exact(urandom_fd, rnum, n, 0, rname, NULL);
+		n = (size_t)read_gbe_file_exact(urandom_fd,
+		    rnum, n, 0, rname, NULL);
 #endif
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
 }
 
-static void
-read_file_exact(int fd, void *buf, size_t len,
+static ssize_t
+read_gbe_file_exact(int fd, void *buf, size_t len,
     off_t off, const char *path, const char *op)
 {
 	int retry;
@@ -938,13 +941,29 @@ read_file_exact(int fd, void *buf, size_t len,
 
 		if (rval == (ssize_t)len) {
 			errno = 0;
-			return;
+			return rval;
 		}
 
-		if (rval != -1)
+		if (rval != -1) {
+			if (path == oldrandom || path == newrandom) {
+				/*
+				 * /dev/[u]random reads can still return
+				 * partial reads legally, on some weird
+				 * Unix systems (especially older ones).
+				 *
+				 * We use a circular buffer for random
+				 * bytes in rhex(), so we can just use
+				 * the smaller amount of bytes and call
+				 * read_gbe_file_exact again if necessary.
+				 */
+				if (rval > 0)
+					return rval;
+			}
+
 			err(ECANCELED,
 			    "Short %s, %zd bytes, on file: %s",
 			    op ? op : "read", rval, path);
+		}
 
 		if (errno != EINTR)
 			err(ECANCELED,
@@ -954,6 +973,7 @@ read_file_exact(int fd, void *buf, size_t len,
 
 	err(EINTR, "%s: max retries exceeded on file: %s",
 	    op ? op : "read", path);
+	return -1;
 }
 
 static void
