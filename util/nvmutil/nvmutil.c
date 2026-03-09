@@ -120,7 +120,7 @@ static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
-static void cmd_helper_cat(void);
+static void cmd_helper_out(void);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -315,7 +315,7 @@ static const struct commands command[] = {
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
 
-	{ CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
+	{ CMD_CAT, "out", cmd_helper_out, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
@@ -1085,7 +1085,7 @@ hexdump(size_t partnum)
 }
 
 static void
-cmd_helper_cat(void)
+cmd_helper_out(void)
 {
 	size_t wc = 0;
 	ssize_t w;
@@ -1402,8 +1402,9 @@ usage(uint8_t usage_exit)
 	    "\t%s FILE dump\n"
 	    "\t%s FILE setmac [MAC]\n"
 	    "\t%s FILE swap\n"
-	    "\t%s FILE copy 0|1\n",
-	    util, util, util, util);
+	    "\t%s FILE copy 0|1\n"
+	    "\t%s FILE out\n",
+	    util, util, util, util, util);
 
 	if (usage_exit)
 		err(EINVAL, "Too few arguments");
