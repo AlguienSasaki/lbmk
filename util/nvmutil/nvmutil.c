@@ -339,14 +339,14 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (gbe_flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
-			err(ECANCELED, "unveil ro '%s'", fname);
+			err(ECANCELED, "%s: unveil ro", fname);
 		if (unveil(NULL, NULL) == -1)
 			err(ECANCELED, "unveil block (ro)");
 		if (pledge("stdio rpath", NULL) == -1)
 			err(ECANCELED, "pledge ro (kill unveil)");
 	} else {
 		if (unveil(fname, "rw") == -1)
-			err(ECANCELED, "unveil rw '%s'", fname);
+			err(ECANCELED, "%s: unveil rw", fname);
 		if (unveil(NULL, NULL) == -1)
 			err(ECANCELED, "unveil block (rw)");
 		if (pledge("stdio rpath wpath", NULL) == -1)
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 	run_cmd(cmd_index);
 
 	if (errno)
-		err(errno, "Unhandled error: will not write file: %s", fname);
+		err(errno, "%s: Unhandled error (WRITE SKIPPED)", fname);
 	else if (gbe_flags != O_RDONLY)
 		write_gbe_file();
 
@@ -700,10 +700,10 @@ read_gbe_file_part(size_t p)
 	if ((size_t)read_gbe_file_exact(gbe_fd, mem_offset,
 	    gbe_rw_size, gbe_file_offset(p, "pread"), fname, "pread") !=
 	    gbe_rw_size)
-		err(ECANCELED, "Partial read p%zu, file %s", p, fname);
+		err(ECANCELED, "%s: Partial read from p%zu", fname, p);
 
-	printf("Read %zu bytes from part %zu: %s\n",
-	    gbe_rw_size, p, fname);
+	printf("%s: Read %zu bytes from p%zu\n",
+	    fname, gbe_rw_size, p);
 }
 
 static void
@@ -750,7 +750,7 @@ read_checksums(void)
 		errno = 0;
 
 	if (num_invalid >= max_invalid)
-		err(ECANCELED, "No valid checksum found in file: %s",
+		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
 }
 
@@ -1188,7 +1188,7 @@ write_gbe_file_part(size_t p)
 	size_t gbe_rw_size;
 
 	if (gbe_fd == -1)
-		err(ECANCELED, "Trying to write bad gbe_fd: %s", fname);
+		err(ECANCELED, "%s: Trying to write bad gbe_fd", fname);
 
 	gbe_rw_size = command[cmd_index].rw_size;
 
@@ -1198,22 +1198,22 @@ write_gbe_file_part(size_t p)
 
 		if (rval == (ssize_t)gbe_rw_size) {
 			errno = 0;
-			printf("Wrote %zu bytes to part %zu: %s\n",
-			    gbe_rw_size, p, fname);
+			printf("%s: Wrote %zu bytes to part %zu\n",
+			    fname, gbe_rw_size, p);
 			return;
 		}
 
 		if (rval != -1)
 			err(ECANCELED,
-			    "Short pwrite, %zd bytes, on file: %s",
-			    rval, fname);
+			    "%s: Short pwrite, %zd bytes",
+			    fname, rval);
 
 		if (errno != EINTR)
 			err(ECANCELED,
-			    "Could not pwrite file: '%s'", fname);
+			    "%s: pwrite failed on p%zu", fname, p);
 	}
 
-	err(EINTR, "pwrite: max retries exceeded on file: %s", fname);
+	err(EINTR, "%s: pwrite: max retries exceeded on p%zu", fname, p);
 }
 
 /*
@@ -1258,12 +1258,12 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	off = (off_t)p * nsize;
 
 	if (off + GBE_PART_SIZE > ncmp)
-		err(ECANCELED, "GbE %s %s out of bounds: %s",
-		    d_type, f_op, fname);
+		err(ECANCELED, "%s: GbE %s %s out of bounds",
+		    fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		err(ECANCELED, "GbE %s %s at bad offset: %s",
-		    d_type, f_op, fname);
+		err(ECANCELED, "%s: GbE %s %s at bad offset",
+		    fname, d_type, f_op);
 
 	return off;
 }
@@ -1294,13 +1294,13 @@ close_files(void)
 {
 	if (gbe_fd > -1) {
 		if (close(gbe_fd) == -1)
-			err(-1, "close '%s'", fname);
+			err(-1, "%s: close failed", fname);
 	}
 
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 	if (urandom_fd > -1) {
 		if (close(urandom_fd) == -1)
-			err(-1, "close '%s'", rname);
+			err(-1, "%s: close failed", rname);
 	}
 #endif
 }
