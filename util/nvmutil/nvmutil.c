@@ -2,6 +2,13 @@
 /* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
+/*
+ * Written for portability among the Unices (Linux, BSD etc)
+ *
+ * Use these CFLAGS:
+ * -Os -Wall -Wextra -Werror -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L
+ */
+
 #define _POSIX_C_SOURCE 200809L
 
 #ifdef __OpenBSD__
