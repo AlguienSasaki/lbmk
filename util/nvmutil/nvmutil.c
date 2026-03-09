@@ -930,7 +930,9 @@ rhex(void)
 {
 	static size_t n = 0;
 	static uint8_t rnum[12];
+#ifndef NVMUTIL_ARC4RANDOM_BUF
 	int max_retries;
+#endif
 
 #ifdef NVMUTIL_ARC4RANDOM_BUF
 if (!n) {
