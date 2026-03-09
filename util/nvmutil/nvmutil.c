@@ -15,7 +15,9 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c99
  */
 
-#define _POSIX_C_SOURCE 200809L
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
+#endif
 
 #ifdef __OpenBSD__
 #include <sys/param.h>
