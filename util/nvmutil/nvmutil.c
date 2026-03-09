@@ -120,6 +120,7 @@ static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
+static void cmd_helper_cat(void);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -236,6 +237,7 @@ enum {
 	CMD_SETMAC,
 	CMD_SWAP,
 	CMD_COPY,
+	CMD_CAT
 };
 
 /*
@@ -315,6 +317,12 @@ static const struct commands command[] = {
 	    PART_INVERT, SET_MOD_N,
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+	    GBE_PART_SIZE },
+
+	{ CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
+	    NO_INVERT, SET_MOD_OFF,
+	    ARG_NOPART,
+	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
 };
 
@@ -694,9 +702,6 @@ read_gbe_file_part(size_t p)
 
 	if (rc != (ssize_t)gbe_rw_size)
 		err(ECANCELED, "%s: Partial read from p%zu", fname, p);
-
-	printf("%s: Read %zu bytes from p%zu\n",
-	    fname, gbe_rw_size, p);
 }
 
 static ssize_t
@@ -1081,6 +1086,19 @@ hexdump(size_t partnum)
 		}
 		printf("\n");
 	}
+}
+
+static void
+cmd_helper_cat(void)
+{
+	size_t wc = 0;
+	ssize_t w;
+
+	fflush(NULL);
+
+	for (wc = 0; wc < sizeof(buf); wc += w)
+		if ((w = write(STDOUT_FILENO, buf + wc, sizeof(buf) - wc)) < 1)
+			err(EIO, "%s: stdout", fname);
 }
 
 static void
