@@ -481,8 +481,7 @@ set_cmd(int argc, char *argv[])
 		else if (argc >= command[cmd_index].argc)
 			return;
 
-		fprintf(stderr, "Too few args on command '%s'", cmd_str);
-		break;
+		err(EINVAL, "Too few args on command '%s'", cmd_str);
 	}
 
 	cmd_index = CMD_NULL;
