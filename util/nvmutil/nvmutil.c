@@ -295,7 +295,7 @@ int
 main(int argc, char *argv[])
 {
 	argv0 = argv[0];
-	if (argc < 2)
+	if (argc < 3)
 		usage(1);
 
 	fname = argv[1];
@@ -469,19 +469,18 @@ check_enum_bin(size_t a, const char *a_name,
 static void
 set_cmd(int argc, char *argv[])
 {
+	const char *cmd_str;
+
 	for (cmd_index = 0; valid_command(cmd_index); cmd_index++) {
-		if (argc < 3)
-			break;
+		cmd_str = command[cmd_index].str;
 
-		if (xstrxcmp(argv[2], command[cmd_index].str,
-		    MAX_CMD_LEN) != 0)
+		if (xstrxcmp(argv[2], cmd_str, MAX_CMD_LEN) != 0)
 			continue;
-
-		if (argc >= command[cmd_index].argc)
+		else if (argc >= command[cmd_index].argc)
 			return;
 
-		err(EINVAL, "Too few args: command '%s'",
-		    command[cmd_index].str);
+		fprintf(stderr, "Too few args on command '%s'", cmd_str);
+		break;
 	}
 
 	cmd_index = CMD_NULL;
@@ -490,45 +489,25 @@ set_cmd(int argc, char *argv[])
 static void
 set_cmd_args(int argc, char *argv[])
 {
-	if (cmd_index == CMD_SETMAC && argc >= 4) {
-		/*
-		 * 4th arg e.g.: ./nvmutil gbe.bin setmac 00:xx:11:22:xx:xx
-		 */
-		mac_str = argv[3];
-	} else if (!valid_command(cmd_index) && argc >= 3) {
-		/*
-		 * Example: ./nvmutil gbe.bin xx:1f:16:xx:xx:xx
-		 * Equivalent ./nvmutil gbe.bin setmac xx:1f:16:xx:xx:xx
-		 */
-		mac_str = argv[2];
-		cmd_index = CMD_SETMAC;
-	} else if (argc == 2) {
-		/*
-		 * No extra args: ./nvmutil gbe.bin
-		 * Equivalent: ./nvmutil gbe.bin setmac xx:xx:xx:xx:xx:xx
-		 */
-		mac_str = rmac;
-		cmd_index = CMD_SETMAC;
-	} else if (valid_command(cmd_index) && argc >= 4) {
-		if (command[cmd_index].arg_part) {
-			/*
-			 * User-supplied partnum.
-			 * Example: ./nvmutil gbe.bin copy 0
-			 */
-			part = conv_argv_part_num(argv[3]);
-		} else {
-			err(ECANCELED, "Bad command: %s %s",
-			    argv[2], argv[3]);
-		}
-	} else if (valid_command(cmd_index) && argc >= 3) {
-		if (cmd_index == CMD_SETMAC)
-			mac_str = rmac;
-	}
+	uint8_t arg_part;
 
-	if (!valid_command(cmd_index)) {
-		usage(0);
-		err(EINVAL, "Unhandled command error");
-	}
+	if (!valid_command(cmd_index) || argc < 3)
+		usage(1);
+
+	arg_part = command[cmd_index].arg_part;
+
+	/* Maintainer bugs */
+	if (arg_part && argc < 4)
+		err(ECANCELED,
+		    "arg_part set for command that needs argc4");
+	if (arg_part && cmd_index == CMD_SETMAC)
+		err(ECANCELED,
+		    "arg_part set on CMD_SETMAC");
+
+	if (cmd_index == CMD_SETMAC)
+		mac_str = argc >= 4 ? argv[3] : rmac;
+	else if (arg_part)
+		part = conv_argv_part_num(argv[3]);
 }
 
 static size_t
@@ -1321,12 +1300,11 @@ usage(uint8_t usage_exit)
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
 	    "USAGE:\n"
 	    "\t%s FILE dump\n"
-	    "\t%s FILE   # same as setmac without [MAC]\n"
 	    "\t%s FILE setmac [MAC]\n"
 	    "\t%s FILE swap\n"
 	    "\t%s FILE copy 0|1\n",
-	    util, util, util, util, util);
+	    util, util, util, util);
 
 	if (usage_exit)
-		err(ECANCELED, "Too few arguments");
+		err(EINVAL, "Too few arguments");
 }
