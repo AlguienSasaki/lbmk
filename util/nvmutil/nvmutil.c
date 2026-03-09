@@ -1132,12 +1132,12 @@ static uint16_t
 calculated_checksum(size_t p)
 {
 	size_t c;
-	uint16_t val16 = 0;
+	uint32_t val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += nvm_word(c, p);
+		val16 += (uint32_t)nvm_word(c, p);
 
-	return NVM_CHECKSUM - val16;
+	return (uint16_t)((NVM_CHECKSUM - val16) & 0xffff);
 }
 
 /*
