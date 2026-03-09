@@ -8,21 +8,23 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
-BIN=nvmutil
+PROG=nvmutil
 
-$(BIN): nvmutil.c
-	$(CC) $(CFLAGS) nvmutil.c -o $(BIN)
+all: $(PROG)
 
-install: $(BIN)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) $(BIN) $(DESTDIR)$(PREFIX)/bin/
+$(PROG): nvmutil.c
+	$(CC) $(CFLAGS) nvmutil.c -o $(PROG)
+
+install: $(PROG)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin/
+	install $(PROG) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
 
 clean:
-	rm -f $(BIN)
+	rm -f $(PROG)
 
 distclean: clean
 
-.PHONY: install uninstall clean distclean
+.PHONY: all install uninstall clean distclean
