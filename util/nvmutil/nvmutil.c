@@ -2,6 +2,8 @@
 /* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
+#define _POSIX_C_SOURCE 200809L
+
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
