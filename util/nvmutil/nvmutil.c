@@ -202,7 +202,6 @@ enum {
 	CMD_SWAP,
 	CMD_COPY,
 	CMD_BRICK,
-	CMD_SETCHECKSUM
 };
 
 /*
@@ -249,6 +248,10 @@ struct commands {
  * Command table, for nvmutil commands
  */
 static const struct commands command[] = {
+	/*
+	 * Unlike older versions, we now require
+	 * both checksums to be valid for "dump".
+	 */
 	{ CMD_DUMP, "dump", cmd_dump, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
@@ -287,15 +290,6 @@ static const struct commands command[] = {
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    NVM_SIZE },
-
-	/*
-	 * The non-target part will not be read.
-	 */
-	{ CMD_SETCHECKSUM, "setchecksum", NULL, ARGC_4,
-	    NO_INVERT, SET_MOD_N,
-	    ARG_PART,
-	    SKIP_CHECKSUM_READ, CHECKSUM_WRITE,
 	    NVM_SIZE },
 };
 
