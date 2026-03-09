@@ -973,6 +973,9 @@ rhex(void)
 #else
 		n = (size_t)read_dev_urandom(
 		    urandom_fd, rnum, sizeof(rnum));
+
+		if (!n || n > sizeof(rnum))
+			err(ECANCELED, "Randomisation failure");
 #endif
 	}
 
