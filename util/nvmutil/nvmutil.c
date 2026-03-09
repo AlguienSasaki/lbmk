@@ -12,7 +12,7 @@
  *
  * Recommended CFLAGS for Clang/GCC:
  *
- * -Os -Wall -Wextra -Werror -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L
+ * -Os -Wall -Wextra -Werror -pedantic -std=c99
  */
 
 #define _POSIX_C_SOURCE 200809L
