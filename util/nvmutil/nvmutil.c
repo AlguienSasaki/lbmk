@@ -501,9 +501,10 @@ main(int argc, char *argv[])
 	errno = 0;
 	run_cmd(cmd_index);
 
-	if (errno)
+	if (errno && (!(part_valid[0] || part_valid[1])))
 		err(errno, "%s: Unhandled error (WRITE SKIPPED)", fname);
-	else if (command[cmd_index].flags == O_RDWR)
+
+	if (command[cmd_index].flags == O_RDWR)
 		write_gbe_file();
 
 	close_files();
