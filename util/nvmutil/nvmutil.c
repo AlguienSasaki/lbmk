@@ -221,7 +221,7 @@ static off_t lseek_eintr(int fd, off_t off, int whence);
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
-static void set_err(int errval);
+static void set_err_if_unset(int errval);
 static void usage(uint8_t usage_exit);
 
 /*
@@ -704,7 +704,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * Should never reach here. This keeps compilers happy.
 	 */
-	set_err(EINVAL);
+	set_err_if_unset(EINVAL);
 	return -1;
 }
 
@@ -848,7 +848,7 @@ good_checksum(size_t partnum)
 	if (current_checksum == expected_checksum)
 		return 1;
 
-	set_err(EINVAL);
+	set_err_if_unset(EINVAL);
 	return 0;
 }
 
@@ -1406,15 +1406,15 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	size_t rc = 0;
 
 	if (fd < 0) {
-		set_err(EIO);
+		set_err_if_unset(EIO);
 		return -1;
 	}
 	if (!len) {
-		set_err(EIO);
+		set_err_if_unset(EIO);
 		return -1;
 	}
 	if (len > (size_t)SSIZE_MAX) {
-		set_err(EIO);
+		set_err_if_unset(EIO);
 		return -1;
 	}
 
@@ -1430,14 +1430,14 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		} else if (rw_type == LESEN) {
 			rval = read(fd, mem + rc, len - rc);
 		} else {
-			set_err(EIO);
+			set_err_if_unset(EIO);
 			return -1;
 		}
 
 		if (rval >= 0) {
 			if ((size_t)rval > (len - rc) /* Prevent overflow */
 			    || rval == 0) { /* Prevent infinite 0-byte loop */
-				set_err(EIO);
+				set_err_if_unset(EIO);
 				return -1;
 			}
 
@@ -1445,7 +1445,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 			continue;
 		}
 
-		set_err(EIO);
+		set_err_if_unset(EIO);
 		return -1;
 	}
 
@@ -1480,7 +1480,7 @@ prw(int fd, void *mem, size_t nrw,
 		else if (rw_type == PSCHREIB)
 			r = write(fd, mem, nrw);
 		else {
-			set_err(EINVAL);
+			set_err_if_unset(EINVAL);
 			return -1;
 		}
 	} while (r < 0 && errno == EINTR);
@@ -1522,7 +1522,7 @@ err(int nvm_errval, const char *msg, ...)
 	 * one that does this.
 	 *
 	 * Since the errval is for setting errno, -1
-	 * would be incorrect. Therefore, set_err()
+	 * would be incorrect. Therefore, set_err_if_unset()
 	 * avoids overriding errno if the given value
 	 * is negative.
 	 *
@@ -1537,7 +1537,7 @@ err(int nvm_errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	set_err(nvm_errval);
+	set_err_if_unset(nvm_errval);
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
@@ -1577,7 +1577,7 @@ getnvmprogname(void)
 }
 
 static void
-set_err(int x)
+set_err_if_unset(int x)
 {
 	if (errno)
 		return;
