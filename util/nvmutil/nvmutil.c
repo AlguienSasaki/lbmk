@@ -96,8 +96,6 @@ static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
-static void read_gbe_file_exact(int fd, uint8_t *buf, size_t len,
-    off_t off);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
 static void run_cmd(size_t c);
@@ -111,10 +109,8 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-static ssize_t read_dev_urandom(int fd, void *buf,
-    size_t len);
-#endif
+static void read_file_exact(int fd, uint8_t *mem, size_t len,
+    off_t off, uint8_t plesen, const char *path);
 static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
@@ -702,32 +698,9 @@ read_gbe_file_part(size_t p)
 	uint8_t *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
-	read_gbe_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pread"));
-}
-
-static void
-read_gbe_file_exact(int fd,
-    uint8_t *buf, size_t len, off_t off)
-{
-	ssize_t rval = -1;
-	ssize_t rc = 0;
-
-	if (fd == -1)
-		err(ECANCELED, "Trying to open bad fd: %s", fname);
-
-	for (rc = 0; rc != (ssize_t)len; rc += rval) {
-		if ((rval = pread(fd, buf + rc, len - rc, off + rc)) > -1) {
-			if (!rval) /* prevent infinite loop */
-				err(EIO, "%s: pread of 0 bytes", fname);
-			continue;
-		}
-
-		if (errno != EINTR || rval < -1)
-			err(EIO, "%s", fname);
-
-		errno = 0;
-	}
+	read_file_exact(gbe_fd, mem_offset,
+	    gbe_rw_size, gbe_file_offset(p, "pread"),
+	    1, fname);
 }
 
 static void
@@ -961,52 +934,45 @@ rhex(void)
 	static uint8_t rnum[12];
 
 	if (!n) {
-#ifdef NVMUTIL_ARC4RANDOM_BUF
 		n = sizeof(rnum);
+#ifdef NVMUTIL_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
-		n = (size_t)read_dev_urandom(
-		    urandom_fd, rnum, sizeof(rnum));
-
-		if (!n || n > sizeof(rnum))
-			err(ECANCELED, "Randomisation failure");
+		read_file_exact(urandom_fd, rnum, n, 0, 0, rname);
 #endif
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
 }
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-static ssize_t
-read_dev_urandom(int fd, void *buf, size_t len)
+static void
+read_file_exact(int fd, uint8_t *mem,
+    size_t len, off_t off, uint8_t plesen, const char *path)
 {
-	int retry;
-	ssize_t rval;
+	ssize_t rval = -1;
+	ssize_t rc = 0;
 
 	if (fd == -1)
-		err(ECANCELED, "Trying to open bad fd: %s", rname);
+		err(ECANCELED, "Trying to open bad fd: %s", path);
 
-	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
-		rval = read(fd, buf, len);
+	for (rc = 0; rc != (ssize_t)len; rc += rval) {
+		if (plesen)
+			rval = pread(fd, mem + rc, len - rc, off + rc);
+		else
+			rval = read(fd, mem + rc, len - rc);
 
-		if (rval == -1) {
-			if (errno == EINTR)
-				continue;
-			err(errno, "%s", rname);
+		if (rval > -1) {
+			if (!rval) /* prevent infinite loop */
+				err(EIO, "%s: read of 0 bytes", path);
+			continue;
 		}
 
-		if (!rval || (size_t)rval > len)
-			continue;
+		if (errno != EINTR || rval < -1)
+			err(EIO, "%s", path);
 
 		errno = 0;
-		return rval;
 	}
-
-	err(EINTR, "%s: read: max retries exceeded: %s", rname);
-
-	return -1;
 }
-#endif
 
 static void
 write_mac_part(size_t partnum)
