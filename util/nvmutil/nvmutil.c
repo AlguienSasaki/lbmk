@@ -537,14 +537,16 @@ sanitize_command_index(size_t c)
 		    (unsigned long)c, command[c].argc);
 
 	if (command[c].str == NULL)
-		err(ECANCELED, "cmd index %lu: NULL str", c);
+		err(ECANCELED, "cmd index %lu: NULL str",
+		    (unsigned long)c);
 	if (*command[c].str == '\0')
-		err(ECANCELED, "cmd index %lu: empty str", c);
+		err(ECANCELED, "cmd index %lu: empty str",
+		    (unsigned long)c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
 		err(ECANCELED, "cmd index %lu: str too long: %s",
-		    c, command[c].str);
+		    (unsigned long)c, command[c].str);
 	}
 
 	mod_type = command[c].set_modified;
@@ -577,12 +579,13 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		err(EINVAL, "Unsupported rw_size: %lu", gbe_rw_size);
+		err(EINVAL, "Unsupported rw_size: %lu",
+		    (unsigned long)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
 		err(EINVAL, "rw_size larger than GbE part: %lu",
-		    gbe_rw_size);
+		    (unsigned long)gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
@@ -814,7 +817,7 @@ read_checksums(void)
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
 			err(ECANCELED, "%s: part %lu has a bad checksum",
-			    fname, part);
+			    fname, (unsigned long)part);
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
 	}
@@ -845,7 +848,8 @@ static void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err(ECANCELED, "Invalid run_cmd arg: %lu", c);
+		err(ECANCELED, "Invalid run_cmd arg: %lu",
+		    (unsigned long)c);
 }
 
 static uint8_t
@@ -856,7 +860,7 @@ valid_command(size_t c)
 
 	if (c != command[c].chk)
 		err(ECANCELED, "Invalid cmd chk value (%lu) vs arg: %lu",
-		    command[c].chk, c);
+		    (unsigned long)command[c].chk, (unsigned long)c);
 
 	return 1;
 }
@@ -1012,7 +1016,8 @@ write_mac_part(size_t partnum)
 	for (w = 0; w < 3; w++)
 		set_nvm_word(w, partnum, mac_buf[w]);
 
-	printf("Wrote MAC address to part %lu: ", partnum);
+	printf("Wrote MAC address to part %lu: ",
+	    (unsigned long)partnum);
 	print_mac_from_nvm(partnum);
 }
 
@@ -1032,9 +1037,11 @@ cmd_helper_dump(void)
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, partnum),
-			    partnum, calculated_checksum(partnum));
+			    (unsigned long)partnum,
+			    calculated_checksum(partnum));
 
-		printf("MAC (part %lu): ", partnum);
+		printf("MAC (part %lu): ",
+		    (unsigned long)partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
@@ -1231,14 +1238,16 @@ check_nvm_bound(size_t c, size_t p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err(EINVAL, "check_nvm_bound: out of bounds %lu", c);
+		err(EINVAL, "check_nvm_bound: out of bounds %lu",
+		    (unsigned long)c);
 }
 
 static void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err(ECANCELED, "%s must be 0 or 1, but is %lu", a_name, a);
+		err(ECANCELED, "%s must be 0 or 1, but is %lu",
+		    a_name, (unsigned long)a);
 }
 
 static void
@@ -1330,8 +1339,9 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		err(EIO, "%s: %s: Zero length", path, rw_type_str);
 	if (len > (size_t)SSIZE_MAX)
 		err(EIO,
-		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%zd)",
-		    path, rw_type_str, len, SSIZE_MAX);
+		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%ld)",
+		    path, rw_type_str, (unsigned long)len,
+		    (long)SSIZE_MAX);
 
 	while (rc < len) {
 		if (rw_type == PSCHREIB)
