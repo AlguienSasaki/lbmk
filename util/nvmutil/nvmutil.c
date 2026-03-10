@@ -522,7 +522,7 @@ sanitize_command_list(void)
 {
 	size_t c;
 
-	for (c = 0; valid_command(c); c++)
+	for (c = 0; c < N_COMMANDS; c++)
 		sanitize_command_index(c);
 }
 
