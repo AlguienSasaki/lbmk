@@ -1372,6 +1372,7 @@ prw(int fd, void *mem, size_t count,
 {
 	off_t old;
 	ssize_t r;
+	int saved_errno = 0;
 
 	if ((old = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
@@ -1388,8 +1389,14 @@ prw(int fd, void *mem, size_t count,
 			err(EIO, "%s: Invalid rw_type", path);
 	} while (r < 0 && errno == EINTR);
 
+	if (r < 0)
+		saved_errno = errno;
+
 	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1)
 		return -1;
+
+	if (r < 0)
+		errno = saved_errno;
 
 	return r;
 }
