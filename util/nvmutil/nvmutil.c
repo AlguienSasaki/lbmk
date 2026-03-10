@@ -1408,7 +1408,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	}
 
 	while (rc < len) {
-		rval = do_rw(fd, mem, len, off, rw_type);
+		rval = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
 		if (rval < 0 && errno == EINTR) {
 			continue;
