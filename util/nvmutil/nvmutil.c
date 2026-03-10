@@ -1319,7 +1319,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path,
     const char *rw_type_str)
 {
-	ssize_t rval = -1;
+	ssize_t rval = 0;
 	size_t rc = 0;
 
 	if (fd < 0)
@@ -1331,7 +1331,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%zd)",
 		    path, rw_type_str, len, SSIZE_MAX);
 
-	for (rc = 0; rc < len; rc += rval) {
+	while (rc < len) {
 		if (rw_type == PSCHREIB)
 			rval = prw(fd, mem + rc, len - rc,
 			    off + rc, rw_type, path);
@@ -1346,14 +1346,20 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 			err(EIO, "%s: %s: Unsupported rw_type",
 			    path, rw_type_str);
 
-		if (rval > -1) {
-			if (!rval) /* prevent infinite loop */
+		if (rval >= 0) {
+			if (rval == 0)
 				err(EIO, "%s: %s: 0-byte return",
 				    path, rw_type_str);
+
+			if ((size_t)rval > (len - rc))
+				err(EIO, "%s: %s: Buffer overread trap",
+				    path, rw_type_str);
+
+			rc += (size_t)rval;
 			continue;
 		}
 
-		if (errno != EINTR || rval < -1)
+		if (errno != EINTR)
 			err(EIO, "%s: %s", path, rw_type_str);
 
 		errno = 0;
