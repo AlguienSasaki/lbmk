@@ -54,6 +54,9 @@ typedef char static_assert_uint8_is_1[(sizeof(uint8_t) == 1) ? 1 : -1];
 typedef char static_assert_uint16_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
 typedef char static_assert_uint32_is_4[(sizeof(uint32_t) == 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
+typedef char static_assert_twos_complement[
+    ((-1 & 3) == 3) ? 1 : -1
+];
 
 /*
  * We set _FILE_OFFSET_BITS 64, but we only handle
