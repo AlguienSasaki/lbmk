@@ -121,10 +121,7 @@ static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 static void cmd_helper_cat(void);
-static void cmd_helper_cat16(void);
-static void cmd_helper_cat128(void);
-static void gbe_catn(size_t n);
-static void gbe_cat(uint8_t *b);
+static void gbe_cat_buf(uint8_t *b);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
@@ -328,13 +325,13 @@ static const struct commands command[] = {
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
 
-	{ CMD_CAT16, "cat16", cmd_helper_cat16, ARGC_3,
+	{ CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE },
 
-	{ CMD_CAT128, "cat128", cmd_helper_cat128, ARGC_3,
+	{ CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
@@ -1111,53 +1108,31 @@ hexdump(size_t partnum)
 static void
 cmd_helper_cat(void)
 {
-	gbe_catn(8);
-}
-
-static void
-cmd_helper_cat16(void)
-{
-	gbe_catn(16);
-}
-
-static void
-cmd_helper_cat128(void)
-{
-	gbe_catn(128);
-}
-
-static void
-gbe_catn(size_t n)
-{
 	size_t p;
 	size_t ff;
+	size_t n = 0;
 
-	switch (n) {
-	case 8:
-	case 16:
-	case 128:
-		break;
-	default:
-		err(ECANCELED, "gbe_catn: Invalid GBE KB size: %zu", n);
-	}
+	if (cmd_index == CMD_CAT16)
+		n = 1;
+	else if (cmd_index == CMD_CAT128)
+		n = 15;
+	else if (cmd_index != CMD_CAT)
+		err(ECANCELED, "cmd_helper_cat called erroneously");
 
 	fflush(NULL);
 
-	n -= 8;
-	n >>= 3;
-
 	for (p = 0; p < 2; p++) {
-		gbe_cat(buf + (p * GBE_PART_SIZE));
+		gbe_cat_buf(buf + (p * GBE_PART_SIZE));
 
 		for (ff = 0; ff < n; ff++)
-			gbe_cat(pad);
+			gbe_cat_buf(pad);
 	}
 }
 
 static void
-gbe_cat(uint8_t *b)
+gbe_cat_buf(uint8_t *b)
 {
-	size_t wc = 0;
+	size_t wc;
 	ssize_t w;
 
 	for (wc = 0; wc < GBE_PART_SIZE; wc += w)
