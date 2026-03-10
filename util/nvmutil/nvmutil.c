@@ -95,7 +95,6 @@ static void open_dev_urandom(void);
 static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
-static void read_gbe_file_part(size_t part);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
 static void run_cmd(size_t c);
@@ -124,13 +123,14 @@ static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
 static void set_part_modified(size_t p);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
-static void write_gbe_file_part(size_t part);
-static void rw_file_exact(int fd, uint8_t *mem, size_t len,
-    off_t off, int rw_type, const char *path, const char *rw_type_str);
-static off_t gbe_file_offset(size_t part, const char *f_op);
+static void rw_gbe_file_part(size_t p, int rw_type,
+    const char *rw_type_str);
 static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
+static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
+static void rw_file_exact(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type, const char *path, const char *rw_type_str);
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
@@ -691,20 +691,8 @@ read_gbe_file(void)
 
 	for (p = 0; p < 2; p++) {
 		if (do_read[p])
-			read_gbe_file_part(p);
+			rw_gbe_file_part(p, PLESEN, "pread");
 	}
-}
-
-static void
-read_gbe_file_part(size_t p)
-{
-	size_t gbe_rw_size = command[cmd_index].rw_size;
-	uint8_t *mem_offset =
-	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
-
-	rw_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pread"),
-	    PLESEN, fname, "pread");
 }
 
 static void
@@ -1077,7 +1065,7 @@ write_gbe_file(void)
 		if (update_checksum)
 			set_checksum(partnum);
 
-		write_gbe_file_part(partnum);
+		rw_gbe_file_part(partnum, PSCHREIB, "pwrite");
 	}
 }
 
@@ -1191,14 +1179,78 @@ check_bin(size_t a, const char *a_name)
 }
 
 static void
-write_gbe_file_part(size_t p)
+rw_gbe_file_part(size_t p, int rw_type,
+    const char *rw_type_str)
 {
 	size_t gbe_rw_size = command[cmd_index].rw_size;
-	uint8_t *mem_offset = gbe_mem_offset(p, "pwrite");
+	uint8_t invert = command[cmd_index].invert;
+
+	uint8_t *mem_offset;
+
+	if (rw_type == SCHREIB || rw_type == PSCHREIB)
+		invert = 0;
+
+	/*
+	 * Inverted reads are used by copy/swap.
+	 * E.g. read from p0 (file) to p1 (mem).
+	 */
+	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
 
 	rw_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, "pwrite"),
-	    PSCHREIB, fname, "pwrite");
+	    gbe_rw_size, gbe_file_offset(p, rw_type_str),
+	    rw_type, fname, rw_type_str);
+}
+
+/*
+ * This one is similar to gbe_file_offset,
+ * but used to check Gbe bounds in memory,
+ * and it is *also* used during file I/O.
+ */
+static uint8_t *
+gbe_mem_offset(size_t p, const char *f_op)
+{
+	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
+	    GBE_PART_SIZE, GBE_FILE_SIZE);
+
+	return (uint8_t *)(buf + gbe_off);
+}
+
+/*
+ * Reads to GbE from write_gbe_file_part and read_gbe_file_part
+ * are filtered through here. These operations must
+ * only write from the 0th position or the half position
+ * within the GbE file, and write 4KB of data.
+ *
+ * This check is called, to ensure just that.
+ */
+static off_t
+gbe_file_offset(size_t p, const char *f_op)
+{
+	off_t gbe_file_half_size = gbe_file_size >> 1;
+
+	return gbe_x_offset(p, f_op, "file",
+	    gbe_file_half_size, gbe_file_size);
+}
+
+static off_t
+gbe_x_offset(size_t p, const char *f_op, const char *d_type,
+    off_t nsize, off_t ncmp)
+{
+	off_t off;
+
+	check_bin(p, "part number");
+
+	off = (off_t)p * nsize;
+
+	if (off + GBE_PART_SIZE > ncmp)
+		err(ECANCELED, "%s: GbE %s %s out of bounds",
+		    fname, d_type, f_op);
+
+	if (off != 0 && off != ncmp >> 1)
+		err(ECANCELED, "%s: GbE %s %s at bad offset",
+		    fname, d_type, f_op);
+
+	return off;
 }
 
 static void
@@ -1236,58 +1288,6 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 
 		errno = 0;
 	}
-}
-
-/*
- * Reads to GbE from write_gbe_file_part and read_gbe_file_part
- * are filtered through here. These operations must
- * only write from the 0th position or the half position
- * within the GbE file, and write 4KB of data.
- *
- * This check is called, to ensure just that.
- */
-static off_t
-gbe_file_offset(size_t p, const char *f_op)
-{
-	off_t gbe_file_half_size = gbe_file_size >> 1;
-
-	return gbe_x_offset(p, f_op, "file",
-	    gbe_file_half_size, gbe_file_size);
-}
-
-/*
- * This one is similar to gbe_file_offset,
- * but used to check Gbe bounds in memory,
- * and it is *also* used during file I/O.
- */
-static uint8_t *
-gbe_mem_offset(size_t p, const char *f_op)
-{
-	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
-	    GBE_PART_SIZE, GBE_FILE_SIZE);
-
-	return (uint8_t *)(buf + gbe_off);
-}
-
-static off_t
-gbe_x_offset(size_t p, const char *f_op, const char *d_type,
-    off_t nsize, off_t ncmp)
-{
-	off_t off;
-
-	check_bin(p, "part number");
-
-	off = (off_t)p * nsize;
-
-	if (off + GBE_PART_SIZE > ncmp)
-		err(ECANCELED, "%s: GbE %s %s out of bounds",
-		    fname, d_type, f_op);
-
-	if (off != 0 && off != ncmp >> 1)
-		err(ECANCELED, "%s: GbE %s %s at bad offset",
-		    fname, d_type, f_op);
-
-	return off;
 }
 
 static void
