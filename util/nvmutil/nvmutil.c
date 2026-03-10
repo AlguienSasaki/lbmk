@@ -1425,6 +1425,9 @@ lseek_eintr(int fd, off_t offset, int whence)
 		old = lseek(fd, offset, whence);
 	} while (old == (off_t)-1 && errno == EINTR);
 
+	if (errno == EINTR)
+		errno = 0;
+
 	return old;
 }
 
