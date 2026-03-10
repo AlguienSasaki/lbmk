@@ -1076,7 +1076,7 @@ hexdump(size_t partnum)
 	uint16_t val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08lx ", (size_t)row << 4);
+		printf("%08zx ", (size_t)row << 4);
 		for (c = 0; c < 8; c++) {
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
