@@ -1390,7 +1390,15 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		if (errno != EINTR)
 			err(EIO, "%s: %s", path, rw_type_str);
 
-		errno = 0;
+		/*
+		 * EINTR is not fatal, because we
+		 * eventually return. We rely on
+		 * errno for general error state
+		 * after return from rw_file_exact,
+		 * so we don't want a false error.
+		 */
+		if (errno == EINTR)
+			errno = 0;
 	}
 }
 
