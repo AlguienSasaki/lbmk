@@ -1041,12 +1041,19 @@ cmd_helper_dump(void)
 {
 	size_t partnum;
 
-	int errval = good_checksum(0);
-	errval |= good_checksum(1);
-	if (errval)
+	part_valid[0] = good_checksum(0);
+	part_valid[1] = good_checksum(1);
+
+	if (part_valid[0] || part_valid[1])
 		errno = 0;
 
 	for (partnum = 0; partnum < 2; partnum++) {
+		if (!part_valid[partnum])
+			fprintf(stderr,
+			    "BAD checksum %04x in part %zu (expected %04x)\n",
+			    nvm_word(NVM_CHECKSUM_WORD, partnum),
+			    partnum, calculated_checksum(partnum));
+
 		printf("MAC (part %zu): ", partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
