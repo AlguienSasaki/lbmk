@@ -801,7 +801,8 @@ read_checksums(void)
 			continue;
 
 		part_valid[p] = good_checksum(p);
-		num_invalid += part_valid[p];
+		if (!part_valid[p])
+			++num_invalid;
 	}
 
 	if (num_invalid < max_invalid)
