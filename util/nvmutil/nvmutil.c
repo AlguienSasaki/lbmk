@@ -1331,7 +1331,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%zd)",
 		    path, rw_type_str, len, SSIZE_MAX);
 
-	for (rc = 0; rc != len; rc += rval) {
+	for (rc = 0; rc < len; rc += rval) {
 		if (rw_type == PSCHREIB)
 			rval = prw(fd, mem + rc, len - rc,
 			    off + rc, rw_type, path);
