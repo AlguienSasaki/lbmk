@@ -31,18 +31,28 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
+#if defined(__has_include)
+#if __has_include(<stdint.h>)
 #include <stdint.h>
+#else
+typedef unsigned char  uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int   uint32_t;
+#endif
+#else
+#include <stdint.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#if __STDC_VERSION__ >= 201112L
-_Static_assert(sizeof(uint16_t) == 2, "uint16_t must be 16 bits");
-#else
-typedef char static_assert_uint16_t_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
-#endif
+typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
+typedef char static_assert_uint8_is_1[(sizeof(uint8_t) == 1) ? 1 : -1];
+typedef char static_assert_uint16_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
+typedef char static_assert_uint32_is_4[(sizeof(uint32_t) == 4) ? 1 : -1];
 
 /*
  * The BSD versions that could realistically build
