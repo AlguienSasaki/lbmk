@@ -89,6 +89,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #endif
 #endif
 
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 /*
  * Sanitize command tables.
  */
@@ -698,7 +702,7 @@ open_dev_urandom(void)
 	struct stat st_urandom_fd;
 
 	rname = newrandom;
-	if ((urandom_fd = open(rname, O_RDONLY)) != -1)
+	if ((urandom_fd = open(rname, O_RDONLY | O_BINARY)) != -1)
 		return;
 
 	/*
@@ -711,7 +715,7 @@ open_dev_urandom(void)
 	errno = 0;
 
 	rname = oldrandom;
-	xopen(&urandom_fd, rname, O_RDONLY, &st_urandom_fd);
+	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY, &st_urandom_fd);
 }
 
 static void
@@ -719,7 +723,7 @@ open_gbe_file(void)
 {
 	struct stat gbe_st;
 
-	xopen(&gbe_fd, fname, command[cmd_index].flags, &gbe_st);
+	xopen(&gbe_fd, fname, command[cmd_index].flags | O_BINARY, &gbe_st);
 
 	gbe_file_size = gbe_st.st_size;
 
