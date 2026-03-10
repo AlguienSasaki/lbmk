@@ -209,8 +209,8 @@ static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static void rw_file_exact(int fd, uint8_t *mem, size_t len,
-    off_t off, int rw_type, const char *path, const char *rw_type_str);
+static ssize_t rw_file_exact(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
@@ -1010,7 +1010,8 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-		rw_file_exact(urandom_fd, rnum, n, 0, LESEN, rname, "read");
+		if (rw_file_exact(urandom_fd, rnum, n, 0, LESEN) == -1)
+			err(errno, "Randomisation failed");
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
@@ -1120,8 +1121,8 @@ cmd_helper_cat(void)
 static void
 gbe_cat_buf(uint8_t *b)
 {
-	rw_file_exact(STDOUT_FILENO, b, GBE_PART_SIZE, 0,
-	    SCHREIB, "stdout", "write");
+	if (rw_file_exact(STDOUT_FILENO, b, GBE_PART_SIZE, 0, SCHREIB) == -1)
+		err(errno, "cat");
 }
 
 static void
@@ -1280,9 +1281,11 @@ rw_gbe_file_part(size_t p, int rw_type,
 	 */
 	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
 
-	rw_file_exact(gbe_fd, mem_offset,
+	if (rw_file_exact(gbe_fd, mem_offset,
 	    gbe_rw_size, gbe_file_offset(p, rw_type_str),
-	    rw_type, fname, rw_type_str);
+	    rw_type) == -1)
+		err(errno, "%s: %s: part %lu",
+		    fname, rw_type_str, (unsigned long)p);
 }
 
 /*
@@ -1349,65 +1352,69 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * provided by yet another portable function,
  * prw() - see notes below.
  */
-static void
+static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
-    off_t off, int rw_type, const char *path,
-    const char *rw_type_str)
+    off_t off, int rw_type)
 {
 	ssize_t rval = 0;
 	size_t rc = 0;
 
-	if (fd < 0)
-		err(EIO, "%s: %s: Bad fd %d", path, rw_type_str, fd);
-	if (!len)
-		err(EIO, "%s: %s: Zero length", path, rw_type_str);
-	if (len > (size_t)SSIZE_MAX)
-		err(EIO,
-		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%ld)",
-		    path, rw_type_str, (unsigned long)len,
-		    (long)SSIZE_MAX);
+	if (fd < 0) {
+		set_err(EINVAL);
+		return -1;
+	}
+	if (!len) {
+		set_err(EINVAL);
+		return -1;
+	}
+	if (len > (size_t)SSIZE_MAX) {
+		set_err(EINVAL);
+		return -1;
+	}
 
 	while (rc < len) {
-		if (rw_type == PSCHREIB)
+		if (rw_type == PSCHREIB) {
 			rval = prw(fd, mem + rc, len - rc,
 			    off + rc, rw_type);
-		else if (rw_type == SCHREIB)
+		} else if (rw_type == SCHREIB) {
 			rval = write(fd, mem + rc, len - rc);
-		else if (rw_type == PLESEN)
+		} else if (rw_type == PLESEN) {
 			rval = prw(fd, mem + rc, len - rc,
 			    off + rc, rw_type);
-		else if (rw_type == LESEN)
+		} else if (rw_type == LESEN) {
 			rval = read(fd, mem + rc, len - rc);
-		else
-			err(EIO, "%s: %s: Unsupported rw_type",
-			    path, rw_type_str);
+		} else {
+			set_err(EINVAL);
+			return -1;
+		}
 
 		if (rval >= 0) {
-			if (rval == 0)
-				err(EIO, "%s: %s: 0-byte return",
-				    path, rw_type_str);
-
-			if ((size_t)rval > (len - rc))
-				err(EIO, "%s: %s: Buffer overread trap",
-				    path, rw_type_str);
+			if ((size_t)rval > (len - rc) /* Prevent overflow */
+			    || rval == 0) { /* Prevent infinite 0-byte loop */
+				set_err(EIO);
+				return -1;
+			}
 
 			rc += (size_t)rval;
 			continue;
 		}
-
-		if (errno != EINTR)
-			err(EIO, "%s: %s", path, rw_type_str);
-
-		/*
-		 * EINTR is not fatal, because we
-		 * eventually return. We rely on
-		 * errno for general error state
-		 * after return from rw_file_exact,
-		 * so we don't want a false error.
-		 */
-		if (errno == EINTR)
+		if (errno == EINTR) {
+			/*
+			 * EINTR is not fatal, because we
+			 * eventually return. We rely on
+			 * errno for general error state
+			 * after return from rw_file_exact,
+			 * so we don't want a false error.
+			 */
 			errno = 0;
+			continue;
+		}
+
+		set_err(EIO);
+		return -1;
 	}
+
+	return rc;
 }
 
 /*
