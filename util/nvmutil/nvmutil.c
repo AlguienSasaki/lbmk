@@ -272,6 +272,10 @@ static const char *mac_str;
 static const char *fname;
 static const char *argv0;
 
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t)-1)
+#endif
+
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
