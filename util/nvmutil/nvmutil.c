@@ -216,6 +216,7 @@ static void rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path, const char *rw_type_str);
 static ssize_t prw(int fd, void *mem, size_t count,
     off_t offset, int rw_type, const char *path);
+static off_t lseek_eintr(int fd, off_t offset, int whence);
 
 /*
  * Error handling and cleanup
@@ -1397,14 +1398,13 @@ static ssize_t
 prw(int fd, void *mem, size_t count,
     off_t offset, int rw_type, const char *path)
 {
+	off_t rs;
 	off_t old;
 	ssize_t r;
 
-	old = lseek(fd, 0, SEEK_CUR);
-	if (old == (off_t)-1)
+	if ((old = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
-
-	if (lseek(fd, offset, SEEK_SET) == (off_t)-1)
+	if ((r = lseek_eintr(fd, offset, SEEK_SET)) == (off_t)-1)
 		return -1;
 
 	do {
@@ -1416,10 +1416,24 @@ prw(int fd, void *mem, size_t count,
 			err(EIO, "%s: Invalid rw_type", path);
 	} while (r < 0 && errno == EINTR);
 
-	if (lseek(fd, old, SEEK_SET) == (off_t)-1 && r >= 0)
-		errno = EIO;
+	if (r >= 0) {
+		if ((rs = lseek_eintr(fd, old, SEEK_SET)) == (off_t)-1)
+			errno = EIO;
+	}
 
 	return r;
+}
+
+static off_t
+lseek_eintr(int fd, off_t offset, int whence)
+{
+	off_t old;
+
+	do {
+		old = lseek(fd, offset, whence);
+	} while (old == (off_t)-1 && errno == EINTR);
+
+	return old;
 }
 
 static void
