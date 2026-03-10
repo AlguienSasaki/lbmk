@@ -1388,10 +1388,8 @@ prw(int fd, void *mem, size_t count,
 			err(EIO, "%s: Invalid rw_type", path);
 	} while (r < 0 && errno == EINTR);
 
-	if (r >= 0) {
-		if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1)
-			return -1;
-	}
+	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1)
+		return -1;
 
 	return r;
 }
