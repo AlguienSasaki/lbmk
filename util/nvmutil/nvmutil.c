@@ -81,25 +81,56 @@ typedef char static_assert_uint16_t_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
 #endif
 #endif
 
+/*
+ * Sanitize command tables.
+ */
 static void sanitize_command_list(void);
 static void sanitize_command_index(size_t c);
 static void check_enum_bin(size_t a, const char *a_name,
     size_t b, const char *b_name);
+
+/*
+ * Argument handling (user input)
+ */
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
+
+/*
+ * Prep files for reading
+ *
+ * Portability: /dev/urandom used
+ * on Linux / old Unix, whereas
+ * arc4random is used on BSD/MacOS.
+ */
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
 #endif
 static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
+
+/*
+ * Read GbE file and verify
+ * checksums.
+ *
+ * After this, we can run commands.
+ */
 static void read_gbe_file(void);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
+
+/*
+ * Execute user command on GbE data.
+ * These are stubs that call helpers.
+ */
 static void run_cmd(size_t c);
 static void check_command_num(size_t c);
 static uint8_t valid_command(size_t c);
+
+/*
+ * Helper functions for command: setmac
+ */
 static void cmd_helper_setmac(void);
 static void parse_mac_string(void);
 static size_t xstrxlen(const char *scmp, size_t maxlen);
@@ -109,20 +140,47 @@ static void set_mac_nib(size_t mac_str_pos,
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
 static void write_mac_part(size_t partnum);
+
+/*
+ * Helper functions for command: dump
+ */
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
+
+/*
+ * Helper functions for commands:
+ * cat, cat16 and cat128
+ */
 static void cmd_helper_cat(void);
 static void gbe_cat_buf(uint8_t *b);
+
+/*
+ * After command processing, write
+ * the modified GbE file back.
+ *
+ * These are stub functions: check
+ * below for the actual functions.
+ */
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
 static uint16_t calculated_checksum(size_t p);
+
+/*
+ * Helper functions for accessing
+ * the NVM area during operation.
+ */
 static uint16_t nvm_word(size_t pos16, size_t part);
 static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
 static void set_part_modified(size_t p);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
+
+/*
+ * Helper functions for stub functions
+ * that handle GbE file reads/writes.
+ */
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
 static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
@@ -131,6 +189,10 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path, const char *rw_type_str);
+
+/*
+ * Error handling and cleanup
+ */
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
