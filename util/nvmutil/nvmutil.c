@@ -1121,8 +1121,26 @@ cmd_helper_cat(void)
 static void
 gbe_cat_buf(uint8_t *b)
 {
-	if (rw_file_exact(STDOUT_FILENO, b, GBE_PART_SIZE, 0, SCHREIB) == -1)
-		err(errno, "cat");
+	ssize_t rval;
+
+	while (1) {
+		rval = rw_file_exact(STDOUT_FILENO, b,
+		    GBE_PART_SIZE, 0, SCHREIB);
+
+		if (rval == -1) {
+			if (errno == EAGAIN) {
+				errno = 0;
+				continue;
+			}
+
+			err(errno, "%s: cat", rname);
+		}
+
+		if ((size_t)rval != GBE_PART_SIZE)
+			err(errno, "%s: Partial read", rname);
+
+		break;
+	}
 }
 
 static void
