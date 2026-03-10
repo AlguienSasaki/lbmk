@@ -505,6 +505,7 @@ main(int argc, char *argv[])
 	read_gbe_file();
 	read_checksums();
 
+	errno = 0;
 	run_cmd(cmd_index);
 
 	if (errno)
