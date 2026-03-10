@@ -211,6 +211,8 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static ssize_t rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type);
+static ssize_t do_rw(int fd,
+    uint8_t *mem, size_t len, off_t off, int rw_type);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
@@ -1404,54 +1406,47 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	ssize_t rval = 0;
 	size_t rc = 0;
 
-	if (fd < 0) {
-		set_err_if_unset(EIO);
-		return -1;
-	}
-	if (!len) {
-		set_err_if_unset(EIO);
-		return -1;
-	}
-	if (len > (size_t)SSIZE_MAX) {
+	if (fd < 0 || !len || len > (size_t)SSIZE_MAX) {
 		set_err_if_unset(EIO);
 		return -1;
 	}
 
 	while (rc < len) {
-		if (rw_type == PSCHREIB) {
-			rval = prw(fd, mem + rc, len - rc,
-			    off + rc, rw_type);
-		} else if (rw_type == SCHREIB) {
-			rval = write(fd, mem + rc, len - rc);
-		} else if (rw_type == PLESEN) {
-			rval = prw(fd, mem + rc, len - rc,
-			    off + rc, rw_type);
-		} else if (rw_type == LESEN) {
-			rval = read(fd, mem + rc, len - rc);
-		} else {
+		rval = do_rw(fd, mem, len, off, rw_type);
+
+		if (rval < 0 && errno == EINTR) {
+			continue;
+		} else if (rval < 0) {
+			set_err_if_unset(EIO);
+			return -1;
+		}
+		if ((size_t)rval > (len - rc) /* Prevent overflow */
+		    || rval == 0) { /* Prevent infinite 0-byte loop */
 			set_err_if_unset(EIO);
 			return -1;
 		}
 
-		if (rval >= 0) {
-			if ((size_t)rval > (len - rc) /* Prevent overflow */
-			    || rval == 0) { /* Prevent infinite 0-byte loop */
-				set_err_if_unset(EIO);
-				return -1;
-			}
-
-			rc += (size_t)rval;
-			continue;
-		}
-
-		if (rval < 0 && errno == EINTR)
-			continue;
-
-		set_err_if_unset(EIO);
-		return -1;
+		rc += (size_t)rval;
 	}
 
 	return rc;
+}
+
+static ssize_t
+do_rw(int fd, uint8_t *mem,
+    size_t len, off_t off, int rw_type)
+{
+	if (rw_type == LESEN)
+		return read(fd, mem, len);
+
+	if (rw_type == SCHREIB)
+		return write(fd, mem, len);
+
+	if (rw_type == PLESEN || rw_type == PSCHREIB)
+		return prw(fd, mem, len, off, rw_type);
+
+	set_err_if_unset(EINVAL);
+	return -1;
 }
 
 /*
