@@ -265,6 +265,7 @@ static uint8_t pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
+static struct stat gbe_st;
 static int urandom_fd = -1;
 static int gbe_fd = -1;
 static size_t part;
@@ -699,8 +700,6 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 static void
 open_dev_urandom(void)
 {
-	struct stat st_urandom_fd;
-
 	rname = newrandom;
 	if ((urandom_fd = open(rname, O_RDONLY | O_BINARY)) != -1)
 		return;
@@ -715,14 +714,12 @@ open_dev_urandom(void)
 	errno = 0;
 
 	rname = oldrandom;
-	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY, &st_urandom_fd);
+	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY, &gbe_st);
 }
 
 static void
 open_gbe_file(void)
 {
-	struct stat gbe_st;
-
 	xopen(&gbe_fd, fname, command[cmd_index].flags | O_BINARY, &gbe_st);
 
 	gbe_file_size = gbe_st.st_size;
