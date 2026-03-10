@@ -88,7 +88,6 @@ static void check_enum_bin(size_t a, const char *a_name,
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
 static size_t conv_argv_part_num(const char *part_str);
-static void set_io_flags(int argc, char *argv[]);
 static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
@@ -203,7 +202,6 @@ static uint8_t pad[GBE_PART_SIZE];
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
-static int gbe_flags;
 #ifndef NVMUTIL_ARC4RANDOM_BUF
 static int urandom_fd = -1;
 #endif
@@ -282,6 +280,7 @@ struct commands {
 	uint8_t chksum_read;
 	uint8_t chksum_write;
 	size_t rw_size; /* within the 4KB GbE part */
+	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
 
 /*
@@ -292,13 +291,13 @@ static const struct commands command[] = {
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    NVM_SIZE },
+	    NVM_SIZE, O_RDONLY },
 
 	{ CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, CHECKSUM_WRITE,
-	    NVM_SIZE },
+	    NVM_SIZE, O_RDWR },
 
 	/*
 	 * OPTIMISATION: Read inverted, so no copying is needed.
@@ -307,7 +306,7 @@ static const struct commands command[] = {
 	    PART_INVERT, SET_MOD_BOTH,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE },
+	    GBE_PART_SIZE, O_RDWR },
 
 	/*
 	 * OPTIMISATION: Read inverted, so no copying is needed.
@@ -317,25 +316,25 @@ static const struct commands command[] = {
 	    PART_INVERT, SET_MOD_N,
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE },
+	    GBE_PART_SIZE, O_RDWR },
 
 	{ CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE },
+	    GBE_PART_SIZE, O_RDONLY },
 
 	{ CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE },
+	    GBE_PART_SIZE, O_RDONLY },
 
 	{ CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
 	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE },
+	    GBE_PART_SIZE, O_RDONLY },
 };
 
 #define MAX_CMD_LEN 50
@@ -372,11 +371,10 @@ main(int argc, char *argv[])
 
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
-	set_io_flags(argc, argv);
 
 #ifdef NVMUTIL_PLEDGE
 #ifdef NVMUTIL_UNVEIL
-	if (gbe_flags == O_RDONLY) {
+	if (command[cmd_index].flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
 			err(ECANCELED, "%s: unveil ro", fname);
 		if (unveil(NULL, NULL) == -1)
@@ -392,7 +390,7 @@ main(int argc, char *argv[])
 			err(ECANCELED, "pledge rw (kill unveil)");
 	}
 #else
-	if (gbe_flags == O_RDONLY) {
+	if (command[cmd_index].flags == O_RDONLY) {
 		if (pledge("stdio rpath", NULL) == -1)
 			err(ECANCELED, "pledge ro");
 	}
@@ -427,7 +425,7 @@ main(int argc, char *argv[])
 
 	if (errno)
 		err(errno, "%s: Unhandled error (WRITE SKIPPED)", fname);
-	else if (gbe_flags != O_RDONLY)
+	else if (command[cmd_index].flags == O_RDWR)
 		write_gbe_file();
 
 	close_files();
@@ -514,6 +512,10 @@ sanitize_command_index(size_t c)
 	if (gbe_rw_size > GBE_PART_SIZE)
 		err(EINVAL, "rw_size larger than GbE part: %zu",
 		    gbe_rw_size);
+
+	if (command[c].flags != O_RDONLY &&
+	    command[c].flags != O_RDWR)
+		err(EINVAL, "invalid cmd.flags setting");
 }
 
 static void
@@ -586,18 +588,6 @@ conv_argv_part_num(const char *part_str)
 	return (size_t)(ch - '0');
 }
 
-static void
-set_io_flags(int argc, char *argv[])
-{
-	gbe_flags = O_RDWR;
-
-	if (argc < 3)
-		return;
-
-	if (xstrxcmp(argv[2], "dump", MAX_CMD_LEN) == 0)
-		gbe_flags = O_RDONLY;
-}
-
 /*
  * Portable strcmp() but blocks NULL/empty/unterminated
  * strings. Even stricter than strncmp().
@@ -662,7 +652,7 @@ open_gbe_file(void)
 {
 	struct stat gbe_st;
 
-	xopen(&gbe_fd, fname, gbe_flags, &gbe_st);
+	xopen(&gbe_fd, fname, command[cmd_index].flags, &gbe_st);
 
 	gbe_file_size = gbe_st.st_size;
 
@@ -1147,7 +1137,7 @@ write_gbe_file(void)
 	size_t partnum;
 	uint8_t update_checksum;
 
-	if (gbe_flags == O_RDONLY)
+	if (command[cmd_index].flags == O_RDONLY)
 		return;
 
 	update_checksum = command[cmd_index].chksum_write;
