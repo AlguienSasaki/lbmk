@@ -166,12 +166,6 @@ static void usage(uint8_t usage_exit);
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
 /*
- * When reading files, we loop on error EINTR
- * a maximum number of times as defined, thus:
- */
-#define MAX_RETRY_RW 30
-
-/*
  * Portable macro based on BSD nitems.
  * Used to count the number of commands (see below).
  */
