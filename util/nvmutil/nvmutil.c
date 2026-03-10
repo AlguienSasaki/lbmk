@@ -1445,6 +1445,9 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 			continue;
 		}
 
+		if (rval < 0 && errno == EINTR)
+			continue;
+
 		set_err_if_unset(EIO);
 		return -1;
 	}
