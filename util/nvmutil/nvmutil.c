@@ -55,6 +55,13 @@ typedef char static_assert_uint16_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
 typedef char static_assert_uint32_is_4[(sizeof(uint32_t) == 4) ? 1 : -1];
 
 /*
+ * We set _FILE_OFFSET_BITS 64, but we only handle
+ * files that are 128KB in size at a maximum, so we
+ * realistically only need 32-bit at a minimum.
+ */
+typedef char static_assert_off_t_is_64[(sizeof(off_t) >= 4) ? 1 : -1];
+
+/*
  * The BSD versions that could realistically build
  * nvmutil almost certainly have arc4random (first
  * introduced in 1990s to early 2000s).
