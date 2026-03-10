@@ -745,6 +745,9 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 
 	if (fstat(*fd_ptr, st) == -1)
 		err(ECANCELED, "%s", path);
+
+	if (!S_ISREG(st->st_mode))
+		err(ECANCELED, "%s: not a regular file", path);
 }
 
 static void
