@@ -851,7 +851,7 @@ static void
 run_cmd(size_t c)
 {
 	check_command_num(c);
-	if (command[c].run)
+	if (command[c].run != NULL)
 		command[c].run();
 }
 
