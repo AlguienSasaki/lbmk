@@ -566,7 +566,7 @@ sanitize_command_index(size_t c)
 	case SET_MOD_OFF:
 		break;
 	default:
-		err(EINVAL, "Unsupported set_mod type: %u", mod_type);
+		err(errno, "Unsupported set_mod type: %u", mod_type);
 	}
 
 	check_bin(command[c].invert, "cmd.invert");
@@ -587,20 +587,20 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		err(EINVAL, "Unsupported rw_size: %lu",
+		err(errno, "Unsupported rw_size: %lu",
 		    (unsigned long)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		err(EINVAL, "rw_size larger than GbE part: %lu",
+		err(errno, "rw_size larger than GbE part: %lu",
 		    (unsigned long)gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
-		err(EINVAL, "invalid cmd.flags setting");
+		err(errno, "invalid cmd.flags setting");
 
 	if (!((PLESEN > LESEN) && (SCHREIB > PLESEN) && (PSCHREIB > SCHREIB)))
-		err(EINVAL, "some rw type integers are the same");
+		err(errno, "some rw type integers are the same");
 }
 
 static void
@@ -627,7 +627,7 @@ set_cmd(int argc, char *argv[])
 		else if (argc >= command[cmd_index].argc)
 			return;
 
-		err(EINVAL, "Too few args on command '%s'", cmd_str);
+		err(errno, "Too few args on command '%s'", cmd_str);
 	}
 
 	cmd_index = CMD_NULL;
@@ -663,12 +663,12 @@ conv_argv_part_num(const char *part_str)
 	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		err(EINVAL, "Partnum string '%s' wrong length", part_str);
+		err(errno, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
-		err(EINVAL, "Bad part number (%c)", ch);
+		err(errno, "Bad part number (%c)", ch);
 
 	return (size_t)(ch - '0');
 }
@@ -683,10 +683,10 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	size_t i;
 
 	if (a == NULL || b == NULL)
-		err(EINVAL, "NULL input to xstrxcmp");
+		err(errno, "NULL input to xstrxcmp");
 
 	if (*a == '\0' || *b == '\0')
-		err(EINVAL, "Empty string in xstrxcmp");
+		err(errno, "Empty string in xstrxcmp");
 
 	for (i = 0; i < maxlen; i++) {
 		if (a[i] != b[i])
@@ -699,7 +699,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * We reached maxlen, so assume unterminated string.
 	 */
-	err(EINVAL, "Unterminated string in xstrxcmp");
+	err(errno, "Unterminated string in xstrxcmp");
 
 	/*
 	 * Should never reach here. This keeps compilers happy.
@@ -895,7 +895,7 @@ parse_mac_string(void)
 	size_t mac_byte;
 
 	if (xstrxlen(mac_str, 18) != 17)
-		err(EINVAL, "MAC address is the wrong length");
+		err(errno, "MAC address is the wrong length");
 
 	memset(mac_buf, 0, sizeof(mac_buf));
 
@@ -903,10 +903,10 @@ parse_mac_string(void)
 		set_mac_byte(mac_byte);
 
 	if ((mac_buf[0] | mac_buf[1] | mac_buf[2]) == 0)
-		err(EINVAL, "Must not specify all-zeroes MAC address");
+		err(errno, "Must not specify all-zeroes MAC address");
 
 	if (mac_buf[0] & 1)
-		err(EINVAL, "Must not specify multicast MAC address");
+		err(errno, "Must not specify multicast MAC address");
 }
 
 /*
@@ -921,17 +921,17 @@ xstrxlen(const char *scmp, size_t maxlen)
 	size_t xstr_index;
 
 	if (scmp == NULL)
-		err(EINVAL, "NULL input to xstrxlen");
+		err(errno, "NULL input to xstrxlen");
 
 	if (*scmp == '\0')
-		err(EINVAL, "Empty string in xstrxlen");
+		err(errno, "Empty string in xstrxlen");
 
 	for (xstr_index = 0;
 	    xstr_index < maxlen && scmp[xstr_index] != '\0';
 	    xstr_index++);
 
 	if (xstr_index == maxlen)
-		err(EINVAL, "Unterminated string in xstrxlen");
+		err(errno, "Unterminated string in xstrxlen");
 
 	return xstr_index;
 }
@@ -945,7 +945,7 @@ set_mac_byte(size_t mac_byte_pos)
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac_str[mac_str_pos + 2]) != ':')
-			err(EINVAL, "Invalid MAC address separator '%c'",
+			err(errno, "Invalid MAC address separator '%c'",
 			    separator);
 	}
 
@@ -963,7 +963,7 @@ set_mac_nib(size_t mac_str_pos,
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
 	if ((hex_num = hextonum(mac_ch)) > 15)
-		err(EINVAL, "Invalid character '%c'",
+		err(errno, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
 
 	/*
@@ -1129,6 +1129,11 @@ gbe_cat_buf(uint8_t *b)
 
 		if (rval == -1) {
 			if (errno == EAGAIN) {
+				/*
+				 * We assume that no
+				 * data was written
+				 * to stdout.
+				 */
 				errno = 0;
 				continue;
 			}
@@ -1192,7 +1197,7 @@ override_part_modified(void)
 	case SET_MOD_OFF:
 		break;
 	default:
-		err(EINVAL, "Unsupported set_mod type: %u",
+		err(errno, "Unsupported set_mod type: %u",
 		    mod_type);
 	}
 }
@@ -1369,6 +1374,10 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * The pread() and pwrite() functionality are
  * provided by yet another portable function,
  * prw() - see notes below.
+ *
+ * This must only be used on files. It cannot
+ * be used on sockets or pipes, because 0-byte
+ * reads are treated like fatal errors.
  */
 static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
@@ -1378,15 +1387,15 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	size_t rc = 0;
 
 	if (fd < 0) {
-		set_err(EINVAL);
+		set_err(errno);
 		return -1;
 	}
 	if (!len) {
-		set_err(EINVAL);
+		set_err(errno);
 		return -1;
 	}
 	if (len > (size_t)SSIZE_MAX) {
-		set_err(EINVAL);
+		set_err(errno);
 		return -1;
 	}
 
@@ -1402,7 +1411,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		} else if (rw_type == LESEN) {
 			rval = read(fd, mem + rc, len - rc);
 		} else {
-			set_err(EINVAL);
+			set_err(errno);
 			return -1;
 		}
 
@@ -1596,5 +1605,5 @@ usage(uint8_t usage_exit)
 	    util, util, util);
 
 	if (usage_exit)
-		err(EINVAL, "Too few arguments");
+		err(errno, "Too few arguments");
 }
