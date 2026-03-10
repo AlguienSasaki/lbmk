@@ -1371,6 +1371,7 @@ prw(int fd, void *mem, size_t count,
 {
 	off_t old;
 	ssize_t r;
+	int restore_errno;
 	int saved_errno = 0;
 
 	if ((old = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
@@ -1391,9 +1392,13 @@ prw(int fd, void *mem, size_t count,
 	if (r < 0)
 		saved_errno = errno;
 
+	restore_errno = errno;
+
 	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1) {
 		if (saved_errno)
 			errno = saved_errno;
+		else
+			errno = restore_errno;
 		return -1;
 	}
 
