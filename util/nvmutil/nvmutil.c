@@ -101,6 +101,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_BINARY 0
 #endif
 
+#ifndef O_NONBLOCK
+#define O_NONBLOCK 0
+#endif
+
 /*
  * Sanitize command tables.
  */
@@ -708,11 +712,15 @@ static void
 open_dev_urandom(void)
 {
 	rname = newrandom;
-	if ((urandom_fd = open(rname, O_RDONLY | O_BINARY)) != -1)
+	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
+	if (urandom_fd != -1)
 		return;
 
 	/*
 	 * Fall back to /dev/random on very old Unix.
+	 *
+	 * We must reset errno, to remove stale state
+	 * set by reading /dev/urandom
 	 */
 
 	fprintf(stderr, "Can't open %s (will use %s instead)\n",
@@ -721,7 +729,7 @@ open_dev_urandom(void)
 	errno = 0;
 
 	rname = oldrandom;
-	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY, &gbe_st);
+	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY | O_NONBLOCK, &gbe_st);
 }
 
 static void
