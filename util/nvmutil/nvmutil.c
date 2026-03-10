@@ -703,7 +703,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * Should never reach here. This keeps compilers happy.
 	 */
-	errno = EINVAL;
+	set_err(EINVAL);
 	return -1;
 }
 
@@ -1481,7 +1481,7 @@ prw(int fd, void *mem, size_t nrw,
 		else if (rw_type == PSCHREIB)
 			r = write(fd, mem, nrw);
 		else {
-			errno = EINVAL;
+			set_err(EINVAL);
 			return -1;
 		}
 	} while (r < 0 && errno == EINTR);
