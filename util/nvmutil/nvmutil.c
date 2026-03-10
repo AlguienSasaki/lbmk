@@ -70,23 +70,6 @@ typedef char static_assert_twos_complement[
 typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 
 /*
- * The BSD versions that could realistically build
- * nvmutil almost certainly have arc4random (first
- * introduced in 1990s to early 2000s).
- *
- * If you want it on another platform, e.g. Linux,
- * just patch this accordingly. Or patch it to remove
- * arc4random on old/weird Unix systems.
- */
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__) || \
-    defined(__DragonFly__)
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-#define NVMUTIL_ARC4RANDOM_BUF 1
-#endif
-#endif
-
-/*
  * Older versions of BSD to the early 2000s
  * could compile nvmutil, but pledge was
  * added in the 2010s. Therefore, for extra
@@ -129,9 +112,7 @@ static int xstrxcmp(const char *a, const char *b, size_t maxlen);
  * on Linux / old Unix, whereas
  * arc4random is used on BSD/MacOS.
  */
-#ifndef NVMUTIL_ARC4RANDOM_BUF
 static void open_dev_urandom(void);
-#endif
 static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 
@@ -261,11 +242,9 @@ static void usage(uint8_t usage_exit);
  */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
 static const char newrandom[] = "/dev/urandom";
 static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
 static const char *rname = NULL;
-#endif
 
 /*
  * GbE files can be 8KB, 16KB or 128KB,
@@ -282,9 +261,7 @@ static uint8_t pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
 static int urandom_fd = -1;
-#endif
 static int gbe_fd = -1;
 static size_t part;
 static uint8_t part_modified[2];
@@ -488,14 +465,7 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__) || \
-    defined(__DragonFly__)
-	err(ECANCELED, "Maintainer error: arc4random disabled on BSD/MacOS");
-#endif
 	open_dev_urandom();
-#endif
 
 	open_gbe_file();
 
@@ -718,7 +688,6 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	return -1;
 }
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
 static void
 open_dev_urandom(void)
 {
@@ -740,7 +709,6 @@ open_dev_urandom(void)
 	rname = oldrandom;
 	xopen(&urandom_fd, rname, O_RDONLY, &st_urandom_fd);
 }
-#endif
 
 static void
 open_gbe_file(void)
@@ -888,12 +856,6 @@ cmd_helper_setmac(void)
 {
 	size_t partnum;
 
-#ifdef NVMUTIL_ARC4RANDOM_BUF
-	printf("Randomisation method: arc4random_buf\n");
-#else
-	printf("Randomisation method: %s\n", rname);
-#endif
-
 	printf("MAC address to be written: %s\n", mac_str);
 	parse_mac_string();
 
@@ -1022,11 +984,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-#ifdef NVMUTIL_ARC4RANDOM_BUF
-		arc4random_buf(rnum, n);
-#else
 		rw_file_exact(urandom_fd, rnum, n, 0, LESEN, rname, "read");
-#endif
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
@@ -1481,13 +1439,11 @@ close_files(void)
 		gbe_fd = -1;
 	}
 
-#ifndef NVMUTIL_ARC4RANDOM_BUF
 	if (urandom_fd > -1) {
 		if (close(urandom_fd) == -1)
 			err(-1, "%s: close failed", rname);
 		urandom_fd = -1;
 	}
-#endif
 }
 
 static const char *
