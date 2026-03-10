@@ -1134,29 +1134,25 @@ gbe_cat_buf(uint8_t *b)
 		rval = rw_file_exact(STDOUT_FILENO, b,
 		    GBE_PART_SIZE, 0, SCHREIB);
 
-		if (rval == -1) {
-			if (errno == EAGAIN) {
-				/*
-				 * We assume that no
-				 * data was written
-				 * to stdout.
-				 */
-				errno = 0;
-				continue;
-			}
-
-			err(errno, "stdout: cat");
+		if (rval >= 0) {
+			/*
+			 * A partial write is especially
+			 * fatal, as it should already be
+			 * prevented in rw_file_exact().
+			 */
+			if ((size_t)rval != GBE_PART_SIZE)
+				err(EIO, "stdout: cat: Partial write");
+			break;
 		}
 
-		/*
-		 * A partial write is especially
-		 * fatal, as it should already be
-		 * prevented in rw_file_exact().
-		 */
-		if ((size_t)rval != GBE_PART_SIZE)
-			err(EIO, "stdout: cat: Partial write");
+		if (errno != EAGAIN)
+			err(errno, "stdout: cat");
 
-		break;
+		/*
+		 * We assume that no data
+		 * was written to stdout.
+		 */
+		errno = 0;
 	}
 
 	/*
