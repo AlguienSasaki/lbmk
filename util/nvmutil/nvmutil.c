@@ -432,6 +432,9 @@ static const struct commands command[] = {
  */
 static size_t cmd_index = CMD_NULL;
 
+typedef char assert_argc3[(ARGC_3==3)?1:-1];
+typedef char assert_argc4[(ARGC_4==4)?1:-1];
+
 int
 main(int argc, char *argv[])
 {
@@ -537,11 +540,6 @@ sanitize_command_index(size_t c)
 
 	check_command_num(c);
 
-	if (ARGC_3 != 3)
-		err(EINVAL, "ARGC_3 is not equal to 3");
-	if (ARGC_4 != 4)
-		err(EINVAL, "ARGC_4 is not equal to 4");
-
 	if (command[c].argc < 3)
 		err(EINVAL, "cmd index %lu: argc below 3, %d",
 		    (unsigned long)c, command[c].argc);
@@ -558,6 +556,15 @@ sanitize_command_index(size_t c)
 		err(EINVAL, "cmd index %lu: str too long: %s",
 		    (unsigned long)c, command[c].str);
 	}
+
+	if (!((CMD_SETMAC > CMD_DUMP) && (CMD_SWAP > CMD_SETMAC) &&
+	    (CMD_COPY > CMD_SWAP) && (CMD_CAT > CMD_COPY) &&
+	    (CMD_CAT16 > CMD_CAT) && (CMD_CAT128 > CMD_CAT16)))
+		err(EINVAL, "Some command integers are the same");
+
+	if (!((SET_MOD_0 > SET_MOD_OFF) && (SET_MOD_1 > SET_MOD_0) &&
+	    (SET_MOD_N > SET_MOD_1) && (SET_MOD_BOTH > SET_MOD_N)))
+		err(EINVAL, "Some modtype integers are the same");
 
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
@@ -581,6 +588,7 @@ sanitize_command_index(size_t c)
 	    CHECKSUM_READ, "CHECKSUM_READ");
 	check_enum_bin(SKIP_CHECKSUM_WRITE, "SKIP_CHECKSUM_WRITE",
 	    CHECKSUM_WRITE, "CHECKSUM_WRITE");
+	check_enum_bin(NO_INVERT, "NO_INVERT", PART_INVERT, "PART_INVERT");
 
 	gbe_rw_size = command[c].rw_size;
 
