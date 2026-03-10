@@ -289,7 +289,7 @@ static const char *fname;
 static const char *argv0;
 
 #ifndef SSIZE_MAX
-#define SSIZE_MAX ((ssize_t)((size_t)-1 >> 1))
+#define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
 
 /*
