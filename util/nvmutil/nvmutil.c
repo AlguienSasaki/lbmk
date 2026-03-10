@@ -34,15 +34,15 @@
 #include <limits.h>
 #include <stdarg.h>
 #if defined(__has_include)
-#  if __has_include(<stdint.h>)
-#    include <stdint.h>
-#  else
+#if __has_include(<stdint.h>)
+#include <stdint.h>
+#else
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int   uint32_t;
-#  endif
+#endif
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#  include <stdint.h>
+#include <stdint.h>
 #else
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
