@@ -785,9 +785,13 @@ read_checksums(void)
 	if (num_invalid < max_invalid)
 		errno = 0;
 
-	if (num_invalid >= max_invalid)
+	if (num_invalid >= max_invalid) {
+		if (max_invalid == 1)
+			err(ECANCELED, "%s: part %zu has a bad checksum",
+			    fname, part);
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
+	}
 }
 
 static int
@@ -796,20 +800,8 @@ good_checksum(size_t partnum)
 	uint16_t expected_checksum = calculated_checksum(partnum);
 	uint16_t current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
 
-	size_t real_partnum = partnum ^ command[cmd_index].invert;
-
 	if (current_checksum == expected_checksum)
 		return 1;
-
-	fprintf(stderr,
-	    "WARNING: BAD checksum in part %zu\n"
-	    "EXPECTED checksum in part %zu: %04x\n"
-	    "CURRENT checksum in part %zu: %04x\n",
-	    real_partnum,
-	    real_partnum,
-	    expected_checksum,
-	    real_partnum,
-	    current_checksum);
 
 	set_err(ECANCELED);
 	return 0;
