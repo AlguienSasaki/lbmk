@@ -800,10 +800,8 @@ read_checksums(void)
 		if (arg_part && (p == skip_part))
 			continue;
 
-		if (good_checksum(p))
-			part_valid[p] = 1;
-		else
-			++num_invalid;
+		part_valid[p] = good_checksum(p);
+		num_invalid += part_valid[p];
 	}
 
 	if (num_invalid < max_invalid)
