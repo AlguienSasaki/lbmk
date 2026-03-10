@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC?=cc
-CFLAGS?=-Os -Wall -Wextra -Werror -pedantic -std=c99
+CFLAGS?=-Os -Wall -Wextra -Werror -pedantic -std=c90
 DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install

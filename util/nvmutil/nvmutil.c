@@ -532,17 +532,17 @@ sanitize_command_index(size_t c)
 		err(ECANCELED, "ARGC_4 is not equal to 4");
 
 	if (command[c].argc < 3)
-		err(ECANCELED, "cmd index %zu: argc below 3, %d",
+		err(ECANCELED, "cmd index %lu: argc below 3, %d",
 		    c, command[c].argc);
 
 	if (command[c].str == NULL)
-		err(ECANCELED, "cmd index %zu: NULL str", c);
+		err(ECANCELED, "cmd index %lu: NULL str", c);
 	if (*command[c].str == '\0')
-		err(ECANCELED, "cmd index %zu: empty str", c);
+		err(ECANCELED, "cmd index %lu: empty str", c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
-		err(ECANCELED, "cmd index %zu: str too long: %s",
+		err(ECANCELED, "cmd index %lu: str too long: %s",
 		    c, command[c].str);
 	}
 
@@ -576,11 +576,11 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		err(EINVAL, "Unsupported rw_size: %zu", gbe_rw_size);
+		err(EINVAL, "Unsupported rw_size: %lu", gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		err(EINVAL, "rw_size larger than GbE part: %zu",
+		err(EINVAL, "rw_size larger than GbE part: %lu",
 		    gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
@@ -811,7 +811,7 @@ read_checksums(void)
 
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
-			err(ECANCELED, "%s: part %zu has a bad checksum",
+			err(ECANCELED, "%s: part %lu has a bad checksum",
 			    fname, part);
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
@@ -843,7 +843,7 @@ static void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err(ECANCELED, "Invalid run_cmd arg: %zu", c);
+		err(ECANCELED, "Invalid run_cmd arg: %lu", c);
 }
 
 static uint8_t
@@ -853,7 +853,7 @@ valid_command(size_t c)
 		return 0;
 
 	if (c != command[c].chk)
-		err(ECANCELED, "Invalid cmd chk value (%zu) vs arg: %zu",
+		err(ECANCELED, "Invalid cmd chk value (%lu) vs arg: %lu",
 		    command[c].chk, c);
 
 	return 1;
@@ -1010,7 +1010,7 @@ write_mac_part(size_t partnum)
 	for (w = 0; w < 3; w++)
 		set_nvm_word(w, partnum, mac_buf[w]);
 
-	printf("Wrote MAC address to part %zu: ", partnum);
+	printf("Wrote MAC address to part %lu: ", partnum);
 	print_mac_from_nvm(partnum);
 }
 
@@ -1028,11 +1028,11 @@ cmd_helper_dump(void)
 	for (partnum = 0; partnum < 2; partnum++) {
 		if (!part_valid[partnum])
 			fprintf(stderr,
-			    "BAD checksum %04x in part %zu (expected %04x)\n",
+			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, partnum),
 			    partnum, calculated_checksum(partnum));
 
-		printf("MAC (part %zu): ", partnum);
+		printf("MAC (part %lu): ", partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
@@ -1061,7 +1061,7 @@ hexdump(size_t partnum)
 	uint16_t val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08zx ", (size_t)row << 4);
+		printf("%08lx ", (size_t)row << 4);
 		for (c = 0; c < 8; c++) {
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
@@ -1229,14 +1229,14 @@ check_nvm_bound(size_t c, size_t p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err(EINVAL, "check_nvm_bound: out of bounds %zu", c);
+		err(EINVAL, "check_nvm_bound: out of bounds %lu", c);
 }
 
 static void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err(ECANCELED, "%s must be 0 or 1, but is %zu", a_name, a);
+		err(ECANCELED, "%s must be 0 or 1, but is %lu", a_name, a);
 }
 
 static void
@@ -1328,7 +1328,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		err(EIO, "%s: %s: Zero length", path, rw_type_str);
 	if (len > (size_t)SSIZE_MAX)
 		err(EIO,
-		    "%s: %s: Requested length (%zu) exceeds SSIZE_MAX (%zd)",
+		    "%s: %s: Requested length (%lu) exceeds SSIZE_MAX (%zd)",
 		    path, rw_type_str, len, SSIZE_MAX);
 
 	for (rc = 0; rc != len; rc += rval) {
@@ -1405,6 +1405,8 @@ lseek_eintr(int fd, off_t offset, int whence)
 static void
 err(int nvm_errval, const char *msg, ...)
 {
+	va_list args;
+
 	/*
 	 * We need to ensure that files are closed
 	 * on exit, including error exits. This
@@ -1422,8 +1424,6 @@ err(int nvm_errval, const char *msg, ...)
 	 */
 	if (nvm_errval != -1)
 		close_files();
-
-	va_list args;
 
 	fprintf(stderr, "%s: ", getnvmprogname());
 
