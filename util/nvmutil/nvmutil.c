@@ -199,9 +199,9 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path, const char *rw_type_str);
-static ssize_t prw(int fd, void *mem, size_t count,
-    off_t offset, int rw_type, const char *path);
-static off_t lseek_eintr(int fd, off_t offset, int whence);
+static ssize_t prw(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type);
+static off_t lseek_eintr(int fd, off_t off, int whence);
 
 /*
  * Error handling and cleanup
@@ -1346,12 +1346,12 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	while (rc < len) {
 		if (rw_type == PSCHREIB)
 			rval = prw(fd, mem + rc, len - rc,
-			    off + rc, rw_type, path);
+			    off + rc, rw_type);
 		else if (rw_type == SCHREIB)
 			rval = write(fd, mem + rc, len - rc);
 		else if (rw_type == PLESEN)
 			rval = prw(fd, mem + rc, len - rc,
-			    off + rc, rw_type, path);
+			    off + rc, rw_type);
 		else if (rw_type == LESEN)
 			rval = read(fd, mem + rc, len - rc);
 		else
@@ -1379,54 +1379,51 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 }
 
 static ssize_t
-prw(int fd, void *mem, size_t count,
-    off_t offset, int rw_type, const char *path)
+prw(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type)
 {
-	off_t old;
+	off_t off_orig;
 	ssize_t r;
-	int saved_errno = 0;
+	int saved_errno;
+	ssize_t (*op)(int, void *, size_t);
 
-	if ((old = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
-		return -1;
-
-	if (lseek_eintr(fd, offset, SEEK_SET) == (off_t)-1)
-		return -1;
-
-	do {
-		if (rw_type == PLESEN)
-			r = read(fd, mem, count);
-		else if (rw_type == PSCHREIB)
-			r = write(fd, mem, count);
-		else
-			err(EIO, "%s: Invalid rw_type", path);
-	} while (r < 0 && errno == EINTR);
-
-	if (r < 0)
-		saved_errno = errno;
-
-	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1) {
-		if (saved_errno)
-			errno = saved_errno;
+	if (rw_type == PLESEN)
+		op = read;
+	else if (rw_type == PSCHREIB)
+		op = (ssize_t (*)(int, void *, size_t))write;
+	else {
+		errno = EINVAL;
 		return -1;
 	}
 
-	if (r < 0)
-		errno = saved_errno;
+	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
+		return -1;
+	if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	do {
+		r = op(fd, mem, nrw);
+	} while (r < 0 && errno == EINTR);
+
+	saved_errno = errno;
+	if (lseek_eintr(fd, off_orig, SEEK_SET) == (off_t)-1) {
+		if (r < 0)
+			errno = saved_errno;
+		return -1;
+	}
+	errno = saved_errno;
 
 	return r;
 }
 
 static off_t
-lseek_eintr(int fd, off_t offset, int whence)
+lseek_eintr(int fd, off_t off, int whence)
 {
 	off_t old;
 
 	do {
-		old = lseek(fd, offset, whence);
+		old = lseek(fd, off, whence);
 	} while (old == (off_t)-1 && errno == EINTR);
-
-	if (errno == EINTR)
-		errno = 0;
 
 	return old;
 }
