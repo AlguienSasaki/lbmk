@@ -728,7 +728,8 @@ open_dev_urandom(void)
 	errno = 0;
 
 	rname = oldrandom;
-	if (open(rname, O_RDONLY | O_BINARY | O_NONBLOCK) == -1)
+	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
+	if (urandom_fd == -1)
 		err(errno, "%s: could not open", rname);
 }
 
