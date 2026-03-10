@@ -1154,6 +1154,8 @@ gbe_cat_buf(uint8_t *b)
 
 		break;
 	}
+
+	errno = 0;
 }
 
 static void
