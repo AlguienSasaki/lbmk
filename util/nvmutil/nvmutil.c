@@ -267,6 +267,10 @@ static const char *mac_str;
 static const char *fname;
 static const char *argv0;
 
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((ssize_t)((size_t)-1 >> 1))
+#endif
+
 /*
  * Use these for .invert in command[]:
  * If set to 1: read/write inverter (p0->p1, p1->p0)
@@ -1327,6 +1331,10 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		err(EIO, "%s: %s: Bad fd %d", path, rw_type_str, fd);
 	if (!len)
 		err(EIO, "%s: %s: Zero length", path, rw_type_str);
+	if (len > (size_t)SSIZE_MAX)
+		err(EIO,
+		    "%s: %s: Requested length (%zu) exceeds SSIZE_MAX (%zd)",
+		    path, rw_type_str, len, SSIZE_MAX);
 
 	for (rc = 0; rc != (ssize_t)len; rc += rval) {
 		if (rw_type == PSCHREIB)
