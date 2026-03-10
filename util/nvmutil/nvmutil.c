@@ -1329,6 +1329,18 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	return off;
 }
 
+/*
+ * Read or write the exact contents of a file,
+ * along with a buffer, (if applicable) offset,
+ * and number of bytes to be read. It unified
+ * the functionality of read(), pread(), write()
+ * and pwrite(), with retry-on-EINTR and also
+ * prevents infinite loop on zero-reads.
+ *
+ * The pread() and pwrite() functionality are
+ * provided by yet another portable function,
+ * prw() - see notes below.
+ */
 static void
 rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path,
@@ -1382,6 +1394,15 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	}
 }
 
+/*
+ * This implements a portable analog of pwrite()
+ * and pread() - note that this version is not
+ * thread-safe (race conditions are possible on
+ * shared file descriptors).
+ *
+ * This limitation is acceptable, since nvmutil is
+ * single-threaded. Portability is the main goal.
+ */
 static ssize_t
 prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
