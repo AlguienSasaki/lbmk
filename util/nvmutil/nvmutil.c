@@ -776,6 +776,9 @@ read_checksums(void)
 	uint8_t num_invalid;
 	uint8_t max_invalid;
 
+	part_valid[0] = 0;
+	part_valid[1] = 0;
+
 	if (!command[cmd_index].chksum_read)
 		return;
 
