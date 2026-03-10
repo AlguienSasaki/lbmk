@@ -534,7 +534,7 @@ sanitize_command_index(size_t c)
 
 	if (command[c].argc < 3)
 		err(ECANCELED, "cmd index %lu: argc below 3, %d",
-		    c, command[c].argc);
+		    (unsigned long)c, command[c].argc);
 
 	if (command[c].str == NULL)
 		err(ECANCELED, "cmd index %lu: NULL str", c);
