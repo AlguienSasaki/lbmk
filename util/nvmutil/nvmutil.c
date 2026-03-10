@@ -435,12 +435,12 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_PLEDGE
 #ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
-		err(ECANCELED, "pledge");
+		err(errno, "pledge");
 	if (unveil("/dev/null", "r") == -1)
-		err(ECANCELED, "unveil '/dev/null'");
+		err(errno, "unveil '/dev/null'");
 #else
 	if (pledge("stdio rpath wpath", NULL) == -1)
-		err(ECANCELED, "pledge");
+		err(errno, "pledge");
 #endif
 #endif
 
@@ -453,23 +453,23 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (command[cmd_index].flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
-			err(ECANCELED, "%s: unveil ro", fname);
+			err(errno, "%s: unveil ro", fname);
 		if (unveil(NULL, NULL) == -1)
-			err(ECANCELED, "unveil block (ro)");
+			err(errno, "unveil block (ro)");
 		if (pledge("stdio rpath", NULL) == -1)
-			err(ECANCELED, "pledge ro (kill unveil)");
+			err(errno, "pledge ro (kill unveil)");
 	} else {
 		if (unveil(fname, "rw") == -1)
-			err(ECANCELED, "%s: unveil rw", fname);
+			err(errno, "%s: unveil rw", fname);
 		if (unveil(NULL, NULL) == -1)
-			err(ECANCELED, "unveil block (rw)");
+			err(errno, "unveil block (rw)");
 		if (pledge("stdio rpath wpath", NULL) == -1)
-			err(ECANCELED, "pledge rw (kill unveil)");
+			err(errno, "pledge rw (kill unveil)");
 	}
 #else
 	if (command[cmd_index].flags == O_RDONLY) {
 		if (pledge("stdio rpath", NULL) == -1)
-			err(ECANCELED, "pledge ro");
+			err(errno, "pledge ro");
 	}
 #endif
 #endif
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 
 #ifdef NVMUTIL_PLEDGE
 	if (pledge("stdio", NULL) == -1)
-		err(ECANCELED, "pledge stdio (main)");
+		err(errno, "pledge stdio (main)");
 #endif
 
 	/*
@@ -502,7 +502,7 @@ main(int argc, char *argv[])
 	close_files();
 
 	if (errno)
-		err(ECANCELED, "Unhandled error on exit");
+		err(errno, "Unhandled error on exit");
 
 	return EXIT_SUCCESS;
 }
@@ -528,24 +528,24 @@ sanitize_command_index(size_t c)
 	check_command_num(c);
 
 	if (ARGC_3 != 3)
-		err(ECANCELED, "ARGC_3 is not equal to 3");
+		err(errno, "ARGC_3 is not equal to 3");
 	if (ARGC_4 != 4)
-		err(ECANCELED, "ARGC_4 is not equal to 4");
+		err(errno, "ARGC_4 is not equal to 4");
 
 	if (command[c].argc < 3)
-		err(ECANCELED, "cmd index %lu: argc below 3, %d",
+		err(errno, "cmd index %lu: argc below 3, %d",
 		    (unsigned long)c, command[c].argc);
 
 	if (command[c].str == NULL)
-		err(ECANCELED, "cmd index %lu: NULL str",
+		err(errno, "cmd index %lu: NULL str",
 		    (unsigned long)c);
 	if (*command[c].str == '\0')
-		err(ECANCELED, "cmd index %lu: empty str",
+		err(errno, "cmd index %lu: empty str",
 		    (unsigned long)c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
-		err(ECANCELED, "cmd index %lu: str too long: %s",
+		err(errno, "cmd index %lu: str too long: %s",
 		    (unsigned long)c, command[c].str);
 	}
 
@@ -600,10 +600,10 @@ check_enum_bin(size_t a, const char *a_name,
     size_t b, const char *b_name)
 {
 	if (a)
-		err(ECANCELED, "%s is non-zero", a_name);
+		err(errno, "%s is non-zero", a_name);
 
 	if (b != 1)
-		err(ECANCELED, "%s is a value other than 1", b_name);
+		err(errno, "%s is a value other than 1", b_name);
 }
 
 static void
@@ -637,10 +637,10 @@ set_cmd_args(int argc, char *argv[])
 
 	/* Maintainer bugs */
 	if (arg_part && argc < 4)
-		err(ECANCELED,
+		err(errno,
 		    "arg_part set for command that needs argc4");
 	if (arg_part && cmd_index == CMD_SETMAC)
-		err(ECANCELED,
+		err(errno,
 		    "arg_part set on CMD_SETMAC");
 
 	if (cmd_index == CMD_SETMAC)
@@ -733,7 +733,7 @@ open_gbe_file(void)
 	case SIZE_128KB:
 		break;
 	default:
-		err(ECANCELED, "File size must be 8KB, 16KB or 128KB");
+		err(errno, "File size must be 8KB, 16KB or 128KB");
 	}
 }
 
@@ -741,13 +741,13 @@ static void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
 	if ((*fd_ptr = open(path, flags)) == -1)
-		err(ECANCELED, "%s", path);
+		err(errno, "%s", path);
 
 	if (fstat(*fd_ptr, st) == -1)
-		err(ECANCELED, "%s", path);
+		err(errno, "%s", path);
 
 	if (!S_ISREG(st->st_mode))
-		err(ECANCELED, "%s: not a regular file", path);
+		err(errno, "%s: not a regular file", path);
 }
 
 static void
@@ -816,9 +816,9 @@ read_checksums(void)
 
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
-			err(ECANCELED, "%s: part %lu has a bad checksum",
+			err(errno, "%s: part %lu has a bad checksum",
 			    fname, (unsigned long)part);
-		err(ECANCELED, "%s: No valid checksum found in file",
+		err(errno, "%s: No valid checksum found in file",
 		    fname);
 	}
 }
@@ -832,7 +832,7 @@ good_checksum(size_t partnum)
 	if (current_checksum == expected_checksum)
 		return 1;
 
-	set_err(ECANCELED);
+	set_err(errno);
 	return 0;
 }
 
@@ -848,7 +848,7 @@ static void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err(ECANCELED, "Invalid run_cmd arg: %lu",
+		err(errno, "Invalid run_cmd arg: %lu",
 		    (unsigned long)c);
 }
 
@@ -859,7 +859,7 @@ valid_command(size_t c)
 		return 0;
 
 	if (c != command[c].chk)
-		err(ECANCELED, "Invalid cmd chk value (%lu) vs arg: %lu",
+		err(errno, "Invalid cmd chk value (%lu) vs arg: %lu",
 		    (unsigned long)command[c].chk, (unsigned long)c);
 
 	return 1;
@@ -1093,7 +1093,7 @@ cmd_helper_cat(void)
 	else if (cmd_index == CMD_CAT128)
 		n = 15;
 	else if (cmd_index != CMD_CAT)
-		err(ECANCELED, "cmd_helper_cat called erroneously");
+		err(errno, "cmd_helper_cat called erroneously");
 
 	fflush(NULL);
 
@@ -1238,7 +1238,7 @@ check_nvm_bound(size_t c, size_t p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err(EINVAL, "check_nvm_bound: out of bounds %lu",
+		err(errno, "check_nvm_bound: out of bounds %lu",
 		    (unsigned long)c);
 }
 
@@ -1246,7 +1246,7 @@ static void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err(ECANCELED, "%s must be 0 or 1, but is %lu",
+		err(errno, "%s must be 0 or 1, but is %lu",
 		    a_name, (unsigned long)a);
 }
 
@@ -1315,11 +1315,11 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	off = ((off_t)p) * (off_t)nsize;
 
 	if (off + GBE_PART_SIZE > ncmp)
-		err(ECANCELED, "%s: GbE %s %s out of bounds",
+		err(errno, "%s: GbE %s %s out of bounds",
 		    fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		err(ECANCELED, "%s: GbE %s %s at bad offset",
+		err(errno, "%s: GbE %s %s at bad offset",
 		    fname, d_type, f_op);
 
 	return off;
@@ -1514,7 +1514,7 @@ usage(uint8_t usage_exit)
 
 #ifdef NVMUTIL_PLEDGE
 	if (pledge("stdio", NULL) == -1)
-		err(ECANCELED, "pledge");
+		err(errno, "pledge");
 #endif
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
