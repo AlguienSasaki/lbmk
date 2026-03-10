@@ -270,7 +270,7 @@ static const char *rname = NULL;
  * The code will handle this properly.
  */
 static uint8_t buf[GBE_FILE_SIZE];
-static uint8_t pad[GBE_PART_SIZE];
+static uint8_t pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
@@ -1366,6 +1366,9 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 			rval = pread(fd, mem + rc, len - rc, off + rc);
 		else if (rw_type == LESEN)
 			rval = read(fd, mem + rc, len - rc);
+		else
+			err(EIO, "%s: %s: Unsupported rw_type",
+			    path, rw_type_str);
 
 		if (rval > -1) {
 			if (!rval) /* prevent infinite loop */
