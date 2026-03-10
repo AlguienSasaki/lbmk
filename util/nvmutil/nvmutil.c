@@ -1155,6 +1155,10 @@ gbe_cat_buf(uint8_t *b)
 		break;
 	}
 
+	/*
+	 * No errors here.
+	 * Avoid the warning in main()
+	 */
 	errno = 0;
 }
 
