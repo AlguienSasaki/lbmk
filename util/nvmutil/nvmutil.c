@@ -1468,16 +1468,6 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_orig;
 	ssize_t r;
 	int saved_errno;
-	ssize_t (*op)(int, void *, size_t);
-
-	if (rw_type == PLESEN)
-		op = read;
-	else if (rw_type == PSCHREIB)
-		op = (ssize_t (*)(int, void *, size_t))write;
-	else {
-		errno = EINVAL;
-		return -1;
-	}
 
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
@@ -1485,7 +1475,14 @@ prw(int fd, void *mem, size_t nrw,
 		return -1;
 
 	do {
-		r = op(fd, mem, nrw);
+		if (rw_type == PLESEN)
+			r = read(fd, mem, nrw);
+		else if (rw_type == PSCHREIB)
+			r = write(fd, mem, nrw);
+		else {
+			errno = EINVAL;
+			return -1;
+		}
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
