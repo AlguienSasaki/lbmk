@@ -1327,7 +1327,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 
 	check_bin(p, "part number");
 
-	off = (off_t)p * nsize;
+	off = ((off_t)p) * (off_t)nsize;
 
 	if (off + GBE_PART_SIZE > ncmp)
 		err(ECANCELED, "%s: GbE %s %s out of bounds",
