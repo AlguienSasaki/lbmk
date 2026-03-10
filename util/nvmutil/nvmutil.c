@@ -214,6 +214,8 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, const char *path, const char *rw_type_str);
+static ssize_t prw(int fd, void *mem, size_t count,
+    off_t offset, int rw_type, const char *path);
 
 /*
  * Error handling and cleanup
@@ -1364,11 +1366,13 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 
 	for (rc = 0; rc != len; rc += rval) {
 		if (rw_type == PSCHREIB)
-			rval = pwrite(fd, mem + rc, len - rc, off + rc);
+			rval = prw(fd, mem + rc, len - rc,
+			    off + rc, rw_type, path);
 		else if (rw_type == SCHREIB)
 			rval = write(fd, mem + rc, len - rc);
 		else if (rw_type == PLESEN)
-			rval = pread(fd, mem + rc, len - rc, off + rc);
+			rval = prw(fd, mem + rc, len - rc,
+			    off + rc, rw_type, path);
 		else if (rw_type == LESEN)
 			rval = read(fd, mem + rc, len - rc);
 		else
@@ -1387,6 +1391,35 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 
 		errno = 0;
 	}
+}
+
+static ssize_t
+prw(int fd, void *mem, size_t count,
+    off_t offset, int rw_type, const char *path)
+{
+	off_t old;
+	ssize_t r;
+
+	old = lseek(fd, 0, SEEK_CUR);
+	if (old == (off_t)-1)
+		return -1;
+
+	if (lseek(fd, offset, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	do {
+		if (rw_type == PLESEN)
+			r = read(fd, mem, count);
+		else if (rw_type == PSCHREIB)
+			r = write(fd, mem, count);
+		else
+			err(EIO, "%s: Invalid rw_type", path);
+	} while (r < 0 && errno == EINTR);
+
+	if (lseek(fd, old, SEEK_SET) == (off_t)-1 && r >= 0)
+		errno = EIO;
+
+	return r;
 }
 
 static void
