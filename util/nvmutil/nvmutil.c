@@ -547,7 +547,7 @@ sanitize_command_index(size_t c)
 		err(EINVAL, "cmd index %lu: NULL str",
 		    (unsigned long)c);
 	if (*command[c].str == '\0')
-		err(errno, "cmd index %lu: empty str",
+		err(EINVAL, "cmd index %lu: empty str",
 		    (unsigned long)c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
@@ -607,10 +607,10 @@ check_enum_bin(size_t a, const char *a_name,
     size_t b, const char *b_name)
 {
 	if (a)
-		err(errno, "%s is non-zero", a_name);
+		err(EINVAL, "%s is non-zero", a_name);
 
 	if (b != 1)
-		err(errno, "%s is a value other than 1", b_name);
+		err(EINVAL, "%s is a value other than 1", b_name);
 }
 
 static void
@@ -626,7 +626,7 @@ set_cmd(int argc, char *argv[])
 		else if (argc >= command[cmd_index].argc)
 			return;
 
-		err(errno, "Too few args on command '%s'", cmd_str);
+		err(EINVAL, "Too few args on command '%s'", cmd_str);
 	}
 
 	cmd_index = CMD_NULL;
@@ -644,10 +644,10 @@ set_cmd_args(int argc, char *argv[])
 
 	/* Maintainer bugs */
 	if (arg_part && argc < 4)
-		err(errno,
+		err(EINVAL,
 		    "arg_part set for command that needs argc4");
 	if (arg_part && cmd_index == CMD_SETMAC)
-		err(errno,
+		err(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
 	if (cmd_index == CMD_SETMAC)
@@ -662,12 +662,12 @@ conv_argv_part_num(const char *part_str)
 	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		err(errno, "Partnum string '%s' wrong length", part_str);
+		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
-		err(errno, "Bad part number (%c)", ch);
+		err(EINVAL, "Bad part number (%c)", ch);
 
 	return (size_t)(ch - '0');
 }
@@ -682,10 +682,10 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	size_t i;
 
 	if (a == NULL || b == NULL)
-		err(errno, "NULL input to xstrxcmp");
+		err(EINVAL, "NULL input to xstrxcmp");
 
 	if (*a == '\0' || *b == '\0')
-		err(errno, "Empty string in xstrxcmp");
+		err(EINVAL, "Empty string in xstrxcmp");
 
 	for (i = 0; i < maxlen; i++) {
 		if (a[i] != b[i])
@@ -698,7 +698,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * We reached maxlen, so assume unterminated string.
 	 */
-	err(errno, "Unterminated string in xstrxcmp");
+	err(EINVAL, "Unterminated string in xstrxcmp");
 
 	/*
 	 * Should never reach here. This keeps compilers happy.
@@ -748,7 +748,7 @@ open_gbe_file(void)
 	case SIZE_128KB:
 		break;
 	default:
-		err(errno, "File size must be 8KB, 16KB or 128KB");
+		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 }
 
@@ -831,9 +831,9 @@ read_checksums(void)
 
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
-			err(errno, "%s: part %lu has a bad checksum",
+			err(EINVAL, "%s: part %lu has a bad checksum",
 			    fname, (unsigned long)part);
-		err(errno, "%s: No valid checksum found in file",
+		err(EINVAL, "%s: No valid checksum found in file",
 		    fname);
 	}
 }
@@ -847,7 +847,7 @@ good_checksum(size_t partnum)
 	if (current_checksum == expected_checksum)
 		return 1;
 
-	set_err(errno);
+	set_err(EINVAL);
 	return 0;
 }
 
@@ -874,7 +874,7 @@ valid_command(size_t c)
 		return 0;
 
 	if (c != command[c].chk)
-		err(errno, "Invalid cmd chk value (%lu) vs arg: %lu",
+		err(EINVAL, "Invalid cmd chk value (%lu) vs arg: %lu",
 		    (unsigned long)command[c].chk, (unsigned long)c);
 
 	return 1;
@@ -898,7 +898,7 @@ parse_mac_string(void)
 	size_t mac_byte;
 
 	if (xstrxlen(mac_str, 18) != 17)
-		err(errno, "MAC address is the wrong length");
+		err(EINVAL, "MAC address is the wrong length");
 
 	memset(mac_buf, 0, sizeof(mac_buf));
 
@@ -906,10 +906,10 @@ parse_mac_string(void)
 		set_mac_byte(mac_byte);
 
 	if ((mac_buf[0] | mac_buf[1] | mac_buf[2]) == 0)
-		err(errno, "Must not specify all-zeroes MAC address");
+		err(EINVAL, "Must not specify all-zeroes MAC address");
 
 	if (mac_buf[0] & 1)
-		err(errno, "Must not specify multicast MAC address");
+		err(EINVAL, "Must not specify multicast MAC address");
 }
 
 /*
@@ -924,17 +924,17 @@ xstrxlen(const char *scmp, size_t maxlen)
 	size_t xstr_index;
 
 	if (scmp == NULL)
-		err(errno, "NULL input to xstrxlen");
+		err(EINVAL, "NULL input to xstrxlen");
 
 	if (*scmp == '\0')
-		err(errno, "Empty string in xstrxlen");
+		err(EINVAL, "Empty string in xstrxlen");
 
 	for (xstr_index = 0;
 	    xstr_index < maxlen && scmp[xstr_index] != '\0';
 	    xstr_index++);
 
 	if (xstr_index == maxlen)
-		err(errno, "Unterminated string in xstrxlen");
+		err(EINVAL, "Unterminated string in xstrxlen");
 
 	return xstr_index;
 }
@@ -948,7 +948,7 @@ set_mac_byte(size_t mac_byte_pos)
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac_str[mac_str_pos + 2]) != ':')
-			err(errno, "Invalid MAC address separator '%c'",
+			err(EINVAL, "Invalid MAC address separator '%c'",
 			    separator);
 	}
 
@@ -966,7 +966,7 @@ set_mac_nib(size_t mac_str_pos,
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
 	if ((hex_num = hextonum(mac_ch)) > 15)
-		err(errno, "Invalid character '%c'",
+		err(EINVAL, "Invalid character '%c'",
 		    mac_str[mac_str_pos + mac_nib_pos]);
 
 	/*
@@ -1109,7 +1109,7 @@ cmd_helper_cat(void)
 	else if (cmd_index == CMD_CAT128)
 		n = 15;
 	else if (cmd_index != CMD_CAT)
-		err(errno, "cmd_helper_cat called erroneously");
+		err(EINVAL, "cmd_helper_cat called erroneously");
 
 	fflush(NULL);
 
@@ -1150,7 +1150,7 @@ gbe_cat_buf(uint8_t *b)
 		 * prevented in rw_file_exact().
 		 */
 		if ((size_t)rval != GBE_PART_SIZE)
-			err(errno, "stdout: cat: Partial write");
+			err(EIO, "stdout: cat: Partial write");
 
 		break;
 	}
@@ -1205,7 +1205,7 @@ override_part_modified(void)
 	case SET_MOD_OFF:
 		break;
 	default:
-		err(errno, "Unsupported set_mod type: %u",
+		err(EINVAL, "Unsupported set_mod type: %u",
 		    mod_type);
 	}
 }
@@ -1282,7 +1282,7 @@ check_nvm_bound(size_t c, size_t p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err(errno, "check_nvm_bound: out of bounds %lu",
+		err(ECANCELED, "check_nvm_bound: out of bounds %lu",
 		    (unsigned long)c);
 }
 
@@ -1290,7 +1290,7 @@ static void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err(errno, "%s must be 0 or 1, but is %lu",
+		err(EINVAL, "%s must be 0 or 1, but is %lu",
 		    a_name, (unsigned long)a);
 }
 
@@ -1361,11 +1361,11 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	off = ((off_t)p) * (off_t)nsize;
 
 	if (off > ncmp - GBE_PART_SIZE)
-		err(errno, "%s: GbE %s %s out of bounds",
+		err(ECANCELED, "%s: GbE %s %s out of bounds",
 		    fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		err(errno, "%s: GbE %s %s at bad offset",
+		err(ECANCELED, "%s: GbE %s %s at bad offset",
 		    fname, d_type, f_op);
 
 	return off;
@@ -1396,15 +1396,15 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	size_t rc = 0;
 
 	if (fd < 0) {
-		set_err(errno);
+		set_err(EIO);
 		return -1;
 	}
 	if (!len) {
-		set_err(errno);
+		set_err(EIO);
 		return -1;
 	}
 	if (len > (size_t)SSIZE_MAX) {
-		set_err(errno);
+		set_err(EIO);
 		return -1;
 	}
 
@@ -1420,7 +1420,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		} else if (rw_type == LESEN) {
 			rval = read(fd, mem + rc, len - rc);
 		} else {
-			set_err(errno);
+			set_err(EIO);
 			return -1;
 		}
 
@@ -1611,5 +1611,5 @@ usage(uint8_t usage_exit)
 	    util, util, util);
 
 	if (usage_exit)
-		err(errno, "Too few arguments");
+		err(EINVAL, "Too few arguments");
 }
