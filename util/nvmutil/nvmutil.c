@@ -535,16 +535,16 @@ sanitize_command_index(size_t c)
 	check_command_num(c);
 
 	if (ARGC_3 != 3)
-		err(errno, "ARGC_3 is not equal to 3");
+		err(EINVAL, "ARGC_3 is not equal to 3");
 	if (ARGC_4 != 4)
-		err(errno, "ARGC_4 is not equal to 4");
+		err(EINVAL, "ARGC_4 is not equal to 4");
 
 	if (command[c].argc < 3)
-		err(errno, "cmd index %lu: argc below 3, %d",
+		err(EINVAL, "cmd index %lu: argc below 3, %d",
 		    (unsigned long)c, command[c].argc);
 
 	if (command[c].str == NULL)
-		err(errno, "cmd index %lu: NULL str",
+		err(EINVAL, "cmd index %lu: NULL str",
 		    (unsigned long)c);
 	if (*command[c].str == '\0')
 		err(errno, "cmd index %lu: empty str",
@@ -552,7 +552,7 @@ sanitize_command_index(size_t c)
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
-		err(errno, "cmd index %lu: str too long: %s",
+		err(EINVAL, "cmd index %lu: str too long: %s",
 		    (unsigned long)c, command[c].str);
 	}
 
@@ -565,7 +565,7 @@ sanitize_command_index(size_t c)
 	case SET_MOD_OFF:
 		break;
 	default:
-		err(errno, "Unsupported set_mod type: %u", mod_type);
+		err(EINVAL, "Unsupported set_mod type: %u", mod_type);
 	}
 
 	check_bin(command[c].invert, "cmd.invert");
@@ -586,20 +586,20 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		err(errno, "Unsupported rw_size: %lu",
+		err(EINVAL, "Unsupported rw_size: %lu",
 		    (unsigned long)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		err(errno, "rw_size larger than GbE part: %lu",
+		err(EINVAL, "rw_size larger than GbE part: %lu",
 		    (unsigned long)gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
-		err(errno, "invalid cmd.flags setting");
+		err(EINVAL, "invalid cmd.flags setting");
 
 	if (!((PLESEN > LESEN) && (SCHREIB > PLESEN) && (PSCHREIB > SCHREIB)))
-		err(errno, "some rw type integers are the same");
+		err(EINVAL, "some rw type integers are the same");
 }
 
 static void
