@@ -1390,8 +1390,11 @@ prw(int fd, void *mem, size_t count,
 	if (r < 0)
 		saved_errno = errno;
 
-	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1)
+	if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1) {
+		if (saved_errno)
+			errno = saved_errno;
 		return -1;
+	}
 
 	if (r < 0)
 		errno = saved_errno;
