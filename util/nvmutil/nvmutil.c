@@ -1133,7 +1133,7 @@ static void
 gbe_cat_buf(uint8_t *b)
 {
 	size_t wc;
-	ssize_t w;
+	ssize_t w = 0;
 
 	for (wc = 0; wc < GBE_PART_SIZE; wc += w)
 		if ((w = write(STDOUT_FILENO, b + wc, GBE_PART_SIZE - wc)) < 1)
