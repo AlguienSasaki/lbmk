@@ -1335,7 +1335,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
     const char *rw_type_str)
 {
 	ssize_t rval = -1;
-	ssize_t rc = 0;
+	size_t rc = 0;
 
 	if (fd < 0)
 		err(EIO, "%s: %s: Bad fd %d", path, rw_type_str, fd);
@@ -1346,7 +1346,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		    "%s: %s: Requested length (%zu) exceeds SSIZE_MAX (%zd)",
 		    path, rw_type_str, len, SSIZE_MAX);
 
-	for (rc = 0; rc != (ssize_t)len; rc += rval) {
+	for (rc = 0; rc != len; rc += rval) {
 		if (rw_type == PSCHREIB)
 			rval = pwrite(fd, mem + rc, len - rc, off + rc);
 		else if (rw_type == SCHREIB)
