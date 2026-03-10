@@ -277,7 +277,6 @@ static uint8_t pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 static uint16_t mac_buf[3];
 static off_t gbe_file_size;
 
-static struct stat gbe_st;
 static int urandom_fd = -1;
 static int gbe_fd = -1;
 static size_t part;
@@ -729,12 +728,15 @@ open_dev_urandom(void)
 	errno = 0;
 
 	rname = oldrandom;
-	xopen(&urandom_fd, rname, O_RDONLY | O_BINARY | O_NONBLOCK, &gbe_st);
+	if (open(rname, O_RDONLY | O_BINARY | O_NONBLOCK) == -1)
+		err(errno, "%s: could not open", rname);
 }
 
 static void
 open_gbe_file(void)
 {
+	struct stat gbe_st;
+
 	xopen(&gbe_fd, fname, command[cmd_index].flags | O_BINARY, &gbe_st);
 
 	gbe_file_size = gbe_st.st_size;
@@ -1138,11 +1140,16 @@ gbe_cat_buf(uint8_t *b)
 				continue;
 			}
 
-			err(errno, "%s: cat", rname);
+			err(errno, "stdout: cat");
 		}
 
+		/*
+		 * A partial write is especially
+		 * fatal, as it should already be
+		 * prevented in rw_file_exact().
+		 */
 		if ((size_t)rval != GBE_PART_SIZE)
-			err(errno, "%s: Partial read", rname);
+			err(errno, "stdout: cat: Partial write");
 
 		break;
 	}
@@ -1377,7 +1384,8 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  *
  * This must only be used on files. It cannot
  * be used on sockets or pipes, because 0-byte
- * reads are treated like fatal errors.
+ * reads are treated like fatal errors. This
+ * means that EOF is also considered fatal.
  */
 static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
