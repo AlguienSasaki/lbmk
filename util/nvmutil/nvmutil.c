@@ -1015,6 +1015,7 @@ rhex(void)
 		n = sizeof(rnum);
 		if (rw_file_exact(urandom_fd, rnum, n, 0, LESEN) == -1)
 			err(errno, "Randomisation failed");
+		errno = 0;
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
@@ -1323,6 +1324,8 @@ rw_gbe_file_part(size_t p, int rw_type,
 	    rw_type) == -1)
 		err(errno, "%s: %s: part %lu",
 		    fname, rw_type_str, (unsigned long)p);
+
+	errno = 0;
 }
 
 /*
@@ -1438,17 +1441,6 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 			}
 
 			rc += (size_t)rval;
-			continue;
-		}
-		if (errno == EINTR) {
-			/*
-			 * EINTR is not fatal, because we
-			 * eventually return. We rely on
-			 * errno for general error state
-			 * after return from rw_file_exact,
-			 * so we don't want a false error.
-			 */
-			errno = 0;
 			continue;
 		}
 
