@@ -609,8 +609,8 @@ sanitize_command_index(size_t c)
 	    command[c].flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
 
-	if (!((PLESEN > LESEN) && (SCHREIB > PLESEN) && (PSCHREIB > SCHREIB)))
-		err(EINVAL, "some rw type integers are the same");
+	if (!((!LESEN) && (PLESEN == 1) && (SCHREIB == 2) && (PSCHREIB == 3)))
+		err(EINVAL, "rw type integers are the wrong values");
 }
 
 static void
@@ -1440,10 +1440,10 @@ static ssize_t
 do_rw(int fd, uint8_t *mem,
     size_t len, off_t off, int rw_type)
 {
-	if (rw_type == LESEN)
+	if (rw_type == LESEN || rw_type == PLESEN << 2)
 		return read(fd, mem, len);
 
-	if (rw_type == SCHREIB)
+	if (rw_type == SCHREIB || rw_type == PSCHREIB << 2)
 		return write(fd, mem, len);
 
 	if (rw_type == PLESEN || rw_type == PSCHREIB)
@@ -1476,14 +1476,7 @@ prw(int fd, void *mem, size_t nrw,
 		return -1;
 
 	do {
-		if (rw_type == PLESEN)
-			r = read(fd, mem, nrw);
-		else if (rw_type == PSCHREIB)
-			r = write(fd, mem, nrw);
-		else {
-			set_err_if_unset(EINVAL);
-			return -1;
-		}
+		r = do_rw(fd, mem, nrw, off, rw_type << 2);
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
