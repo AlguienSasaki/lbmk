@@ -1344,8 +1344,7 @@ gbe_mem_offset(size_t p, const char *f_op)
 }
 
 /*
- * Reads to GbE from write_gbe_file_part and read_gbe_file_part
- * are filtered through here. These operations must
+ * I/O operations filtered here. These operations must
  * only write from the 0th position or the half position
  * within the GbE file, and write 4KB of data.
  *
@@ -1579,6 +1578,15 @@ getnvmprogname(void)
 		return argv0;
 }
 
+/*
+ * Set errno only if it hasn't already been set.
+ * This prevents overriding real libc errors.
+ *
+ * We use errno for regular program state, while
+ * being careful not to clobber what was set by
+ * real libc function, or a minority of our stub
+ * functions such as prw()
+ */
 static void
 set_err_if_unset(int x)
 {
