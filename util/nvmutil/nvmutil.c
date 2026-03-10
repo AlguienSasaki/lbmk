@@ -96,7 +96,7 @@ static void open_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 static void read_gbe_file(void);
 static void read_gbe_file_part(size_t part);
-static ssize_t read_gbe_file_exact(int fd, void *buf, size_t len,
+static void read_gbe_file_exact(int fd, uint8_t *buf, size_t len,
     off_t off);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
@@ -132,7 +132,7 @@ static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
 static void write_gbe_file_part(size_t part);
 static off_t gbe_file_offset(size_t part, const char *f_op);
-static void *gbe_mem_offset(size_t part, const char *f_op);
+static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static void err(int nvm_errval, const char *msg, ...);
@@ -698,48 +698,36 @@ read_gbe_file(void)
 static void
 read_gbe_file_part(size_t p)
 {
-	ssize_t rc;
-
 	size_t gbe_rw_size = command[cmd_index].rw_size;
-	void *mem_offset =
+	uint8_t *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
-	rc = read_gbe_file_exact(gbe_fd, mem_offset,
+	read_gbe_file_exact(gbe_fd, mem_offset,
 	    gbe_rw_size, gbe_file_offset(p, "pread"));
-
-	if (rc != (ssize_t)gbe_rw_size)
-		err(ECANCELED, "%s: Partial read from p%zu", fname, p);
 }
 
-static ssize_t
+static void
 read_gbe_file_exact(int fd,
-    void *buf, size_t len, off_t off)
+    uint8_t *buf, size_t len, off_t off)
 {
-	int retry;
-	ssize_t rval;
+	ssize_t rval = -1;
+	ssize_t rc = 0;
 
 	if (fd == -1)
 		err(ECANCELED, "Trying to open bad fd: %s", fname);
 
-	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
-		rval = pread(fd, buf, len, off);
-
-		if (rval == (ssize_t)len) {
-			errno = 0;
-			return rval;
-		} else if (rval != -1) {
-			err(ECANCELED,
-			    "%s: Short pread of %zd bytes",
-			    fname, rval);
-		} else if (errno != EINTR) {
-			err(ECANCELED,
-			    "%s: Could not pread", fname);
+	for (rc = 0; rc != (ssize_t)len; rc += rval) {
+		if ((rval = pread(fd, buf + rc, len - rc, off + rc)) > -1) {
+			if (!rval) /* prevent infinite loop */
+				err(EIO, "%s: pread of 0 bytes", fname);
+			continue;
 		}
+
+		if (errno != EINTR || rval < -1)
+			err(EIO, "%s", fname);
+
+		errno = 0;
 	}
-
-	err(EINTR, "%s: pread: max retries exceeded", fname);
-
-	return -1;
 }
 
 static void
@@ -1323,13 +1311,13 @@ gbe_file_offset(size_t p, const char *f_op)
  * but used to check Gbe bounds in memory,
  * and it is *also* used during file I/O.
  */
-static void *
+static uint8_t *
 gbe_mem_offset(size_t p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_FILE_SIZE);
 
-	return (void *)(buf + gbe_off);
+	return (uint8_t *)(buf + gbe_off);
 }
 
 static off_t
