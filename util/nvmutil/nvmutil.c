@@ -109,8 +109,6 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
-static void read_file_exact(int fd, uint8_t *mem, size_t len,
-    off_t off, uint8_t plesen, const char *path);
 static void write_mac_part(size_t partnum);
 static void cmd_helper_dump(void);
 static void print_mac_from_nvm(size_t partnum);
@@ -127,6 +125,8 @@ static void set_part_modified(size_t p);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
 static void write_gbe_file_part(size_t part);
+static void rw_file_exact(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type, const char *path, const char *rw_type_str);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -223,6 +223,13 @@ static const char *argv0;
  */
 #define ARGC_3 3
 #define ARGC_4 4
+
+enum {
+	LESEN,
+	PLESEN,
+	SCHREIB,
+	PSCHREIB
+};
 
 /*
  * Used as indices for command[]
@@ -512,6 +519,9 @@ sanitize_command_index(size_t c)
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
+
+	if (!((PLESEN > LESEN) && (SCHREIB > PLESEN) && (PSCHREIB > SCHREIB)))
+		err(EINVAL, "some rw type integers are the same");
 }
 
 static void
@@ -698,9 +708,9 @@ read_gbe_file_part(size_t p)
 	uint8_t *mem_offset =
 	    gbe_mem_offset(p ^ command[cmd_index].invert, "pread");
 
-	read_file_exact(gbe_fd, mem_offset,
+	rw_file_exact(gbe_fd, mem_offset,
 	    gbe_rw_size, gbe_file_offset(p, "pread"),
-	    1, fname);
+	    PLESEN, fname, "pread");
 }
 
 static void
@@ -938,40 +948,11 @@ rhex(void)
 #ifdef NVMUTIL_ARC4RANDOM_BUF
 		arc4random_buf(rnum, n);
 #else
-		read_file_exact(urandom_fd, rnum, n, 0, 0, rname);
+		rw_file_exact(urandom_fd, rnum, n, 0, LESEN, rname, "read");
 #endif
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
-}
-
-static void
-read_file_exact(int fd, uint8_t *mem,
-    size_t len, off_t off, uint8_t plesen, const char *path)
-{
-	ssize_t rval = -1;
-	ssize_t rc = 0;
-
-	if (fd == -1)
-		err(ECANCELED, "Trying to open bad fd: %s", path);
-
-	for (rc = 0; rc != (ssize_t)len; rc += rval) {
-		if (plesen)
-			rval = pread(fd, mem + rc, len - rc, off + rc);
-		else
-			rval = read(fd, mem + rc, len - rc);
-
-		if (rval > -1) {
-			if (!rval) /* prevent infinite loop */
-				err(EIO, "%s: read of 0 bytes", path);
-			continue;
-		}
-
-		if (errno != EINTR || rval < -1)
-			err(EIO, "%s", path);
-
-		errno = 0;
-	}
 }
 
 static void
@@ -1075,12 +1056,8 @@ cmd_helper_cat(void)
 static void
 gbe_cat_buf(uint8_t *b)
 {
-	size_t wc;
-	ssize_t w = 0;
-
-	for (wc = 0; wc < GBE_PART_SIZE; wc += w)
-		if ((w = write(STDOUT_FILENO, b + wc, GBE_PART_SIZE - wc)) < 1)
-			err(EIO, "%s: stdout", fname);
+	rw_file_exact(STDOUT_FILENO, b, GBE_PART_SIZE, 0,
+	    SCHREIB, "stdout", "write");
 }
 
 static void
@@ -1222,37 +1199,49 @@ check_bin(size_t a, const char *a_name)
 static void
 write_gbe_file_part(size_t p)
 {
-	int retry;
-	ssize_t rval;
-	size_t gbe_rw_size;
+	size_t gbe_rw_size = command[cmd_index].rw_size;
+	uint8_t *mem_offset = gbe_mem_offset(p, "pwrite");
 
-	if (gbe_fd == -1)
-		err(ECANCELED, "%s: Trying to write bad gbe_fd", fname);
+	rw_file_exact(gbe_fd, mem_offset,
+	    gbe_rw_size, gbe_file_offset(p, "pwrite"),
+	    PSCHREIB, fname, "pwrite");
+}
 
-	gbe_rw_size = command[cmd_index].rw_size;
+static void
+rw_file_exact(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type, const char *path,
+    const char *rw_type_str)
+{
+	ssize_t rval = -1;
+	ssize_t rc = 0;
 
-	for (retry = 0; retry < MAX_RETRY_RW; retry++) {
-		rval = pwrite(gbe_fd, gbe_mem_offset(p, "pwrite"),
-		    gbe_rw_size, gbe_file_offset(p, "pwrite"));
+	if (fd < 0)
+		err(EIO, "%s: %s: Bad fd %d", path, rw_type_str, fd);
+	if (!len)
+		err(EIO, "%s: %s: Zero length", path, rw_type_str);
 
-		if (rval == (ssize_t)gbe_rw_size) {
-			errno = 0;
-			printf("%s: Wrote %zu bytes to part %zu\n",
-			    fname, gbe_rw_size, p);
-			return;
+	for (rc = 0; rc != (ssize_t)len; rc += rval) {
+		if (rw_type == PSCHREIB)
+			rval = pwrite(fd, mem + rc, len - rc, off + rc);
+		else if (rw_type == SCHREIB)
+			rval = write(fd, mem + rc, len - rc);
+		else if (rw_type == PLESEN)
+			rval = pread(fd, mem + rc, len - rc, off + rc);
+		else if (rw_type == LESEN)
+			rval = read(fd, mem + rc, len - rc);
+
+		if (rval > -1) {
+			if (!rval) /* prevent infinite loop */
+				err(EIO, "%s: %s: 0-byte return",
+				    path, rw_type_str);
+			continue;
 		}
 
-		if (rval != -1)
-			err(ECANCELED,
-			    "%s: Short pwrite of %zd bytes",
-			    fname, rval);
+		if (errno != EINTR || rval < -1)
+			err(EIO, "%s: %s", path, rw_type_str);
 
-		if (errno != EINTR)
-			err(ECANCELED,
-			    "%s: pwrite failed on p%zu", fname, p);
+		errno = 0;
 	}
-
-	err(EINTR, "%s: pwrite: max retries exceeded on p%zu", fname, p);
 }
 
 /*
