@@ -1370,13 +1370,13 @@ static ssize_t
 prw(int fd, void *mem, size_t count,
     off_t offset, int rw_type, const char *path)
 {
-	off_t rs;
 	off_t old;
 	ssize_t r;
 
 	if ((old = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
-	if ((r = lseek_eintr(fd, offset, SEEK_SET)) == (off_t)-1)
+
+	if (lseek_eintr(fd, offset, SEEK_SET) == (off_t)-1)
 		return -1;
 
 	do {
@@ -1389,8 +1389,8 @@ prw(int fd, void *mem, size_t count,
 	} while (r < 0 && errno == EINTR);
 
 	if (r >= 0) {
-		if ((rs = lseek_eintr(fd, old, SEEK_SET)) == (off_t)-1)
-			errno = EIO;
+		if (lseek_eintr(fd, old, SEEK_SET) == (off_t)-1)
+			return -1;
 	}
 
 	return r;
