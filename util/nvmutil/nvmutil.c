@@ -598,7 +598,7 @@ sanitize_command_index(size_t c)
 	    command[c].flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
 
-	if (!((PLESEN > LESEN) || (SCHREIB > PLESEN) || (PSCHREIB > SCHREIB)))
+	if (!((PLESEN > LESEN) && (SCHREIB > PLESEN) && (PSCHREIB > SCHREIB)))
 		err(EINVAL, "some rw type integers are the same");
 }
 
