@@ -1373,6 +1373,21 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 static void
 err(int nvm_errval, const char *msg, ...)
 {
+	/*
+	 * We need to ensure that files are closed
+	 * on exit, including error exits. This
+	 * would otherwise recurse, because the
+	 * close_files() function also calls err(),
+	 * but with -1 on nvm_errval. It's the only
+	 * one that does this.
+	 *
+	 * Since the errval is for setting errno, -1
+	 * would be incorrect. Therefore, set_err()
+	 * avoids overriding errno if the given value
+	 * is negative.
+	 *
+	 * Be careful modifying err() and close_files().
+	 */
 	if (nvm_errval != -1)
 		close_files();
 
