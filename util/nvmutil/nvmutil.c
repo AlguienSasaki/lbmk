@@ -63,7 +63,7 @@ typedef char static_assert_twos_complement[
  * files that are 128KB in size at a maximum, so we
  * realistically only need 32-bit at a minimum.
  */
-typedef char static_assert_off_t_is_64[(sizeof(off_t) >= 4) ? 1 : -1];
+typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 
 /*
  * The BSD versions that could realistically build
