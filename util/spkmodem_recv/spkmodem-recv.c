@@ -7,10 +7,6 @@
  * This version is heavily modified, re-written based on OpenBSD Kernel Source
  * File Style Guide (KNF); this change is Copyright 2023,2026 Leah Rowe. */
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 500
-#endif
-
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
@@ -47,14 +43,6 @@ static void set_err_if_unset(int x);
 #define THRESHOLD 500
 
 #define reset_char() ascii = 0, ascii_bit = 7
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS 1
-#endif
-
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE 0
-#endif
 
 signed short frame[MAX_SAMPLES], pulse[MAX_SAMPLES];
 int ringpos, debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
