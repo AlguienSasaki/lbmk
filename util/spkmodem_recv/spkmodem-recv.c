@@ -67,6 +67,8 @@ main(int argc, char *argv[])
 {
 	int c;
 
+	argv0 = argv[0];
+
 #ifdef HAVE_PLEDGE
 #if HAVE_PLEDGE > 0
 	if (pledge("stdio", NULL) == -1)
