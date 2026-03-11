@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-	while (!feof(stdin))
+	while (1)
 		handle_audio();
 
 	return EXIT_SUCCESS;
@@ -112,16 +112,22 @@ handle_audio(void)
 static void
 decode_pulse(void)
 {
+	size_t n;
+
 	int next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
 
 	freq_data -= pulse[ringpos];
 	freq_data += pulse[next_ringpos];
 	freq_separator -= pulse[next_ringpos];
 
-	fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
+	n = fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
 
-	if (ferror(stdin) != 0)
-		err(errno, "Could not read from frame.");
+	if (n != sizeof(frame[0])) {
+		if (feof(stdin))
+			exit(EXIT_SUCCESS);
+		if (ferror(stdin))
+			err(errno, "Could not read from frame.");
+	}
 
 	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
 	freq_separator += pulse[ringpos++];
