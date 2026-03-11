@@ -7,6 +7,8 @@
  * This version is heavily modified, re-written based on OpenBSD Kernel Source
  * File Style Guide (KNF); this change is Copyright 2023,2026 Leah Rowe. */
 
+#define _POSIX_SOURCE
+
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
@@ -24,6 +26,10 @@ static void handle_audio(void), decode_pulse(void), print_char(void),
 static void err(int nvm_errval, const char *msg, ...);
 static const char * getnvmprogname(void);
 static void set_err_if_unset(int x);
+
+int getopt(int, char * const *, const char *);
+extern char *optarg;
+extern int optind, opterr, optopt;
 
 #if defined(__OpenBSD__) && defined(OpenBSD)
 #if OpenBSD >= 509
