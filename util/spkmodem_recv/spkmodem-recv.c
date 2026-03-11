@@ -113,27 +113,26 @@ static void
 decode_pulse(void)
 {
 	size_t n;
-	size_t frame_size;
+	int next_ringpos;
 
-	int next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
+	next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
 
 	freq_data -= pulse[ringpos];
 	freq_data += pulse[next_ringpos];
 	freq_separator -= pulse[next_ringpos];
 
-	frame_size = sizeof(frame[0]);
-	n = fread(&frame[ringpos], 1, frame_size, stdin);
-
-	if (n != frame_size) {
+	n = fread(&frame[ringpos], 1, sizeof(frame[0]), stdin);
+	if (n != sizeof(frame[0])) {
 		if (feof(stdin))
 			exit(EXIT_SUCCESS);
-		if (ferror(stdin))
-			err(errno, "Could not read from frame.");
+		err(errno, "stdin read");
 	}
 
 	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
-	freq_separator += pulse[ringpos++];
-	ringpos %= MAX_SAMPLES;
+
+	freq_separator += pulse[ringpos];
+	ringpos = (ringpos + 1) % MAX_SAMPLES;
+
 	++sample_count;
 }
 
