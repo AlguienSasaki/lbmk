@@ -65,7 +65,7 @@ static const char *argv0;
 int
 main(int argc, char *argv[])
 {
-	int c;
+	int c = 0;
 
 	argv0 = argv[0];
 
