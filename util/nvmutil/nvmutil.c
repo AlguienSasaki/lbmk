@@ -263,7 +263,6 @@ static void usage(uint8_t usage_exit);
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 static const char newrandom[] = "/dev/urandom";
-static const char oldrandom[] = "/dev/random"; /* fallback on OLD unix */
 static const char *rname = NULL;
 
 /*
@@ -719,11 +718,6 @@ static void
 open_dev_urandom(void)
 {
 	rname = newrandom;
-	urandom_fd = open(rname, O_RDONLY);
-	if (urandom_fd != -1)
-		return;
-
-	rname = oldrandom;
 	urandom_fd = open(rname, O_RDONLY);
 	if (urandom_fd != -1)
 		return;
