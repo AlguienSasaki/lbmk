@@ -212,9 +212,10 @@ read_sample(struct decoder_state *st)
 		    READ_BUF, stdin);
 
 		if (n == 0) {
+			if (ferror(stdin))
+				err(errno, "stdin read");
 			if (feof(stdin))
 				exit(EXIT_SUCCESS);
-			err(errno, "stdin read");
 		}
 
 		st->inpos = 0;
