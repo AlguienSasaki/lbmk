@@ -583,7 +583,7 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(errno, "pledge");
-	if (unveil("/dev/null", "r") == -1)
+	if (unveil("/dev/urandom", "r") == -1)
 		err(errno, "unveil '/dev/null'");
 #else
 	if (pledge("stdio rpath wpath", NULL) == -1)
