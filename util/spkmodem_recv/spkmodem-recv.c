@@ -37,17 +37,74 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * spkmodem is essentially used FSK (Frequency Shift Keying)
+ * with two frequencies: tone A (bit 0) and tone B (bit 1),
+ * detected via pulse density inside a given window.
+ * Very cheap on CPU cycles and avoids neeing something more
+ * complicated like FFT or Goertzel filters, and tolerates
+ * weak/noisy signals.
+ */
+
+/*
+ * Frequency of audio in Hz
+ */
+#define SAMPLE_RATE 48000
+
+/*
+ * A frame is 5ms, so samples
+ * per frame is N / 48000 = 0.005 (5ms)
+ * => N = 0.005 * 48000 = 240
+ */
 #define SAMPLES_PER_FRAME 240
-#define MAX_SAMPLES (2 * SAMPLES_PER_FRAME)
-#define SAMPLE_OFFSET (MAX_SAMPLES * sizeof(short))
 
-#define FREQ_SEP_MIN 5
-#define FREQ_SEP_MAX 15
+/* = 48000 / 240 = 200 Hz resolution */
+#define FRAME_RATE ((SAMPLE_RATE) / (SAMPLES_PER_FRAME))
 
-#define FREQ_DATA_MIN 15
-#define FREQ_DATA_THRESHOLD 25
-#define FREQ_DATA_MAX 60
+/*
+ * Two FIR windows are maintained; one for data done,
+ * and one for the separator tone. They are positioned
+ * one frame apart in the ring buffer.
+ */
+#define MAX_SAMPLES (2 * (SAMPLES_PER_FRAME))
 
+/*
+ * Approx byte offset for ring buffer span, just for
+ * easier debug output correlating to the audio stream.
+ */
+#define SAMPLE_OFFSET ((MAX_SAMPLES) * (sizeof(short)))
+
+/*
+ * Expected tone ranges (approximate, derived from spkmodem).
+ * These values are intentionally wide because real-world setups
+ * often involve microphones, room acoustics, and cheap ADCs.
+ */
+#define SEP_TONE_MIN_HZ 1000
+#define SEP_TONE_MAX_HZ 3000
+
+#define DATA_TONE_MIN_HZ 3000
+#define DATA_TONE_MAX_HZ 12000
+
+/* Mid point used to distinguish the two data tones. */
+#define DATA_TONE_THRESHOLD_HZ 5000
+
+/*
+ * Convert tone frequencies within the sliding window, into pulse counts
+ * pulse_count is: tone_frequency / FRAME_RATE
+ * where FRAME_RATE = SAMPLE_RATE / SAMPLES_PER_FRAME.
+ */
+#define FREQ_SEP_MIN ((SEP_TONE_MIN_HZ) / (FRAME_RATE))
+#define FREQ_SEP_MAX ((SEP_TONE_MAX_HZ) / (FRAME_RATE))
+
+#define FREQ_DATA_MIN ((DATA_TONE_MIN_HZ) / (FRAME_RATE))
+#define FREQ_DATA_MAX ((DATA_TONE_MAX_HZ) / (FRAME_RATE))
+
+#define FREQ_DATA_THRESHOLD ((DATA_TONE_THRESHOLD_HZ) / (FRAME_RATE))
+
+/*
+ * Sample amplitude threshold used to convert the waveform
+ * into a pulse stream. Values near zero regarded as noise.
+ */
 #define THRESHOLD 500
 
 #define READ_BUF 4096
