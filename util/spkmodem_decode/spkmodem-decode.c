@@ -210,6 +210,8 @@ main(int argc, char **argv)
 	struct decoder_state st;
 	int c;
 
+	argv0 = argv[0];
+
 #if defined (__OpenBSD__) && defined(OpenBSD)
 #if OpenBSD >= 509
 	if (pledge("stdio", NULL) == -1)
@@ -222,8 +224,6 @@ main(int argc, char **argv)
 
 	st.ringpos = 0;
 	st.sep_pos = SAMPLES_PER_FRAME;
-
-	argv0 = argv[0];
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		if (c != 'd')
