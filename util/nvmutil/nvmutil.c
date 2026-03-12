@@ -164,6 +164,7 @@ static void set_mac_nib(size_t mac_str_pos,
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
 static uint16_t fallback_rand(void);
+static unsigned long entropy_jitter(void);
 static void write_mac_part(size_t partnum);
 
 /*
@@ -1034,7 +1035,8 @@ fallback_rand(void)
 	    ^ (unsigned long)tv.tv_usec
 	    ^ (unsigned long)getpid()
 	    ^ (unsigned long)&mix
-	    ^ counter++;
+	    ^ counter++
+	    ^ entropy_jitter();
 
 	/*
 	 * Stack addresses can vary between
@@ -1045,6 +1047,25 @@ fallback_rand(void)
 	mix ^= (unsigned long)&counter;
 
 	return (uint16_t)(mix & 0xf);
+}
+
+static unsigned long
+entropy_jitter(void)
+{
+    struct timeval a, b;
+    unsigned long mix = 0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        gettimeofday(&a, NULL);
+        getpid();
+        gettimeofday(&b, NULL);
+
+        mix ^= (unsigned long)(b.tv_usec - a.tv_usec);
+        mix ^= (unsigned long)&mix;
+    }
+
+    return mix;
 }
 
 static void
