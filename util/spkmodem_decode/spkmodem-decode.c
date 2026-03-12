@@ -211,7 +211,7 @@ static const char *argv0;
 
 static int host_is_big_endian(void);
 static void handle_audio(struct decoder_state *st);
-static void auto_detect_tone(struct decoder_state *st);
+static void detect_tone(struct decoder_state *st);
 static int silent_signal(struct decoder_state *st);
 static void select_low_tone(struct decoder_state *st);
 static void collect_separator_tone(struct decoder_state *st);
@@ -314,14 +314,14 @@ handle_audio(struct decoder_state *st)
 		decode_pulse(st);
 
 	/* Detect tone per each frame */
-	auto_detect_tone(st);
+	detect_tone(st);
 }
 
 /*
  * Automatically detect spkmodem tone
  */
 static void
-auto_detect_tone(struct decoder_state *st)
+detect_tone(struct decoder_state *st)
 {
 	if (st->learn_frames >= LEARN_FRAMES)
 		return;
