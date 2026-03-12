@@ -9,6 +9,10 @@
 
 #define _POSIX_SOURCE
 
+/*
+ * For OpenBSD define, to detect version
+ * for deciding whether to use pledge(2)
+ */
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
@@ -20,179 +24,216 @@
 #include <string.h>
 #include <unistd.h>
 
-static int set_ascii_bit(void);
-static void handle_audio(void), decode_pulse(void), print_char(void),
-    print_stats(void);
-static void err(int nvm_errval, const char *msg, ...);
-static const char * getnvmprogname(void);
-static void set_err_if_unset(int x);
-
-int getopt(int, char * const *, const char *);
-extern char *optarg;
-extern int optind, opterr, optopt;
-
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if OpenBSD >= 509
-#ifndef HAVE_PLEDGE
-#define HAVE_PLEDGE 1
-#endif
-#endif
-#endif
-
 #define SAMPLES_PER_FRAME 240
 #define MAX_SAMPLES (2 * SAMPLES_PER_FRAME)
+
 #define FREQ_SEP_MIN 5
 #define FREQ_SEP_MAX 15
+
 #define FREQ_DATA_MIN 15
 #define FREQ_DATA_THRESHOLD 25
 #define FREQ_DATA_MAX 60
+
 #define THRESHOLD 500
 
-#define reset_char() ascii = 0, ascii_bit = 7
+struct decoder_state {
+	signed short frame[MAX_SAMPLES];
+	unsigned char pulse[MAX_SAMPLES];
 
-signed short frame[MAX_SAMPLES], pulse[MAX_SAMPLES];
-int ringpos, debug, freq_data, freq_separator, sample_count, ascii_bit = 7;
-char ascii = 0;
+	int ringpos;
+	int freq_data;
+	int freq_separator;
+	int sample_count;
+
+	int ascii_bit;
+	unsigned char ascii;
+
+	int debug;
+};
 
 static const char *argv0;
 
+static void handle_audio(struct decoder_state *st);
+static void decode_pulse(struct decoder_state *st);
+static int set_ascii_bit(struct decoder_state *st);
+static void print_char(struct decoder_state *st);
+static void print_stats(struct decoder_state *st);
+static void reset_char(struct decoder_state *st);
+
+static void err(int errval, const char *msg, ...);
+static const char *progname(void);
+
+int getopt(int, char * const *, const char *);
+extern char *optarg;
+extern int optind;
+extern int opterr;
+extern int optopt;
+
+#ifndef errno
+extern int errno;
+#endif
+
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	int c = 0;
+	struct decoder_state st;
+	int c;
 
-	argv0 = argv[0];
-
-#ifdef HAVE_PLEDGE
-#if HAVE_PLEDGE > 0
+#if defined (__OpenBSD__) && defined(OpenBSD)
+#if OpenBSD >= 509
 	if (pledge("stdio", NULL) == -1)
 		err(errno, "pledge");
 #endif
 #endif
-	while (c != -1) {
+
+	memset(&st, 0, sizeof(st));
+	st.ascii_bit = 7;
+
+	argv0 = argv[0];
+
+	while (1) {
 		c = getopt(argc, argv, "d");
+		if (c == -1)
+			break;
 
 		if (c == 'd')
-			debug = 1;
-		else if (c != -1)
+			st.debug = 1;
+		else
 			err(EINVAL, "Invalid argument");
 	}
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-	while (1)
-		handle_audio();
+	for (;;)
+		handle_audio(&st);
 
 	return EXIT_SUCCESS;
 }
 
 static void
-handle_audio(void)
+handle_audio(struct decoder_state *st)
 {
 	int sample;
 
-	if (sample_count > (3 * SAMPLES_PER_FRAME))
-		sample_count = reset_char();
+	if (st->sample_count > (3 * SAMPLES_PER_FRAME))
+		reset_char(st);
 
-	if ((freq_separator <= FREQ_SEP_MIN) || (freq_separator >= FREQ_SEP_MAX)
-	    || (freq_data <= FREQ_DATA_MIN) || (freq_data >= FREQ_DATA_MAX)) {
-		decode_pulse();
+	if ((st->freq_separator <= FREQ_SEP_MIN) ||
+	    (st->freq_separator >= FREQ_SEP_MAX) ||
+	    (st->freq_data <= FREQ_DATA_MIN) ||
+	    (st->freq_data >= FREQ_DATA_MAX)) {
+
+		decode_pulse(st);
 		return;
 	}
 
-	if (set_ascii_bit() < 0)
-		print_char();
+	if (set_ascii_bit(st) < 0)
+		print_char(st);
 
-	sample_count = 0;
+	st->sample_count = 0;
 
 	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
-		decode_pulse();
+		decode_pulse(st);
 }
 
 static void
-decode_pulse(void)
+decode_pulse(struct decoder_state *st)
 {
 	size_t n;
-	int next_ringpos;
+	int next;
 
-	next_ringpos = (ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
+	next = (st->ringpos + SAMPLES_PER_FRAME) % MAX_SAMPLES;
 
-	freq_data -= pulse[ringpos];
-	freq_data += pulse[next_ringpos];
-	freq_separator -= pulse[next_ringpos];
+	st->freq_data -= st->pulse[st->ringpos];
+	st->freq_data += st->pulse[next];
+	st->freq_separator -= st->pulse[next];
 
-	n = fread(&frame[ringpos], 1, sizeof(frame[0]), stdin);
-	if (n != sizeof(frame[0])) {
+	n = fread(&st->frame[st->ringpos], sizeof(st->frame[0]), 1, stdin);
+	if (n != 1) {
 		if (feof(stdin))
 			exit(EXIT_SUCCESS);
 		err(errno, "stdin read");
 	}
 
-	pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0;
+	if (abs(st->frame[st->ringpos]) > THRESHOLD)
+		st->pulse[st->ringpos] = 1;
+	else
+		st->pulse[st->ringpos] = 0;
 
-	freq_separator += pulse[ringpos];
-	ringpos = (ringpos + 1) % MAX_SAMPLES;
+	st->freq_separator += st->pulse[st->ringpos];
 
-	++sample_count;
+	st->ringpos = (st->ringpos + 1) % MAX_SAMPLES;
+	st->sample_count++;
 }
 
 static int
-set_ascii_bit(void)
+set_ascii_bit(struct decoder_state *st)
 {
-	if (debug)
-		print_stats();
+	if (st->debug)
+		print_stats(st);
 
-	if (freq_data < FREQ_DATA_THRESHOLD)
-		ascii |= (1 << ascii_bit);
+	if (st->freq_data < FREQ_DATA_THRESHOLD)
+		st->ascii |= (1 << st->ascii_bit);
 
-	--ascii_bit;
-	return ascii_bit;
+	st->ascii_bit--;
+
+	return st->ascii_bit;
 }
 
 static void
-print_stats(void)
+print_char(struct decoder_state *st)
 {
-	long stdin_pos;
-
-	if ((stdin_pos = ftell(stdin)) == -1)
-		err(errno, "ftell stdin");
-
-	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
-	    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
-}
-
-static void
-print_char(void)
-{
-	if (debug)
-		printf("<%c, %x>", ascii, ascii);
+	if (st->debug)
+		printf("<%c,%x>", st->ascii, st->ascii);
 	else
-		printf("%c", ascii);
+		putchar(st->ascii);
 
-	reset_char();
+	reset_char(st);
 }
 
 static void
-err(int nvm_errval, const char *msg, ...)
+print_stats(struct decoder_state *st)
 {
-	va_list args;
+	long pos;
 
-	fprintf(stderr, "%s: ", getnvmprogname());
+	pos = ftell(stdin);
+	if (pos == -1)
+		err(errno, "ftell");
 
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
+	printf("%d %d %d @%ld\n",
+	    st->freq_data,
+	    st->freq_separator,
+	    FREQ_DATA_THRESHOLD,
+	    pos - sizeof(st->frame));
+}
 
-	set_err_if_unset(nvm_errval);
-	fprintf(stderr, ": %s", strerror(errno));
+static void
+reset_char(struct decoder_state *st)
+{
+	st->ascii = 0;
+	st->ascii_bit = 7;
+}
 
-	fprintf(stderr, "\n");
+static void
+err(int errval, const char *msg, ...)
+{
+	va_list ap;
 
+	fprintf(stderr, "%s: ", progname());
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+
+	if (!errno)
+		errno = errval;
+
+	fprintf(stderr, ": %s\n", strerror(errno));
 	exit(EXIT_FAILURE);
 }
 
 static const char *
-getnvmprogname(void)
+progname(void)
 {
 	const char *p;
 
@@ -205,15 +246,4 @@ getnvmprogname(void)
 		return p + 1;
 	else
 		return argv0;
-}
-
-static void
-set_err_if_unset(int x)
-{
-	if (errno)
-		return;
-	if (x > 0)
-		errno = x;
-	else
-		errno = ECANCELED;
 }
