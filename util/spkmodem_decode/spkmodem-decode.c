@@ -80,6 +80,8 @@
 
 /*
  * Frequency of audio in Hz
+ * WARNING: if changing, make sure to adjust
+ *     SAMPLES_PER_FRAME accordingly (see maths below)
  */
 #define SAMPLE_RATE 48000
 
@@ -153,6 +155,19 @@
 #define FREQ_DATA_THRESHOLD ((DATA_TONE_THRESHOLD_HZ) / (FRAME_RATE))
 
 /*
+ * These determine how long the program will wait during
+ * tone auto-detection, before shifting to defaults.
+ *
+ * For tone auto-detection (time waiting for detection)
+ * NOTE: you could multiply SAMPLE_PER_FRAME instead
+ * of SAMPLE_RATE in LEARN_SAMPLES, for more granularity.
+ * Here, 1 * SAMPLE_RATE represents 1 second, which seems
+ * like a reasonable, conservative default wait time.
+ */
+#define LEARN_SECONDS 1
+#define LEARN_SAMPLES ((LEARN_SECONDS) * (SAMPLE_RATE))
+
+/*
  * Sample amplitude threshold used to convert the waveform
  * into a pulse stream. Values near zero are regarded as noise.
  */
@@ -189,6 +204,12 @@ struct decoder_state {
 	int sep_samples;
 	int sep_min;
 	int sep_max;
+
+	/* for automatic tone detection */
+	int freq_min;
+	int freq_max;
+	int freq_threshold;
+	int learn_samples;
 };
 
 static const char *argv0;
@@ -197,6 +218,7 @@ static int host_is_big_endian(void);
 static void handle_audio(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
+static void auto_detect_tone(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
@@ -236,6 +258,11 @@ main(int argc, char **argv)
 		st.debug = 1;
 		break;
 	}
+
+	/* fallback in case tone detection fails */
+	st.freq_min = 100000;
+	st.freq_max = 0;
+	st.freq_threshold = FREQ_DATA_THRESHOLD;
 
 	/*
 	 * Used for separator calibration
@@ -405,7 +432,48 @@ decode_pulse(struct decoder_state *st)
 	st->ringpos = ringpos;
 	st->sep_pos = sep_pos;
 
+	/*
+	 * Attempt to auto-detect spkmodem tone
+	 */
+	auto_detect_tone(st);
+
 	st->sample_count++;
+}
+
+/*
+ * Observe signal for LEARN_SAMPLES samples (e.g. 1 second).
+ * The exact amount of time is determined by LEARN_SAMPLES
+ * divided by SAMPLE_RATE, logically. For example, if
+ * LEARN_SAMPLES were half of the SAMPLE_RATE, this
+ * corresponds to roughly 500ms before timeout.
+ *
+ * to guess the correct timing. If it fails,
+ * fall back to known good values.
+ */
+static void
+auto_detect_tone(struct decoder_state *st)
+{
+	if (st->learn_samples >= LEARN_SAMPLES)
+		return;
+
+	if (st->freq_data > 0) {
+		if (st->freq_data < st->freq_min)
+			st->freq_min = st->freq_data;
+
+		if (st->freq_data > st->freq_max)
+			st->freq_max = st->freq_data;
+	}
+
+	st->learn_samples++;
+
+	if (st->learn_samples == LEARN_SAMPLES) {
+		st->freq_threshold =
+		    (st->freq_min + st->freq_max) / 2;
+
+		if (st->debug)
+			printf("auto threshold: %dHz\n",
+			    st->freq_threshold * FRAME_RATE);
+	}
 }
 
 static signed short
@@ -452,7 +520,7 @@ set_ascii_bit(struct decoder_state *st)
 {
 	if (st->debug)
 		print_stats(st);
-	if (st->freq_data < FREQ_DATA_THRESHOLD)
+	if (st->freq_data < st->freq_threshold)
 		st->ascii |= (1 << st->ascii_bit);
 
 	st->ascii_bit--;
@@ -484,7 +552,7 @@ print_stats(struct decoder_state *st)
 		printf("%d %d %d data=%dHz sep=%dHz(min %dHz %dHz)\n",
 		    st->freq_data,
 		    st->freq_separator,
-		    FREQ_DATA_THRESHOLD,
+		    st->freq_threshold,
 		    data_hz,
 		    sep_hz,
 		    sep_hz_min,
@@ -495,7 +563,7 @@ print_stats(struct decoder_state *st)
 	printf("%d %d %d @%ld data=%dHz sep=%dHz(min %dHz %dHz)\n",
 	    st->freq_data,
 	    st->freq_separator,
-	    FREQ_DATA_THRESHOLD,
+	    st->freq_threshold,
 	    pos - SAMPLE_OFFSET,
 	    data_hz,
 	    sep_hz,
