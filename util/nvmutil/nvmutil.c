@@ -1479,6 +1479,17 @@ read_again:
 	 */
 	if ((size_t)rv > (len - rc) /* Prevent overflow */
 	    || rv == 0) { /* Prevent infinite 0-byte loop */
+		/*
+		 * TODO: handle rv == 0 this way:
+		 * re-try a finite number of times,
+		 * based on a counter, that resets
+		 * on a non-zero read but then returns
+		 * like below if the counter reaches
+		 * the limit. This will retain the
+		 * current safety, while increasing
+		 * robustness e.g. on unreliable NFS
+		 * shares or really slow media.
+		 */
 		errno = EIO;
 		return -1;
 	}
