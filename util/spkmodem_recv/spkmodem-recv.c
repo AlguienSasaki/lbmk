@@ -1,11 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* SPDX-FileCopyrightText: 2013 Free Software Foundation, Inc. */
-/* Usage: parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv */
-
-/* Forked from coreboot's version, at util/spkmodem_recv/ in coreboot.git,
- * revision 5c2b5fcf2f9c9259938fd03cfa3ea06b36a007f0 as of 3 January 2022.
- * This version is heavily modified, re-written based on OpenBSD Kernel Source
- * File Style Guide (KNF); this change is Copyright 2023,2026 Leah Rowe. */
+/*
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ * Copyright (c) 2013 Free Software Foundation, Inc.
+ * Copyright (c) 2023, 2026 Leah Rowe <leah@libreboot.org>
+ *
+ * This program receives text encoded as pulses on the PC speaker,
+ * and decodes them. This is a special type of interface provided
+ * by coreboot and GRUB, for computers that lack serial ports.
+ *
+ * Usage example:
+ * parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv
+ *
+ * Originally provided by GNU GRUB, this version is a heavily
+ * modified fork that complies with the OpenBSD Kernel Source
+ * File Style Guide (KNF) instead of GNU coding standards; it
+ * emphasises strict error handling, portability and code
+ * quality, as characterised by OpenBSD projects.
+ *
+ * This fork of spkmodem-recv is provided with Libreboot releases:
+ * https://libreboot.org/
+ */
 
 #define _POSIX_SOURCE
 
@@ -110,13 +123,10 @@ main(int argc, char **argv)
 	argv0 = argv[0];
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
-		switch (c) {
-		case 'd':
-			st.debug = 1;
-			break;
-		default:
+		if (c != 'd')
 			usage();
-		}
+		st.debug = 1;
+		break;
 	}
 
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -134,20 +144,17 @@ handle_audio(struct decoder_state *st)
 
 	if (st->sample_count > (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
-
-	if (valid_signal(st)) {
-
-		if (set_ascii_bit(st) < 0)
-			print_char(st);
-
-		st->sample_count = 0;
-
-		for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
-			decode_pulse(st);
-
-	} else {
+	if (!valid_signal(st)) {
 		decode_pulse(st);
+		return;
 	}
+
+	if (set_ascii_bit(st) < 0)
+		print_char(st);
+
+	st->sample_count = 0;
+	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
+		decode_pulse(st);
 }
 
 static int
@@ -222,12 +229,10 @@ set_ascii_bit(struct decoder_state *st)
 {
 	if (st->debug)
 		print_stats(st);
-
 	if (st->freq_data < FREQ_DATA_THRESHOLD)
 		st->ascii |= (1 << st->ascii_bit);
 
 	st->ascii_bit--;
-
 	return st->ascii_bit;
 }
 
@@ -247,9 +252,7 @@ print_stats(struct decoder_state *st)
 {
 	long pos;
 
-	pos = ftell(stdin);
-
-	if (pos == -1) {
+	if ((pos = ftell(stdin)) == -1) {
 		printf("%d %d %d\n",
 		    st->freq_data,
 		    st->freq_separator,
@@ -282,10 +285,7 @@ err(int errval, const char *msg, ...)
 	vfprintf(stderr, msg, ap);
 	va_end(ap);
 
-	if (!errno)
-		errno = errval;
-
-	fprintf(stderr, ": %s\n", strerror(errno));
+	fprintf(stderr, ": %s\n", strerror(errval));
 	exit(EXIT_FAILURE);
 }
 
