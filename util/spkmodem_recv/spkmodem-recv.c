@@ -56,6 +56,7 @@ struct decoder_state {
 static const char *argv0;
 
 static void handle_audio(struct decoder_state *st);
+static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
@@ -123,10 +124,7 @@ handle_audio(struct decoder_state *st)
 	if (st->sample_count > (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 
-	if ((st->freq_separator > FREQ_SEP_MIN) &&
-	    (st->freq_separator < FREQ_SEP_MAX) &&
-	    (st->freq_data > FREQ_DATA_MIN) &&
-	    (st->freq_data < FREQ_DATA_MAX)) {
+	if (valid_signal(st)) {
 
 		if (set_ascii_bit(st) < 0)
 			print_char(st);
@@ -139,6 +137,15 @@ handle_audio(struct decoder_state *st)
 	} else {
 		decode_pulse(st);
 	}
+}
+
+static int
+valid_signal(struct decoder_state *st)
+{
+	return (st->freq_separator > FREQ_SEP_MIN &&
+	    st->freq_separator < FREQ_SEP_MAX &&
+	    st->freq_data > FREQ_DATA_MIN &&
+	    st->freq_data < FREQ_DATA_MAX);
 }
 
 static void
