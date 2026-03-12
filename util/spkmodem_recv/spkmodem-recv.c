@@ -14,7 +14,7 @@
  * This is performance-efficient on most CPUs, and has relatively
  * high tolerance for noisy signals (similar to techniques used
  * for data stored on audio cassette tapes).
-
+ *
  * This is a special interface provided by coreboot and GNU GRUB,
  * for computers that lack serial ports (useful for debugging).
  * Note that GRUB and coreboot can both send these signals; this
