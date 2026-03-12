@@ -718,12 +718,12 @@ static void
 open_dev_urandom(void)
 {
 	rname = newrandom;
-	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
+	urandom_fd = open(rname, O_RDONLY);
 	if (urandom_fd != -1)
 		return;
 
 	rname = oldrandom;
-	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
+	urandom_fd = open(rname, O_RDONLY);
 }
 
 static void
