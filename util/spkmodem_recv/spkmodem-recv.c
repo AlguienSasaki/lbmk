@@ -186,15 +186,22 @@ decode_pulse(struct decoder_state *st)
 	ringpos = st->ringpos;
 	sep_pos = st->sep_pos;
 
+	/*
+	 * Moving sum of the last N
+	 * pulses; O(1) per sample.
+	 */
 	old_ring = st->pulse[ringpos];
 	old_sep = st->pulse[sep_pos];
-
 	st->freq_data -= old_ring;
 	st->freq_data += old_sep;
 	st->freq_separator -= old_sep;
 
 	sample = read_sample(st);
 
+	/*
+	 * Noise suppression, with a frequency
+	 * tolerancy defined by THRESHOLD.
+	 */
 	if ((unsigned)(sample + THRESHOLD)
 	    > (unsigned)(2 * THRESHOLD))
 		new_pulse = 1;
