@@ -487,11 +487,8 @@ auto_detect_tone(struct decoder_state *st)
 static int
 silent_signal(struct decoder_state *st)
 {
-	if (st->freq_data > 2 || st->freq_separator > 2)
-		return 0;
-
-	st->learn_samples++;
-	return 1;
+	return (st->freq_data <= 2 &&
+	    st->freq_separator <= 2);
 }
 
 /*
