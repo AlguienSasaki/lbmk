@@ -463,12 +463,12 @@ auto_detect_tone(struct decoder_state *st)
 	if (st->learn_samples >= LEARN_SAMPLES)
 		return;
 
+	st->learn_samples++;
+
 	if (silent_signal(st))
 		return;
 
 	select_low_tone(st);
-
-	st->learn_samples++;
 
 	if (st->learn_samples == LEARN_SAMPLES) {
 		st->freq_threshold =
