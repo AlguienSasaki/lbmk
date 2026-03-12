@@ -123,22 +123,22 @@ handle_audio(struct decoder_state *st)
 	if (st->sample_count > (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 
-	if ((st->freq_separator <= FREQ_SEP_MIN) ||
-	    (st->freq_separator >= FREQ_SEP_MAX) ||
-	    (st->freq_data <= FREQ_DATA_MIN) ||
-	    (st->freq_data >= FREQ_DATA_MAX)) {
+	if ((st->freq_separator > FREQ_SEP_MIN) &&
+	    (st->freq_separator < FREQ_SEP_MAX) &&
+	    (st->freq_data > FREQ_DATA_MIN) &&
+	    (st->freq_data < FREQ_DATA_MAX)) {
 
+		if (set_ascii_bit(st) < 0)
+			print_char(st);
+
+		st->sample_count = 0;
+
+		for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
+			decode_pulse(st);
+
+	} else {
 		decode_pulse(st);
-		return;
 	}
-
-	if (set_ascii_bit(st) < 0)
-		print_char(st);
-
-	st->sample_count = 0;
-
-	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
-		decode_pulse(st);
 }
 
 static void
