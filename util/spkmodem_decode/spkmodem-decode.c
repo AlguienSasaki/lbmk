@@ -482,7 +482,9 @@ auto_detect_tone(struct decoder_state *st)
 	f = st->freq_data;
 	if (st->freq_separator > 0 && st->freq_separator < f)
 		f = st->freq_separator;
-	if (f > 0) {
+	if (f > 0 || /* prevent noise from corrupting tone-learning */
+	    st->freq_data > 2 || /* <--- stop from */
+	    st->freq_separator > 2) { /* learning silence if no signal */
 		if (f < st->freq_min)
 			st->freq_min = f;
 
