@@ -239,8 +239,14 @@ print_stats(struct decoder_state *st)
 	long pos;
 
 	pos = ftell(stdin);
-	if (pos == -1)
-		err(errno, "ftell");
+
+	if (pos == -1) {
+		printf("%d %d %d\n",
+		    st->freq_data,
+		    st->freq_separator,
+		    FREQ_DATA_THRESHOLD);
+		return;
+	}
 
 	printf("%d %d %d @%ld\n",
 	    st->freq_data,
