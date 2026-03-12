@@ -822,9 +822,9 @@ read_checksums(void)
 
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
-			err(EINVAL, "%s: part %lu has a bad checksum",
+			err(ECANCELED, "%s: part %lu has a bad checksum",
 			    fname, (unsigned long)part);
-		err(EINVAL, "%s: No valid checksum found in file",
+		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
 	}
 }
