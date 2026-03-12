@@ -26,6 +26,7 @@
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -51,6 +52,7 @@ typedef unsigned int   uint32_t;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
@@ -161,6 +163,7 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static uint16_t hextonum(char ch_s);
 static uint16_t rhex(void);
+static uint16_t fallback_rand(void);
 static void write_mac_part(size_t partnum);
 
 /*
@@ -433,6 +436,8 @@ static size_t cmd_index = CMD_NULL;
 
 typedef char assert_argc3[(ARGC_3==3)?1:-1];
 typedef char assert_argc4[(ARGC_4==4)?1:-1];
+
+static int use_prng = 0;
 
 int
 main(int argc, char *argv[])
@@ -720,6 +725,12 @@ open_dev_urandom(void)
 
 	rname = oldrandom;
 	urandom_fd = open(rname, O_RDONLY);
+	if (urandom_fd != -1)
+		return;
+
+	/* fallback on VERY VERY VERY old unix */
+	use_prng = 1;
+	srand((unsigned)(time(NULL) ^ getpid()));
 }
 
 static void
@@ -996,6 +1007,14 @@ rhex(void)
 	static size_t n = 0;
 	static uint8_t rnum[12];
 
+	if (use_prng) {
+		/*
+		 * On very old Unix systems that
+		 * lack /dev/random and /dev/urandom
+		 */
+		return fallback_rand();
+	}
+
 	if (urandom_fd < 0)
 		err(ECANCELED, "Your operating system has no /dev/[u]random");
 
@@ -1006,6 +1025,22 @@ rhex(void)
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
+}
+
+static uint16_t
+fallback_rand(void)
+{
+	struct timeval tv;
+	unsigned long mix;
+
+	gettimeofday(&tv, NULL);
+
+	mix = (unsigned long)tv.tv_sec
+	    ^ (unsigned long)tv.tv_usec
+	    ^ (unsigned long)getpid()
+	    ^ (unsigned long)(uintptr_t)&mix;
+
+	return (uint16_t)(mix & 0xf);
 }
 
 static void
