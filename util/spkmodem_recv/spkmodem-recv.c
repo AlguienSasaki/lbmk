@@ -49,6 +49,10 @@ struct decoder_state {
 	int ringpos;
 	int sep_pos;
 
+	/*
+	 * Sliding window pulse counters
+	 * used to detect modem tones
+	 */
 	int freq_data;
 	int freq_separator;
 	int sample_count;
