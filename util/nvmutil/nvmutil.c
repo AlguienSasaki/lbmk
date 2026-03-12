@@ -215,6 +215,8 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 static ssize_t rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type);
+static ssize_t rw_file_once(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type, size_t rc);
 static ssize_t do_rw(int fd,
     uint8_t *mem, size_t len, off_t off, int rw_type);
 static ssize_t prw(int fd, void *mem, size_t nrw,
@@ -1427,33 +1429,43 @@ static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type)
 {
-	ssize_t rval = 0;
-	size_t rc = 0;
+	ssize_t rv;
+	size_t rc;
 
 	if (fd < 0 || !len || len > (size_t)SSIZE_MAX) {
 		errno = EIO;
 		return -1;
 	}
 
-	while (rc < len) {
-		rval = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
-
-		if (rval < 0 && errno == EINTR) {
-			continue;
-		} else if (rval < 0) {
-			errno = EIO;
+	for (rc = 0, rv = 0; rc < len; rc += (size_t)rv) {
+		if ((rv = rw_file_once(fd, mem, len, off, rw_type, rc)) == -1)
 			return -1;
-		}
-		if ((size_t)rval > (len - rc) /* Prevent overflow */
-		    || rval == 0) { /* Prevent infinite 0-byte loop */
-			errno = EIO;
-			return -1;
-		}
-
-		rc += (size_t)rval;
 	}
 
 	return rc;
+}
+
+static ssize_t
+rw_file_once(int fd, uint8_t *mem, size_t len,
+    off_t off, int rw_type, size_t rc)
+{
+	ssize_t rv;
+read_again:
+	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
+
+	if (rv < 0 && errno == EINTR) {
+		goto read_again;
+	} else if (rv < 0) {
+		errno = EIO;
+		return -1;
+	}
+	if ((size_t)rv > (len - rc) /* Prevent overflow */
+	    || rv == 0) { /* Prevent infinite 0-byte loop */
+		errno = EIO;
+		return -1;
+	}
+
+	return rv;
 }
 
 static ssize_t
