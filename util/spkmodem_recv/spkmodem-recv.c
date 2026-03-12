@@ -104,15 +104,14 @@ main(int argc, char **argv)
 
 	argv0 = argv[0];
 
-	while (1) {
-		c = getopt(argc, argv, "d");
-		if (c == -1)
-			break;
-
-		if (c == 'd')
+	while ((c = getopt(argc, argv, "d")) != -1) {
+		switch (c) {
+		case 'd':
 			st.debug = 1;
-		else
+			break;
+		default:
 			err(EINVAL, "Invalid argument");
+		}
 	}
 
 	setvbuf(stdout, NULL, _IONBF, 0);
