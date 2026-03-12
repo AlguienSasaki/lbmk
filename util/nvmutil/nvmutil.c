@@ -128,6 +128,22 @@ OBJ = $(SRC:.c=.o)
 ^ explicitly declare the order in which to build
 */
 
+/*
+TODO:
+further note when fuzzing is implemented:
+use deterministic randomisation, with a
+guaranteed seed - so e.g. don't use /dev/urandom
+in test builds. e.g. just use normal rand()
+but with a static seed e.g. 1234
+*/
+/*
+TODO: stricter build flags, e.g.
+CFLAGS += -fstack-protector-strong
+CFLAGS += -fno-common
+CFLAGS += -D_FORTIFY_SOURCE=2
+CFLAGS += -fPIE
+*/
+
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
 #endif
