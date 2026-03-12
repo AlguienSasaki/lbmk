@@ -718,13 +718,8 @@ open_dev_urandom(void)
 	if (urandom_fd != -1)
 		return;
 
-	fprintf(stderr, "Can't open %s (will use %s instead)\n",
-	    newrandom, oldrandom);
-
 	rname = oldrandom;
 	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
-	if (urandom_fd == -1)
-		err(errno, "%s: could not open", rname);
 }
 
 static void
@@ -1000,6 +995,9 @@ rhex(void)
 {
 	static size_t n = 0;
 	static uint8_t rnum[12];
+
+	if (urandom_fd)
+		err(ECANCELED, "Your operating system has no /dev/[u]random");
 
 	if (!n) {
 		n = sizeof(rnum);
