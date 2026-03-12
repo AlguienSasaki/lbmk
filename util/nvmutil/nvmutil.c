@@ -15,6 +15,59 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
+/*
+ * Major TODO: split this into multiple files.
+ * This program has become quite large now, mostly
+ * due to all the extra sanity checks / portability.
+ *
+ * TODO: gettimeofday not posible - use portable functions.
+ * TODO: uint32_t fallback: modify the program instead
+ * to run on 16-bit systems: smaller buffers, and do
+ * operations byte-based instead of word-based.
+ *
+ * TODO: _XOPEN_SOURCE 500 probably not needed anymore.
+ * the portable fallbacks alone are likely enough.
+ * e.g. i don't need stdint, and i don't use pwrite/pread
+ * anymore.
+ *
+ * TODO: version detection of various BSDs to detect
+ * arc4random, use that if available. but also work on
+ * older versions of those BSDs (also MacOS) that lack it.
+ *
+ * TODO: portability/testing on non-Unix systems:
+ * old DOS. all windows versions (probably irrelevant
+ * because you can use cygwin/wsl, whatever), classic MacOS,
+ * also test really old unix e.g. sunos and irix. Be/Haiku too!
+ *
+ * TODO: reliance on global variables for status. make
+ * functions use structs passed as args instead, make
+ * functions re-useable (including libraries), etc.
+ *
+ * TODO: bound checks for files per-command, e.g. only
+ * first 6 bytes for CMD_SETMAC
+ *
+ * TODO: clean up the do_rw function: make PSCHREIB and
+ * so on clearer, probably just define them inline and
+ * validate them inline (no define).
+ *
+ * TODO: general modularisierung of the entire codebase.
+ * TODO: better explain copy/swap read inversion trick
+ *       by improving existing comments
+ * TODO: lots of overwritten comments in code. tidy it up.
+ *
+ * TODO: use getopt for nvmutil args, so that multiple
+ *      operations can be performed, and also on many
+ *	files at once (noting limitations with cat)
+ *
+ * TODO: document fuzzing / static analysis methods
+ * 	for the code, and:
+ * TODO: implement rigorous unit tests (separate util)
+ *
+ * TODO: also document the layout of Intel GbE files, so
+ *       that wily individuals can easily expand the
+ *	featureset of nvmutil.
+ */
+
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
 #endif
