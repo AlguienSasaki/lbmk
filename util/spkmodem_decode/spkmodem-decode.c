@@ -220,7 +220,9 @@ static void collect_separator_tone(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
 static void auto_detect_tone(struct decoder_state *st);
+static int silent_signal(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
+static void select_low_tone(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
 static void print_stats(struct decoder_state *st);
@@ -458,38 +460,13 @@ decode_pulse(struct decoder_state *st)
 static void
 auto_detect_tone(struct decoder_state *st)
 {
-	int f;
-
 	if (st->learn_samples >= LEARN_SAMPLES)
 		return;
 
-	/*
-	 * Ignore silence / near silence.
-	 * Both FIR windows will be near zero when no signal exists.
-	 */
-	if (st->freq_data <= 2 && st->freq_separator <= 2) {
-		st->learn_samples++;
+	if (silent_signal(st))
 		return;
-	}
 
-	/*
-	 * Choose the lowest active tone.
-	 * Separator frames carry tone in the separator window,
-	 * data frames carry tone in the data window.
-	 */
-	f = st->freq_data;
-
-	if (f <= 0 || (st->freq_separator > 0 &&
-	    st->freq_separator < f))
-		f = st->freq_separator;
-
-	if (f > 0) {
-		if (f < st->freq_min)
-			st->freq_min = f;
-
-		if (f > st->freq_max)
-			st->freq_max = f;
-	}
+	select_low_tone(st);
 
 	st->learn_samples++;
 
@@ -501,6 +478,46 @@ auto_detect_tone(struct decoder_state *st)
 			printf("auto threshold: %dHz\n",
 			    st->freq_threshold * FRAME_RATE);
 	}
+}
+
+/*
+ * Ignore silence / near silence.
+ * Both FIR windows will be near zero when no signal exists.
+ */
+static int
+silent_signal(struct decoder_state *st)
+{
+	if (st->freq_data > 2 || st->freq_separator > 2)
+		return 0;
+
+	st->learn_samples++;
+	return 1;
+}
+
+/*
+ * Choose the lowest active tone.
+ * Separator frames carry tone in the separator window,
+ * data frames carry tone in the data window.
+ */
+static void
+select_low_tone(struct decoder_state *st)
+{
+	int f;
+
+	f = st->freq_data;
+
+	if (f <= 0 || (st->freq_separator > 0 &&
+	    st->freq_separator < f))
+		f = st->freq_separator;
+
+	if (f <= 0)
+		return;
+
+	if (f < st->freq_min)
+		st->freq_min = f;
+
+	if (f > st->freq_max)
+		st->freq_max = f;
 }
 
 static signed short
