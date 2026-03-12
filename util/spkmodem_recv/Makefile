@@ -17,7 +17,7 @@ $(PROG): spkmodem-recv.c
 
 install: $(PROG)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin/
-	install $(PROG) $(DESTDIR)$(PREFIX)/bin/
+	install -c $(PROG) $(DESTDIR)$(PREFIX)/bin/
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
