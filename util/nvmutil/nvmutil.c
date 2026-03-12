@@ -1052,9 +1052,10 @@ static void
 print_mac_from_nvm(size_t partnum)
 {
 	size_t c;
+	uint16_t val16;
 
 	for (c = 0; c < 3; c++) {
-		uint16_t val16 = nvm_word(c, partnum);
+		val16 = nvm_word(c, partnum);
 		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
 		if (c == 2)
 			printf("\n");
