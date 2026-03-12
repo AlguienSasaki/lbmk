@@ -307,6 +307,7 @@ handle_audio(struct decoder_state *st)
 		reset_char(st);
 
 	collect_separator_tone(st);
+	decode_pulse(st);
 
 	if (set_ascii_bit(st) < 0)
 		print_char(st);
@@ -328,30 +329,23 @@ collect_separator_tone(struct decoder_state *st)
 	if (valid_signal(st))
 		return;
 
-	if (st->sep_samples >= 50 && st->freq_separator <= 0) {
-		decode_pulse(st);
+	if (st->sep_samples >= 50 && st->freq_separator <= 0)
 		return;
-	}
 
 	st->sep_sum += st->freq_separator;
 	st->sep_samples++;
 
-	if (st->sep_samples != 50) {
-		decode_pulse(st);
+	if (st->sep_samples != 50)
 		return;
-	}
 
 	avg = st->sep_sum / st->sep_samples;
 
-	/* plus or minus pulse window */
 	st->sep_min = avg - SEP_TOLERANCE_PULSES;
 	st->sep_max = avg + SEP_TOLERANCE_PULSES;
 
 	if (st->debug)
 		printf("separator calibrated: %dHz\n",
 		    avg * FRAME_RATE);
-
-	decode_pulse(st);
 }
 
 /*
