@@ -104,10 +104,6 @@ extern int optind;
 extern int opterr;
 extern int optopt;
 
-#ifndef errno
-extern int errno;
-#endif
-
 int
 main(int argc, char **argv)
 {
