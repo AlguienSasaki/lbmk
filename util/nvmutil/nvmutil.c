@@ -1052,20 +1052,20 @@ fallback_rand(void)
 static unsigned long
 entropy_jitter(void)
 {
-    struct timeval a, b;
-    unsigned long mix = 0;
-    int i;
+	struct timeval a, b;
+	unsigned long mix = 0;
+	int i;
 
-    for (i = 0; i < 8; i++) {
-        gettimeofday(&a, NULL);
-        getpid();
-        gettimeofday(&b, NULL);
+	for (i = 0; i < 8; i++) {
+		gettimeofday(&a, NULL);
+		getpid();
+		gettimeofday(&b, NULL);
 
-        mix ^= (unsigned long)(b.tv_usec - a.tv_usec);
-        mix ^= (unsigned long)&mix;
-    }
+		mix ^= (unsigned long)(b.tv_usec - a.tv_usec);
+		mix ^= (unsigned long)&mix;
+	}
 
-    return mix;
+	return mix;
 }
 
 static void
