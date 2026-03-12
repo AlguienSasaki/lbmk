@@ -152,10 +152,14 @@ static void
 decode_pulse(struct decoder_state *st)
 {
 	size_t n;
+	unsigned char old_ring, old_sep;
 
-	st->freq_data -= st->pulse[st->ringpos];
-	st->freq_data += st->pulse[st->sep_pos];
-	st->freq_separator -= st->pulse[st->sep_pos];
+	old_ring = st->pulse[st->ringpos];
+	old_sep = st->pulse[st->sep_pos];
+
+	st->freq_data -= old_ring;
+	st->freq_data += old_sep;
+	st->freq_separator -= old_sep;
 
 	n = fread(&st->frame[st->ringpos], sizeof(st->frame[0]), 1, stdin);
 	if (n != 1) {
