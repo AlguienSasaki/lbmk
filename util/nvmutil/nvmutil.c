@@ -223,7 +223,6 @@ static off_t lseek_eintr(int fd, off_t off, int whence);
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
-static void set_err_if_unset(int errval);
 static void usage(uint8_t usage_exit);
 
 /*
@@ -503,19 +502,12 @@ main(int argc, char *argv[])
 	read_gbe_file();
 	read_checksums();
 
-	errno = 0;
 	run_cmd(cmd_index);
-
-	if (errno && (!(part_valid[0] || part_valid[1])))
-		err(errno, "%s: Unhandled error (WRITE SKIPPED)", fname);
 
 	if (command[cmd_index].flags == O_RDWR)
 		write_gbe_file();
 
 	close_files();
-
-	if (errno)
-		err(errno, "Unhandled error on exit");
 
 	return EXIT_SUCCESS;
 }
@@ -714,7 +706,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	/*
 	 * Should never reach here. This keeps compilers happy.
 	 */
-	set_err_if_unset(EINVAL);
+	errno = EINVAL;
 	return -1;
 }
 
@@ -726,17 +718,8 @@ open_dev_urandom(void)
 	if (urandom_fd != -1)
 		return;
 
-	/*
-	 * Fall back to /dev/random on very old Unix.
-	 *
-	 * We must reset errno, to remove stale state
-	 * set by reading /dev/urandom
-	 */
-
 	fprintf(stderr, "Can't open %s (will use %s instead)\n",
 	    newrandom, oldrandom);
-
-	errno = 0;
 
 	rname = oldrandom;
 	urandom_fd = open(rname, O_RDONLY | O_BINARY | O_NONBLOCK);
@@ -837,9 +820,6 @@ read_checksums(void)
 			++num_invalid;
 	}
 
-	if (num_invalid < max_invalid)
-		errno = 0;
-
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
 			err(EINVAL, "%s: part %lu has a bad checksum",
@@ -858,7 +838,6 @@ good_checksum(size_t partnum)
 	if (current_checksum == expected_checksum)
 		return 1;
 
-	set_err_if_unset(EINVAL);
 	return 0;
 }
 
@@ -874,7 +853,7 @@ static void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err(errno, "Invalid run_cmd arg: %lu",
+		err(EINVAL, "Invalid run_cmd arg: %lu",
 		    (unsigned long)c);
 }
 
@@ -1026,7 +1005,6 @@ rhex(void)
 		n = sizeof(rnum);
 		if (rw_file_exact(urandom_fd, rnum, n, 0, LESEN) == -1)
 			err(errno, "Randomisation failed");
-		errno = 0;
 	}
 
 	return (uint16_t)(rnum[--n] & 0xf);
@@ -1056,9 +1034,6 @@ cmd_helper_dump(void)
 
 	part_valid[0] = good_checksum(0);
 	part_valid[1] = good_checksum(1);
-
-	if (part_valid[0] || part_valid[1])
-		errno = 0;
 
 	for (partnum = 0; partnum < 2; partnum++) {
 		if (!part_valid[partnum])
@@ -1155,19 +1130,7 @@ gbe_cat_buf(uint8_t *b)
 
 		if (errno != EAGAIN)
 			err(errno, "stdout: cat");
-
-		/*
-		 * We assume that no data
-		 * was written to stdout.
-		 */
-		errno = 0;
 	}
-
-	/*
-	 * No errors here.
-	 * Avoid the warning in main()
-	 */
-	errno = 0;
 }
 
 static void
@@ -1331,8 +1294,6 @@ rw_gbe_file_part(size_t p, int rw_type,
 	    rw_type) == -1)
 		err(errno, "%s: %s: part %lu",
 		    fname, rw_type_str, (unsigned long)p);
-
-	errno = 0;
 }
 
 /*
@@ -1411,7 +1372,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	size_t rc = 0;
 
 	if (fd < 0 || !len || len > (size_t)SSIZE_MAX) {
-		set_err_if_unset(EIO);
+		errno = EIO;
 		return -1;
 	}
 
@@ -1421,12 +1382,12 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		if (rval < 0 && errno == EINTR) {
 			continue;
 		} else if (rval < 0) {
-			set_err_if_unset(EIO);
+			errno = EIO;
 			return -1;
 		}
 		if ((size_t)rval > (len - rc) /* Prevent overflow */
 		    || rval == 0) { /* Prevent infinite 0-byte loop */
-			set_err_if_unset(EIO);
+			errno = EIO;
 			return -1;
 		}
 
@@ -1449,7 +1410,7 @@ do_rw(int fd, uint8_t *mem,
 	if (rw_type == PLESEN || rw_type == PSCHREIB)
 		return prw(fd, mem, len, off, rw_type);
 
-	set_err_if_unset(EINVAL);
+	errno = EINVAL;
 	return -1;
 }
 
@@ -1507,23 +1468,12 @@ err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 
-	/*
-	 * We need to ensure that files are closed
-	 * on exit, including error exits. This
-	 * would otherwise recurse, because the
-	 * close_files() function also calls err(),
-	 * but with -1 on nvm_errval. It's the only
-	 * one that does this.
-	 *
-	 * Since the errval is for setting errno, -1
-	 * would be incorrect. Therefore, set_err_if_unset()
-	 * avoids overriding errno if the given value
-	 * is negative.
-	 *
-	 * Be careful modifying err() and close_files().
-	 */
-	if (nvm_errval != -1)
+	if (nvm_errval >= 0) {
 		close_files();
+		errno = nvm_errval;
+	}
+	if (errno <= 0)
+		errno = ECANCELED;
 
 	fprintf(stderr, "%s: ", getnvmprogname());
 
@@ -1531,7 +1481,6 @@ err(int nvm_errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	set_err_if_unset(nvm_errval);
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
@@ -1568,26 +1517,6 @@ getnvmprogname(void)
 		return p + 1;
 	else
 		return argv0;
-}
-
-/*
- * Set errno only if it hasn't already been set.
- * This prevents overriding real libc errors.
- *
- * We use errno for regular program state, while
- * being careful not to clobber what was set by
- * real libc function, or a minority of our stub
- * functions such as prw()
- */
-static void
-set_err_if_unset(int x)
-{
-	if (errno)
-		return;
-	if (x > 0)
-		errno = x;
-	else
-		errno = ECANCELED;
 }
 
 static void
