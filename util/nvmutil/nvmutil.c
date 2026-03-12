@@ -584,7 +584,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(errno, "pledge");
 	if (unveil("/dev/urandom", "r") == -1)
-		err(errno, "unveil '/dev/null'");
+		err(errno, "unveil /dev/urandom");
 #else
 	if (pledge("stdio rpath wpath", NULL) == -1)
 		err(errno, "pledge");
