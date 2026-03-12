@@ -19,6 +19,7 @@
  * Major TODO: split this into multiple files.
  * This program has become quite large now, mostly
  * due to all the extra sanity checks / portability.
+ * Make most of nvmutil a *library* for re-use
  *
  * TODO: gettimeofday not posible - use portable functions.
  * TODO: uint32_t fallback: modify the program instead
@@ -49,6 +50,9 @@
  * TODO: clean up the do_rw function: make PSCHREIB and
  * so on clearer, probably just define them inline and
  * validate them inline (no define).
+ * TODO: in command sanitizer: verify that each given
+ * entry corresponds to the correct function, in the
+ * pointer (this check is currently missing)
  *
  * TODO: general modularisierung of the entire codebase.
  * TODO: better explain copy/swap read inversion trick
@@ -58,15 +62,71 @@
  * TODO: use getopt for nvmutil args, so that multiple
  *      operations can be performed, and also on many
  *	files at once (noting limitations with cat)
+ *	BONUS: implement own getopt(), for portability
  *
  * TODO: document fuzzing / static analysis methods
  * 	for the code, and:
  * TODO: implement rigorous unit tests (separate util)
+ *	NOTE: this would *include* known good test files
+ *	in various configurations, also invalid files.
+ *	the tests would likely be portable posix shell
+ *	scripts rather than a new C program, but a modularisiert
+ *	codebase would allow me to write a separate C
+ *	program to test some finer intricacies
+ * TODO: the unit tests would basically test regressions
+ * TODO: after writing back a gbe to file, close() and
+ *	open() it again, read it again, and check that
+ *	the contents were written correctly, providing
+ *	a warning if they were. do this in the main
+ *	program.
+ * TODO: the unit tests would include an aggressive set
+ *	of fuzz tests, under controlled conditions
  *
  * TODO: also document the layout of Intel GbE files, so
  *       that wily individuals can easily expand the
  *	featureset of nvmutil.
+ * TODO: remove some clever code, e.g.:
+ *	rw_type == PLESEN << 2
+ *	make stuff like that clearer.
+ *	ditto the invert copy/swap trick
+ * TODO: write a manpage
+ * TODO: simplify the command sanitization, implement more
+ *	of it as build time checks, e.g. static asserts.
+ *	generally remove cleverness from the code, instead
+ *	prefyerring readibility
+ * TODO: also document nvmutil's coding style, which is
+ *	its own style at this point!
+ * TODO: when all the above (and possibly more) is done,
+ *	submit this tool to coreboot with a further change
+ *	to their build system that lets users modify
+ *	GbE images, especially set MAC addresses, when
+ *	including GbE files in coreboot configs.
  */
+/*
+ BONUS TODO:
+ CI/CD. woodpecker is good enough, sourcehut also has one.
+	tie this in with other things mentioned here, 
+	e.g. fuzzer / unit tests
+*/
+
+/* Major TODO: reproducible builds
+Test with and without these:
+
+CFLAGS += -fno-record-gcc-switches
+CFLAGS += -ffile-prefix-map=$(PWD)=.
+CFLAGS += -fdebug-prefix-map=$(PWD)=.
+
+I already avoid unique timestamps per-build,
+by not using them, e.g. not reporting build
+time in the program.
+
+When splitting the nvmutil.c file later, do e.g.:
+
+SRC = main.c io.c nvm.c cmd.c
+OBJ = $(SRC:.c=.o)
+
+^ explicitly declare the order in which to build
+*/
 
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
