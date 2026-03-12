@@ -36,9 +36,15 @@
 
 #define THRESHOLD 500
 
+#define READ_BUF 4096
+
 struct decoder_state {
 	signed short frame[MAX_SAMPLES];
 	unsigned char pulse[MAX_SAMPLES];
+
+	signed short inbuf[READ_BUF];
+	size_t inpos;
+	size_t inlen;
 
 	int ringpos;
 	int sep_pos;
@@ -58,6 +64,7 @@ static const char *argv0;
 static void handle_audio(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
+static signed short read_sample(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
 static void print_stats(struct decoder_state *st);
@@ -151,7 +158,6 @@ valid_signal(struct decoder_state *st)
 static void
 decode_pulse(struct decoder_state *st)
 {
-	size_t n;
 	unsigned char old_ring, old_sep;
 	unsigned char new_pulse;
 
@@ -162,12 +168,7 @@ decode_pulse(struct decoder_state *st)
 	st->freq_data += old_sep;
 	st->freq_separator -= old_sep;
 
-	n = fread(&st->frame[st->ringpos], sizeof(st->frame[0]), 1, stdin);
-	if (n != 1) {
-		if (feof(stdin))
-			exit(EXIT_SUCCESS);
-		err(errno, "stdin read");
-	}
+	st->frame[st->ringpos] = read_sample(st);
 
 	new_pulse = abs(st->frame[st->ringpos]) > THRESHOLD;
 	st->pulse[st->ringpos] = new_pulse;
@@ -182,6 +183,29 @@ decode_pulse(struct decoder_state *st)
 		st->sep_pos = 0;
 
 	st->sample_count++;
+}
+
+static signed short
+read_sample(struct decoder_state *st)
+{
+	size_t n;
+
+	if (st->inpos >= st->inlen) {
+
+		n = fread(st->inbuf, sizeof(st->inbuf[0]),
+		    READ_BUF, stdin);
+
+		if (n == 0) {
+			if (feof(stdin))
+				exit(EXIT_SUCCESS);
+			err(errno, "stdin read");
+		}
+
+		st->inpos = 0;
+		st->inlen = n;
+	}
+
+	return st->inbuf[st->inpos++];
 }
 
 static int
