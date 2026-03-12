@@ -216,6 +216,7 @@ static const char *argv0;
 
 static int host_is_big_endian(void);
 static void handle_audio(struct decoder_state *st);
+static void collect_separator_tone(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
 static void auto_detect_tone(struct decoder_state *st);
@@ -296,7 +297,6 @@ host_is_big_endian(void)
 static void
 handle_audio(struct decoder_state *st)
 {
-	int avg;
 	int sample;
 
 	/*
@@ -306,32 +306,7 @@ handle_audio(struct decoder_state *st)
 	if (st->sample_count >= (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 
-	if (!valid_signal(st)) {
-
-		/*
-		 * collect separator tone statistics
-		 * (and auto-adjust tolerances)
-		 */
-		if (st->sep_samples < 50 && st->freq_separator > 0) {
-			st->sep_sum += st->freq_separator;
-			st->sep_samples++;
-
-			if (st->sep_samples == 50) {
-				avg = st->sep_sum / st->sep_samples;
-
-				/* plus or minus 3 pulse window */
-				st->sep_min = avg - SEP_TOLERANCE_PULSES;
-				st->sep_max = avg + SEP_TOLERANCE_PULSES;
-
-				if (st->debug)
-					printf("separator calibrated: %dHz\n",
-					    avg * FRAME_RATE);
-			}
-		}
-
-		decode_pulse(st);
-		return;
-	}
+	collect_separator_tone(st);
 
 	if (set_ascii_bit(st) < 0)
 		print_char(st);
@@ -339,6 +314,44 @@ handle_audio(struct decoder_state *st)
 	st->sample_count = 0;
 	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		decode_pulse(st);
+}
+
+/*
+ * collect separator tone statistics
+ * (and auto-adjust tolerances)
+ */
+static void
+collect_separator_tone(struct decoder_state *st)
+{
+	int avg;
+
+	if (valid_signal(st))
+		return;
+
+	if (st->sep_samples >= 50 && st->freq_separator <= 0) {
+		decode_pulse(st);
+		return;
+	}
+
+	st->sep_sum += st->freq_separator;
+	st->sep_samples++;
+
+	if (st->sep_samples != 50) {
+		decode_pulse(st);
+		return;
+	}
+
+	avg = st->sep_sum / st->sep_samples;
+
+	/* plus or minus pulse window */
+	st->sep_min = avg - SEP_TOLERANCE_PULSES;
+	st->sep_max = avg + SEP_TOLERANCE_PULSES;
+
+	if (st->debug)
+		printf("separator calibrated: %dHz\n",
+		    avg * FRAME_RATE);
+
+	decode_pulse(st);
 }
 
 /*
