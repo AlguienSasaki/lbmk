@@ -17,8 +17,7 @@ $(PROG): nvmutil.c
 	$(CC) $(CFLAGS) $(LDFLAGS) nvmutil.c -o $(PROG)
 
 install: $(PROG)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/
+	$(INSTALL) -d $(PROG) $(DESTDIR)$(PREFIX)/bin/
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
 
 uninstall:
