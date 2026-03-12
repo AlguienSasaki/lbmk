@@ -71,6 +71,7 @@ static void print_stats(struct decoder_state *st);
 static void reset_char(struct decoder_state *st);
 
 static void err(int errval, const char *msg, ...);
+static void usage(void);
 static const char *progname(void);
 
 int getopt(int, char * const *, const char *);
@@ -110,7 +111,7 @@ main(int argc, char **argv)
 			st.debug = 1;
 			break;
 		default:
-			err(EINVAL, "Invalid argument");
+			usage();
 		}
 	}
 
@@ -276,6 +277,13 @@ err(int errval, const char *msg, ...)
 		errno = errval;
 
 	fprintf(stderr, ": %s\n", strerror(errno));
+	exit(EXIT_FAILURE);
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "usage: %s [-d]\n", progname());
 	exit(EXIT_FAILURE);
 }
 
