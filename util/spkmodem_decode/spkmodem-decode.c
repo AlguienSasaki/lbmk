@@ -128,6 +128,9 @@
 #define SEP_TONE_MIN_HZ 1000
 #define SEP_TONE_MAX_HZ 3000
 
+#define SEP_TOLERANCE_PULSES \
+    (((SEP_TONE_MAX_HZ) - (SEP_TONE_MIN_HZ)) / (2 * (FRAME_RATE)))
+
 #define DATA_TONE_MIN_HZ 3000
 #define DATA_TONE_MAX_HZ 12000
 
@@ -180,6 +183,12 @@ struct decoder_state {
 
 	int debug;
 	int swap_bytes;
+
+	/* dynamic separator calibration */
+	int sep_sum;
+	int sep_samples;
+	int sep_min;
+	int sep_max;
 };
 
 static const char *argv0;
@@ -228,6 +237,12 @@ main(int argc, char **argv)
 		break;
 	}
 
+	/*
+	 * Used for separator calibration
+	 */
+	st.sep_min = FREQ_SEP_MIN;
+	st.sep_max = FREQ_SEP_MAX;
+
 	st.ascii_bit = 7;
 
 	st.ringpos = 0;
@@ -254,6 +269,7 @@ host_is_big_endian(void)
 static void
 handle_audio(struct decoder_state *st)
 {
+	int avg;
 	int sample;
 
 	/*
@@ -262,7 +278,30 @@ handle_audio(struct decoder_state *st)
 	 */
 	if (st->sample_count >= (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
+
 	if (!valid_signal(st)) {
+
+		/*
+		 * collect separator tone statistics
+		 * (and auto-adjust tolerances)
+		 */
+		if (st->sep_samples < 50 && st->freq_separator > 0) {
+			st->sep_sum += st->freq_separator;
+			st->sep_samples++;
+
+			if (st->sep_samples == 50) {
+				avg = st->sep_sum / st->sep_samples;
+
+				/* plus or minus 3 pulse window */
+				st->sep_min = avg - SEP_TOLERANCE_PULSES;
+				st->sep_max = avg + SEP_TOLERANCE_PULSES;
+
+				if (st->debug)
+					printf("separator calibrated: %dHz\n",
+					    avg * FRAME_RATE);
+			}
+		}
+
 		decode_pulse(st);
 		return;
 	}
@@ -283,8 +322,8 @@ handle_audio(struct decoder_state *st)
 static int
 valid_signal(struct decoder_state *st)
 {
-	return (st->freq_separator > FREQ_SEP_MIN &&
-	    st->freq_separator < FREQ_SEP_MAX &&
+	return (st->freq_separator > st->sep_min &&
+	    st->freq_separator < st->sep_max &&
 	    st->freq_data > FREQ_DATA_MIN &&
 	    st->freq_data < FREQ_DATA_MAX);
 }
@@ -438,24 +477,30 @@ print_stats(struct decoder_state *st)
 
 	int data_hz = st->freq_data * FRAME_RATE;
 	int sep_hz  = st->freq_separator * FRAME_RATE;
+	int sep_hz_min = st->sep_min * FRAME_RATE;
+	int sep_hz_max = st->sep_max * FRAME_RATE;
 
 	if ((pos = ftell(stdin)) == -1) {
-		printf("%d %d %d data=%dHz sep=%dHz\n",
+		printf("%d %d %d data=%dHz sep=%dHz(min %dHz %dHz)\n",
 		    st->freq_data,
 		    st->freq_separator,
 		    FREQ_DATA_THRESHOLD,
 		    data_hz,
-		    sep_hz);
+		    sep_hz,
+		    sep_hz_min,
+		    sep_hz_max);
 		return;
 	}
 
-	printf("%d %d %d @%ld data=%dHz sep=%dHz\n",
+	printf("%d %d %d @%ld data=%dHz sep=%dHz(min %dHz %dHz)\n",
 	    st->freq_data,
 	    st->freq_separator,
 	    FREQ_DATA_THRESHOLD,
 	    pos - SAMPLE_OFFSET,
 	    data_hz,
-	    sep_hz);
+	    sep_hz,
+	    sep_hz_min,
+	    sep_hz_max);
 }
 
 static void
