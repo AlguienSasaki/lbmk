@@ -12,7 +12,7 @@
  *
  * Recommended CFLAGS for Clang/GCC:
  *
- * -Os -Wall -Wextra -Werror -pedantic -std=c99
+ * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
 #ifndef _XOPEN_SOURCE
