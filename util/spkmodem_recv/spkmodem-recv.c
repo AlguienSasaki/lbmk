@@ -4,8 +4,22 @@
  * Copyright (c) 2023, 2026 Leah Rowe <leah@libreboot.org>
  *
  * This program receives text encoded as pulses on the PC speaker,
- * and decodes them. This is a special type of interface provided
- * by coreboot and GRUB, for computers that lack serial ports.
+ * and decodes them via simple FSK (Frequency Shift Keying)
+ * demodulation and FIR (Finite Impulse Response) frequency
+ * discriminator.
+ *
+ * It waits for specific tones at specific intervals.
+ * It detects tones within the audio stream and reconstructs
+ * characters bit-by-bit as the encoded modem signal is received.
+ * This is performance-efficient on most CPUs, and has relatively
+ * high tolerance for noisy signals (similar to techniques used
+ * for data stored on audio cassette tapes).
+
+ * This is a special interface provided by coreboot and GNU GRUB,
+ * for computers that lack serial ports (useful for debugging).
+ * Note that GRUB and coreboot can both send these signals; this
+ * tool merely decodes them. This tool does not *encode*, only
+ * decode.
  *
  * Usage example (NOTE: little endian!):
  * parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv
@@ -14,7 +28,16 @@
  * modified fork that complies with the OpenBSD Kernel Source
  * File Style Guide (KNF) instead of GNU coding standards; it
  * emphasises strict error handling, portability and code
- * quality, as characterised by OpenBSD projects.
+ * quality, as characterised by OpenBSD projects. Several magic
+ * numbers have been tidied up, calculated (not hardcoded) and
+ * thoroughly explained, unlike in the original version.
+ *
+ * The original version was essentially a blob, masquerading as
+ * source code. This forked source code is therefore the result
+ * of extensive reverse engineering (of the GNU source code)!
+ * This cleaned up code and extensive commenting will thoroughly
+ * explain how the decoding works. This was done as an academic
+ * exercise in 2023, continuing in 2026.
  *
  * This fork of spkmodem-recv is provided with Libreboot releases:
  * https://libreboot.org/
@@ -38,11 +61,11 @@
 #include <unistd.h>
 
 /*
- * spkmodem is essentially used FSK (Frequency Shift Keying)
- * with two frequencies: tone A (bit 0) and tone B (bit 1),
- * detected via pulse density inside a given window.
- * Very cheap on CPU cycles and avoids neeing something more
- * complicated like FFT or Goertzel filters, and tolerates
+ * spkmodem is essentially using FSK (Frequency Shift Keying)
+ * with two primary tones representing encoded bits,
+ * separated by a framing tone.
+ * Very cheap on CPU cycles and avoids needing something more
+ * expensive like FFT or Goertzel filters, and tolerates
  * weak/noisy signals.
  */
 
@@ -52,17 +75,31 @@
 #define SAMPLE_RATE 48000
 
 /*
- * A frame is 5ms, so samples
- * per frame is N / 48000 = 0.005 (5ms)
- * => N = 0.005 * 48000 = 240
+ * One analysis frame spans 5 ms.
+ *
+ *   frame_time = SAMPLES_PER_FRAME / SAMPLE_RATE
+ *
+ * With the default sample rate (48 kHz):
+ *
+ *   frame_time = N / 48000
+ *   0.005 s = N / 48000
+ *   N = 0.005 × 48000 = 240 samples
  */
 #define SAMPLES_PER_FRAME 240
 
-/* = 48000 / 240 = 200 Hz resolution */
+/*
+ * Number of analysis frames per second.
+ *
+ * Each increment in the frequency counters corresponds
+ * roughly to this many Hertz of tone frequency.
+ *
+ * With the default values:
+ *   FRAME_RATE = 48000 / 240 = 200 Hz
+ */
 #define FRAME_RATE ((SAMPLE_RATE) / (SAMPLES_PER_FRAME))
 
 /*
- * Two FIR windows are maintained; one for data done,
+ * Two FIR windows are maintained; one for data tone,
  * and one for the separator tone. They are positioned
  * one frame apart in the ring buffer.
  */
@@ -89,7 +126,9 @@
 #define DATA_TONE_THRESHOLD_HZ 5000
 
 /*
- * Convert tone frequencies within the sliding window, into pulse counts
+ * Convert tone frequency ranges into pulse counts within the
+ * sliding analysis window.
+ *
  * pulse_count is: tone_frequency / FRAME_RATE
  * where FRAME_RATE = SAMPLE_RATE / SAMPLES_PER_FRAME.
  */
@@ -103,7 +142,7 @@
 
 /*
  * Sample amplitude threshold used to convert the waveform
- * into a pulse stream. Values near zero regarded as noise.
+ * into a pulse stream. Values near zero are regarded as noise.
  */
 #define THRESHOLD 500
 
@@ -207,6 +246,10 @@ handle_audio(struct decoder_state *st)
 {
 	int sample;
 
+	/*
+	 * If the modem signal disappears for several frames,
+	 * discard the partially assembled character.
+	 */
 	if (st->sample_count > (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 	if (!valid_signal(st)) {
@@ -222,6 +265,11 @@ handle_audio(struct decoder_state *st)
 		decode_pulse(st);
 }
 
+/*
+ * Verify that the observed pulse densities fall within the
+ * expected ranges for spkmodem tones. This prevents random noise
+ * from being misinterpreted as data.
+ */
 static int
 valid_signal(struct decoder_state *st)
 {
@@ -231,6 +279,9 @@ valid_signal(struct decoder_state *st)
 	    st->freq_data < FREQ_DATA_MAX);
 }
 
+/*
+ * Main demodulation step (moving-sum FIR filter).
+ */
 static void
 decode_pulse(struct decoder_state *st)
 {
@@ -244,11 +295,29 @@ decode_pulse(struct decoder_state *st)
 	sep_pos = st->sep_pos;
 
 	/*
-	 * Moving sum of the last N
-	 * pulses; O(1) per sample.
+	 * Sliding rectangular FIR (Finite Impulse Response) filter.
+	 *
+	 * After thresholding, the signal becomes a stream of 0/1 pulses.
+	 * The decoder measures pulse density over two windows:
+	 *
+	 * freq_data: pulses in the "data" window
+	 * freq_separator: pulses in the "separator" window
+	 *
+	 * Instead of calculating each window every time (O(N) per frame), we
+	 * update the window sums incrementally:
+	 *
+	 *   sum_new = sum_old - pulse_leaving + pulse_entering
+	 *
+	 * This keeps the filter O(1) per sample instead of O(N).
+	 * The technique is equivalent to a rectangular FIR filter
+	 * implemented as a sliding moving sum.
+	 *
+	 * The two windows are exactly SAMPLES_PER_FRAME apart in the ring
+	 * buffer, so the pulse leaving the data window is simultaneously
+	 * entering the separator window.
 	 */
 	old_ring = st->pulse[ringpos];
-	old_sep = st->pulse[sep_pos];
+	old_sep  = st->pulse[sep_pos];
 	st->freq_data -= old_ring;
 	st->freq_data += old_sep;
 	st->freq_separator -= old_sep;
@@ -256,8 +325,12 @@ decode_pulse(struct decoder_state *st)
 	sample = read_sample(st);
 
 	/*
-	 * Noise suppression, with a frequency
-	 * tolerancy defined by THRESHOLD.
+	 * Convert the waveform sample into a pulse (0 or 1).
+	 *
+	 * The unsigned comparison creates a small dead zone near zero,
+	 * suppressing small amplitude noise from microphones or
+	 * cheap ADCs. Real PC speaker tones are far outside this
+	 * range, so they still produce clean pulses.
 	 */
 	if ((unsigned)(sample + THRESHOLD)
 	    > (unsigned)(2 * THRESHOLD))
@@ -268,10 +341,14 @@ decode_pulse(struct decoder_state *st)
 	st->pulse[ringpos] = new_pulse;
 	st->freq_separator += new_pulse;
 
+	/*
+	 * Advance both FIR windows through the ring buffer.
+	 * The separator window always stays one frame ahead
+	 * of the data window.
+	 */
 	ringpos++;
 	if (ringpos >= MAX_SAMPLES)
 		ringpos = 0;
-
 	sep_pos++;
 	if (sep_pos >= MAX_SAMPLES)
 		sep_pos = 0;
@@ -317,6 +394,10 @@ read_sample(struct decoder_state *st)
 	return sample;
 }
 
+/*
+ * Each validated frame contributes one bit of modem data.
+ * Bits are accumulated MSB-first into the ASCII byte.
+ */
 static int
 set_ascii_bit(struct decoder_state *st)
 {
