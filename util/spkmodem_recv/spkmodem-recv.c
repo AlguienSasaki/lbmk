@@ -39,6 +39,7 @@
 
 #define SAMPLES_PER_FRAME 240
 #define MAX_SAMPLES (2 * SAMPLES_PER_FRAME)
+#define SAMPLE_OFFSET (MAX_SAMPLES * sizeof(short))
 
 #define FREQ_SEP_MIN 5
 #define FREQ_SEP_MAX 15
@@ -52,7 +53,6 @@
 #define READ_BUF 4096
 
 struct decoder_state {
-	signed short frame[MAX_SAMPLES];
 	unsigned char pulse[MAX_SAMPLES];
 
 	signed short inbuf[READ_BUF];
@@ -192,7 +192,6 @@ decode_pulse(struct decoder_state *st)
 	st->freq_separator -= old_sep;
 
 	sample = read_sample(st);
-	st->frame[ringpos] = sample;
 
 	if ((unsigned)(sample + THRESHOLD)
 	    > (unsigned)(2 * THRESHOLD))
@@ -291,7 +290,7 @@ print_stats(struct decoder_state *st)
 	    st->freq_data,
 	    st->freq_separator,
 	    FREQ_DATA_THRESHOLD,
-	    pos - sizeof(st->frame));
+	    pos - SAMPLE_OFFSET);
 }
 
 static void
