@@ -1032,13 +1032,15 @@ fallback_rand(void)
 {
 	struct timeval tv;
 	unsigned long mix;
+	static unsigned long counter = 0;
 
 	gettimeofday(&tv, NULL);
 
 	mix = (unsigned long)tv.tv_sec
 	    ^ (unsigned long)tv.tv_usec
 	    ^ (unsigned long)getpid()
-	    ^ (unsigned long)(uintptr_t)&mix;
+	    ^ (unsigned long)&mix
+	    ^ counter++;
 
 	return (uint16_t)(mix & 0xf);
 }
