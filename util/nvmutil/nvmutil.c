@@ -1461,6 +1461,9 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, size_t rc)
 {
 	ssize_t rv;
+	size_t retries_on_zero = 0;
+	size_t max_retries = 10;
+
 read_again:
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
@@ -1479,17 +1482,17 @@ read_again:
 	 */
 	if ((size_t)rv > (len - rc) /* Prevent overflow */
 	    || rv == 0) { /* Prevent infinite 0-byte loop */
-		/*
-		 * TODO: handle rv == 0 this way:
-		 * re-try a finite number of times,
-		 * based on a counter, that resets
-		 * on a non-zero read but then returns
-		 * like below if the counter reaches
-		 * the limit. This will retain the
-		 * current safety, while increasing
-		 * robustness e.g. on unreliable NFS
-		 * shares or really slow media.
-		 */
+		if (rv == 0) {
+			/*
+			 * Fault tolerance against infinite
+			 * zero-byte loop: re-try a finite
+			 * number of times. This mitigates
+			 * otherwise OK but slow filesystems
+			 * e.g. NFS or slow media.
+			 */
+			if (retries_on_zero++ < max_retries)
+				goto read_again;
+		}
 		errno = EIO;
 		return -1;
 	}
