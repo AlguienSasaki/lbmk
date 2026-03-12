@@ -1424,6 +1424,17 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * be used on sockets or pipes, because 0-byte
  * reads are treated like fatal errors. This
  * means that EOF is also considered fatal.
+ *
+ * WARNING: Do not use O_APPEND on open() when
+ * using this function. If you do, POSIX allows
+ * write() to ignore the current file offset and
+ * write at EOF, which means that our use of
+ * lseek in prw() does not guarantee writing at
+ * a specified offset. So if using PSCHREIB or
+ * PLESEN, make sure not to pass a file descriptor
+ * with the O_APPEND flag. Alternatively, modify
+ * do_rw() to directly use pwrite() and pread()
+ * instead of prw().
  */
 static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
@@ -1459,6 +1470,13 @@ read_again:
 		errno = EIO;
 		return -1;
 	}
+
+	/*
+	 * Theoretical bug: if a buggy libc returned
+	 * a size larger than SSIZE_MAX, the cast may
+	 * cause an overflow. Specifications guarantee
+	 * this won't happen, but spec != implementation
+	 */
 	if ((size_t)rv > (len - rc) /* Prevent overflow */
 	    || rv == 0) { /* Prevent infinite 0-byte loop */
 		errno = EIO;
