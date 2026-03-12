@@ -18,7 +18,8 @@ $(PROG): nvmutil.c
 
 install: $(PROG)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) -m 755 $(PROG) $(DESTDIR)$(PREFIX)/bin/
+	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
