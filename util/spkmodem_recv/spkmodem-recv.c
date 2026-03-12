@@ -174,8 +174,8 @@ decode_pulse(struct decoder_state *st)
 
 	st->frame[st->ringpos] = read_sample(st);
 
-	if (st->frame[st->ringpos] > THRESHOLD ||
-	    st->frame[st->ringpos] < -THRESHOLD)
+	if ((unsigned)(st->frame[st->ringpos] + THRESHOLD)
+	    > (unsigned)(2 * THRESHOLD))
 		new_pulse = 1;
 	else
 		new_pulse = 0;
