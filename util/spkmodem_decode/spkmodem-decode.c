@@ -349,10 +349,8 @@ handle_audio(struct decoder_state *st)
 static int
 valid_signal(struct decoder_state *st)
 {
-	return (st->freq_separator > st->sep_min &&
-	    st->freq_separator < st->sep_max &&
-	    st->freq_data > FREQ_DATA_MIN &&
-	    st->freq_data < FREQ_DATA_MAX);
+	return (st->freq_separator > 0 &&
+	    st->freq_data > 0);
 }
 
 /*
