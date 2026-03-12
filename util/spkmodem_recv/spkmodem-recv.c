@@ -179,28 +179,35 @@ decode_pulse(struct decoder_state *st)
 {
 	unsigned char old_ring, old_sep;
 	unsigned char new_pulse;
+	int ringpos;
+	signed short sample;
 
-	old_ring = st->pulse[st->ringpos];
+	ringpos = st->ringpos;
+
+	old_ring = st->pulse[ringpos];
 	old_sep = st->pulse[st->sep_pos];
 
 	st->freq_data -= old_ring;
 	st->freq_data += old_sep;
 	st->freq_separator -= old_sep;
 
-	st->frame[st->ringpos] = read_sample(st);
+	sample = read_sample(st);
+	st->frame[ringpos] = sample;
 
-	if ((unsigned)(st->frame[st->ringpos] + THRESHOLD)
+	if ((unsigned)(sample + THRESHOLD)
 	    > (unsigned)(2 * THRESHOLD))
 		new_pulse = 1;
 	else
 		new_pulse = 0;
 
-	st->pulse[st->ringpos] = new_pulse;
+	st->pulse[ringpos] = new_pulse;
 	st->freq_separator += new_pulse;
 
-	st->ringpos++;
-	if (st->ringpos >= MAX_SAMPLES)
-		st->ringpos = 0;
+	ringpos++;
+	if (ringpos >= MAX_SAMPLES)
+		ringpos = 0;
+
+	st->ringpos = ringpos;
 
 	st->sep_pos++;
 	if (st->sep_pos >= MAX_SAMPLES)
