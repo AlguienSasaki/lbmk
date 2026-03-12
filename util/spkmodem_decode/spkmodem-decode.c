@@ -451,15 +451,30 @@ decode_pulse(struct decoder_state *st)
 static void
 auto_detect_tone(struct decoder_state *st)
 {
+	int f;
+
+	/*
+	 * Don't also run auto-detect during decode,
+	 * otherwise it would run for every sample.
+	 */
 	if (st->learn_samples >= LEARN_SAMPLES)
 		return;
 
-	if (st->freq_data > 0) {
-		if (st->freq_data < st->freq_min)
-			st->freq_min = st->freq_data;
+	/*
+	 * Check both FIR windows.
+	 * Inside separator frames, the separator window contains tone,
+	 * during data frames the data window does; a minimum of
+	 * the two captures the lowest active tone cluster more reliably.
+	 */
+	f = st->freq_data;
+	if (st->freq_separator > 0 && st->freq_separator < f)
+		f = st->freq_separator;
+	if (f > 0) {
+		if (f < st->freq_min)
+			st->freq_min = f;
 
-		if (st->freq_data > st->freq_max)
-			st->freq_max = st->freq_data;
+		if (f > st->freq_max)
+			st->freq_max = f;
 	}
 
 	st->learn_samples++;
