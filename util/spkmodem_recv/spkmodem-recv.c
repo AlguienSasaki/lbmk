@@ -190,7 +190,7 @@ read_sample(struct decoder_state *st)
 {
 	size_t n;
 
-	if (st->inpos >= st->inlen) {
+	while (st->inpos >= st->inlen) {
 
 		n = fread(st->inbuf, sizeof(st->inbuf[0]),
 		    READ_BUF, stdin);
