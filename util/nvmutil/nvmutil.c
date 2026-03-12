@@ -1000,7 +1000,7 @@ rhex(void)
 	static size_t n = 0;
 	static uint8_t rnum[12];
 
-	if (urandom_fd)
+	if (urandom_fd < 0)
 		err(ECANCELED, "Your operating system has no /dev/[u]random");
 
 	if (!n) {
