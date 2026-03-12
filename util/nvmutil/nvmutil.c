@@ -1036,6 +1036,14 @@ fallback_rand(void)
 	    ^ (unsigned long)&mix
 	    ^ counter++;
 
+	/*
+	 * Stack addresses can vary between
+	 * calls, thus increasing entropy.
+	 */
+	mix ^= (unsigned long)&mix;
+	mix ^= (unsigned long)&tv;
+	mix ^= (unsigned long)&counter;
+
 	return (uint16_t)(mix & 0xf);
 }
 
