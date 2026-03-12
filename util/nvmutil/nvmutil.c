@@ -1480,6 +1480,12 @@ read_again:
 	 * cause an overflow. Specifications guarantee
 	 * this won't happen, but spec != implementation
 	 */
+	if ((size_t)rv > SSIZE_MAX) {
+		errno = EIO;
+		return -1;
+		/* we will not tolerate your buggy libc */
+	}
+
 	if ((size_t)rv > (len - rc) /* Prevent overflow */
 	    || rv == 0) { /* Prevent infinite 0-byte loop */
 		if (rv == 0) {
