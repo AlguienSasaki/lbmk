@@ -436,13 +436,16 @@ print_stats(struct decoder_state *st)
 {
 	long pos;
 
+	int data_hz = st->freq_data * FRAME_RATE;
+	int sep_hz  = st->freq_separator * FRAME_RATE;
+
 	if ((pos = ftell(stdin)) == -1) {
 		printf("%d %d %d data=%dHz sep=%dHz\n",
 		    st->freq_data,
 		    st->freq_separator,
 		    FREQ_DATA_THRESHOLD,
-		    st->freq_data * FRAME_RATE,
-		    st->freq_separator * FRAME_RATE);
+		    data_hz,
+		    sep_hz);
 		return;
 	}
 
@@ -451,8 +454,8 @@ print_stats(struct decoder_state *st)
 	    st->freq_separator,
 	    FREQ_DATA_THRESHOLD,
 	    pos - SAMPLE_OFFSET,
-	    st->freq_data * FRAME_RATE,
-	    st->freq_separator * FRAME_RATE);
+	    data_hz,
+	    sep_hz);
 }
 
 static void
