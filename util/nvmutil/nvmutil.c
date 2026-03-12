@@ -431,10 +431,6 @@ static const struct commands command[] = {
  */
 static size_t cmd_index = CMD_NULL;
 
-#ifndef errno
-extern int errno;
-#endif
-
 typedef char assert_argc3[(ARGC_3==3)?1:-1];
 typedef char assert_argc4[(ARGC_4==4)?1:-1];
 
