@@ -7,7 +7,7 @@
  * and decodes them. This is a special type of interface provided
  * by coreboot and GRUB, for computers that lack serial ports.
  *
- * Usage example:
+ * Usage example (NOTE: little endian!):
  * parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv
  *
  * Originally provided by GNU GRUB, this version is a heavily
@@ -50,6 +50,13 @@
 #define THRESHOLD 500
 
 #define READ_BUF 4096
+
+/* TODO: handle this at runtime instead (bswap) */
+#if defined(__BYTE_ORDER__)
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#error "spkmodem-recv requires little-endian samples"
+#endif
+#endif
 
 struct decoder_state {
 	signed short frame[MAX_SAMPLES];
