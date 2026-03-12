@@ -22,7 +22,7 @@
  * decode.
  *
  * Usage example (NOTE: little endian!):
- * parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-recv
+ * parec --channels=1 --rate=48000 --format=s16le | ./spkmodem-decode
  *
  * Originally provided by GNU GRUB, this version is a heavily
  * modified fork that complies with the OpenBSD Kernel Source
@@ -39,8 +39,17 @@
  * explain how the decoding works. This was done as an academic
  * exercise in 2023, continuing in 2026.
  *
- * This fork of spkmodem-recv is provided with Libreboot releases:
+ * This fork of spkmodem-recv, called spkmodem-decode, is provided
+ * with Libreboot releases:
  * https://libreboot.org/
+ *
+ * The original GNU version is here, if you're morbidly curious:
+ * https://cgit.git.savannah.gnu.org/cgit/grub.git/plain/util/spkmodem-recv.c?id=3dce38eb196f47bdf86ab028de74be40e13f19fd
+ *
+ * Libreboot's version was renamed to spkmodem-decode on 12 March 2026,
+ * since Libreboot's version no longer closely resembles the GNU
+ * version at all; ergo, a full rename was in order. GNU's version
+ * was called spkmodem-recv.
  */
 
 #define _POSIX_SOURCE

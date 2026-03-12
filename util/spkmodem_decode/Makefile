@@ -8,12 +8,12 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
-PROG=spkmodem-recv
+PROG=spkmodem-decode
 
 all: $(PROG)
 
-$(PROG): spkmodem-recv.c
-	$(CC) $(CFLAGS) spkmodem-recv.c -o $(PROG)
+$(PROG): spkmodem-decode.c
+	$(CC) $(CFLAGS) spkmodem-decode.c -o $(PROG)
 
 install: $(PROG)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin/
