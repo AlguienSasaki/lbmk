@@ -41,6 +41,8 @@ struct decoder_state {
 	unsigned char pulse[MAX_SAMPLES];
 
 	int ringpos;
+	int sep_pos;
+
 	int freq_data;
 	int freq_separator;
 	int sample_count;
@@ -88,6 +90,9 @@ main(int argc, char **argv)
 
 	memset(&st, 0, sizeof(st));
 	st.ascii_bit = 7;
+
+	st.ringpos = 0;
+	st.sep_pos = SAMPLES_PER_FRAME;
 
 	argv0 = argv[0];
 
@@ -140,15 +145,10 @@ static void
 decode_pulse(struct decoder_state *st)
 {
 	size_t n;
-	int next;
-
-	next = st->ringpos + SAMPLES_PER_FRAME;
-	if (next >= MAX_SAMPLES)
-		next -= MAX_SAMPLES;
 
 	st->freq_data -= st->pulse[st->ringpos];
-	st->freq_data += st->pulse[next];
-	st->freq_separator -= st->pulse[next];
+	st->freq_data += st->pulse[st->sep_pos];
+	st->freq_separator -= st->pulse[st->sep_pos];
 
 	n = fread(&st->frame[st->ringpos], sizeof(st->frame[0]), 1, stdin);
 	if (n != 1) {
@@ -165,6 +165,10 @@ decode_pulse(struct decoder_state *st)
 	st->ringpos++;
 	if (st->ringpos >= MAX_SAMPLES)
 		st->ringpos = 0;
+
+	st->sep_pos++;
+	if (st->sep_pos >= MAX_SAMPLES)
+		st->sep_pos = 0;
 
 	st->sample_count++;
 }
