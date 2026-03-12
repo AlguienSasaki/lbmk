@@ -220,10 +220,6 @@ main(int argc, char **argv)
 #endif
 
 	memset(&st, 0, sizeof(st));
-	st.ascii_bit = 7;
-
-	st.ringpos = 0;
-	st.sep_pos = SAMPLES_PER_FRAME;
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		if (c != 'd')
@@ -231,6 +227,11 @@ main(int argc, char **argv)
 		st.debug = 1;
 		break;
 	}
+
+	st.ascii_bit = 7;
+
+	st.ringpos = 0;
+	st.sep_pos = SAMPLES_PER_FRAME;
 
 	if (host_is_big_endian())
 		st.swap_bytes = 1;
