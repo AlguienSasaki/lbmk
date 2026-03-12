@@ -51,13 +51,6 @@
 
 #define READ_BUF 4096
 
-/* TODO: handle this at runtime instead (bswap) */
-#if defined(__BYTE_ORDER__)
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#error "spkmodem-recv requires little-endian samples"
-#endif
-#endif
-
 struct decoder_state {
 	signed short frame[MAX_SAMPLES];
 	unsigned char pulse[MAX_SAMPLES];
@@ -81,10 +74,12 @@ struct decoder_state {
 	unsigned char ascii;
 
 	int debug;
+	int swap_bytes;
 };
 
 static const char *argv0;
 
+static int host_is_big_endian(void);
 static void handle_audio(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
@@ -132,12 +127,22 @@ main(int argc, char **argv)
 		break;
 	}
 
+	if (host_is_big_endian())
+		st.swap_bytes = 1;
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	for (;;)
 		handle_audio(&st);
 
 	return EXIT_SUCCESS;
+}
+
+static int
+host_is_big_endian(void)
+{
+	unsigned int x = 1;
+	return (*(unsigned char *)&x == 0);
 }
 
 static void
@@ -208,6 +213,8 @@ static signed short
 read_sample(struct decoder_state *st)
 {
 	size_t n;
+	signed short sample;
+	unsigned short u;
 
 	while (st->inpos >= st->inlen) {
 
@@ -225,7 +232,16 @@ read_sample(struct decoder_state *st)
 		st->inlen = n;
 	}
 
-	return st->inbuf[st->inpos++];
+	sample = st->inbuf[st->inpos++];
+
+	if (st->swap_bytes) {
+		u = (unsigned short)sample;
+		u = (u >> 8) | (u << 8);
+
+		sample = (signed short)u;
+	}
+
+	return sample;
 }
 
 static int
