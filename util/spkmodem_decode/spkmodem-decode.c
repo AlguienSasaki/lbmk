@@ -460,25 +460,30 @@ auto_detect_tone(struct decoder_state *st)
 {
 	int f;
 
-	/*
-	 * Don't also run auto-detect during decode,
-	 * otherwise it would run for every sample.
-	 */
 	if (st->learn_samples >= LEARN_SAMPLES)
 		return;
 
 	/*
-	 * Check both FIR windows.
-	 * Inside separator frames, the separator window contains tone,
-	 * during data frames the data window does; a minimum of
-	 * the two captures the lowest active tone cluster more reliably.
+	 * Ignore silence / near silence.
+	 * Both FIR windows will be near zero when no signal exists.
+	 */
+	if (st->freq_data <= 2 && st->freq_separator <= 2) {
+		st->learn_samples++;
+		return;
+	}
+
+	/*
+	 * Choose the lowest active tone.
+	 * Separator frames carry tone in the separator window,
+	 * data frames carry tone in the data window.
 	 */
 	f = st->freq_data;
-	if (st->freq_separator > 0 && st->freq_separator < f)
+
+	if (f <= 0 || (st->freq_separator > 0 &&
+	    st->freq_separator < f))
 		f = st->freq_separator;
-	if (f > 0 || /* prevent noise from corrupting tone-learning */
-	    st->freq_data > 2 || /* <--- stop from */
-	    st->freq_separator > 2) { /* learning silence if no signal */
+
+	if (f > 0) {
 		if (f < st->freq_min)
 			st->freq_min = f;
 
