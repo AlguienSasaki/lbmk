@@ -157,15 +157,10 @@
 /*
  * These determine how long the program will wait during
  * tone auto-detection, before shifting to defaults.
- *
- * For tone auto-detection (time waiting for detection)
- * NOTE: you could multiply SAMPLE_PER_FRAME instead
- * of SAMPLE_RATE in LEARN_SAMPLES, for more granularity.
- * Here, 1 * SAMPLE_RATE represents 1 second, which seems
- * like a reasonable, conservative default wait time.
+ * It is done every LEARN_FRAMES number of frames.
  */
 #define LEARN_SECONDS 1
-#define LEARN_SAMPLES ((LEARN_SECONDS) * (SAMPLE_RATE))
+#define LEARN_FRAMES ((LEARN_SECONDS) * (FRAME_RATE))
 
 /*
  * Sample amplitude threshold used to convert the waveform
@@ -209,20 +204,20 @@ struct decoder_state {
 	int freq_min;
 	int freq_max;
 	int freq_threshold;
-	int learn_samples;
+	int learn_frames;
 };
 
 static const char *argv0;
 
 static int host_is_big_endian(void);
 static void handle_audio(struct decoder_state *st);
+static void auto_detect_tone(struct decoder_state *st);
+static int silent_signal(struct decoder_state *st);
+static void select_low_tone(struct decoder_state *st);
 static void collect_separator_tone(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
-static void auto_detect_tone(struct decoder_state *st);
-static int silent_signal(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
-static void select_low_tone(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
 static void print_stats(struct decoder_state *st);
@@ -317,6 +312,72 @@ handle_audio(struct decoder_state *st)
 	st->sample_count = 0;
 	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		decode_pulse(st);
+
+	/* Detect tone per each frame */
+	auto_detect_tone(st);
+}
+
+/*
+ * Automatically detect spkmodem tone
+ */
+static void
+auto_detect_tone(struct decoder_state *st)
+{
+	if (st->learn_frames >= LEARN_FRAMES)
+		return;
+
+	st->learn_frames++;
+
+	if (silent_signal(st))
+		return;
+
+	select_low_tone(st);
+
+	if (st->learn_frames == LEARN_FRAMES) {
+		st->freq_threshold =
+		    (st->freq_min + st->freq_max) / 2;
+
+		if (st->debug)
+			printf("auto threshold: %dHz\n",
+			    st->freq_threshold * FRAME_RATE);
+	}
+}
+
+/*
+ * Ignore silence / near silence.
+ * Both FIR windows will be near zero when no signal exists.
+ */
+static int
+silent_signal(struct decoder_state *st)
+{
+	return (st->freq_data <= 2 &&
+	    st->freq_separator <= 2);
+}
+
+/*
+ * Choose the lowest active tone.
+ * Separator frames carry tone in the separator window,
+ * data frames carry tone in the data window.
+ */
+static void
+select_low_tone(struct decoder_state *st)
+{
+	int f;
+
+	f = st->freq_data;
+
+	if (f <= 0 || (st->freq_separator > 0 &&
+	    st->freq_separator < f))
+		f = st->freq_separator;
+
+	if (f <= 0)
+		return;
+
+	if (f < st->freq_min)
+		st->freq_min = f;
+
+	if (f > st->freq_max)
+		st->freq_max = f;
 }
 
 /*
@@ -439,82 +500,7 @@ decode_pulse(struct decoder_state *st)
 	st->ringpos = ringpos;
 	st->sep_pos = sep_pos;
 
-	/*
-	 * Attempt to auto-detect spkmodem tone
-	 */
-	auto_detect_tone(st);
-
 	st->sample_count++;
-}
-
-/*
- * Observe signal for LEARN_SAMPLES samples (e.g. 1 second).
- * The exact amount of time is determined by LEARN_SAMPLES
- * divided by SAMPLE_RATE, logically. For example, if
- * LEARN_SAMPLES were half of the SAMPLE_RATE, this
- * corresponds to roughly 500ms before timeout.
- *
- * to guess the correct timing. If it fails,
- * fall back to known good values.
- */
-static void
-auto_detect_tone(struct decoder_state *st)
-{
-	if (st->learn_samples >= LEARN_SAMPLES)
-		return;
-
-	st->learn_samples++;
-
-	if (silent_signal(st))
-		return;
-
-	select_low_tone(st);
-
-	if (st->learn_samples == LEARN_SAMPLES) {
-		st->freq_threshold =
-		    (st->freq_min + st->freq_max) / 2;
-
-		if (st->debug)
-			printf("auto threshold: %dHz\n",
-			    st->freq_threshold * FRAME_RATE);
-	}
-}
-
-/*
- * Ignore silence / near silence.
- * Both FIR windows will be near zero when no signal exists.
- */
-static int
-silent_signal(struct decoder_state *st)
-{
-	return (st->freq_data <= 2 &&
-	    st->freq_separator <= 2);
-}
-
-/*
- * Choose the lowest active tone.
- * Separator frames carry tone in the separator window,
- * data frames carry tone in the data window.
- */
-static void
-select_low_tone(struct decoder_state *st)
-{
-	int f;
-
-	f = st->freq_data;
-
-	if (f <= 0 || (st->freq_separator > 0 &&
-	    st->freq_separator < f))
-		f = st->freq_separator;
-
-	if (f <= 0)
-		return;
-
-	if (f < st->freq_min)
-		st->freq_min = f;
-
-	if (f > st->freq_max)
-		st->freq_max = f;
 }
 
 static signed short
