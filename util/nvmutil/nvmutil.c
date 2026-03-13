@@ -1136,9 +1136,6 @@ rhex(void)
 	if (use_prng)
 		return fallback_rand();
 
-	if (urandom_fd < 0)
-		err(ECANCELED, "Your operating system has no /dev/[u]random");
-
 	if (!n) {
 		n = sizeof(rnum);
 		if (rw_file_exact(urandom_fd, rnum, n, 0, LESEN) == -1)
