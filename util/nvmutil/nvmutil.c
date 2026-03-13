@@ -1565,7 +1565,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	}
 
 	for (rc = 0, rv = 0; rc < len; ) {
-		if ((rv = rw_file_once(fd, mem, len, off, rw_type, rc)) == -1)
+		if ((rv = rw_file_once(fd, mem, len, off, rw_type, rc)) <= 0)
 			return -1;
 
 		rc += (size_t)rv;
