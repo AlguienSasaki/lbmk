@@ -330,13 +330,15 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
 static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type);
 static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
-    off_t off, int rw_type);
+    off_t off, int rw_type, int loop_eagain);
 static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
-    off_t off, int rw_type, size_t rc);
+    off_t off, int rw_type, size_t rc, int loop_eagain);
 static ssize_t prw(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type);
+    off_t off, int rw_type, int loop_eagain);
 static int rw_over_ssize_max(ssize_t r);
-static off_t lseek_eintr(int fd, off_t off, int whence);
+static off_t lseek_eintr(int fd, off_t off,
+    int whence, int loop_eagain);
+static int err_eagain(int loop_eagain);
 
 /*
  * Error handling and cleanup
@@ -1151,7 +1153,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ) == -1)
+		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ, 0) == -1)
 			err(errno, "Randomisation failed");
 	}
 
@@ -1319,26 +1321,9 @@ cmd_helper_cat(void)
 static void
 gbe_cat_buf(u8 *b)
 {
-	ssize_t rval;
-
-	while (1) {
-		rval = rw_file_exact(STDOUT_FILENO, b,
-		    GBE_PART_SIZE, 0, IO_WRITE);
-
-		if (rval >= 0) {
-			/*
-			 * A partial write is especially
-			 * fatal, as it should already be
-			 * prevented in rw_file_exact().
-			 */
-			if ((size_t)rval != GBE_PART_SIZE)
-				err(EIO, "stdout: cat: Partial write");
-			break;
-		}
-
-		if (errno != EAGAIN)
-			err(errno, "stdout: cat");
-	}
+	if (rw_file_exact(STDOUT_FILENO, b,
+	    GBE_PART_SIZE, 0, IO_WRITE, 1) < 0)
+		err(errno, "stdout: cat");
 }
 
 static void
@@ -1591,7 +1576,7 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 	if (nrw > GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
-	return rw_file_exact(fd, mem, nrw, off, rw_type);
+	return rw_file_exact(fd, mem, nrw, off, rw_type, 0);
 
 err_rw_gbe_file_exact:
 	errno = EIO;
@@ -1617,13 +1602,14 @@ err_rw_gbe_file_exact:
  */
 static ssize_t
 rw_file_exact(int fd, u8 *mem, size_t nrw,
-    off_t off, int rw_type)
+    off_t off, int rw_type, int loop_eagain)
 {
 	ssize_t rv;
 	size_t rc;
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
-		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc)) <= 0)
+		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
+		    loop_eagain)) <= 0)
 			return -1;
 
 		rc += (size_t)rv;
@@ -1642,7 +1628,8 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
  */
 static ssize_t
 rw_file_once(int fd, u8 *mem, size_t nrw,
-    off_t off, int rw_type, size_t rc)
+    off_t off, int rw_type, size_t rc,
+    int loop_eagain)
 {
 	ssize_t rv;
 	size_t retries_on_zero = 0;
@@ -1652,7 +1639,7 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 		goto err_rw_file_once;
 
 read_again:
-	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type);
+	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type, loop_eagain);
 
 	if (rv < 0)
 		return -1;
@@ -1688,7 +1675,7 @@ err_rw_file_once:
  */
 static ssize_t
 prw(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type)
+    off_t off, int rw_type, int loop_eagain)
 {
 	off_t off_orig;
 	ssize_t r;
@@ -1718,7 +1705,8 @@ try_rw_again:
 		positional_rw = 1;
 
 	if (!positional_rw) {
-		if (r == -1 && errno == EINTR)
+		if (r == -1 && (errno == EINTR
+		    || errno == err_eagain(loop_eagain)))
 			goto try_rw_again;
 
 		return rw_over_ssize_max(r);
@@ -1737,9 +1725,10 @@ try_rw_again:
 	if (flags & O_APPEND)
 		goto err_prw;
 
-	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
+	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR,
+	    loop_eagain)) == (off_t)-1)
 		r = -1;
-	else if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
+	else if (lseek_eintr(fd, off, SEEK_SET, loop_eagain) == (off_t)-1)
 		r = -1;
 
 	do {
@@ -1749,10 +1738,12 @@ try_rw_again:
 			r = write(fd, mem, nrw);
 
 		r = rw_over_ssize_max(r);
-	} while (r < 0 && errno == EINTR);
+	} while (r == -1 && (errno == EINTR
+	    || errno == err_eagain(loop_eagain)));
 
 	saved_errno = errno;
-	if (lseek_eintr(fd, off_orig, SEEK_SET) == (off_t)-1) {
+	if (lseek_eintr(fd, off_orig, SEEK_SET,
+	    loop_eagain) == (off_t)-1) {
 		if (r < 0)
 			errno = saved_errno;
 		return -1;
@@ -1791,15 +1782,28 @@ rw_over_ssize_max(ssize_t r)
 }
 
 static off_t
-lseek_eintr(int fd, off_t off, int whence)
+lseek_eintr(int fd, off_t off, int whence, int loop_eagain)
 {
 	off_t old;
 
 	do {
 		old = lseek(fd, off, whence);
-	} while (old == (off_t)-1 && errno == EINTR);
+	} while (old == (off_t)-1
+	    && (!(errno == EINTR || errno == err_eagain(loop_eagain))));
 
 	return old;
+}
+
+static int
+err_eagain(int loop_eagain)
+{
+	if (loop_eagain)
+		return EAGAIN;
+
+	/* errno is never negative,
+	   so functions checking it
+	   can use it accordingly */
+	return -1;
 }
 
 static void
