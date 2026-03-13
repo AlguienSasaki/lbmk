@@ -1663,20 +1663,22 @@ prw(int fd, void *mem, size_t nrw,
 	    || (unsigned int)prw_type > IO_WRITE)
 		goto err_prw;
 
+	flags = fcntl(fd, F_GETFL);
+	if (flags == -1)
+		return -1;
+
 	/*
 	 * O_APPEND must not be used, because this
 	 * allows POSIX write() to ignore the
 	 * current write offset and write at EOF,
 	 * which would therefore break pread/pwrite
 	 */
-	flags = fcntl(fd, F_GETFL);
-	if (flags == -1)
-		return -1;
 	if (flags & O_APPEND)
 		goto err_prw;
 
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
+
 	if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
 		return -1;
 
@@ -1688,6 +1690,7 @@ prw(int fd, void *mem, size_t nrw,
 	if (lseek_eintr(fd, off_orig, SEEK_SET) == (off_t)-1) {
 		if (r < 0)
 			errno = saved_errno;
+
 		return -1;
 	}
 	errno = saved_errno;
