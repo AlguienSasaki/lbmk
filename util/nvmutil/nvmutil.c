@@ -682,6 +682,9 @@ sanitize_command_list(void)
 		sanitize_command_index(c);
 }
 
+/*
+ * TODO: specific config checks per command
+ */
 static void
 sanitize_command_index(size_t c)
 {
