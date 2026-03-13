@@ -375,6 +375,10 @@ select_separator_tone(struct decoder_state *st)
 	st->sep_min = avg - SEP_TOLERANCE_PULSES;
 	st->sep_max = avg + SEP_TOLERANCE_PULSES;
 
+	/* reset calibration accumulators */
+	st->sep_sum = 0;
+	st->sep_samples = 0;
+
 	if (st->debug)
 		printf("separator calibrated: %dHz\n",
 		    avg * FRAME_RATE);
