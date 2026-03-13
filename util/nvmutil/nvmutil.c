@@ -1234,7 +1234,9 @@ print_mac_from_nvm(size_t partnum)
 
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
-		printf("%02x:%02x", val16 & 0xff, val16 >> 8);
+		printf("%02x:%02x",
+		    (unsigned int)(val16 & 0xff),
+		    (unsigned int)(val16 >> 8));
 		if (c == 2)
 			printf("\n");
 		else
@@ -1255,7 +1257,9 @@ hexdump(size_t partnum)
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
-			printf(" %02x %02x", val16 & 0xff, val16 >> 8);
+			printf(" %02x %02x",
+			    (unsigned int)(val16 & 0xff),
+			    (unsigned int)(val16 >> 8));
 		}
 		printf("\n");
 	}
