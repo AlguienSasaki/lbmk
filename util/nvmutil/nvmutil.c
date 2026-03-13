@@ -1577,6 +1577,10 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	return rc;
 }
 
+/*
+ * May not return all requested bytes (len).
+ * Use rw_file_exact for guaranteed length.
+ */
 static ssize_t
 rw_file_once(int fd, uint8_t *mem, size_t len,
     off_t off, int rw_type, size_t rc)
@@ -1584,48 +1588,27 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
 	ssize_t rv;
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
+
 read_again:
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
 	if (rv < 0 && errno == EINTR)
 		goto read_again;
 
-	if (rv < 0) {
-		errno = EIO;
+	if (rv < 0)
 		return -1;
-	}
 
-	/*
-	 * Theoretical bug: if a buggy libc returned
-	 * a size larger than SSIZE_MAX, the cast may
-	 * cause an overflow. Specifications guarantee
-	 * this won't happen, but spec != implementation
-	 */
-	if ((size_t)rv > SSIZE_MAX) {
-		errno = EIO;
-		return -1;
-		/* we do not tolerate buggy libc */
-	}
+	if ((size_t)rv > SSIZE_MAX /* theoretical buggy libc */
+	    || (size_t)rv > (len - rc))/* don't overflow */
+		goto err_rw_file_once;
 
-	if (!((size_t)rv > (len - rc) /* don't overflow */
-	    || rv == 0)) 
+	if (rv != 0)
 		return rv;
 
-	/* Prevent infinite 0-byte loop */
-	if (rv != 0) {
-		errno = EIO;
-		return -1;
-	}
-	/*
-	 * Fault tolerance against infinite
-	 * zero-byte loop: re-try a finite
-	 * number of times. This mitigates
-	 * otherwise OK but slow filesystems
-	 * e.g. NFS or slow media.
-	 */
 	if (retries_on_zero++ < max_retries)
 		goto read_again;
 
+err_rw_file_once:
 	errno = EIO;
 	return -1;
 }
