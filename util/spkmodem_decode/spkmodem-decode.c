@@ -143,7 +143,11 @@
  * Convert tone frequency ranges into pulse counts within the
  * sliding analysis window.
  *
+<<<<<<< HEAD
  * pulse_count is: tone_frequency / FRAME_RATE
+=======
+ * pulse_count = tone_frequency / FRAME_RATE
+>>>>>>> a010665c1d (fix typo in comment)
  * where FRAME_RATE = SAMPLE_RATE / SAMPLES_PER_FRAME.
  */
 #define FREQ_SEP_MIN ((SEP_TONE_MIN_HZ) / (FRAME_RATE))
