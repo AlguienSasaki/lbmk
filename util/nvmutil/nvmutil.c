@@ -1544,7 +1544,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 /*
  * Read or write the exact contents of a file,
  * along with a buffer, (if applicable) offset,
- * and number of bytes to be read. It unified
+ * and number of bytes to be read. It unifies
  * the functionality of read(), pread(), write()
  * and pwrite(), with retry-on-EINTR and also
  * prevents infinite loop on zero-reads.
@@ -1559,20 +1559,20 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * means that EOF is also considered fatal.
  */
 static ssize_t
-rw_file_exact(int fd, uint8_t *mem, size_t len,
+rw_file_exact(int fd, uint8_t *mem, size_t nrw,
     off_t off, int rw_type)
 {
 	ssize_t rv;
 	size_t rc;
 
-	if (fd < 0 || !len || len > (size_t)SSIZE_MAX
+	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
 	    || (unsigned int)rw_type > IO_PWRITE) {
 		errno = EIO;
 		return -1;
 	}
 
-	for (rc = 0, rv = 0; rc < len; ) {
-		if ((rv = rw_file_once(fd, mem, len, off, rw_type, rc)) <= 0)
+	for (rc = 0, rv = 0; rc < nrw; ) {
+		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc)) <= 0)
 			return -1;
 
 		rc += (size_t)rv;
@@ -1586,19 +1586,19 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
  * Use rw_file_exact for guaranteed length.
  */
 static ssize_t
-rw_file_once(int fd, uint8_t *mem, size_t len,
+rw_file_once(int fd, uint8_t *mem, size_t nrw,
     off_t off, int rw_type, size_t rc)
 {
 	ssize_t rv;
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
 
-	if (fd < 0 || !len || len > (size_t)SSIZE_MAX
+	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
 	    || (unsigned int)rw_type > IO_PWRITE)
 		goto err_rw_file_once;
 
 read_again:
-	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
+	rv = do_rw(fd, mem + rc, nrw - rc, off + rc, rw_type);
 
 	if (rv < 0 && errno == EINTR)
 		goto read_again;
@@ -1607,7 +1607,7 @@ read_again:
 		return -1;
 
 	if ((size_t)rv > SSIZE_MAX /* theoretical buggy libc */
-	    || (size_t)rv > (len - rc))/* don't overflow */
+	    || (size_t)rv > (nrw - rc))/* don't overflow */
 		goto err_rw_file_once;
 
 	if (rv != 0)
@@ -1623,16 +1623,16 @@ err_rw_file_once:
 
 static ssize_t
 do_rw(int fd, uint8_t *mem,
-    size_t len, off_t off, int rw_type)
+    size_t nrw, off_t off, int rw_type)
 {
 	if (rw_type == IO_READ)
-		return read(fd, mem, len);
+		return read(fd, mem, nrw);
 
 	if (rw_type == IO_WRITE)
-		return write(fd, mem, len);
+		return write(fd, mem, nrw);
 
 	if (rw_type == IO_PREAD || rw_type == IO_PWRITE)
-		return prw(fd, mem, len, off, rw_type);
+		return prw(fd, mem, nrw, off, rw_type);
 
 	errno = EIO;
 	return -1;
