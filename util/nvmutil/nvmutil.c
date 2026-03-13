@@ -1604,10 +1604,11 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
 
-read_again:
-	if ((unsigned int)rw_type > IO_PWRITE)
+	if (fd < 0 || !len || len > (size_t)SSIZE_MAX
+	    || (unsigned int)rw_type > IO_PWRITE)
 		goto err_rw_file_once;
 
+read_again:
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
 	if (rv < 0 && errno == EINTR)
@@ -1668,10 +1669,9 @@ prw(int fd, void *mem, size_t nrw,
 
 	prw_type = rw_type ^ IO_PREAD;
 
-	if ((unsigned int)prw_type > IO_WRITE) {
-		errno = EIO;
-		return -1;
-	}
+	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
+	    || (unsigned int)prw_type > IO_WRITE)
+		goto err_prw;
 
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
@@ -1691,6 +1691,10 @@ prw(int fd, void *mem, size_t nrw,
 	errno = saved_errno;
 
 	return r;
+
+err_prw:
+	errno = EIO;
+	return -1;
 }
 
 static off_t
