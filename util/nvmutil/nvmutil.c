@@ -1761,6 +1761,9 @@ io_args(int fd, void *mem, size_t nrw,
 	if (off < 0 || off >= gbe_file_size)
 		goto err_io_args;
 
+	if ((off_t)(off + nrw) > gbe_file_size)
+		goto err_io_args;
+
 	if (nrw > GBE_PART_SIZE)
 		goto err_io_args;
 
