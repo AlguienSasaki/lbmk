@@ -261,6 +261,10 @@ extern int optind;
 extern int opterr;
 extern int optopt;
 
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
+
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
 typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
 typedef char static_assert_short[(sizeof(short) == 2) ? 1 : -1];
