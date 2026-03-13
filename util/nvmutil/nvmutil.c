@@ -1564,9 +1564,11 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 		return -1;
 	}
 
-	for (rc = 0, rv = 0; rc < len; rc += (size_t)rv) {
+	for (rc = 0, rv = 0; rc < len; ) {
 		if ((rv = rw_file_once(fd, mem, len, off, rw_type, rc)) == -1)
 			return -1;
+
+		rc += (size_t)rv;
 	}
 
 	return rc;
