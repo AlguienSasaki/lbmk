@@ -1684,6 +1684,7 @@ prw(int fd, void *mem, size_t nrw,
 		goto err_prw;
 
 	if (fd < 0
+	    || off < 0
 	    || !nrw /* prevent zero read request */
 	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
 	    || (unsigned int)rw_type > IO_PWRITE)
