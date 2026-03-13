@@ -349,7 +349,7 @@ static ssize_t do_rw(int fd,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
-static int io_args(int fd, size_t nrw,
+static int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 
 /*
@@ -389,6 +389,7 @@ static void usage(uint8_t usage_exit);
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
 #define NUM_RANDOM_BYTES 12
+static uint8_t rnum[NUM_RANDOM_BYTES];
 
 /*
  * Portable macro based on BSD nitems.
@@ -1158,7 +1159,6 @@ static uint16_t
 rhex(void)
 {
 	static size_t n = 0;
-	static uint8_t rnum[NUM_RANDOM_BYTES];
 
 	if (use_prng)
 		return fallback_rand();
@@ -1608,7 +1608,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t nrw,
 	ssize_t rv;
 	size_t rc;
 
-	if (io_args(fd, nrw, off, rw_type) == -1) {
+	if (io_args(fd, mem, nrw, off, rw_type) == -1) {
 		errno = EIO;
 		return -1;
 	}
@@ -1635,7 +1635,7 @@ rw_file_once(int fd, uint8_t *mem, size_t nrw,
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
 
-	if (io_args(fd, nrw, off, rw_type) == -1)
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_rw_file_once;
 
 read_again:
@@ -1666,7 +1666,7 @@ static ssize_t
 do_rw(int fd, uint8_t *mem,
     size_t nrw, off_t off, int rw_type)
 {
-	if (io_args(fd, nrw, off, rw_type) == -1)
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_do_rw;
 
 	if (rw_type == IO_READ)
@@ -1702,7 +1702,7 @@ prw(int fd, void *mem, size_t nrw,
 	int prw_type;
 	int flags;
 
-	if (io_args(fd, nrw, off, rw_type) == -1)
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_prw;
 
 	prw_type = rw_type ^ IO_PREAD;
@@ -1750,9 +1750,14 @@ err_prw:
 }
 
 static int
-io_args(int fd, size_t nrw,
+io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
 {
+	if (mem != pad
+	    && mem != rnum
+	    && (mem < (void *)buf || mem >= (void *)(buf + GBE_FILE_SIZE)))
+		goto err_io_args;
+
 	if (off != 0
 	    && off != gbe_file_offset(1, "i/o check"))
 		goto err_io_args;
