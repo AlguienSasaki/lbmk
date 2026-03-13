@@ -169,8 +169,10 @@ typedef unsigned int   u32;
 
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
+typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
 typedef char static_assert_uint8_is_1[(sizeof(u8) == 1) ? 1 : -1];
 typedef char static_assert_uint16_is_2[(sizeof(u16) == 2) ? 1 : -1];
+typedef char static_assert_short_is_2[(sizeof(short) == 2) ? 1 : -1];
 typedef char static_assert_uint32_is_4[(sizeof(u32) == 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
