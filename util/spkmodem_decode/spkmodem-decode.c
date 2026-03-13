@@ -63,6 +63,7 @@
 #endif
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -256,6 +257,14 @@ extern char *optarg;
 extern int optind;
 extern int opterr;
 extern int optopt;
+
+typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
+typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
+typedef char static_assert_short[(sizeof(short) == 2) ? 1 : -1];
+typedef char static_assert_int_is_4[(sizeof(int) >= 4) ? 1 : -1];
+typedef char static_assert_twos_complement[
+    ((-1 & 3) == 3) ? 1 : -1
+];
 
 int
 main(int argc, char **argv)
