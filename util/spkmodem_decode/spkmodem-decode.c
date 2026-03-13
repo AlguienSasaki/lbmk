@@ -210,6 +210,9 @@ struct decoder_state {
 	int freq_max;
 	int freq_threshold;
 	int learn_frames;
+
+	/* previous sample used for edge detection */
+	signed short prev_sample;
 };
 
 static const char *argv0;
@@ -449,9 +452,11 @@ decode_pulse(struct decoder_state *st)
 {
 	unsigned char old_ring, old_sep;
 	unsigned char new_pulse;
+	signed short sample;
 	int ringpos;
 	int sep_pos;
-	signed short sample;
+	int diff_edge;
+	int diff_amp;
 
 	ringpos = st->ringpos;
 	sep_pos = st->sep_pos;
@@ -487,18 +492,33 @@ decode_pulse(struct decoder_state *st)
 	sample = read_sample(st);
 
 	/*
-	 * Convert the waveform sample into a pulse (0 or 1).
-	 *
-	 * The unsigned comparison creates a small dead zone near zero,
-	 * suppressing small amplitude noise from microphones or
-	 * cheap ADCs. Real PC speaker tones are far outside this
-	 * range, so they still produce clean pulses.
+	 * Avoid startup edge. Since
+	 * it's zero at startup, this
+	 * may wrongly produce a pulse
 	 */
-	if ((unsigned)(sample + THRESHOLD)
-	    > (unsigned)(2 * THRESHOLD))
+	if (st->sample_count == 0)
+		st->prev_sample = sample;
+
+	/*
+	 * Detect edges instead of amplitude.
+	 * This is more tolerant of weak microphones
+	 * and speaker distortion..
+	 *
+	 * However, we check both slope edges and
+	 * amplitude, to mitagate noise.
+	 */
+	diff_amp = sample;
+	diff_edge = sample - st->prev_sample;
+	if (diff_edge < 0)
+		diff_edge = -diff_edge;
+	if (diff_amp < 0)
+		diff_amp = -diff_amp;
+	if (diff_edge > THRESHOLD &&
+	    diff_amp > THRESHOLD)
 		new_pulse = 1;
 	else
 		new_pulse = 0;
+	st->prev_sample = sample;
 
 	st->pulse[ringpos] = new_pulse;
 	st->freq_separator += new_pulse;
