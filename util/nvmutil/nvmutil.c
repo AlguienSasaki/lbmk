@@ -177,6 +177,7 @@ typedef unsigned int   uint32_t;
 #include <time.h>
 #include <unistd.h>
 
+/* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
 typedef char static_assert_uint8_is_1[(sizeof(uint8_t) == 1) ? 1 : -1];
 typedef char static_assert_uint16_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
@@ -234,8 +235,6 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
  */
 static void sanitize_command_list(void);
 static void sanitize_command_index(size_t c);
-static void check_enum_bin(size_t a, const char *a_name,
-    size_t b, const char *b_name);
 
 /*
  * Argument handling (user input)
@@ -558,12 +557,38 @@ static const struct commands command[] = {
  */
 static size_t cmd_index = CMD_NULL;
 
+/*
+ * asserts (variables/defines sanity check)
+ */
 typedef char assert_argc3[(ARGC_3==3)?1:-1];
 typedef char assert_argc4[(ARGC_4==4)?1:-1];
 typedef char assert_read[(IO_READ==0)?1:-1];
 typedef char assert_write[(IO_WRITE==1)?1:-1];
 typedef char assert_pread[(IO_PREAD==2)?1:-1];
 typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
+/* commands */
+typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
+typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
+typedef char assert_cmd_swap[(CMD_SWAP==2)?1:-1];
+typedef char assert_cmd_copy[(CMD_COPY==3)?1:-1];
+typedef char assert_cmd_cat[(CMD_CAT==4)?1:-1];
+typedef char assert_cmd_cat16[(CMD_CAT16==5)?1:-1];
+typedef char assert_cmd_cat128[(CMD_CAT128==6)?1:-1];
+/* mod_type */
+typedef char assert_mod_off[(SET_MOD_OFF==0)?1:-1];
+typedef char assert_mod_0[(SET_MOD_0==1)?1:-1];
+typedef char assert_mod_1[(SET_MOD_1==2)?1:-1];
+typedef char assert_mod_n[(SET_MOD_N==3)?1:-1];
+typedef char assert_mod_both[(SET_MOD_BOTH==4)?1:-1];
+/* bool */
+typedef char bool_arg_nopart[(ARG_NOPART==0)?1:-1];
+typedef char bool_arg_part[(ARG_PART==1)?1:-1];
+typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
+typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
+typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
+typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
+typedef char bool_no_invert[(NO_INVERT==0)?1:-1];
+typedef char bool_part_invert[(PART_INVERT==1)?1:-1];
 
 static int use_prng = 0;
 
@@ -682,15 +707,6 @@ sanitize_command_index(size_t c)
 		    (unsigned long)c, command[c].str);
 	}
 
-	if (!((CMD_SETMAC > CMD_DUMP) && (CMD_SWAP > CMD_SETMAC) &&
-	    (CMD_COPY > CMD_SWAP) && (CMD_CAT > CMD_COPY) &&
-	    (CMD_CAT16 > CMD_CAT) && (CMD_CAT128 > CMD_CAT16)))
-		err(EINVAL, "Some command integers are the same");
-
-	if (!((SET_MOD_0 > SET_MOD_OFF) && (SET_MOD_1 > SET_MOD_0) &&
-	    (SET_MOD_N > SET_MOD_1) && (SET_MOD_BOTH > SET_MOD_N)))
-		err(EINVAL, "Some modtype integers are the same");
-
 	mod_type = command[c].set_modified;
 	switch (mod_type) {
 	case SET_MOD_0:
@@ -707,13 +723,6 @@ sanitize_command_index(size_t c)
 	check_bin(command[c].arg_part, "cmd.arg_part");
 	check_bin(command[c].chksum_read, "cmd.chksum_read");
 	check_bin(command[c].chksum_write, "cmd.chksum_write");
-
-	check_enum_bin(ARG_NOPART, "ARG_NOPART", ARG_PART, "ARG_PART");
-	check_enum_bin(SKIP_CHECKSUM_READ, "SKIP_CHECKSUM_READ",
-	    CHECKSUM_READ, "CHECKSUM_READ");
-	check_enum_bin(SKIP_CHECKSUM_WRITE, "SKIP_CHECKSUM_WRITE",
-	    CHECKSUM_WRITE, "CHECKSUM_WRITE");
-	check_enum_bin(NO_INVERT, "NO_INVERT", PART_INVERT, "PART_INVERT");
 
 	gbe_rw_size = command[c].rw_size;
 
@@ -733,17 +742,6 @@ sanitize_command_index(size_t c)
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
-}
-
-static void
-check_enum_bin(size_t a, const char *a_name,
-    size_t b, const char *b_name)
-{
-	if (a)
-		err(EINVAL, "%s is non-zero", a_name);
-
-	if (b != 1)
-		err(EINVAL, "%s is a value other than 1", b_name);
 }
 
 static void
