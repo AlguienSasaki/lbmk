@@ -1456,7 +1456,11 @@ rw_gbe_file_part(size_t p, int rw_type,
 
 	uint8_t *mem_offset;
 
-	if (rw_type == IO_WRITE || rw_type == IO_PWRITE)
+	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
+		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
+		    fname, rw_type_str, (unsigned long)p, rw_type);
+
+	if (rw_type == IO_PWRITE)
 		invert = 0;
 
 	/*
