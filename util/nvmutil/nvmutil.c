@@ -1172,6 +1172,7 @@ entropy_jitter(void)
 {
 	struct timeval a, b;
 	unsigned long mix = 0;
+	long mix_diff;
 	int i;
 
 	for (i = 0; i < 8; i++) {
@@ -1179,7 +1180,15 @@ entropy_jitter(void)
 		getpid();
 		gettimeofday(&b, NULL);
 
-		mix ^= (unsigned long)(b.tv_usec - a.tv_usec);
+		/*
+		 * prevent negative numbers to prevent overflow,
+		 * which would bias rand to large numbers
+		 */
+		mix_diff = (long)(b.tv_usec - a.tv_usec);
+		if (mix_diff < 0)
+			mix_diff = -mix_diff;
+
+		mix ^= (unsigned long)(mix_diff);
 		mix ^= (unsigned long)&mix;
 	}
 
