@@ -1716,6 +1716,10 @@ static int
 io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
 {
+	if (off > 0
+	    && off != GBE_PART_SIZE)
+		goto err_io_args;
+
 	if (nrw != GBE_PART_SIZE &&
 	    nrw != NVM_SIZE &&
 	    nrw != NUM_RANDOM_BYTES)
