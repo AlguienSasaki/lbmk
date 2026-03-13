@@ -1618,9 +1618,6 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 read_again:
 	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type);
 
-	if (rv < 0 && errno == EINTR)
-		goto read_again;
-
 	if (rv < 0)
 		return -1;
 
@@ -1640,6 +1637,8 @@ err_rw_file_once:
 }
 
 /*
+ * prw() - portable read-write
+ *
  * This implements a portable analog of pwrite()
  * and pread() - note that this version is not
  * thread-safe (race conditions are possible on
@@ -1660,15 +1659,27 @@ prw(int fd, void *mem, size_t nrw,
 	ssize_t r;
 	int saved_errno;
 	int flags;
+	int positional_rw = 0;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_prw;
 
-	if (rw_type == IO_WRITE)
-		return write(fd, mem, nrw);
+	r = -1;
 
-	if (rw_type == IO_READ)
-		return read(fd, mem, nrw);
+try_rw_again:
+
+	if (rw_type == IO_WRITE)
+		r = write(fd, mem, nrw);
+	else if (rw_type == IO_READ)
+		r = read(fd, mem, nrw);
+	else
+		positional_rw = 1;
+
+	if (!positional_rw) {
+		if (r == -1 && errno == EINTR)
+			goto try_rw_again;
+		return r;
+	}
 
 	flags = fcntl(fd, F_GETFL);
 	if (flags == -1)
@@ -1700,7 +1711,6 @@ prw(int fd, void *mem, size_t nrw,
 	if (lseek_eintr(fd, off_orig, SEEK_SET) == (off_t)-1) {
 		if (r < 0)
 			errno = saved_errno;
-
 		return -1;
 	}
 	errno = saved_errno;
