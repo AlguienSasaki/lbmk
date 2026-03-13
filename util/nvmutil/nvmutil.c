@@ -1753,18 +1753,15 @@ static int
 io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
 {
-	if (mem != pad
+	if (mem != (void *)pad
 	    && mem != rnum
 	    && (mem < (void *)buf || mem >= (void *)(buf + GBE_FILE_SIZE)))
 		goto err_io_args;
 
-	if (off != 0
-	    && off != gbe_file_offset(1, "i/o check"))
+	if (off < 0 || off >= gbe_file_size)
 		goto err_io_args;
 
-	if (nrw != GBE_PART_SIZE &&
-	    nrw != NVM_SIZE &&
-	    nrw != NUM_RANDOM_BYTES)
+	if (nrw > GBE_PART_SIZE)
 		goto err_io_args;
 
 	if (fd < 0
