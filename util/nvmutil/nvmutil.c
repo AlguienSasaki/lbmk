@@ -22,7 +22,7 @@
  * Make most of nvmutil a *library* for re-use
  *
  * TODO: gettimeofday not posible - use portable functions.
- * TODO: uint32_t fallback: modify the program instead
+ * TODO: u32 fallback: modify the program instead
  * to run on 16-bit systems: smaller buffers, and do
  * operations byte-based instead of word-based.
  *
@@ -163,15 +163,15 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
+typedef unsigned char  u8;
+typedef unsigned short u16;
+typedef unsigned int   u32;
 
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
-typedef char static_assert_uint8_is_1[(sizeof(uint8_t) == 1) ? 1 : -1];
-typedef char static_assert_uint16_is_2[(sizeof(uint16_t) == 2) ? 1 : -1];
-typedef char static_assert_uint32_is_4[(sizeof(uint32_t) == 4) ? 1 : -1];
+typedef char static_assert_uint8_is_1[(sizeof(u8) == 1) ? 1 : -1];
+typedef char static_assert_uint16_is_2[(sizeof(u16) == 2) ? 1 : -1];
+typedef char static_assert_uint32_is_4[(sizeof(u32) == 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
@@ -262,7 +262,7 @@ static int good_checksum(size_t partnum);
  */
 static void run_cmd(size_t c);
 static void check_command_num(size_t c);
-static uint8_t valid_command(size_t c);
+static u8 valid_command(size_t c);
 
 /*
  * Helper functions for command: setmac
@@ -273,9 +273,9 @@ static size_t xstrxlen(const char *scmp, size_t maxlen);
 static void set_mac_byte(size_t mac_byte_pos);
 static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
-static uint16_t hextonum(char ch_s);
-static uint16_t rhex(void);
-static uint16_t fallback_rand(void);
+static u16 hextonum(char ch_s);
+static u16 rhex(void);
+static u16 fallback_rand(void);
 static unsigned long entropy_jitter(void);
 static void write_mac_part(size_t partnum);
 
@@ -291,7 +291,7 @@ static void hexdump(size_t partnum);
  * cat, cat16 and cat128
  */
 static void cmd_helper_cat(void);
-static void gbe_cat_buf(uint8_t *b);
+static void gbe_cat_buf(u8 *b);
 
 /*
  * After command processing, write
@@ -303,14 +303,14 @@ static void gbe_cat_buf(uint8_t *b);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
-static uint16_t calculated_checksum(size_t p);
+static u16 calculated_checksum(size_t p);
 
 /*
  * Helper functions for accessing
  * the NVM area during operation.
  */
-static uint16_t nvm_word(size_t pos16, size_t part);
-static void set_nvm_word(size_t pos16, size_t part, uint16_t val16);
+static u16 nvm_word(size_t pos16, size_t part);
+static void set_nvm_word(size_t pos16, size_t part, u16 val16);
 static void set_part_modified(size_t p);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
@@ -321,16 +321,16 @@ static void check_bin(size_t a, const char *a_name);
  */
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
-static uint8_t *gbe_mem_offset(size_t part, const char *f_op);
+static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static ssize_t rw_file_exact(int fd, uint8_t *mem, size_t len,
+static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type);
-static ssize_t rw_file_once(int fd, uint8_t *mem, size_t len,
+static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, size_t rc);
 static ssize_t do_rw(int fd,
-    uint8_t *mem, size_t len, off_t off, int rw_type);
+    u8 *mem, size_t len, off_t off, int rw_type);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
@@ -343,7 +343,7 @@ static int io_args(int fd, void *mem, size_t nrw,
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
-static void usage(uint8_t usage_exit);
+static void usage(u8 usage_exit);
 
 /*
  * Sizes in bytes:
@@ -374,7 +374,7 @@ static void usage(uint8_t usage_exit);
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
 #define NUM_RANDOM_BYTES 12
-static uint8_t rnum[NUM_RANDOM_BYTES];
+static u8 rnum[NUM_RANDOM_BYTES];
 
 /*
  * Portable macro based on BSD nitems.
@@ -394,17 +394,17 @@ static const char *rname = NULL;
  *
  * The code will handle this properly.
  */
-static uint8_t buf[GBE_FILE_SIZE];
-static uint8_t pad[GBE_PART_SIZE]; /* the file that wouldn't die */
+static u8 buf[GBE_FILE_SIZE];
+static u8 pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 
-static uint16_t mac_buf[3];
+static u16 mac_buf[3];
 static off_t gbe_file_size;
 
 static int urandom_fd = -1;
 static int gbe_fd = -1;
 static size_t part;
-static uint8_t part_modified[2];
-static uint8_t part_valid[2];
+static u8 part_modified[2];
+static u8 part_valid[2];
 
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
 static const char *mac_str;
@@ -481,11 +481,11 @@ struct commands {
 	const char *str;
 	void (*run)(void);
 	int argc;
-	uint8_t invert;
-	uint8_t set_modified;
-	uint8_t arg_part;
-	uint8_t chksum_read;
-	uint8_t chksum_write;
+	u8 invert;
+	u8 set_modified;
+	u8 arg_part;
+	u8 chksum_read;
+	u8 chksum_write;
 	size_t rw_size; /* within the 4KB GbE part */
 	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
@@ -687,7 +687,7 @@ sanitize_command_list(void)
 static void
 sanitize_command_index(size_t c)
 {
-	uint8_t mod_type;
+	u8 mod_type;
 	size_t gbe_rw_size;
 
 	check_command_num(c);
@@ -768,7 +768,7 @@ set_cmd(int argc, char *argv[])
 static void
 set_cmd_args(int argc, char *argv[])
 {
-	uint8_t arg_part;
+	u8 arg_part;
 
 	if (!valid_command(cmd_index) || argc < 3)
 		usage(1);
@@ -908,7 +908,7 @@ static void
 read_gbe_file(void)
 {
 	size_t p;
-	uint8_t do_read[2] = {1, 1};
+	u8 do_read[2] = {1, 1};
 
 	/*
 	 * Commands specifying a partnum only
@@ -928,10 +928,10 @@ read_checksums(void)
 {
 	size_t p;
 	size_t skip_part;
-	uint8_t invert;
-	uint8_t arg_part;
-	uint8_t num_invalid;
-	uint8_t max_invalid;
+	u8 invert;
+	u8 arg_part;
+	u8 num_invalid;
+	u8 max_invalid;
 
 	part_valid[0] = 0;
 	part_valid[1] = 0;
@@ -977,8 +977,8 @@ read_checksums(void)
 static int
 good_checksum(size_t partnum)
 {
-	uint16_t expected_checksum = calculated_checksum(partnum);
-	uint16_t current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
+	u16 expected_checksum = calculated_checksum(partnum);
+	u16 current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
 
 	if (current_checksum == expected_checksum)
 		return 1;
@@ -1002,7 +1002,7 @@ check_command_num(size_t c)
 		    (unsigned long)c);
 }
 
-static uint8_t
+static u8
 valid_command(size_t c)
 {
 	if (c >= N_COMMANDS)
@@ -1096,7 +1096,7 @@ set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos)
 {
 	char mac_ch;
-	uint16_t hex_num;
+	u16 hex_num;
 
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
@@ -1121,7 +1121,7 @@ set_mac_nib(size_t mac_str_pos,
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
-static uint16_t
+static u16
 hextonum(char ch_s)
 {
 	unsigned char ch = (unsigned char)ch_s;
@@ -1140,7 +1140,7 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-static uint16_t
+static u16
 rhex(void)
 {
 	static size_t n = 0;
@@ -1154,10 +1154,10 @@ rhex(void)
 			err(errno, "Randomisation failed");
 	}
 
-	return (uint16_t)(rnum[--n] & 0xf);
+	return (u16)(rnum[--n] & 0xf);
 }
 
-static uint16_t
+static u16
 fallback_rand(void)
 {
 	struct timeval tv;
@@ -1181,7 +1181,7 @@ fallback_rand(void)
 	mix ^= (unsigned long)&tv;
 	mix ^= (unsigned long)&counter;
 
-	return (uint16_t)(mix & 0xf);
+	return (u16)(mix & 0xf);
 }
 
 static unsigned long
@@ -1256,7 +1256,7 @@ static void
 print_mac_from_nvm(size_t partnum)
 {
 	size_t c;
-	uint16_t val16;
+	u16 val16;
 
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
@@ -1275,7 +1275,7 @@ hexdump(size_t partnum)
 {
 	size_t c;
 	size_t row;
-	uint16_t val16;
+	u16 val16;
 
 	for (row = 0; row < 8; row++) {
 		printf("%08lx ", (unsigned long)((size_t)row << 4));
@@ -1316,7 +1316,7 @@ cmd_helper_cat(void)
 }
 
 static void
-gbe_cat_buf(uint8_t *b)
+gbe_cat_buf(u8 *b)
 {
 	ssize_t rval;
 
@@ -1347,7 +1347,7 @@ write_gbe_file(void)
 
 	size_t p;
 	size_t partnum;
-	uint8_t update_checksum;
+	u8 update_checksum;
 
 	if (command[cmd_index].flags == O_RDONLY)
 		return;
@@ -1381,7 +1381,7 @@ write_gbe_file(void)
 static void
 override_part_modified(void)
 {
-	uint8_t mod_type = command[cmd_index].set_modified;
+	u8 mod_type = command[cmd_index].set_modified;
 
 	switch (mod_type) {
 	case SET_MOD_0:
@@ -1412,16 +1412,16 @@ set_checksum(size_t p)
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
-static uint16_t
+static u16
 calculated_checksum(size_t p)
 {
 	size_t c;
-	uint32_t val16 = 0;
+	u32 val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += (uint32_t)nvm_word(c, p);
+		val16 += (u32)nvm_word(c, p);
 
-	return (uint16_t)((NVM_CHECKSUM - val16) & 0xffff);
+	return (u16)((NVM_CHECKSUM - val16) & 0xffff);
 }
 
 /*
@@ -1432,7 +1432,7 @@ calculated_checksum(size_t p)
  * file, but we assume otherwise and adapt accordingly.
  */
 
-static uint16_t
+static u16
 nvm_word(size_t pos16, size_t p)
 {
 	size_t pos;
@@ -1440,20 +1440,20 @@ nvm_word(size_t pos16, size_t p)
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (uint16_t)buf[pos] |
-	    ((uint16_t)buf[pos + 1] << 8);
+	return (u16)buf[pos] |
+	    ((u16)buf[pos + 1] << 8);
 }
 
 static void
-set_nvm_word(size_t pos16, size_t p, uint16_t val16)
+set_nvm_word(size_t pos16, size_t p, u16 val16)
 {
 	size_t pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	buf[pos] = (uint8_t)(val16 & 0xff);
-	buf[pos + 1] = (uint8_t)(val16 >> 8);
+	buf[pos] = (u8)(val16 & 0xff);
+	buf[pos + 1] = (u8)(val16 >> 8);
 
 	set_part_modified(p);
 }
@@ -1494,9 +1494,9 @@ rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str)
 {
 	size_t gbe_rw_size = command[cmd_index].rw_size;
-	uint8_t invert = command[cmd_index].invert;
+	u8 invert = command[cmd_index].invert;
 
-	uint8_t *mem_offset;
+	u8 *mem_offset;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
@@ -1523,13 +1523,13 @@ rw_gbe_file_part(size_t p, int rw_type,
  * but used to check Gbe bounds in memory,
  * and it is *also* used during file I/O.
  */
-static uint8_t *
+static u8 *
 gbe_mem_offset(size_t p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_FILE_SIZE);
 
-	return (uint8_t *)(buf + gbe_off);
+	return (u8 *)(buf + gbe_off);
 }
 
 /*
@@ -1587,7 +1587,7 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * means that EOF is also considered fatal.
  */
 static ssize_t
-rw_file_exact(int fd, uint8_t *mem, size_t nrw,
+rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type)
 {
 	ssize_t rv;
@@ -1613,7 +1613,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t nrw,
  * Use rw_file_exact for guaranteed length.
  */
 static ssize_t
-rw_file_once(int fd, uint8_t *mem, size_t nrw,
+rw_file_once(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, size_t rc)
 {
 	ssize_t rv;
@@ -1648,7 +1648,7 @@ err_rw_file_once:
 }
 
 static ssize_t
-do_rw(int fd, uint8_t *mem,
+do_rw(int fd, u8 *mem,
     size_t nrw, off_t off, int rw_type)
 {
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
@@ -1837,7 +1837,7 @@ getnvmprogname(void)
 }
 
 static void
-usage(uint8_t usage_exit)
+usage(u8 usage_exit)
 {
 	const char *util = getnvmprogname();
 
