@@ -47,9 +47,6 @@
  * TODO: bound checks for files per-command, e.g. only
  * first 6 bytes for CMD_SETMAC
  *
- * TODO: clean up the do_rw function: make PSCHREIB and
- * so on clearer, probably just define them inline and
- * validate them inline (no define).
  * TODO: in command sanitizer: verify that each given
  * entry corresponds to the correct function, in the
  * pointer (this check is currently missing)
@@ -85,10 +82,6 @@
  * TODO: also document the layout of Intel GbE files, so
  *       that wily individuals can easily expand the
  *	featureset of nvmutil.
- * TODO: remove some clever code, e.g.:
- *	rw_type == PLESEN << 2
- *	make stuff like that clearer.
- *	ditto the invert copy/swap trick
  * TODO: write a manpage
  * TODO: simplify the command sanitization, implement more
  *	of it as build time checks, e.g. static asserts.
@@ -441,10 +434,10 @@ static const char *argv0;
 #define ARGC_4 4
 
 enum {
-	LESEN,
-	PLESEN,
-	SCHREIB,
-	PSCHREIB
+	IO_READ,
+	IO_WRITE,
+	IO_PREAD,
+	IO_PWRITE
 };
 
 /*
@@ -567,6 +560,10 @@ static size_t cmd_index = CMD_NULL;
 
 typedef char assert_argc3[(ARGC_3==3)?1:-1];
 typedef char assert_argc4[(ARGC_4==4)?1:-1];
+typedef char assert_read[(IO_READ==0)?1:-1];
+typedef char assert_write[(IO_WRITE==1)?1:-1];
+typedef char assert_pread[(IO_PREAD==2)?1:-1];
+typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
 
 static int use_prng = 0;
 
@@ -736,9 +733,6 @@ sanitize_command_index(size_t c)
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
-
-	if (!((!LESEN) && (PLESEN == 1) && (SCHREIB == 2) && (PSCHREIB == 3)))
-		err(EINVAL, "rw type integers are the wrong values");
 }
 
 static void
@@ -906,7 +900,7 @@ read_gbe_file(void)
 
 	for (p = 0; p < 2; p++) {
 		if (do_read[p])
-			rw_gbe_file_part(p, PLESEN, "pread");
+			rw_gbe_file_part(p, IO_PREAD, "pread");
 	}
 }
 
@@ -1138,7 +1132,7 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-		if (rw_file_exact(urandom_fd, rnum, n, 0, LESEN) == -1)
+		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ) == -1)
 			err(errno, "Randomisation failed");
 	}
 
@@ -1297,7 +1291,7 @@ gbe_cat_buf(uint8_t *b)
 
 	while (1) {
 		rval = rw_file_exact(STDOUT_FILENO, b,
-		    GBE_PART_SIZE, 0, SCHREIB);
+		    GBE_PART_SIZE, 0, IO_WRITE);
 
 		if (rval >= 0) {
 			/*
@@ -1338,7 +1332,7 @@ write_gbe_file(void)
 		if (update_checksum)
 			set_checksum(partnum);
 
-		rw_gbe_file_part(partnum, PSCHREIB, "pwrite");
+		rw_gbe_file_part(partnum, IO_PWRITE, "pwrite");
 	}
 }
 
@@ -1462,7 +1456,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 
 	uint8_t *mem_offset;
 
-	if (rw_type == SCHREIB || rw_type == PSCHREIB)
+	if (rw_type == IO_WRITE || rw_type == IO_PWRITE)
 		invert = 0;
 
 	/*
@@ -1551,8 +1545,8 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * write() to ignore the current file offset and
  * write at EOF, which means that our use of
  * lseek in prw() does not guarantee writing at
- * a specified offset. So if using PSCHREIB or
- * PLESEN, make sure not to pass a file descriptor
+ * a specified offset. So if using IO_PWRITE or
+ * IO_PREAD, make sure not to pass a file descriptor
  * with the O_APPEND flag. Alternatively, modify
  * do_rw() to directly use pwrite() and pread()
  * instead of prw().
@@ -1564,7 +1558,8 @@ rw_file_exact(int fd, uint8_t *mem, size_t len,
 	ssize_t rv;
 	size_t rc;
 
-	if (fd < 0 || !len || len > (size_t)SSIZE_MAX) {
+	if (fd < 0 || !len || len > (size_t)SSIZE_MAX
+	    || (unsigned int)rw_type > IO_PWRITE) {
 		errno = EIO;
 		return -1;
 	}
@@ -1590,6 +1585,9 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
 	size_t max_retries = 10;
 
 read_again:
+	if ((unsigned int)rw_type > IO_PWRITE)
+		goto err_rw_file_once;
+
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
 	if (rv < 0 && errno == EINTR)
@@ -1617,16 +1615,20 @@ static ssize_t
 do_rw(int fd, uint8_t *mem,
     size_t len, off_t off, int rw_type)
 {
-	if (rw_type == LESEN || rw_type == PLESEN << 2)
+	if ((unsigned int)rw_type > IO_PWRITE)
+		goto err_do_rw;
+
+	if (rw_type == IO_READ)
 		return read(fd, mem, len);
 
-	if (rw_type == SCHREIB || rw_type == PSCHREIB << 2)
+	if (rw_type == IO_WRITE)
 		return write(fd, mem, len);
 
-	if (rw_type == PLESEN || rw_type == PSCHREIB)
+	if (rw_type == IO_PREAD || rw_type == IO_PWRITE)
 		return prw(fd, mem, len, off, rw_type);
 
-	errno = EINVAL;
+err_do_rw:
+	errno = EIO;
 	return -1;
 }
 
@@ -1647,13 +1649,18 @@ prw(int fd, void *mem, size_t nrw,
 	ssize_t r;
 	int saved_errno;
 
+	if ((unsigned int)(rw_type ^ IO_PREAD) > IO_WRITE) {
+		errno = EIO;
+		return -1;
+	}
+
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
 		return -1;
 	if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
 		return -1;
 
 	do {
-		r = do_rw(fd, mem, nrw, off, rw_type << 2);
+		r = do_rw(fd, mem, nrw, off, rw_type ^ IO_PREAD);
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
