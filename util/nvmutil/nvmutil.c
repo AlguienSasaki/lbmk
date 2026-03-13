@@ -1133,13 +1133,8 @@ rhex(void)
 	static size_t n = 0;
 	static uint8_t rnum[12];
 
-	if (use_prng) {
-		/*
-		 * On very old Unix systems that
-		 * lack /dev/random and /dev/urandom
-		 */
+	if (use_prng)
 		return fallback_rand();
-	}
 
 	if (urandom_fd < 0)
 		err(ECANCELED, "Your operating system has no /dev/[u]random");
