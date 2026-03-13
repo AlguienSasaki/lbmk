@@ -1377,6 +1377,9 @@ write_gbe_file(void)
 	if (gbe_st.st_size != gbe_file_size)
 		err(errno, "%s: file size changed before write", fname);
 
+	if (!S_ISREG(gbe_st.st_mode))
+		err(errno, "%s: file type changed before write", fname);
+
 	for (p = 0; p < 2; p++) {
 		partnum = p ^ command[cmd_index].invert;
 
