@@ -380,6 +380,8 @@ static void usage(uint8_t usage_exit);
 #define NVM_WORDS (NVM_SIZE >> 1)
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
+#define NUM_RANDOM_BYTES 12
+
 /*
  * Portable macro based on BSD nitems.
  * Used to count the number of commands (see below).
@@ -566,6 +568,8 @@ typedef char assert_read[(IO_READ==0)?1:-1];
 typedef char assert_write[(IO_WRITE==1)?1:-1];
 typedef char assert_pread[(IO_PREAD==2)?1:-1];
 typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
+typedef char assert_rand_byte[(NUM_RANDOM_BYTES>0)?1:-1];
+typedef char assert_rand_len[(NUM_RANDOM_BYTES<NVM_SIZE)?1:-1];
 /* commands */
 typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
 typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
@@ -1126,7 +1130,7 @@ static uint16_t
 rhex(void)
 {
 	static size_t n = 0;
-	static uint8_t rnum[12];
+	static uint8_t rnum[NUM_RANDOM_BYTES];
 
 	if (use_prng)
 		return fallback_rand();
@@ -1592,6 +1596,11 @@ rw_file_once(int fd, uint8_t *mem, size_t nrw,
 	ssize_t rv;
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
+
+	if (nrw != GBE_PART_SIZE &&
+	    nrw != NVM_SIZE &&
+	    nrw != NUM_RANDOM_BYTES)
+		goto err_rw_file_once;
 
 	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
 	    || (unsigned int)rw_type > IO_PWRITE)
