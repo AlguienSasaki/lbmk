@@ -164,16 +164,16 @@ also consider:
 #include <unistd.h>
 
 typedef unsigned char  u8;
-typedef unsigned short u16;
-typedef unsigned int   ux;
+typedef unsigned short ushort;
+typedef unsigned int   uint;
 
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
 typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
 typedef char static_assert_uint8_is_1[(sizeof(u8) == 1) ? 1 : -1];
-typedef char static_assert_uint16_is_2[(sizeof(u16) == 2) ? 1 : -1];
-typedef char static_assert_short_is_2[(sizeof(short) == 2) ? 1 : -1];
-typedef char static_assert_uint32_is_4[(sizeof(ux) >= 4) ? 1 : -1];
+typedef char static_assert_uint16_is_2[(sizeof(ushort) >= 2) ? 1 : -1];
+typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
+typedef char static_assert_uint32_is_4[(sizeof(uint) >= 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
@@ -275,9 +275,9 @@ static size_t xstrxlen(const char *scmp, size_t maxlen);
 static void set_mac_byte(size_t mac_byte_pos);
 static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
-static u16 hextonum(char ch_s);
-static u16 rhex(void);
-static u16 fallback_rand(void);
+static ushort hextonum(char ch_s);
+static ushort rhex(void);
+static ushort fallback_rand(void);
 static unsigned long entropy_jitter(void);
 static void write_mac_part(size_t partnum);
 
@@ -305,14 +305,14 @@ static void gbe_cat_buf(u8 *b);
 static void write_gbe_file(void);
 static void override_part_modified(void);
 static void set_checksum(size_t part);
-static u16 calculated_checksum(size_t p);
+static ushort calculated_checksum(size_t p);
 
 /*
  * Helper functions for accessing
  * the NVM area during operation.
  */
-static u16 nvm_word(size_t pos16, size_t part);
-static void set_nvm_word(size_t pos16, size_t part, u16 val16);
+static ushort nvm_word(size_t pos16, size_t part);
+static void set_nvm_word(size_t pos16, size_t part, ushort val16);
 static void set_part_modified(size_t p);
 static void check_nvm_bound(size_t pos16, size_t part);
 static void check_bin(size_t a, const char *a_name);
@@ -399,7 +399,7 @@ static const char *rname = NULL;
 static u8 buf[GBE_FILE_SIZE];
 static u8 pad[GBE_PART_SIZE]; /* the file that wouldn't die */
 
-static u16 mac_buf[3];
+static ushort mac_buf[3];
 static off_t gbe_file_size;
 
 static int urandom_fd = -1;
@@ -979,8 +979,8 @@ read_checksums(void)
 static int
 good_checksum(size_t partnum)
 {
-	u16 expected_checksum = calculated_checksum(partnum);
-	u16 current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
+	ushort expected_checksum = calculated_checksum(partnum);
+	ushort current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
 
 	if (current_checksum == expected_checksum)
 		return 1;
@@ -1098,7 +1098,7 @@ set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos)
 {
 	char mac_ch;
-	u16 hex_num;
+	ushort hex_num;
 
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
@@ -1123,7 +1123,7 @@ set_mac_nib(size_t mac_str_pos,
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
-static u16
+static ushort
 hextonum(char ch_s)
 {
 	unsigned char ch = (unsigned char)ch_s;
@@ -1142,7 +1142,7 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-static u16
+static ushort
 rhex(void)
 {
 	static size_t n = 0;
@@ -1156,10 +1156,10 @@ rhex(void)
 			err(errno, "Randomisation failed");
 	}
 
-	return (u16)(rnum[--n] & 0xf);
+	return (ushort)(rnum[--n] & 0xf);
 }
 
-static u16
+static ushort
 fallback_rand(void)
 {
 	struct timeval tv;
@@ -1183,7 +1183,7 @@ fallback_rand(void)
 	mix ^= (unsigned long)&tv;
 	mix ^= (unsigned long)&counter;
 
-	return (u16)(mix & 0xf);
+	return (ushort)(mix & 0xf);
 }
 
 static unsigned long
@@ -1258,7 +1258,7 @@ static void
 print_mac_from_nvm(size_t partnum)
 {
 	size_t c;
-	u16 val16;
+	ushort val16;
 
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
@@ -1277,7 +1277,7 @@ hexdump(size_t partnum)
 {
 	size_t c;
 	size_t row;
-	u16 val16;
+	ushort val16;
 
 	for (row = 0; row < 8; row++) {
 		printf("%08lx ", (unsigned long)((size_t)row << 4));
@@ -1414,16 +1414,16 @@ set_checksum(size_t p)
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
-static u16
+static ushort
 calculated_checksum(size_t p)
 {
 	size_t c;
-	ux val16 = 0;
+	uint val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += (ux)nvm_word(c, p);
+		val16 += (uint)nvm_word(c, p);
 
-	return (u16)((NVM_CHECKSUM - val16) & 0xffff);
+	return (ushort)((NVM_CHECKSUM - val16) & 0xffff);
 }
 
 /*
@@ -1434,7 +1434,7 @@ calculated_checksum(size_t p)
  * file, but we assume otherwise and adapt accordingly.
  */
 
-static u16
+static ushort
 nvm_word(size_t pos16, size_t p)
 {
 	size_t pos;
@@ -1442,12 +1442,12 @@ nvm_word(size_t pos16, size_t p)
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (u16)buf[pos] |
-	    ((u16)buf[pos + 1] << 8);
+	return (ushort)buf[pos] |
+	    ((ushort)buf[pos + 1] << 8);
 }
 
 static void
-set_nvm_word(size_t pos16, size_t p, u16 val16)
+set_nvm_word(size_t pos16, size_t p, ushort val16)
 {
 	size_t pos;
 
