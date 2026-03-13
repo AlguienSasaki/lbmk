@@ -253,6 +253,7 @@ static int xstrxcmp(const char *a, const char *b, size_t maxlen);
  */
 static void open_dev_urandom(void);
 static void open_gbe_file(void);
+static void lock_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 
 /*
@@ -652,6 +653,7 @@ main(int argc, char *argv[])
 	open_dev_urandom();
 
 	open_gbe_file();
+	lock_gbe_file();
 
 #ifdef NVMUTIL_PLEDGE
 	if (pledge("stdio", NULL) == -1)
@@ -878,6 +880,24 @@ open_gbe_file(void)
 	default:
 		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
+}
+
+static void
+lock_gbe_file(void)
+{
+	struct flock fl;
+
+	memset(&fl, 0, sizeof(fl));
+
+	if (command[cmd_index].flags == O_RDONLY)
+		fl.l_type = F_RDLCK;
+	else
+		fl.l_type = F_WRLCK;
+
+	fl.l_whence = SEEK_SET;
+
+	if (fcntl(gbe_fd, F_SETLK, &fl) == -1)
+		err(errno, "file is locked by another process");
 }
 
 static void
