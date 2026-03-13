@@ -1640,8 +1640,7 @@ read_again:
 	if (rv < 0)
 		return -1;
 
-	if ((size_t)rv > SSIZE_MAX /* theoretical buggy libc */
-	    || (size_t)rv > (nrw - rc))/* don't overflow */
+	if ((size_t)rv > (nrw - rc))/* don't overflow */
 		goto err_rw_file_once;
 
 	if (rv != 0)
@@ -1730,6 +1729,20 @@ try_rw_again:
 			r = read(fd, mem, nrw);
 		else if (rw_type == IO_PWRITE)
 			r = write(fd, mem, nrw);
+		if ((size_t)r > SSIZE_MAX) {
+			/*
+			 * Theoretical buggy libc.
+			 * Specifications never
+			 * allow this return value
+			 * to exceed SSIZE_MAX, but
+			 * spec != implementation
+			 */
+			errno = EIO;
+			r = -1;
+
+			/* Don't use the goto here.
+			   We need to reset lseek */
+		}
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
