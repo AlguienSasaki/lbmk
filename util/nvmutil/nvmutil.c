@@ -334,8 +334,6 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
-static int io_args(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type);
 
 /*
  * Error handling and cleanup
@@ -1604,7 +1602,11 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 }
 
 /*
- * May not return all requested bytes (len).
+ * Helper function for rw_file_exact, that
+ * also does extra error handling pertaining
+ * to GbE file offsets.
+ *
+ * May not return all requested bytes (nrw).
  * Use rw_file_exact for guaranteed length.
  */
 static ssize_t
@@ -1614,6 +1616,23 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 	ssize_t rv;
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
+
+	if (mem == NULL)
+		goto err_rw_file_once;
+
+	if (mem != (void *)pad
+	    && mem != (void *)rnum
+	    && (mem < buf || mem >= (buf + GBE_FILE_SIZE)))
+		goto err_rw_file_once;
+
+	if (off < 0 || off >= gbe_file_size)
+		goto err_rw_file_once;
+
+	if (nrw > (size_t)(gbe_file_size - off))
+		goto err_rw_file_once;
+
+	if (nrw > GBE_PART_SIZE)
+		goto err_rw_file_once;
 
 read_again:
 	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type);
@@ -1661,7 +1680,13 @@ prw(int fd, void *mem, size_t nrw,
 	int flags;
 	int positional_rw = 0;
 
-	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+	if (mem == NULL)
+		goto err_prw;
+
+	if (fd < 0
+	    || !nrw /* prevent zero read request */
+	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
+	    || (unsigned int)rw_type > IO_PWRITE)
 		goto err_prw;
 
 	r = -1;
@@ -1718,40 +1743,6 @@ try_rw_again:
 	return r;
 
 err_prw:
-	errno = EIO;
-	return -1;
-}
-
-static int
-io_args(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type)
-{
-	if (mem == NULL)
-		goto err_io_args;
-
-	if (mem != (void *)pad
-	    && mem != (void *)rnum
-	    && (mem < (void *)buf || mem >= (void *)(buf + GBE_FILE_SIZE)))
-		goto err_io_args;
-
-	if (off < 0 || off >= gbe_file_size)
-		goto err_io_args;
-
-	if (nrw > (size_t)(gbe_file_size - off))
-		goto err_io_args;
-
-	if (nrw > GBE_PART_SIZE)
-		goto err_io_args;
-
-	if (fd < 0
-	    || !nrw /* prevent zero read request */
-	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
-	    || (unsigned int)rw_type > IO_PWRITE)
-		goto err_io_args;
-
-	return 0;
-
-err_io_args:
 	errno = EIO;
 	return -1;
 }
