@@ -333,7 +333,8 @@ handle_audio(struct decoder_state *st)
 	 * If the modem signal disappears for several (read: 3)
 	 * frames, discard the partially assembled character.
 	 */
-	if (st->sample_count >= (3 * SAMPLES_PER_FRAME))
+	if (st->sample_count >= (3 * SAMPLES_PER_FRAME) ||
+	    st->freq_separator <= 0)
 		reset_char(st);
 
 	st->sample_count = 0;
