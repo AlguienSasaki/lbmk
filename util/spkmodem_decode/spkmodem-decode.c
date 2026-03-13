@@ -390,8 +390,14 @@ select_separator_tone(struct decoder_state *st)
 static int
 is_valid_signal(struct decoder_state *st)
 {
-	return (st->freq_separator > 0 &&
-	    st->freq_data > 0);
+	if (st->freq_data <= 0)
+		return 0;
+
+	if (st->freq_separator < st->sep_min ||
+	    st->freq_separator > st->sep_max)
+		return 0;
+
+	return 1;
 }
 
 /*
