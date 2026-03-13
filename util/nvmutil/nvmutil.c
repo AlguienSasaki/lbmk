@@ -1716,8 +1716,8 @@ static int
 io_args(int fd, size_t nrw,
     off_t off, int rw_type)
 {
-	if (off > 0
-	    && off != GBE_PART_SIZE)
+	if (off != 0
+	    && off != gbe_file_offset(1, "i/o check"))
 		goto err_io_args;
 
 	if (nrw != GBE_PART_SIZE &&
