@@ -331,8 +331,6 @@ static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type);
 static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, size_t rc);
-static ssize_t do_rw(int fd,
-    u8 *mem, size_t len, off_t off, int rw_type);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
@@ -1595,11 +1593,6 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	ssize_t rv;
 	size_t rc;
 
-	if (io_args(fd, mem, nrw, off, rw_type) == -1) {
-		errno = EIO;
-		return -1;
-	}
-
 	for (rc = 0, rv = 0; rc < nrw; ) {
 		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc)) <= 0)
 			return -1;
@@ -1622,11 +1615,8 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
 
-	if (io_args(fd, mem, nrw, off, rw_type) == -1)
-		goto err_rw_file_once;
-
 read_again:
-	rv = do_rw(fd, mem + rc, nrw - rc, off + rc, rw_type);
+	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type);
 
 	if (rv < 0 && errno == EINTR)
 		goto read_again;
@@ -1649,27 +1639,6 @@ err_rw_file_once:
 	return -1;
 }
 
-static ssize_t
-do_rw(int fd, u8 *mem,
-    size_t nrw, off_t off, int rw_type)
-{
-	if (io_args(fd, mem, nrw, off, rw_type) == -1)
-		goto err_do_rw;
-
-	if (rw_type == IO_READ)
-		return read(fd, mem, nrw);
-
-	if (rw_type == IO_WRITE)
-		return write(fd, mem, nrw);
-
-	if (rw_type == IO_PREAD || rw_type == IO_PWRITE)
-		return prw(fd, mem, nrw, off, rw_type);
-
-err_do_rw:
-	errno = EIO;
-	return -1;
-}
-
 /*
  * This implements a portable analog of pwrite()
  * and pread() - note that this version is not
@@ -1678,6 +1647,10 @@ err_do_rw:
  *
  * This limitation is acceptable, since nvmutil is
  * single-threaded. Portability is the main goal.
+ *
+ * A fallback is provided for regular read/write.
+ * rw_type can be IO_READ, IO_WRITE, IO_PREAD
+ * or IO_PWRITE
  */
 static ssize_t
 prw(int fd, void *mem, size_t nrw,
@@ -1686,16 +1659,16 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_orig;
 	ssize_t r;
 	int saved_errno;
-	int prw_type;
 	int flags;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_prw;
 
-	prw_type = rw_type ^ IO_PREAD;
+	if (rw_type == IO_WRITE)
+		return write(fd, mem, nrw);
 
-	if ((unsigned int)prw_type > IO_WRITE)
-		goto err_prw;
+	if (rw_type == IO_READ)
+		return read(fd, mem, nrw);
 
 	flags = fcntl(fd, F_GETFL);
 	if (flags == -1)
@@ -1717,7 +1690,10 @@ prw(int fd, void *mem, size_t nrw,
 		return -1;
 
 	do {
-		r = do_rw(fd, mem, nrw, off, prw_type);
+		if (rw_type == IO_PREAD)
+			r = read(fd, mem, nrw);
+		else if (rw_type == IO_PWRITE)
+			r = write(fd, mem, nrw);
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
