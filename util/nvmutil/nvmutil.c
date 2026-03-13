@@ -1617,9 +1617,6 @@ static ssize_t
 do_rw(int fd, uint8_t *mem,
     size_t len, off_t off, int rw_type)
 {
-	if ((unsigned int)rw_type > IO_PWRITE)
-		goto err_do_rw;
-
 	if (rw_type == IO_READ)
 		return read(fd, mem, len);
 
@@ -1629,7 +1626,6 @@ do_rw(int fd, uint8_t *mem,
 	if (rw_type == IO_PREAD || rw_type == IO_PWRITE)
 		return prw(fd, mem, len, off, rw_type);
 
-err_do_rw:
 	errno = EIO;
 	return -1;
 }
