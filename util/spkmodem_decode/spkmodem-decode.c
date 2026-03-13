@@ -342,6 +342,7 @@ handle_audio(struct decoder_state *st)
 	if (set_ascii_bit(st) < 0)
 		print_char(st);
 
+	st->sample_count = 0;
 	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
 		decode_pulse(st);
 
