@@ -213,25 +213,44 @@ struct decoder_state {
 
 static const char *argv0;
 
+/*
+ * 16-bit little endian words are read
+ * continuously. we will swap them, if
+ * the host cpu is big endian.
+ */
 static int host_is_big_endian(void);
+
+/* main loop */
 static void handle_audio(struct decoder_state *st);
-static void detect_tone(struct decoder_state *st);
-static int silent_signal(struct decoder_state *st);
-static void select_low_tone(struct decoder_state *st);
+
+/* separate tone tolerances */
 static void select_separator_tone(struct decoder_state *st);
-static int valid_signal(struct decoder_state *st);
+static int is_valid_signal(struct decoder_state *st);
+
+/* output to terminal */
+static int set_ascii_bit(struct decoder_state *st);
+static void print_char(struct decoder_state *st);
+static void reset_char(struct decoder_state *st);
+
+/* process samples/frames */
 static void decode_pulse(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
 static void read_words(struct decoder_state *st);
-static int set_ascii_bit(struct decoder_state *st);
-static void print_char(struct decoder_state *st);
-static void print_stats(struct decoder_state *st);
-static void reset_char(struct decoder_state *st);
 
+/* continually adjust tone */
+static void detect_tone(struct decoder_state *st);
+static int silent_signal(struct decoder_state *st);
+static void select_low_tone(struct decoder_state *st);
+
+/* debug */
+static void print_stats(struct decoder_state *st);
+
+/* error handling / usage */
 static void err(int errval, const char *msg, ...);
 static void usage(void);
 static const char *progname(void);
 
+/* portability (old systems) */
 int getopt(int, char * const *, const char *);
 extern char *optarg;
 extern int optind;
@@ -322,70 +341,6 @@ handle_audio(struct decoder_state *st)
 }
 
 /*
- * Automatically detect spkmodem tone
- */
-static void
-detect_tone(struct decoder_state *st)
-{
-	if (st->learn_frames >= LEARN_FRAMES)
-		return;
-
-	st->learn_frames++;
-
-	if (silent_signal(st))
-		return;
-
-	select_low_tone(st);
-
-	if (st->learn_frames != LEARN_FRAMES)
-		return;
-
-	st->freq_threshold =
-	    (st->freq_min + st->freq_max) / 2;
-
-	if (st->debug)
-		printf("auto threshold: %dHz\n",
-		    st->freq_threshold * FRAME_RATE);
-}
-
-/*
- * Ignore silence / near silence.
- * Both FIR windows will be near zero when no signal exists.
- */
-static int
-silent_signal(struct decoder_state *st)
-{
-	return (st->freq_data <= 2 &&
-	    st->freq_separator <= 2);
-}
-
-/*
- * Choose the lowest active tone.
- * Separator frames carry tone in the separator window,
- * data frames carry tone in the data window.
- */
-static void
-select_low_tone(struct decoder_state *st)
-{
-	int f;
-
-	f = st->freq_data;
-
-	if (f <= 0 || (st->freq_separator > 0 &&
-	    st->freq_separator < f))
-		f = st->freq_separator;
-
-	if (f <= 0)
-		return;
-
-	if (f < st->freq_min)
-		st->freq_min = f;
-
-	if (f > st->freq_max)
-		st->freq_max = f;
-}
-
-/*
  * collect separator tone statistics
  * (and auto-adjust tolerances)
  */
@@ -394,7 +349,7 @@ select_separator_tone(struct decoder_state *st)
 {
 	int avg;
 
-	if (valid_signal(st))
+	if (is_valid_signal(st))
 		return;
 
 	if (st->sep_samples >= 50 && st->freq_separator <= 0)
@@ -422,10 +377,44 @@ select_separator_tone(struct decoder_state *st)
  * from being misinterpreted as data.
  */
 static int
-valid_signal(struct decoder_state *st)
+is_valid_signal(struct decoder_state *st)
 {
 	return (st->freq_separator > 0 &&
 	    st->freq_data > 0);
+}
+
+/*
+ * Each validated frame contributes one bit of modem data.
+ * Bits are accumulated MSB-first into the ASCII byte.
+ */
+static int
+set_ascii_bit(struct decoder_state *st)
+{
+	if (st->debug)
+		print_stats(st);
+	if (st->freq_data < st->freq_threshold)
+		st->ascii |= (1 << st->ascii_bit);
+
+	st->ascii_bit--;
+	return st->ascii_bit;
+}
+
+static void
+print_char(struct decoder_state *st)
+{
+	if (st->debug)
+		printf("<%c,%x>", st->ascii, st->ascii);
+	else
+		putchar(st->ascii);
+
+	reset_char(st);
+}
+
+static void
+reset_char(struct decoder_state *st)
+{
+	st->ascii = 0;
+	st->ascii_bit = 7;
 }
 
 /*
@@ -551,30 +540,67 @@ read_words(struct decoder_state *st)
 }
 
 /*
- * Each validated frame contributes one bit of modem data.
- * Bits are accumulated MSB-first into the ASCII byte.
+ * Automatically detect spkmodem tone
  */
-static int
-set_ascii_bit(struct decoder_state *st)
+static void
+detect_tone(struct decoder_state *st)
 {
-	if (st->debug)
-		print_stats(st);
-	if (st->freq_data < st->freq_threshold)
-		st->ascii |= (1 << st->ascii_bit);
+	if (st->learn_frames >= LEARN_FRAMES)
+		return;
 
-	st->ascii_bit--;
-	return st->ascii_bit;
+	st->learn_frames++;
+
+	if (silent_signal(st))
+		return;
+
+	select_low_tone(st);
+
+	if (st->learn_frames != LEARN_FRAMES)
+		return;
+
+	st->freq_threshold =
+	    (st->freq_min + st->freq_max) / 2;
+
+	if (st->debug)
+		printf("auto threshold: %dHz\n",
+		    st->freq_threshold * FRAME_RATE);
 }
 
-static void
-print_char(struct decoder_state *st)
+/*
+ * Ignore silence / near silence.
+ * Both FIR windows will be near zero when no signal exists.
+ */
+static int
+silent_signal(struct decoder_state *st)
 {
-	if (st->debug)
-		printf("<%c,%x>", st->ascii, st->ascii);
-	else
-		putchar(st->ascii);
+	return (st->freq_data <= 2 &&
+	    st->freq_separator <= 2);
+}
 
-	reset_char(st);
+/*
+ * Choose the lowest active tone.
+ * Separator frames carry tone in the separator window,
+ * data frames carry tone in the data window.
+ */
+static void
+select_low_tone(struct decoder_state *st)
+{
+	int f;
+
+	f = st->freq_data;
+
+	if (f <= 0 || (st->freq_separator > 0 &&
+	    st->freq_separator < f))
+		f = st->freq_separator;
+
+	if (f <= 0)
+		return;
+
+	if (f < st->freq_min)
+		st->freq_min = f;
+
+	if (f > st->freq_max)
+		st->freq_max = f;
 }
 
 static void
@@ -608,13 +634,6 @@ print_stats(struct decoder_state *st)
 	    sep_hz,
 	    sep_hz_min,
 	    sep_hz_max);
-}
-
-static void
-reset_char(struct decoder_state *st)
-{
-	st->ascii = 0;
-	st->ascii_bit = 7;
 }
 
 static void
