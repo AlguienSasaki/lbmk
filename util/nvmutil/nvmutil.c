@@ -1648,8 +1648,11 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_orig;
 	ssize_t r;
 	int saved_errno;
+	int prw_type;
 
-	if ((unsigned int)(rw_type ^ IO_PREAD) > IO_WRITE) {
+	prw_type = rw_type ^ IO_PREAD;
+
+	if (prw_type > IO_WRITE) {
 		errno = EIO;
 		return -1;
 	}
@@ -1660,7 +1663,7 @@ prw(int fd, void *mem, size_t nrw,
 		return -1;
 
 	do {
-		r = do_rw(fd, mem, nrw, off, rw_type ^ IO_PREAD);
+		r = do_rw(fd, mem, nrw, off, prw_type);
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
