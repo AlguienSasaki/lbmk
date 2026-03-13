@@ -1654,7 +1654,7 @@ prw(int fd, void *mem, size_t nrw,
 
 	prw_type = rw_type ^ IO_PREAD;
 
-	if (prw_type > IO_WRITE) {
+	if ((unsigned int)prw_type > IO_WRITE) {
 		errno = EIO;
 		return -1;
 	}
