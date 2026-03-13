@@ -218,7 +218,7 @@ static void handle_audio(struct decoder_state *st);
 static void detect_tone(struct decoder_state *st);
 static int silent_signal(struct decoder_state *st);
 static void select_low_tone(struct decoder_state *st);
-static void collect_separator_tone(struct decoder_state *st);
+static void select_separator_tone(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
@@ -308,7 +308,7 @@ handle_audio(struct decoder_state *st)
 	if (st->sample_count >= (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 
-	collect_separator_tone(st);
+	select_separator_tone(st);
 	decode_pulse(st);
 
 	if (set_ascii_bit(st) < 0)
@@ -390,7 +390,7 @@ select_low_tone(struct decoder_state *st)
  * (and auto-adjust tolerances)
  */
 static void
-collect_separator_tone(struct decoder_state *st)
+select_separator_tone(struct decoder_state *st)
 {
 	int avg;
 
