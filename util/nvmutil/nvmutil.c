@@ -1744,7 +1744,7 @@ io_args(int fd, void *mem, size_t nrw,
 		goto err_io_args;
 
 	if (mem != (void *)pad
-	    && mem != rnum
+	    && mem != (void *)rnum
 	    && (mem < (void *)buf || mem >= (void *)(buf + GBE_FILE_SIZE)))
 		goto err_io_args;
 
