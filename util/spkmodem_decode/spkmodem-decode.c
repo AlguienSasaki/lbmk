@@ -364,9 +364,6 @@ select_separator_tone(struct decoder_state *st)
 	if (!is_valid_signal(st))
 		return;
 
-	if (st->sep_samples >= 50 && st->freq_separator <= 0)
-		return;
-
 	st->sep_sum += st->freq_separator;
 	st->sep_samples++;
 
