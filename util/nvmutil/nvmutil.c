@@ -333,6 +333,7 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, size_t rc);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
+static int rw_over_ssize_max(ssize_t r);
 static off_t lseek_eintr(int fd, off_t off, int whence);
 
 /*
@@ -1702,7 +1703,8 @@ try_rw_again:
 	if (!positional_rw) {
 		if (r == -1 && errno == EINTR)
 			goto try_rw_again;
-		return r;
+
+		return rw_over_ssize_max(r);
 	}
 
 	flags = fcntl(fd, F_GETFL);
@@ -1728,20 +1730,8 @@ try_rw_again:
 			r = read(fd, mem, nrw);
 		else if (rw_type == IO_PWRITE)
 			r = write(fd, mem, nrw);
-		if ((size_t)r > SSIZE_MAX) {
-			/*
-			 * Theoretical buggy libc.
-			 * Specifications never
-			 * allow this return value
-			 * to exceed SSIZE_MAX, but
-			 * spec != implementation
-			 */
-			errno = EIO;
-			r = -1;
 
-			/* Don't use the goto here.
-			   We need to reset lseek */
-		}
+		r = rw_over_ssize_max(r);
 	} while (r < 0 && errno == EINTR);
 
 	saved_errno = errno;
@@ -1757,6 +1747,30 @@ try_rw_again:
 err_prw:
 	errno = EIO;
 	return -1;
+}
+
+
+/*
+ * Theoretical buggy libc
+ * check. Extremely academic.
+ *
+ * Specifications never
+ * allow this return value
+ * to exceed SSIZE_MAX, but
+ * spec != implementation
+ *
+ * Check this after using
+ * [p]read() or [p]write()
+ */
+static int
+rw_over_ssize_max(ssize_t r)
+{
+	if ((size_t)r > SSIZE_MAX) {
+		errno = EIO;
+		return -1;
+	}
+
+	return r;
 }
 
 static off_t
