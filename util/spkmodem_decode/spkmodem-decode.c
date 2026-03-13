@@ -336,15 +336,16 @@ handle_audio(struct decoder_state *st)
 	if (st->sample_count >= (3 * SAMPLES_PER_FRAME))
 		reset_char(st);
 
+	st->sample_count = 0;
+
+	/* process exactly one frame */
+	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
+		decode_pulse(st);
+
 	select_separator_tone(st);
-	decode_pulse(st);
 
 	if (set_ascii_bit(st) < 0)
 		print_char(st);
-
-	st->sample_count = 0;
-	for (sample = 0; sample < SAMPLES_PER_FRAME; sample++)
-		decode_pulse(st);
 
 	/* Detect tone per each frame */
 	detect_tone(st);
