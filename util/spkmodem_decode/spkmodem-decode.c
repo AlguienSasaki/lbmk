@@ -575,6 +575,14 @@ detect_tone(struct decoder_state *st)
 	if (st->learn_frames != LEARN_FRAMES)
 		return;
 
+	/*
+	 * If the observed frequencies are too close,
+	 * learning likely failed (only one tone seen).
+	 * Keep the default threshold.
+	 */
+	if (st->freq_max - st->freq_min < 2)
+		return;
+
 	st->freq_threshold =
 	    (st->freq_min + st->freq_max) / 2;
 
