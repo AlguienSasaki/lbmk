@@ -222,6 +222,7 @@ static void collect_separator_tone(struct decoder_state *st);
 static int valid_signal(struct decoder_state *st);
 static void decode_pulse(struct decoder_state *st);
 static signed short read_sample(struct decoder_state *st);
+static void read_words(struct decoder_state *st);
 static int set_ascii_bit(struct decoder_state *st);
 static void print_char(struct decoder_state *st);
 static void print_stats(struct decoder_state *st);
@@ -336,14 +337,15 @@ detect_tone(struct decoder_state *st)
 
 	select_low_tone(st);
 
-	if (st->learn_frames == LEARN_FRAMES) {
-		st->freq_threshold =
-		    (st->freq_min + st->freq_max) / 2;
+	if (st->learn_frames != LEARN_FRAMES)
+		return;
 
-		if (st->debug)
-			printf("auto threshold: %dHz\n",
-			    st->freq_threshold * FRAME_RATE);
-	}
+	st->freq_threshold =
+	    (st->freq_min + st->freq_max) / 2;
+
+	if (st->debug)
+		printf("auto threshold: %dHz\n",
+		    st->freq_threshold * FRAME_RATE);
 }
 
 /*
@@ -509,25 +511,11 @@ decode_pulse(struct decoder_state *st)
 static signed short
 read_sample(struct decoder_state *st)
 {
-	size_t n;
 	signed short sample;
 	unsigned short u;
 
-	while (st->inpos >= st->inlen) {
-
-		n = fread(st->inbuf, sizeof(st->inbuf[0]),
-		    READ_BUF, stdin);
-
-		if (n == 0) {
-			if (ferror(stdin))
-				err(errno, "stdin read");
-			if (feof(stdin))
-				exit(EXIT_SUCCESS);
-		}
-
-		st->inpos = 0;
-		st->inlen = n;
-	}
+	while (st->inpos >= st->inlen)
+		read_words(st);
 
 	sample = st->inbuf[st->inpos++];
 
@@ -539,6 +527,27 @@ read_sample(struct decoder_state *st)
 	}
 
 	return sample;
+}
+
+static void
+read_words(struct decoder_state *st)
+{
+	size_t n;
+
+	n = fread(st->inbuf, sizeof(st->inbuf[0]),
+	    READ_BUF, stdin);
+
+	if (n != 0) {
+		st->inpos = 0;
+		st->inlen = n;
+
+		return;
+	}
+
+	if (ferror(stdin))
+		err(errno, "stdin read");
+	if (feof(stdin))
+		exit(EXIT_SUCCESS);
 }
 
 /*
