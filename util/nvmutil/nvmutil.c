@@ -1592,7 +1592,6 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
 	ssize_t rv;
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
-
 read_again:
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
@@ -1612,27 +1611,30 @@ read_again:
 	if ((size_t)rv > SSIZE_MAX) {
 		errno = EIO;
 		return -1;
-		/* we will not tolerate your buggy libc */
+		/* we do not tolerate buggy libc */
 	}
 
-	if ((size_t)rv > (len - rc) /* Prevent overflow */
-	    || rv == 0) { /* Prevent infinite 0-byte loop */
-		if (rv == 0) {
-			/*
-			 * Fault tolerance against infinite
-			 * zero-byte loop: re-try a finite
-			 * number of times. This mitigates
-			 * otherwise OK but slow filesystems
-			 * e.g. NFS or slow media.
-			 */
-			if (retries_on_zero++ < max_retries)
-				goto read_again;
-		}
+	if (!((size_t)rv > (len - rc) /* don't overflow */
+	    || rv == 0)) 
+		return rv;
+
+	/* Prevent infinite 0-byte loop */
+	if (rv != 0) {
 		errno = EIO;
 		return -1;
 	}
+	/*
+	 * Fault tolerance against infinite
+	 * zero-byte loop: re-try a finite
+	 * number of times. This mitigates
+	 * otherwise OK but slow filesystems
+	 * e.g. NFS or slow media.
+	 */
+	if (retries_on_zero++ < max_retries)
+		goto read_again;
 
-	return rv;
+	errno = EIO;
+	return -1;
 }
 
 static ssize_t
