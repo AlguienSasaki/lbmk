@@ -22,7 +22,7 @@
  * Make most of nvmutil a *library* for re-use
  *
  * TODO: gettimeofday not posible - use portable functions.
- * TODO: u32 fallback: modify the program instead
+ * TODO: ux fallback: modify the program instead
  * to run on 16-bit systems: smaller buffers, and do
  * operations byte-based instead of word-based.
  *
@@ -165,7 +165,7 @@ also consider:
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
-typedef unsigned int   u32;
+typedef unsigned int   ux;
 
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
@@ -173,7 +173,7 @@ typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
 typedef char static_assert_uint8_is_1[(sizeof(u8) == 1) ? 1 : -1];
 typedef char static_assert_uint16_is_2[(sizeof(u16) == 2) ? 1 : -1];
 typedef char static_assert_short_is_2[(sizeof(short) == 2) ? 1 : -1];
-typedef char static_assert_uint32_is_4[(sizeof(u32) == 4) ? 1 : -1];
+typedef char static_assert_uint32_is_4[(sizeof(ux) >= 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
@@ -1418,10 +1418,10 @@ static u16
 calculated_checksum(size_t p)
 {
 	size_t c;
-	u32 val16 = 0;
+	ux val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += (u32)nvm_word(c, p);
+		val16 += (ux)nvm_word(c, p);
 
 	return (u16)((NVM_CHECKSUM - val16) & 0xffff);
 }
