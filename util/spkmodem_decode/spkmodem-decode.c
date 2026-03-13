@@ -410,10 +410,15 @@ set_ascii_bit(struct decoder_state *st)
 {
 	if (st->debug)
 		print_stats(st);
+
+	if (!is_valid_signal(st))
+		return st->ascii_bit;
+
 	if (st->freq_data < st->freq_threshold)
 		st->ascii |= (1 << st->ascii_bit);
 
 	st->ascii_bit--;
+
 	return st->ascii_bit;
 }
 
