@@ -1719,10 +1719,9 @@ try_rw_again:
 		goto err_prw;
 
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
-		return -1;
-
-	if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
-		return -1;
+		r = -1;
+	else if (lseek_eintr(fd, off, SEEK_SET) == (off_t)-1)
+		r = -1;
 
 	do {
 		if (rw_type == IO_PREAD)
