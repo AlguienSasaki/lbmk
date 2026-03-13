@@ -135,6 +135,11 @@ CFLAGS += -fstack-protector-strong
 CFLAGS += -fno-common
 CFLAGS += -D_FORTIFY_SOURCE=2
 CFLAGS += -fPIE
+
+also consider:
+-fstack-clash-protection
+-Wl,-z,relro
+-Wl,-z,now
 */
 
 #ifndef _XOPEN_SOURCE
@@ -1353,6 +1358,8 @@ gbe_cat_buf(uint8_t *b)
 static void
 write_gbe_file(void)
 {
+	struct stat gbe_st;
+
 	size_t p;
 	size_t partnum;
 	uint8_t update_checksum;
@@ -1363,6 +1370,12 @@ write_gbe_file(void)
 	update_checksum = command[cmd_index].chksum_write;
 
 	override_part_modified();
+	
+	if (fstat(gbe_fd, &gbe_st) == -1)
+		err(errno, "%s: re-check", fname);
+
+	if (gbe_st.st_size != gbe_file_size)
+		err(errno, "%s: file size changed before write", fname);
 
 	for (p = 0; p < 2; p++) {
 		partnum = p ^ command[cmd_index].invert;
