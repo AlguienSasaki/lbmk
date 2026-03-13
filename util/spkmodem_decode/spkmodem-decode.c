@@ -507,11 +507,9 @@ decode_pulse(struct decoder_state *st)
 	 * The separator window always stays one frame ahead
 	 * of the data window.
 	 */
-	ringpos++;
-	if (ringpos >= MAX_SAMPLES)
+	if (++ringpos >= MAX_SAMPLES)
 		ringpos = 0;
-	sep_pos++;
-	if (sep_pos >= MAX_SAMPLES)
+	if (++sep_pos >= MAX_SAMPLES)
 		sep_pos = 0;
 
 	st->ringpos = ringpos;
