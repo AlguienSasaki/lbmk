@@ -1587,9 +1587,10 @@ rw_file_once(int fd, uint8_t *mem, size_t len,
 read_again:
 	rv = do_rw(fd, mem + rc, len - rc, off + rc, rw_type);
 
-	if (rv < 0 && errno == EINTR) {
+	if (rv < 0 && errno == EINTR)
 		goto read_again;
-	} else if (rv < 0) {
+
+	if (rv < 0) {
 		errno = EIO;
 		return -1;
 	}
