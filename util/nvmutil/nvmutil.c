@@ -1753,6 +1753,9 @@ static int
 io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
 {
+	if (mem == NULL)
+		goto err_io_args;
+
 	if (mem != (void *)pad
 	    && mem != rnum
 	    && (mem < (void *)buf || mem >= (void *)(buf + GBE_FILE_SIZE)))
