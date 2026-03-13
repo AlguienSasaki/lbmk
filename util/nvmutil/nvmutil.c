@@ -1557,17 +1557,6 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
  * be used on sockets or pipes, because 0-byte
  * reads are treated like fatal errors. This
  * means that EOF is also considered fatal.
- *
- * WARNING: Do not use O_APPEND on open() when
- * using this function. If you do, POSIX allows
- * write() to ignore the current file offset and
- * write at EOF, which means that our use of
- * lseek in prw() does not guarantee writing at
- * a specified offset. So if using IO_PWRITE or
- * IO_PREAD, make sure not to pass a file descriptor
- * with the O_APPEND flag. Alternatively, modify
- * do_rw() to directly use pwrite() and pread()
- * instead of prw().
  */
 static ssize_t
 rw_file_exact(int fd, uint8_t *mem, size_t len,
@@ -1666,11 +1655,24 @@ prw(int fd, void *mem, size_t nrw,
 	ssize_t r;
 	int saved_errno;
 	int prw_type;
+	int flags;
 
 	prw_type = rw_type ^ IO_PREAD;
 
 	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
 	    || (unsigned int)prw_type > IO_WRITE)
+		goto err_prw;
+
+	/*
+	 * O_APPEND must not be used, because this
+	 * allows POSIX write() to ignore the
+	 * current write offset and write at EOF,
+	 * which would therefore break pread/pwrite
+	 */
+	flags = fcntl(fd, F_GETFL);
+	if (flags == -1)
+		return -1;
+	if (flags & O_APPEND)
 		goto err_prw;
 
 	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR)) == (off_t)-1)
