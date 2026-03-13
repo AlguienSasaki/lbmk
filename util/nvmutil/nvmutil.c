@@ -327,6 +327,8 @@ static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
+static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
+    off_t off, int rw_type);
 static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type);
 static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
@@ -1510,7 +1512,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 	 */
 	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
 
-	if (rw_file_exact(gbe_fd, mem_offset,
+	if (rw_gbe_file_exact(gbe_fd, mem_offset,
 	    gbe_rw_size, gbe_file_offset(p, rw_type_str),
 	    rw_type) == -1)
 		err(errno, "%s: %s: part %lu",
@@ -1568,6 +1570,34 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	return off;
 }
 
+static ssize_t
+rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	if (mem == NULL)
+		goto err_rw_gbe_file_exact;
+
+	if (mem != (void *)pad
+	    && mem != (void *)rnum
+	    && (mem < buf || mem >= (buf + GBE_FILE_SIZE)))
+		goto err_rw_gbe_file_exact;
+
+	if (off < 0 || off >= gbe_file_size)
+		goto err_rw_gbe_file_exact;
+
+	if (nrw > (size_t)(gbe_file_size - off))
+		goto err_rw_gbe_file_exact;
+
+	if (nrw > GBE_PART_SIZE)
+		goto err_rw_gbe_file_exact;
+
+	return rw_file_exact(fd, mem, nrw, off, rw_type);
+
+err_rw_gbe_file_exact:
+	errno = EIO;
+	return -1;
+}
+
 /*
  * Read or write the exact contents of a file,
  * along with a buffer, (if applicable) offset,
@@ -1619,20 +1649,6 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 	size_t max_retries = 10;
 
 	if (mem == NULL)
-		goto err_rw_file_once;
-
-	if (mem != (void *)pad
-	    && mem != (void *)rnum
-	    && (mem < buf || mem >= (buf + GBE_FILE_SIZE)))
-		goto err_rw_file_once;
-
-	if (off < 0 || off >= gbe_file_size)
-		goto err_rw_file_once;
-
-	if (nrw > (size_t)(gbe_file_size - off))
-		goto err_rw_file_once;
-
-	if (nrw > GBE_PART_SIZE)
 		goto err_rw_file_once;
 
 read_again:
