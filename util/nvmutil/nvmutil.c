@@ -343,6 +343,8 @@ static ssize_t do_rw(int fd,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 static off_t lseek_eintr(int fd, off_t off, int whence);
+static int io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type);
 
 /*
  * Error handling and cleanup
@@ -1569,8 +1571,7 @@ rw_file_exact(int fd, uint8_t *mem, size_t nrw,
 	ssize_t rv;
 	size_t rc;
 
-	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
-	    || (unsigned int)rw_type > IO_PWRITE) {
+	if (io_args(fd, mem, nrw, off, rw_type) == -1) {
 		errno = EIO;
 		return -1;
 	}
@@ -1597,13 +1598,7 @@ rw_file_once(int fd, uint8_t *mem, size_t nrw,
 	size_t retries_on_zero = 0;
 	size_t max_retries = 10;
 
-	if (nrw != GBE_PART_SIZE &&
-	    nrw != NVM_SIZE &&
-	    nrw != NUM_RANDOM_BYTES)
-		goto err_rw_file_once;
-
-	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
-	    || (unsigned int)rw_type > IO_PWRITE)
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		goto err_rw_file_once;
 
 read_again:
@@ -1634,6 +1629,9 @@ static ssize_t
 do_rw(int fd, uint8_t *mem,
     size_t nrw, off_t off, int rw_type)
 {
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		goto err_do_rw;
+
 	if (rw_type == IO_READ)
 		return read(fd, mem, nrw);
 
@@ -1643,6 +1641,7 @@ do_rw(int fd, uint8_t *mem,
 	if (rw_type == IO_PREAD || rw_type == IO_PWRITE)
 		return prw(fd, mem, nrw, off, rw_type);
 
+err_do_rw:
 	errno = EIO;
 	return -1;
 }
@@ -1666,10 +1665,12 @@ prw(int fd, void *mem, size_t nrw,
 	int prw_type;
 	int flags;
 
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		goto err_prw;
+
 	prw_type = rw_type ^ IO_PREAD;
 
-	if (fd < 0 || !nrw || nrw > (size_t)SSIZE_MAX
-	    || (unsigned int)prw_type > IO_WRITE)
+	if ((unsigned int)prw_type > IO_WRITE)
 		goto err_prw;
 
 	flags = fcntl(fd, F_GETFL);
@@ -1707,6 +1708,28 @@ prw(int fd, void *mem, size_t nrw,
 	return r;
 
 err_prw:
+	errno = EIO;
+	return -1;
+}
+
+static int
+io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	if (nrw != GBE_PART_SIZE &&
+	    nrw != NVM_SIZE &&
+	    nrw != NUM_RANDOM_BYTES)
+		goto err_io_args;
+
+	if (fd < 0
+	    || !nrw /* prevent zero read request */
+	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
+	    || (unsigned int)rw_type > IO_PWRITE)
+		goto err_io_args;
+
+	return 0;
+
+err_io_args:
 	errno = EIO;
 	return -1;
 }
