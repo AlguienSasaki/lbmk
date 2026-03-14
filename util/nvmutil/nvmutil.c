@@ -1970,7 +1970,7 @@ real_pread_pwrite:
 			r = read(fd, mem, nrw);
 #if defined(HAVE_REAL_PREAD_PWRITE) && \
     HAVE_REAL_PREAD_PWRITE > 0
-		else if (rw_type == IO_WRITE)
+		else if (rw_type == IO_PWRITE)
 			r = pwrite(fd, mem, nrw, off);
 		else if (rw_type == IO_PREAD)
 			r = pread(fd, mem, nrw, off);
