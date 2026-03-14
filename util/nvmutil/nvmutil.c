@@ -15,6 +15,11 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
+#define OFF_ERR 0
+#ifndef OFF_RESET
+#define OFF_RESET 1
+#endif
+
 /*
  * NOTE: older Linux lacked arc4random.
  * added in glibc 2.36. Just pass HAVE_ARC4RANDOM_BUF=0
@@ -409,7 +414,8 @@ static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     size_t max_retries);
 static ssize_t prw(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr);
+    off_t off, int rw_type, int loop_eagain, int loop_eintr,
+    int off_reset);
 static int check_file(int fd, struct stat *st);
 static ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
@@ -668,6 +674,8 @@ typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
 typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
 typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
 typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
+typedef char bool_off_err[(OFF_ERR==0)?1:-1];
+typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 
 static int io_err_gbe = 0;
 static int rw_check_err_read[] = {0, 0};
@@ -1883,7 +1891,8 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		    mem + (size_t)rc,
 		    nrw - (size_t)rc,
 		    off + (off_t)rc,
-		    rw_type, loop_eagain, loop_eintr);
+		    rw_type, loop_eagain, loop_eintr,
+		    OFF_ERR);
 
 		if (rv < 0)
 			return -1;
@@ -1941,12 +1950,23 @@ err_rw_file_exact:
  * NOTE: If you use loop_eagain (1), you enable wait
  * loop on EAGAIN. Beware if using this on a non-blocking
  * pipe (it could spin indefinitely).
+ *
+ * off_reset: if zero, and using fallback pwrite/pread
+ *            analogs, we check if a file offset changed,
+ *            which would indicate another thread changed
+ *            it, and return error, without resetting the
+ *            file - this would allow that thread to keep
+ *            running, but we could then cause a whole
+ *            program exit if we wanted to.
+ *            if not zero:
+ *            we reset and continue, and pray for the worst.
  */
 
 static ssize_t
 prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type,
-    int loop_eagain, int loop_eintr)
+    int loop_eagain, int loop_eintr,
+    int off_reset)
 {
 	ssize_t r;
 	int positional_rw;
@@ -2050,9 +2070,19 @@ real_pread_pwrite:
 		 * Failure is the better option
 		 * here, since recovery would
 		 * mask hidden bugs in code.
+		 * We cannot guarantee thread
+		 * safety, except in the event
+		 * that violations cause exit;
+		 * you would then debug it.
 		 */
-		if (off != verified)
-			goto err_prw;
+		if (off != verified) {
+			if (!off_reset)
+				goto err_prw;
+
+			if (lseek_loop(fd, off, SEEK_SET,
+			    loop_eagain, loop_eintr) == (off_t)-1)
+				return -1;
+		}
 
 		do {
 			if (rw_type == IO_PREAD)
