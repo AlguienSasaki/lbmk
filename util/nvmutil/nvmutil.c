@@ -16,6 +16,33 @@
  */
 
 /*
+ * Regarding:
+ * Retries on zero-return.
+ *
+ * 10 retries is generous,
+ * but also conservative.
+ * This is enough for e.g.
+ * slow USB flash drives,
+ * busy NFS servers, etc.
+ * Any more is too much
+ * and not of much benefit.
+ *
+ * At least 3-5 recommended.
+ * Pass this at build time.
+ */
+#ifndef MAX_ZERO_RW_RETRY
+#define MAX_ZERO_RW_RETRY 10
+#endif
+
+/*
+ * 0: portable pread/pwrite
+ * 1: real pread/pwrite (thread-safe)
+ */
+#ifndef HAVE_REAL_PREAD_PWRITE
+#define HAVE_REAL_PREAD_PWRITE 0
+#endif
+
+/*
  * Major TODO: split this into multiple files.
  * This program has become quite large now, mostly
  * due to all the extra sanity checks / portability.
@@ -341,10 +368,11 @@ static off_t gbe_x_offset(size_t part, const char *f_op,
 static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type);
 static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr);
+    off_t off, int rw_type, int loop_eagain, int loop_eintr,
+    size_t max_retries);
 static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, size_t rc, int loop_eagain,
-    int loop_eintr);
+    int loop_eintr, size_t max_retries);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
 static int rw_over_nrw(ssize_t r, size_t nrw);
@@ -1202,7 +1230,7 @@ rhex(void)
 	if (!n) {
 		n = sizeof(rnum);
 		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ,
-		    NO_LOOP_EAGAIN, LOOP_EINTR) == -1)
+		    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY) == -1)
 			err(errno, "Randomisation failed");
 	}
 
@@ -1371,7 +1399,8 @@ static void
 gbe_cat_buf(u8 *b)
 {
 	if (rw_file_exact(STDOUT_FILENO, b,
-	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR) < 0)
+	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY) < 0)
 		err(errno, "stdout: cat");
 }
 
@@ -1732,7 +1761,7 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 		goto err_rw_gbe_file_exact;
 
 	return rw_file_exact(fd, mem, nrw, off, rw_type,
-	    NO_LOOP_EAGAIN, LOOP_EINTR);
+	    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY);
 
 err_rw_gbe_file_exact:
 	errno = EIO;
@@ -1773,14 +1802,14 @@ err_rw_gbe_file_exact:
 static ssize_t
 rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain,
-    int loop_eintr)
+    int loop_eintr, size_t max_retries)
 {
 	ssize_t rv;
 	size_t rc;
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
 		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
-		    loop_eagain, loop_eintr)) < 0)
+		    loop_eagain, loop_eintr, max_retries)) < 0)
 			return -1;
 	
 		/* rw_file_once never returns
@@ -1816,23 +1845,11 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 static ssize_t
 rw_file_once(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, size_t rc,
-    int loop_eagain, int loop_eintr)
+    int loop_eagain, int loop_eintr,
+    size_t max_retries)
 {
 	ssize_t rv;
 	size_t retries_on_zero = 0;
-
-	/*
-	 * Retries on zero-return.
-	 *
-	 * 10 retries is generous,
-	 * but also conservative.
-	 * This is enough for e.g.
-	 * slow USB flash drives,
-	 * busy NFS servers, etc.
-	 * Any more is too much
-	 * and not of much benefit.
-	 */
-	size_t max_retries = 10;
 
 	if (mem == NULL)
 		goto err_rw_file_once;
