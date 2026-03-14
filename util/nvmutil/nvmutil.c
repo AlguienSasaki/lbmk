@@ -411,7 +411,7 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
 static int check_file(int fd, struct stat *st);
-static int rw_over_nrw(ssize_t r, size_t nrw);
+static ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 static off_t lseek_loop(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 static int try_err(int loop_err, int errval);
@@ -1874,32 +1874,37 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
     int loop_eintr, size_t max_retries)
 {
 	ssize_t rv = 0;
-	size_t rc = 0;
+	ssize_t rc = 0;
+	size_t retries_on_zero = 0;
 
-	for (rc = 0, rv = 0; rc < nrw; ) {
+	while (1) {
 
-		rc += (size_t)rv;
+		rc += rv;
+		if ((size_t)rc >= nrw)
+			break;
 
 		if ((rv = rw_file_once(fd,
 		    mem + rc, nrw - rc, off + rc, rw_type,
 		    loop_eagain, loop_eintr, max_retries)) < 0)
 			return -1;
 	
-		/* rw_file_once never returns
-		   zero, but it's still logically
-		   incorrect not to handle it here */
-	
+		/* Prevent theoretical overflow */
+		if ((size_t)rv > (nrw - rc))
+			goto err_rw_file_exact;
+
 		if (rv == 0) {
-			errno = EIO;
-			return -1;
+			if (retries_on_zero++ < max_retries)
+				continue;
+			goto err_rw_file_exact;
 		}
 
-		/* Prevent theoretical overflow */
-		if ((size_t)rv > nrw - rc)
-			goto err_rw_file_exact;
+		retries_on_zero = 0;
 	}
 
-	return rc;
+	if ((size_t)rc != nrw)
+		goto err_rw_file_exact;
+
+	return rw_over_nrw(rc, nrw);
 
 err_rw_file_exact:
 	errno = EIO;
@@ -2113,7 +2118,7 @@ err_is_file:
  * POSIX can say whatever it wants.
  * specification != implementation
  */
-static int
+static ssize_t
 rw_over_nrw(ssize_t r, size_t nrw)
 {
 	if (r == -1)
