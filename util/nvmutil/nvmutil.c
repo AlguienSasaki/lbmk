@@ -1876,9 +1876,13 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		if ((size_t)rc >= nrw)
 			break;
 
-		if ((rv = prw(fd,
-		    mem + (size_t)rc, nrw - rc, off + rc, rw_type,
-		    loop_eagain, loop_eintr)) < 0)
+		rv = prw(fd,
+		    mem + (size_t)rc,
+		    nrw - (size_t)rc,
+		    off + (off_t)rc,
+		    rw_type, loop_eagain, loop_eintr);
+
+		if (rv < 0)
 			return -1;
 	
 		/* Prevent theoretical overflow */
