@@ -332,6 +332,7 @@ static void check_bin(size_t a, const char *a_name);
  */
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
+static void verify_gbe_bin_write(size_t p);
 static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -1526,9 +1527,21 @@ rw_gbe_file_part(size_t p, int rw_type,
 	 * to ensure that it was done correctly.
 	 * NOTE: using "pad" (only cat uses it)
 	 */
+	if (rw_type == IO_PWRITE)
+		verify_gbe_bin_write(p);
+}
 
-	if (rw_type != IO_PWRITE)
-		return; /* skip for reads */
+static void
+verify_gbe_bin_write(size_t p)
+{
+	ssize_t r;
+	size_t gbe_rw_size = command[cmd_index].rw_size;
+	u8 *mem_offset;
+	off_t file_offset;
+
+	/* invert not needed for pwrite */
+	mem_offset = gbe_mem_offset(p, "pwrite");
+	file_offset = (off_t)gbe_file_offset(p, "pwrite");
 
 	/*
 	 * We may otherwise read from
