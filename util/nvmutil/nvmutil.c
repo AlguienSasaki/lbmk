@@ -999,6 +999,9 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 
 	if (!S_ISREG(st->st_mode))
 		err(errno, "%s: not a regular file", path);
+
+	if (lseek(*fd_ptr, 0, SEEK_CUR) == (off_t)-1)
+		err(errno, "%s: file not seekable", path);
 }
 
 static void
