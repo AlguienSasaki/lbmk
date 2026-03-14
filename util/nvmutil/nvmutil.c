@@ -249,6 +249,9 @@ typedef char static_assert_twos_complement[
 typedef char assert_ulong_ptr[
     (sizeof(ulong) >= sizeof(void *)) ? 1 : -1
 ];
+typedef char assert_size_t_ptr[
+    (sizeof(size_t) >= sizeof(void *)) ? 1 : -1
+];
 
 /*
  * We set _FILE_OFFSET_BITS 64, but we only handle
@@ -449,9 +452,6 @@ static void usage(int usage_exit);
 #define NVM_WORDS (NVM_SIZE >> 1)
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
-#define NUM_RANDOM_BYTES 12
-static u8 rnum[NUM_RANDOM_BYTES];
-
 /*
  * Portable macro based on BSD nitems.
  * Used to count the number of commands (see below).
@@ -638,8 +638,6 @@ typedef char assert_read[(IO_READ==0)?1:-1];
 typedef char assert_write[(IO_WRITE==1)?1:-1];
 typedef char assert_pread[(IO_PREAD==2)?1:-1];
 typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
-typedef char assert_rand_byte[(NUM_RANDOM_BYTES>0)?1:-1];
-typedef char assert_rand_len[(NUM_RANDOM_BYTES<NVM_SIZE)?1:-1];
 /* commands */
 typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
 typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
@@ -1801,19 +1799,18 @@ static ssize_t
 rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type)
 {
-	ulong mem_addr;
-	ulong buf_addr;
-	ulong buf_end;
+	size_t mem_addr;
+	size_t buf_addr;
+	size_t buf_end;
 
 	if (mem == NULL)
 		goto err_rw_gbe_file_exact;
 
-	mem_addr = (ulong)(void *)mem;
-	buf_addr = (ulong)(void *)buf;
-	buf_end  = buf_addr + (ulong)GBE_FILE_SIZE;
+	mem_addr = (size_t)(void *)mem;
+	buf_addr = (size_t)(void *)buf;
+	buf_end  = buf_addr + (size_t)GBE_FILE_SIZE;
 
 	if (mem != (void *)pad &&
-	    mem != (void *)rnum &&
 	    (mem_addr < buf_addr || mem_addr >= buf_end))
 	    goto err_rw_gbe_file_exact;
 
@@ -1860,10 +1857,9 @@ err_rw_gbe_file_exact:
  * returned and errno is set accordingly.
  *
  * Zero-byte returns are not allowed.
- * It calls rw_file_once(), which will
- * re-try on zero-read a finite number
- * of times, to prevent infinite loops
- * while also having fault tolerance.
+ * It will re-spin a finite number of
+ * times upon zero-return, to recover,
+ * otherwise it will return an error.
  */
 static ssize_t
 rw_file_exact(int fd, u8 *mem, size_t nrw,
