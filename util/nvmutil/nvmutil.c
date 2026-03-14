@@ -1813,7 +1813,7 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 
 	mem_addr = (ulong)(void *)mem;
 	buf_addr = (ulong)(void *)buf;
-	buf_end  = buf_addr + GBE_FILE_SIZE;
+	buf_end  = buf_addr + (ulong)GBE_FILE_SIZE;
 
 	if (mem != (void *)pad &&
 	    mem != (void *)rnum &&
