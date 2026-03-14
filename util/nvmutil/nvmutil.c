@@ -1750,7 +1750,7 @@ try_rw_again:
 	}
 	errno = saved_errno;
 
-	return r;
+	return rw_over_ssize_max(r);
 
 err_prw:
 	errno = EIO;
