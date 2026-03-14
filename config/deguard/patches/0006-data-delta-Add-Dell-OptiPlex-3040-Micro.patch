@@ -1,0 +1,219 @@
+From 1b6633229a67d934adef8c775333ccfe81450efb Mon Sep 17 00:00:00 2001
+From: Todd Baker <todd_baker@student.uml.edu>
+Date: Thu, 12 Mar 2026 11:45:48 -0400
+Subject: [PATCH] data/delta: Add Dell OptiPlex 3040 Micro
+
+Generated from stock flash dump of Dell OptiPlex 3040 Micro with ME version 11.0.0.1197, SKU 2M, PCH-H.
+
+Signed-off-by: Todd Baker <todd_baker@student.uml.edu>
+---
+ .../optiplex_3040/home/bup/bup_sku/emu_fuse_map   | Bin 0 -> 7 bytes
+ .../optiplex_3040/home/bup/bup_sku/fuse_ip_base   | Bin 0 -> 18 bytes
+ .../optiplex_3040/home/bup/bup_sku/plat_n_sku     | Bin 0 -> 4 bytes
+ data/delta/optiplex_3040/home/fwupdate/fwuoemid   |   1 +
+ data/delta/optiplex_3040/home/gpio/csme_pins      |   0
+ data/delta/optiplex_3040/home/icc/header          | Bin 0 -> 4 bytes
+ data/delta/optiplex_3040/home/icc/namestr         | Bin 0 -> 48 bytes
+ data/delta/optiplex_3040/home/icc/prof0           | Bin 0 -> 56 bytes
+ data/delta/optiplex_3040/home/icc/prof1           |   0
+ data/delta/optiplex_3040/home/icc/prof2           |   0
+ data/delta/optiplex_3040/home/icc/prof3           |   0
+ data/delta/optiplex_3040/home/icc/prof4           |   0
+ data/delta/optiplex_3040/home/icc/prof5           |   0
+ data/delta/optiplex_3040/home/icc/prof6           |   0
+ data/delta/optiplex_3040/home/mca/ish_policy      | Bin 0 -> 1 bytes
+ data/delta/optiplex_3040/home/mctp/device_ports   | Bin 0 -> 4 bytes
+ data/delta/optiplex_3040/home/pavp/hdcp_ports     | Bin 0 -> 1 bytes
+ .../optiplex_3040/home/policy/cfgmgr/cfg_rules    | Bin 0 -> 660 bytes
+ .../delta/optiplex_3040/home/policy/hci/sysintid1 | Bin 0 -> 4 bytes
+ .../delta/optiplex_3040/home/policy/hci/sysintid2 | Bin 0 -> 4 bytes
+ .../delta/optiplex_3040/home/policy/hci/sysintid3 | Bin 0 -> 4 bytes
+ 21 files changed, 1 insertion(+)
+ create mode 100644 data/delta/optiplex_3040/home/bup/bup_sku/emu_fuse_map
+ create mode 100644 data/delta/optiplex_3040/home/bup/bup_sku/fuse_ip_base
+ create mode 100644 data/delta/optiplex_3040/home/bup/bup_sku/plat_n_sku
+ create mode 100644 data/delta/optiplex_3040/home/fwupdate/fwuoemid
+ create mode 100644 data/delta/optiplex_3040/home/gpio/csme_pins
+ create mode 100644 data/delta/optiplex_3040/home/icc/header
+ create mode 100644 data/delta/optiplex_3040/home/icc/namestr
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof0
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof1
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof2
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof3
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof4
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof5
+ create mode 100644 data/delta/optiplex_3040/home/icc/prof6
+ create mode 100644 data/delta/optiplex_3040/home/mca/ish_policy
+ create mode 100644 data/delta/optiplex_3040/home/mctp/device_ports
+ create mode 100644 data/delta/optiplex_3040/home/pavp/hdcp_ports
+ create mode 100644 data/delta/optiplex_3040/home/policy/cfgmgr/cfg_rules
+ create mode 100644 data/delta/optiplex_3040/home/policy/hci/sysintid1
+ create mode 100644 data/delta/optiplex_3040/home/policy/hci/sysintid2
+ create mode 100644 data/delta/optiplex_3040/home/policy/hci/sysintid3
+
+diff --git a/data/delta/optiplex_3040/home/bup/bup_sku/emu_fuse_map b/data/delta/optiplex_3040/home/bup/bup_sku/emu_fuse_map
+new file mode 100644
+index 0000000000000000000000000000000000000000..19d86a9897dad64f168d75bb0a4706e2d88a461c
+GIT binary patch
+literal 7
+OcmZ>3uVmn1U<LpOp8-|?
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/bup/bup_sku/fuse_ip_base b/data/delta/optiplex_3040/home/bup/bup_sku/fuse_ip_base
+new file mode 100644
+index 0000000000000000000000000000000000000000..658a9660e31c0501f3e9fba168279fecec236f8b
+GIT binary patch
+literal 18
+ZcmWe&P-3uPSje!M;Q^BeQzX+xCIBG91Q`GT
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/bup/bup_sku/plat_n_sku b/data/delta/optiplex_3040/home/bup/bup_sku/plat_n_sku
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9ed9bc11e92f2c2ad9096ebe689993fdeff0d26
+GIT binary patch
+literal 4
+Lcmc~~U~B*Y0xAIO
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/fwupdate/fwuoemid b/data/delta/optiplex_3040/home/fwupdate/fwuoemid
+new file mode 100644
+index 0000000..a174ee2
+--- /dev/null
++++ b/data/delta/optiplex_3040/home/fwupdate/fwuoemid
+@@ -0,0 +1 @@
++"6�h��N��l�1_kx
+\ No newline at end of file
+diff --git a/data/delta/optiplex_3040/home/gpio/csme_pins b/data/delta/optiplex_3040/home/gpio/csme_pins
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/header b/data/delta/optiplex_3040/home/icc/header
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b75556082e2c00ea8a888450d05627b20f0ec61
+GIT binary patch
+literal 4
+LcmZQ%U|<9Q00{sC
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/icc/namestr b/data/delta/optiplex_3040/home/icc/namestr
+new file mode 100644
+index 0000000000000000000000000000000000000000..6f8c6989c84e6c19cdc026f95c6148b436fd4486
+GIT binary patch
+literal 48
+ecmWG2%1_J8NmVdlKn1}iiFqlBMJcGF3=9Cwn+8(=
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/icc/prof0 b/data/delta/optiplex_3040/home/icc/prof0
+new file mode 100644
+index 0000000000000000000000000000000000000000..87c9dabb55dfb6e5049870b63d4e29e809d1ad56
+GIT binary patch
+literal 56
+zcmWeozo*7wbe=&#T|k|Ifq_ATfsuiQfq{WJfblJZ5yO8$MaH+x49pCE4vcR>@>~Lp
+HcR(}%2R#Vu
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/icc/prof1 b/data/delta/optiplex_3040/home/icc/prof1
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/prof2 b/data/delta/optiplex_3040/home/icc/prof2
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/prof3 b/data/delta/optiplex_3040/home/icc/prof3
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/prof4 b/data/delta/optiplex_3040/home/icc/prof4
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/prof5 b/data/delta/optiplex_3040/home/icc/prof5
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/icc/prof6 b/data/delta/optiplex_3040/home/icc/prof6
+new file mode 100644
+index 0000000..e69de29
+diff --git a/data/delta/optiplex_3040/home/mca/ish_policy b/data/delta/optiplex_3040/home/mca/ish_policy
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76dd238ade08917e6712764a16a22005a50573d
+GIT binary patch
+literal 1
+IcmZPo000310RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/mctp/device_ports b/data/delta/optiplex_3040/home/mctp/device_ports
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/pavp/hdcp_ports b/data/delta/optiplex_3040/home/pavp/hdcp_ports
+new file mode 100644
+index 0000000000000000000000000000000000000000..f76dd238ade08917e6712764a16a22005a50573d
+GIT binary patch
+literal 1
+IcmZPo000310RR91
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/policy/cfgmgr/cfg_rules b/data/delta/optiplex_3040/home/policy/cfgmgr/cfg_rules
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ea0e403b1037ab54a1afbd1a96bbc3d4d8a8280
+GIT binary patch
+literal 660
+zcmYk&NlpR*5QX7~4MGTl%pxfBJP9ak0&B0pmJJ7B%Z7t+Ef3%=z!WLszx(p~byams
+zQbG!+B!%3P^x(EEKyDAMZ+QgyBl4)Eq<3P-e}n&b@3viZ0yCfBBy6|Z4R+VF`y?st
+zzDmlVpM`Vi<lzEbblW$+xb4mo@>h3UQrT^LEAI8-=lc!)cev`dnKjA&(am-D=5RSS
+y+$%{<_in#Ex6p69?amJ7chTv=ee4~;Lv%*)7@lDM6!`}{gXi!9{)E5aCHx0PuNQ3q
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/policy/hci/sysintid1 b/data/delta/optiplex_3040/home/policy/hci/sysintid1
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ffc797e4d9b08ba4549064dbb10b39ccb2ad38b
+GIT binary patch
+literal 4
+LcmdN8U|;|M0Mr0E
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/policy/hci/sysintid2 b/data/delta/optiplex_3040/home/policy/hci/sysintid2
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+diff --git a/data/delta/optiplex_3040/home/policy/hci/sysintid3 b/data/delta/optiplex_3040/home/policy/hci/sysintid3
+new file mode 100644
+index 0000000000000000000000000000000000000000..593f4708db84ac8fd0f5cc47c634f38c013fe9e4
+GIT binary patch
+literal 4
+LcmZQzU|;|M00aO5
+
+literal 0
+HcmV?d00001
+
+-- 
+2.53.0
+

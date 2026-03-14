@@ -1,0 +1,1528 @@
+From 24856e5e383b1b9aa078b879064b8c2b99f4494c Mon Sep 17 00:00:00 2001
+From: Todd Baker <todd_baker@student.uml.edu>
+Date: Thu, 12 Mar 2026 13:12:04 -0400
+Subject: [PATCH] mb/dell: Add OptiPlex 3040 Micro port (upstream-compatible)
+
+Based on the OptiPlex 3050 Micro (same Skylake H110 PCH-H platform).
+Key differences from 3050:
+- DDR3L SODIMMs (256-byte SPD at 0x50/0x52)
+- Intel Pentium G4400T-class CPUs (Skylake only, no Kabylake/Coffeelake)
+- Realtek ALC3234 HDA (subsystem ID 0x102806bb)
+- VBT: DDI E entry removed (phantom port, causes i915 WARN_ON)
+- PCIe root ports rp5/rp8/rp21 enabled (PcieRpEnable removed; use device on/off)
+- HECI1 set off to prevent stall when HAP bit is set (ME neutralized)
+
+Signed-off-by: Todd Baker <todd_baker@student.uml.edu>
+---
+ src/mainboard/dell/optiplex_3040/Kconfig      |  37 ++
+ src/mainboard/dell/optiplex_3040/Kconfig.name |   4 +
+ src/mainboard/dell/optiplex_3040/Makefile.mk  |  12 +
+ src/mainboard/dell/optiplex_3040/acpi/ec.asl  |   3 +
+ .../dell/optiplex_3040/acpi/superio.asl       |   3 +
+ .../dell/optiplex_3040/board_info.txt         |   7 +
+ src/mainboard/dell/optiplex_3040/bootblock.c  | 107 ++++
+ src/mainboard/dell/optiplex_3040/cmos.default |   5 +
+ src/mainboard/dell/optiplex_3040/cmos.layout  |  54 ++
+ src/mainboard/dell/optiplex_3040/data.vbt     | Bin 0 -> 4300 bytes
+ .../dell/optiplex_3040/devicetree.cb          | 100 ++++
+ src/mainboard/dell/optiplex_3040/dsdt.asl     |  27 +
+ .../dell/optiplex_3040/gma-mainboard.ads      |  19 +
+ src/mainboard/dell/optiplex_3040/hda_verb.c   |  90 +++
+ .../dell/optiplex_3040/include/early_gpio.h   |  11 +
+ .../dell/optiplex_3040/include/gpio.h         | 241 +++++++++
+ src/mainboard/dell/optiplex_3040/ramstage.c   | 512 ++++++++++++++++++
+ src/mainboard/dell/optiplex_3040/romstage.c   |  22 +
+ src/mainboard/dell/optiplex_3040/sch5555_ec.c |  54 ++
+ src/mainboard/dell/optiplex_3040/sch5555_ec.h |  10 +
+ 20 files changed, 1318 insertions(+)
+ create mode 100644 src/mainboard/dell/optiplex_3040/Kconfig
+ create mode 100644 src/mainboard/dell/optiplex_3040/Kconfig.name
+ create mode 100644 src/mainboard/dell/optiplex_3040/Makefile.mk
+ create mode 100644 src/mainboard/dell/optiplex_3040/acpi/ec.asl
+ create mode 100644 src/mainboard/dell/optiplex_3040/acpi/superio.asl
+ create mode 100644 src/mainboard/dell/optiplex_3040/board_info.txt
+ create mode 100644 src/mainboard/dell/optiplex_3040/bootblock.c
+ create mode 100644 src/mainboard/dell/optiplex_3040/cmos.default
+ create mode 100644 src/mainboard/dell/optiplex_3040/cmos.layout
+ create mode 100644 src/mainboard/dell/optiplex_3040/data.vbt
+ create mode 100644 src/mainboard/dell/optiplex_3040/devicetree.cb
+ create mode 100644 src/mainboard/dell/optiplex_3040/dsdt.asl
+ create mode 100644 src/mainboard/dell/optiplex_3040/gma-mainboard.ads
+ create mode 100644 src/mainboard/dell/optiplex_3040/hda_verb.c
+ create mode 100644 src/mainboard/dell/optiplex_3040/include/early_gpio.h
+ create mode 100644 src/mainboard/dell/optiplex_3040/include/gpio.h
+ create mode 100644 src/mainboard/dell/optiplex_3040/ramstage.c
+ create mode 100644 src/mainboard/dell/optiplex_3040/romstage.c
+ create mode 100644 src/mainboard/dell/optiplex_3040/sch5555_ec.c
+ create mode 100644 src/mainboard/dell/optiplex_3040/sch5555_ec.h
+
+diff --git a/src/mainboard/dell/optiplex_3040/Kconfig b/src/mainboard/dell/optiplex_3040/Kconfig
+new file mode 100644
+index 0000000000..eab8e7d814
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/Kconfig
+@@ -0,0 +1,37 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++if BOARD_DELL_OPTIPLEX_3040
++
++config BOARD_SPECIFIC_OPTIONS
++	def_bool y
++	select BOARD_ROMSIZE_KB_16384
++	select HAVE_ACPI_RESUME
++	select HAVE_ACPI_TABLES
++	select HAVE_CMOS_DEFAULT
++	select HAVE_OPTION_TABLE
++	select INTEL_GMA_ADD_VBT
++	select INTEL_GMA_HAVE_VBT
++	select MAINBOARD_HAS_LIBGFXINIT
++	select MAINBOARD_SUPPORTS_SKYLAKE_CPU
++	select SKYLAKE_SOC_PCH_H
++	select AZALIA_USE_LEGACY_VERB_TABLE
++	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
++	select SOC_INTEL_KABYLAKE
++	select SUPERIO_SMSC_SCH555x
++
++config CBFS_SIZE
++	default 0x900000
++
++config MAINBOARD_DIR
++	default "dell/optiplex_3040"
++
++config MAINBOARD_PART_NUMBER
++	default "OptiPlex 3040 Micro"
++
++config INTEL_GMA_VBT_FILE
++	default "src/mainboard/$(MAINBOARDDIR)/data.vbt"
++
++config DIMM_SPD_SIZE
++	default 256	# DDR3L
++
++endif
+diff --git a/src/mainboard/dell/optiplex_3040/Kconfig.name b/src/mainboard/dell/optiplex_3040/Kconfig.name
+new file mode 100644
+index 0000000000..e06da5010a
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/Kconfig.name
+@@ -0,0 +1,4 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++config BOARD_DELL_OPTIPLEX_3040
++	bool "Dell OptiPlex 3040 Micro"
+diff --git a/src/mainboard/dell/optiplex_3040/Makefile.mk b/src/mainboard/dell/optiplex_3040/Makefile.mk
+new file mode 100644
+index 0000000000..0bd72fe691
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/Makefile.mk
+@@ -0,0 +1,12 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++bootblock-y += bootblock.c
++bootblock-y += sch5555_ec.c
++
++romstage-y += romstage.c
++
++ramstage-y += ramstage.c
++ramstage-y += sch5555_ec.c
++ramstage-y += hda_verb.c
++
++ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
+diff --git a/src/mainboard/dell/optiplex_3040/acpi/ec.asl b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
+new file mode 100644
+index 0000000000..16990d45f4
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: CC-PDDC */
++
++/* Please update the license if adding licensable material. */
+diff --git a/src/mainboard/dell/optiplex_3040/acpi/superio.asl b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
+new file mode 100644
+index 0000000000..16990d45f4
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: CC-PDDC */
++
++/* Please update the license if adding licensable material. */
+diff --git a/src/mainboard/dell/optiplex_3040/board_info.txt b/src/mainboard/dell/optiplex_3040/board_info.txt
+new file mode 100644
+index 0000000000..e43a925ec3
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/board_info.txt
+@@ -0,0 +1,7 @@
++Category: desktop
++Board URL: https://www.dell.com/support/home/en-us/product-support/product/optiplex-3040-micro/overview
++ROM package: SOIC-8
++ROM protocol: SPI
++ROM socketed: n
++Flashrom support: y
++Release year: 2016
+diff --git a/src/mainboard/dell/optiplex_3040/bootblock.c b/src/mainboard/dell/optiplex_3040/bootblock.c
+new file mode 100644
+index 0000000000..10689c42a1
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/bootblock.c
+@@ -0,0 +1,107 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <bootblock_common.h>
++#include <device/pnp_ops.h>
++#include <soc/gpio.h>
++#include <superio/smsc/sch555x/sch555x.h>
++#include "include/early_gpio.h"
++#include "sch5555_ec.h"
++
++struct ec_init_entry {
++	uint16_t addr;
++	uint8_t val;
++};
++
++static void bootblock_ec_init(void)
++{
++	/*
++	 * Early EC init
++	 */
++
++	static const struct ec_init_entry init_table1[] = {
++		{0x08cc, 0x11}, {0x08d0, 0x11}, {0x088c, 0x10}, {0x0890, 0x10},
++		{0x0894, 0x10}, {0x0898, 0x12}, {0x089c, 0x12}, {0x08a0, 0x10},
++		{0x08a4, 0x12}, {0x08a8, 0x10}, {0x0820, 0x12}, {0x0824, 0x12},
++		{0x0878, 0x12}, {0x0880, 0x12}, {0x0884, 0x12}, {0x08e0, 0x12},
++		{0x08e4, 0x12}, {0x083c, 0x10}, {0x0840, 0x10}, {0x0844, 0x10},
++		{0x0848, 0x10}, {0x084c, 0x10}, {0x0850, 0x10}, {0x0814, 0x11},
++	};
++
++	for (size_t i = 0; i < ARRAY_SIZE(init_table1); ++i)
++		sch5555_mbox_write(2, init_table1[i].addr, init_table1[i].val);
++
++	static const struct ec_init_entry init_table2[] = {
++		{0x0040, 0x00}, {0x00f8, 0x10}, {0x00f9, 0x00}, {0x00f0, 0x30},
++		{0x00fa, 0x00}, {0x00fb, 0x00}, {0x00ea, 0x00}, {0x00eb, 0x00},
++		{0x00ef, 0x7c}, {0x0005, 0x0f}, {0x0014, 0x01}, {0x0018, 0x2f},
++		{0x0019, 0x2f}, {0x001a, 0x2f}, {0x001b, 0x2f}, {0x01d8, 0x01},
++		{0x0040, 0x11},
++	};
++
++	for (size_t i = 0; i < ARRAY_SIZE(init_table2); ++i)
++		sch5555_mbox_write(1, init_table2[i].addr, init_table2[i].val);
++
++	sch5555_mbox_write(1, 0x000b, 0x01);
++	sch5555_mbox_write(4, 0x001a, 0x04);
++	sch5555_mbox_write(4, 0x0028, 0x18);
++	sch5555_mbox_write(4, 0x001a, 0x00);
++	sch5555_mbox_write(1, 0x000b, 0x03);
++
++	/*
++	 * Early HWM init
++	 */
++
++	sch5555_mbox_read(1, 0xcb);
++	sch5555_mbox_read(1, 0xb8);
++
++	static const struct ec_init_entry hwm_init_table[] = {
++		{0x02fc, 0xa0}, {0x02fd, 0x32}, {0x0005, 0x77}, {0x0019, 0x2f},
++		{0x001a, 0x2f}, {0x008a, 0x33}, {0x008b, 0x33}, {0x008c, 0x33},
++		{0x00ba, 0x10}, {0x00d1, 0xff}, {0x00d6, 0xff}, {0x00db, 0xff},
++		{0x0048, 0x00}, {0x0049, 0x00}, {0x007a, 0x00}, {0x007b, 0x00},
++		{0x007c, 0x00}, {0x0080, 0x00}, {0x0081, 0x00}, {0x0082, 0x00},
++		{0x0083, 0xbb}, {0x0084, 0xb0}, {0x01a1, 0x88}, {0x01a4, 0x80},
++		{0x0088, 0x00}, {0x0089, 0x00}, {0x00a0, 0x02}, {0x00a1, 0x02},
++		{0x00a2, 0x02}, {0x00a4, 0x04}, {0x00a5, 0x04}, {0x00a6, 0x04},
++		{0x00ab, 0x00}, {0x00ad, 0x3f}, {0x00b7, 0x07}, {0x0062, 0x50},
++		{0x0000, 0x46}, {0x0000, 0x50}, {0x0000, 0x46}, {0x0000, 0x50},
++		{0x0000, 0x46}, {0x0000, 0x98}, {0x0059, 0x98}, {0x0061, 0x7c},
++		{0x01bc, 0x00}, {0x01bd, 0x00}, {0x01bb, 0x00}, {0x0085, 0xdd},
++		{0x0086, 0xdd}, {0x0087, 0x07}, {0x0090, 0x82}, {0x0091, 0x5e},
++		{0x0095, 0x5d}, {0x0096, 0xa9}, {0x0097, 0x00}, {0x009b, 0x00},
++		{0x00ae, 0x86}, {0x00af, 0x86}, {0x00b3, 0x67}, {0x00c4, 0xff},
++		{0x00c5, 0xff}, {0x00c9, 0xff}, {0x0040, 0x01}, {0x02fc, 0x00},
++		{0x02b3, 0x9a}, {0x02b4, 0x05}, {0x02cc, 0x01}, {0x02d0, 0x4c},
++		{0x02d2, 0x01}, {0x02db, 0x01}, {0x006f, 0x01}, {0x0070, 0x02},
++		{0x0071, 0x03}, {0x018b, 0x03}, {0x018c, 0x03}, {0x0015, 0x33},
++		{0x018b, 0x00}, {0x018c, 0x00}, {0x02f8, 0x5e}, {0x02f9, 0x01},
++	};
++
++	for (size_t i = 0; i < ARRAY_SIZE(hwm_init_table); ++i)
++		sch5555_mbox_write(1, hwm_init_table[i].addr, hwm_init_table[i].val);
++}
++
++
++#define SCH555x_IOBASE	0x2e
++#define GLOBAL_DEV	PNP_DEV(SCH555x_IOBASE, SCH555x_LDN_GLOBAL)
++#define SERIAL_DEV	PNP_DEV(SCH555x_IOBASE, SCH555x_LDN_UART1)
++
++void bootblock_mainboard_early_init(void)
++{
++	gpio_configure_pads(early_gpio_table, ARRAY_SIZE(early_gpio_table));
++
++	// Super I/O early init will map Runtime and EMI registers
++	sch555x_early_init(GLOBAL_DEV);
++
++	// Changes LED color among a few other things
++	outb(1, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_PME_STS);
++	outb(1, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_PME_EN);
++	outb(0xf, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_LED);
++	outb(1, SCH555x_RUNTIME_IOBASE + SCH555x_RUNTIME_UNK1);
++
++	// Perform bootblock EC initialization
++	bootblock_ec_init();
++
++	// Bootblock EC initialization is required for UART1 to work
++	sch555x_enable_serial(SERIAL_DEV, CONFIG_TTYS0_BASE);
++}
+diff --git a/src/mainboard/dell/optiplex_3040/cmos.default b/src/mainboard/dell/optiplex_3040/cmos.default
+new file mode 100644
+index 0000000000..79961f43d8
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/cmos.default
+@@ -0,0 +1,5 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++boot_option=Fallback
++debug_level=Debug
++power_on_after_fail=Disable
+diff --git a/src/mainboard/dell/optiplex_3040/cmos.layout b/src/mainboard/dell/optiplex_3040/cmos.layout
+new file mode 100644
+index 0000000000..54a5147b7d
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/cmos.layout
+@@ -0,0 +1,54 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++# -----------------------------------------------------------------
++entries
++
++#start-bit length  config config-ID	name
++
++# -----------------------------------------------------------------
++0	120	r	0	reserved_memory
++
++# -----------------------------------------------------------------
++# RTC_BOOT_BYTE (coreboot hardcoded)
++384	1	e	4	boot_option
++388	4	h	0	reboot_counter
++
++# -----------------------------------------------------------------
++# coreboot config options: console
++395	4	e	6	debug_level
++
++# coreboot config options: southbridge
++409	2	e	7	power_on_after_fail
++
++# coreboot config options: bootloader
++#Used by ChromeOS:
++416	128	r	0	vbnv
++
++# coreboot config options: check sums
++984	16	h	0	check_sum
++
++# -----------------------------------------------------------------
++
++enumerations
++
++#ID	value	text
++1	0	Disable
++1	1	Enable
++4	0	Fallback
++4	1	Normal
++6	0	Emergency
++6	1	Alert
++6	2	Critical
++6	3	Error
++6	4	Warning
++6	5	Notice
++6	6	Info
++6	7	Debug
++6	8	Spew
++7	0	Disable
++7	1	Enable
++7	2	Keep
++# -----------------------------------------------------------------
++checksums
++
++checksum 392 415 984
+diff --git a/src/mainboard/dell/optiplex_3040/data.vbt b/src/mainboard/dell/optiplex_3040/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..b503dfc20277775982256a4bdc9108c2ad96f856
+GIT binary patch
+literal 4300
+zcmeHJU2GIp6#nLSXYbBzr$d#pV7($jx3pz;m0GlwX?H0tEiwzWuF-@o*+oezEo~tM
+zf4YX6kSJy!)Szid6JN~w(!}_rMiOHr!Jldr9_@>X5=}_J_yVk%JJapDM0Z0%l!R}R
+zIrp4<=DX+Id*|M>Zm4^Z?&*JOpsRly^^k^%uk_0>aU;6>cJ0|4?;7md+dZ%=)=$5~
+z-I&#{Uj)(|w@Qten<IS(Co?0ByTi1<dw>o(A5h19#EjB-JKfpSLz9t6Gqt-rd*eI%
+zXydjXI}&cDcC0gQN0=IQ)OcsyjxzPZa5LT3V@D}H&^<ajF-bEAhxd(S(l<s|39-?!
+zqvHpjeQuIA#=<menr2JXj6^64nZ`!P$69IE$Ozr-_)O5<nTgE!kxaT(BN_qDKoL1`
+zoP?SzI9!V&Wx=)(w_sAN6HzB(%tG42poNDhCav;#bnu%wUIf;c_D}!>5CAB!m<l+8
+z6Y+ftx~?3nb9DO$4v;=M3`pQ8$0(d{Eu3dwuQRX33ko1QTt3QCe#y&i=(=*6c>#Vv
+zb~=3~N1dVBi0<IJj(LwOz<L1QD)Dj#E#hxV5#`o$-9@>zTwnGQIN<6r&rpgWXJWs<
+z0o#Q}ObR?+7TU2^JPXB7vC*&NF~5$4U&lF#;75tzCyC%!iQuwCa7`lc$pp1B!D^Y{
+z0hwTvOt3{Jh{*&yWr8PVf?=6JK8&jcJ_{ckJj;2q)|Jpjyb(rr*0axgcK;=3B>>{d
+zfG4X(q2Tl3df}UT6beeG6M=O}1P5?&kEz#_1565n?dgNAACjJ4DELzVqKMv-x4@Xm
+zIcFogC=_n@mbwBvAVN?&W<+Ft?P3S`&rfOsra)?yrR-p+&Vm$CcN%iY)qEXAYZ?B_
+zo{)1Ctp1H(@DVKdu5c$-{6AaHl<5_oCDeLY((m97O0lLF=l$6nUA#wEQfu9whMTk8
+z`;2pqD-fZ=LL9xN;}oHQ@5Pdn3ucO=v?x%(i|o!{2BoNR@9KX<V+b{vDDTeZ^Z7gw
+zeiOo@gbov9f{>R8eUBI)5%L+KKNI6mLbw3k5HPj`NGw1P1dJB~<kbNEAYgnNAYTUP
+z?*XF_Abyo@QjIQ^^sDrcY8+R|NtJ%68egd7Tb2Hy8a|EGYV={v=+np^jULsE*EI5$
+zMnBe!uQhT(qt`T}CP-EV>DHi;2$H9RT9YAV`9&^U8)Su!GOl95m*iC@uW<Uf3aMrT
+z3WXaNrEQvX4_K87Nxm|}Tn$AexrR1o>)bhNXq)EU`bTw+^U4hARj|6S-mE{-<}%c`
+zO$)3(g9-_v!_Xn%U$QWpa4G@QGRN341}6rIRb^18q)=51Q#29MExm++%Slc=RWiK4
+zX=*VMT5ly!Eyuv+Sk0$e@_ZFB^lr7xee+SvI<w3myA_Z+Bvmt$`|lgdC(vN_<h-?T
+zW-`a_PA(@`GY>De=H^nN2Fs-0S~Rpxi#b1=hpexfEE+qqb7S-OTPAHP?guHy>J)WO
+znyF$xyc?cdNX)D??RQod83eG>SheJ87|bT?Y-%QL)+gM0(8)r8%Cfl0J;@j}mqDUc
+zWN|TsIh(FDRWr7nMJ~t~oa(0Xf5AVJtv}S>VkKLa*Fr#z8-oJ5@_!Mwkji33O4q%s
+znq{FghJhY?uRVM)GxGTG^O@UI$;9oJ$<daf?OpB+SHQ+sAn(vOAerBB7PsO}lKDaz
+g_%bx#h2uQ{`atjmY^2f5y^UXl)_LGW5w}J2FT+;79{>OV
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/mainboard/dell/optiplex_3040/devicetree.cb b/src/mainboard/dell/optiplex_3040/devicetree.cb
+new file mode 100644
+index 0000000000..f1c919fbc7
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/devicetree.cb
+@@ -0,0 +1,100 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++chip soc/intel/skylake
++	register "deep_sx_config" = "DSX_EN_WAKE_PIN | DSX_EN_LAN_WAKE_PIN"
++
++	# Enable Enhanced Intel SpeedStep
++	register "eist_enable" = "1"
++
++	device domain 0 on
++		device ref igpu on
++			register "PrimaryDisplay" = "Display_iGFX"
++		end
++
++		device ref south_xhci on
++			register "usb2_ports" = "{
++				[0] = USB2_PORT_MID(OC0),	// Front panel (blue)
++				[1] = USB2_PORT_MID(OC0),	// Front panel (blue)
++				[2] = USB2_PORT_MID(OC3),	// Back panel (black)
++				[3] = USB2_PORT_MID(OC2),	// Back panel (blue)
++				[4] = USB2_PORT_MID(OC1),	// Back panel (blue)
++				[6] = USB2_PORT_MID(OC1),	// Back panel (black)
++				[8] = USB2_PORT_MID(OC_SKIP),	// WiFi slot
++			}"
++			register "usb3_ports" = "{
++				[0] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[1] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[2] = USB3_PORT_DEFAULT(OC2),	// Back panel (blue)
++				[3] = USB3_PORT_DEFAULT(OC1),	// Back panel (blue)
++			}"
++		end
++
++		# ME interface is 'off' to avoid HECI reset delay due to HAP
++		device ref heci1 off end
++
++		device ref sata on
++			register "SataSalpSupport" = "1"
++			register "SataPortsEnable[0]" = "1"
++		end
++
++		# M.2 SSD
++		device ref pcie_rp21 on
++			register "PcieRpClkReqSupport[20]"              = "1"
++			register "PcieRpClkReqNumber[20]"               = "3"
++			register "PcieRpAdvancedErrorReporting[20]"     = "1"
++			register "PcieRpLtrEnable[20]"                  = "true"
++			register "PcieRpClkSrcNumber[20]"               = "3"
++			register "PcieRpHotPlug[20]"                    = "0"
++		end
++
++		# Realtek LAN
++		device ref pcie_rp5 on
++			register "PcieRpClkReqSupport[4]"		= "0"
++			register "PcieRpHotPlug[4]"			= "0"
++		end
++
++		# M.2 WiFi
++		device ref pcie_rp8 on
++			register "PcieRpClkReqSupport[7]"		= "0"
++			register "PcieRpHotPlug[7]"			= "1"
++		end
++
++		# UART0 is exposed on test points on the bottom of the board
++		device ref uart0 on
++			register "SerialIoDevMode[PchSerialIoIndexUart0]" = "PchSerialIoPci"
++		end
++
++		device ref lpc_espi on
++			register "serirq_mode" = "SERIRQ_CONTINUOUS"
++
++			# I/O decode for EMI/Runtime registers
++			register "gen1_dec" = "0x007c0a01"
++
++			# SCH5553
++			chip superio/smsc/sch555x
++				device pnp 2e.0 on		# EMI
++					io 0x60 = 0xa00
++				end
++				device pnp 2e.1 off end		# 8042
++				device pnp 2e.7 on		# UART1
++					io 0x60 = 0x3f8
++					irq 0x0f = 2
++					irq 0x70 = 4
++				end
++				device pnp 2e.8 off end 	# UART2
++				device pnp 2e.c on		# LPC interface
++					io 0x60 = 0x2e
++				end
++				device pnp 2e.a on		# Runtime registers
++					io 0x60 = 0xa40
++				end
++				device pnp 2e.b  off end	# Floppy Controller
++				device pnp 2e.11 off end	# Parallel Port
++			end
++		end
++
++		device ref hda on end
++
++		device ref smbus on end
++	end
++end
+diff --git a/src/mainboard/dell/optiplex_3040/dsdt.asl b/src/mainboard/dell/optiplex_3040/dsdt.asl
+new file mode 100644
+index 0000000000..9762f6ff74
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/dsdt.asl
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <acpi/acpi.h>
++DefinitionBlock(
++	"dsdt.aml",
++	"DSDT",
++	ACPI_DSDT_REV_2,
++	OEM_ID,
++	ACPI_TABLE_CREATOR,
++	0x20110725
++)
++{
++	#include <acpi/dsdt_top.asl>
++	#include <soc/intel/common/block/acpi/acpi/globalnvs.asl>
++	#include <cpu/intel/common/acpi/cpu.asl>
++
++	Scope (\_SB)
++	{
++		Device (PCI0)
++		{
++			#include <soc/intel/skylake/acpi/systemagent.asl>
++			#include <soc/intel/skylake/acpi/pch.asl>
++		}
++	}
++
++	#include <southbridge/intel/common/acpi/sleepstates.asl>
++}
+diff --git a/src/mainboard/dell/optiplex_3040/gma-mainboard.ads b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
+new file mode 100644
+index 0000000000..cb4c22f285
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
+@@ -0,0 +1,19 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++      (HDMI1,  -- External HDMI
++       DP2,    -- External DP (native)
++       HDMI2,  -- External DP (DP++)
++       DP3,    -- Video I/O card: VGA (0PKGGG), DP (H64DC)
++       HDMI3,  -- Video I/O card: VGA (0PKGGG), DP (H64DC)
++       others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/dell/optiplex_3040/hda_verb.c b/src/mainboard/dell/optiplex_3040/hda_verb.c
+new file mode 100644
+index 0000000000..5a1db019c7
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/hda_verb.c
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	/* coreboot specific header, codec 0 */
++	0x10ec0255, /* Realtek ALC3234 */
++	0x102806bb, /* Subsystem ID */
++	11,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(0, 0x102806bb),
++
++	AZALIA_PIN_CFG(0, 0x12, 0x40000000), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_SPEAKER,
++		AZALIA_OTHER_ANALOG,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		5, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x17, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_LINE_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		2, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x1d, 0x4054c029), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_HP_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		5, 15
++	)),
++
++	/* coreboot specific header, codec 2 */
++	0x80862809, /* Intel Skylake HDMI */
++	0x80860101, /* Subsystem ID */
++	4,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(2, 0x80860101),
++
++	AZALIA_PIN_CFG(2, 0x05, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x06, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++};
++
++const u32 pc_beep_verbs[] = {};
++
++AZALIA_ARRAY_SIZES;
+diff --git a/src/mainboard/dell/optiplex_3040/include/early_gpio.h b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
+new file mode 100644
+index 0000000000..fdf1a64c7c
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
+@@ -0,0 +1,11 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#ifndef __OPTIPLEX_3040_EARLY_GPIO_H__
++#define __OPTIPLEX_3040_EARLY_GPIO_H__
++
++static const struct pad_config early_gpio_table[] = {
++	PAD_CFG_NF(GPP_C8, NONE, DEEP, NF1),	/* UART0_RXD */
++	PAD_CFG_NF(GPP_C9, NONE, DEEP, NF1),	/* UART0_TXD */
++};
++
++#endif
+diff --git a/src/mainboard/dell/optiplex_3040/include/gpio.h b/src/mainboard/dell/optiplex_3040/include/gpio.h
+new file mode 100644
+index 0000000000..29da4b11d4
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/include/gpio.h
+@@ -0,0 +1,241 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#ifndef __OPTIPLEX_3040_GPIO_H__
++#define __OPTIPLEX_3040_GPIO_H__
++
++static const struct pad_config gpio_table[] = {
++
++	/* ------- GPIO Community 0 ------- */
++
++	/* ------- GPIO Group GPP_A ------- */
++	PAD_CFG_NF(GPP_A0, UP_20K, PLTRST, NF1),			/* RCIN# */
++	PAD_CFG_NF(GPP_A1, UP_20K, PLTRST, NF1),			/* LAD0 */
++	PAD_CFG_NF(GPP_A2, UP_20K, PLTRST, NF1),			/* LAD1 */
++	PAD_CFG_NF(GPP_A3, UP_20K, PLTRST, NF1),			/* LAD2 */
++	PAD_CFG_NF(GPP_A4, UP_20K, PLTRST, NF1),			/* LAD3 */
++	PAD_CFG_NF(GPP_A5, NONE, PLTRST, NF1),				/* LFRAME# */
++	PAD_CFG_NF(GPP_A6, NONE, PLTRST, NF1),				/* SERIRQ */
++	PAD_CFG_GPI_TRIG_OWN(GPP_A7, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_A8, NONE, DEEP, NF1),				/* CLKRUN# */
++	PAD_CFG_NF(GPP_A9, NONE, PLTRST, NF1),				/* CLKOUT_LPC0 */
++	PAD_CFG_NF(GPP_A10, NONE, PLTRST, NF1),				/* CLKOUT_LPC1 */
++	PAD_CFG_NF(GPP_A11, UP_20K, DEEP, NF1),				/* PME# */
++	PAD_CFG_GPO(GPP_A12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_A13, NONE, PLTRST, NF1),				/* SUSWARN#/SUSPWRDNACK */
++	PAD_CFG_GPI_TRIG_OWN(GPP_A14, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_A15, UP_20K, PLTRST, NF1),			/* SUS_ACK# */
++	PAD_CFG_GPO(GPP_A16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A21, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_B ------- */
++	PAD_CFG_GPO(GPP_B0, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B1, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B2, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_B3, 1, RSMRST),					/* GPIO (ME_CNTL, B3 -> LOW => HDA_SDO -> HIGH) */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B4, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_B5, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B6, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B8, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_B9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B11, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_B12, NONE, PLTRST, NF1),				/* SLP_S0# */
++	PAD_CFG_NF(GPP_B13, NONE, PLTRST, NF1),				/* PLTRST# */
++	PAD_CFG_NF(GPP_B14, DN_20K, PLTRST, NF1),			/* SPKR */
++	PAD_CFG_GPO(GPP_B15, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B16, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_B18, DN_20K, DEEP, NF1),				/* GSPIO_MOSI */
++	PAD_CFG_GPO(GPP_B19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B20, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_B21, 0, DEEP),					/* GPIO */
++	PAD_CFG_NF(GPP_B22, DN_20K, DEEP, NF1),				/* GSPI1_MOSI */
++	PAD_CFG_NF(GPP_B23, DN_20K, DEEP, NF2),				/* PCHHOT# */
++
++	/* ------- GPIO Community 1 ------- */
++
++	/* ------- GPIO Group GPP_C ------- */
++	PAD_CFG_NF(GPP_C0, NONE, DEEP, NF1),				/* SMBCLK */
++	PAD_CFG_NF(GPP_C1, NONE, DEEP, NF1),				/* SMBDATA */
++	PAD_CFG_GPI_TRIG_OWN(GPP_C2, DN_20K, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_C3, NONE, PLTRST, NF1),				/* SML0CLK */
++	PAD_CFG_NF(GPP_C4, NONE, PLTRST, NF1),				/* SML0DATA */
++	PAD_CFG_GPI_TRIG_OWN(GPP_C5, DN_20K, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_C6, NONE, DEEP, NF1),				/* SML1CLK */
++	PAD_CFG_NF(GPP_C7, NONE, DEEP, NF1),				/* SML1DATA */
++	PAD_CFG_NF(GPP_C8, NONE, DEEP, NF1),				/* UART0_RXD */
++	PAD_CFG_NF(GPP_C9, NONE, DEEP, NF1),				/* UART0_TXD */
++	PAD_CFG_GPO(GPP_C10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_C16, NONE, PLTRST, NF1),				/* I2C0_SDA */
++	PAD_CFG_NF(GPP_C17, NONE, PLTRST, NF1),				/* I2C0_SCL */
++	PAD_CFG_GPO(GPP_C18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* GPIO */
++
++	/* ------- GPIO Group GPP_D ------- */
++	PAD_CFG_GPO(GPP_D0, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D1, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D2, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D3, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D4, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_D5, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_D6, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_D7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D8, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_E ------- */
++	PAD_CFG_NF(GPP_E0, NONE, DEEP, NF1),				/* SATAXPCIE0 */
++	PAD_CFG_NF(GPP_E1, NONE, DEEP, NF1),				/* SATAXPCIE1 */
++	PAD_CFG_NF(GPP_E2, NONE, DEEP, NF1),				/* SATAXPCIE2 */
++	PAD_CFG_GPO(GPP_E3, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_E4, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_E5, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_E6, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_E7, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_E8, NONE, PLTRST, NF1),				/* SATA_LED# */
++	PAD_CFG_NF(GPP_E9, UP_20K, PLTRST, NF1),			/* USB_OC0# */
++	PAD_CFG_NF(GPP_E10, UP_20K, PLTRST, NF1),			/* USB_OC1# */
++	PAD_CFG_NF(GPP_E11, UP_20K, PLTRST, NF1),			/* USB_OC2# */
++	PAD_CFG_NF(GPP_E12, UP_20K, PLTRST, NF1),			/* USB_OC3# */
++
++	/* ------- GPIO Group GPP_F ------- */
++	PAD_CFG_NF(GPP_F0, NONE, DEEP, NF1),				/* SATAXPCIE3 */
++	PAD_CFG_NF(GPP_F1, NONE, DEEP, NF1),				/* SATAXPCIE4 */
++	PAD_CFG_NF(GPP_F2, NONE, DEEP, NF1),				/* SATAXPCIE5 */
++	PAD_CFG_NF(GPP_F3, NONE, DEEP, NF1),				/* SATAXPCIE6 */
++	PAD_CFG_NF(GPP_F4, NONE, DEEP, NF1),				/* SATAXPCIE7 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F5, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_F6, NONE, RSMRST, NF1),				/* SATA_DEVSLP4 */
++	PAD_CFG_GPO(GPP_F7, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F8, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_F9, 0, RSMRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F10, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F11, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F12, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_F13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F14, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_F15, UP_20K, DEEP, NF1),				/* USB_OC4# */
++	PAD_CFG_NF(GPP_F16, UP_20K, DEEP, NF1),				/* USB_OC5# */
++	PAD_CFG_NF(GPP_F17, UP_20K, PLTRST, NF1),			/* USB_OC6# */
++	PAD_CFG_TERM_GPO(GPP_F18, 0, UP_20K, DEEP),			/* GPIO */
++	PAD_CFG_GPO(GPP_F19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F20, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_F21, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F22, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F23, 1, RSMRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_G ------- */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G0, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G1, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G2, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G3, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G4, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G5, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G6, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G7, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G8, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G9, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G10, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G11, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G12, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G13, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G14, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G15, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G16, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G17, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_G19, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G20, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_G21, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G22, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_H ------- */
++	PAD_CFG_GPO(GPP_H0, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_H1, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H2, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H3, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H4, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H5, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H6, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_H7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H8, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_TERM_GPO(GPP_H12, 1, DN_20K, DEEP),			/* GPIO */
++	PAD_CFG_GPO(GPP_H13, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Community 2 ------- */
++
++	/* -------- GPIO Group GPD -------- */
++	PAD_CFG_NF(GPD0, NONE, RSMRST, NF1),				/* BATLOW# */
++	PAD_CFG_GPO(GPD1, 0, PWROK),					/* GPIO */
++	PAD_CFG_NF(GPD2, NONE, RSMRST, NF1),				/* LAN_WAKE# */
++	PAD_CFG_NF(GPD3, UP_20K, RSMRST, NF1),				/* PWRBTN# */
++	PAD_CFG_NF(GPD4, NONE, RSMRST, NF1),				/* SLP_S3# */
++	PAD_CFG_NF(GPD5, NONE, RSMRST, NF1),				/* SLP_S4# */
++	PAD_CFG_NF(GPD6, NONE, RSMRST, NF1),				/* SLP_A# */
++	PAD_CFG_GPO(GPD7, 1, RSMRST),					/* GPIO */
++	PAD_CFG_NF(GPD8, NONE, RSMRST, NF1),				/* SUSCLK */
++	PAD_CFG_NF(GPD9, NONE, RSMRST, NF1),				/* SLP_WLAN# */
++	PAD_CFG_NF(GPD10, NONE, RSMRST, NF1),				/* SLP_S5# */
++	PAD_CFG_GPO(GPD11, 1, RSMRST),					/* GPIO */
++
++	/* ------- GPIO Community 3 ------- */
++
++	/* ------- GPIO Group GPP_I ------- */
++	PAD_CFG_NF(GPP_I0, NONE, PLTRST, NF1),				/* DDPB_HPD0 */
++	PAD_CFG_NF(GPP_I1, NONE, PLTRST, NF1),				/* DDPC_HPD1 */
++	PAD_CFG_NF(GPP_I2, NONE, PLTRST, NF1),				/* DDPD_HPD2 */
++	PAD_CFG_NF(GPP_I3, NONE, PLTRST, NF1),				/* DDPE_HPD3 */
++	PAD_CFG_NF(GPP_I4, NONE, PLTRST, NF1),				/* EDP_HPD */
++	PAD_CFG_NF(GPP_I5, NONE, PLTRST, NF1),				/* DDPB_CTRLCLK */
++	PAD_CFG_NF(GPP_I6, DN_20K, PLTRST, NF1),			/* DDPB_CTRLDATA */
++	PAD_CFG_NF(GPP_I7, NONE, PLTRST, NF1),				/* DDPC_CTRLCLK */
++	PAD_CFG_NF(GPP_I8, DN_20K, PLTRST, NF1),			/* DDPC_CTRLDATA */
++	PAD_CFG_NF(GPP_I9, NONE, PLTRST, NF1),				/* DDPD_CTRLCLK */
++	PAD_CFG_NF(GPP_I10, DN_20K, PLTRST, NF1),			/* DDPD_CTRLDATA */
++};
++
++#endif
+diff --git a/src/mainboard/dell/optiplex_3040/ramstage.c b/src/mainboard/dell/optiplex_3040/ramstage.c
+new file mode 100644
+index 0000000000..c391e4ac6d
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/ramstage.c
+@@ -0,0 +1,512 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <bootstate.h>
++#include <arch/cpuid.h>
++#include <cpu/x86/msr.h>
++#include <soc/gpio.h>
++#include <soc/ramstage.h>
++#include "include/gpio.h"
++#include "sch5555_ec.h"
++
++void mainboard_silicon_init_params(FSP_SIL_UPD *params)
++{
++	gpio_configure_pads(gpio_table, ARRAY_SIZE(gpio_table));
++}
++
++#define FORM_FACTOR_MICRO	0
++#define FORM_FACTOR_SFF		1
++// Probably DT and MT
++#define FORM_FACTOR_UNK2	2
++#define FORM_FACTOR_UNK3	3
++
++#define HWM_TAB_ADD_TEMP_TARGET	1
++#define HWM_TAB_PKG_POWER_ANY	0xffff
++
++struct hwm_tab_entry {
++	uint16_t addr;
++	uint8_t val;
++	uint8_t flags;
++	uint16_t pkg_power;
++};
++
++static const struct hwm_tab_entry HWM_TAB_MICRO_BASE[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x01b, 0x0f, 0, 0xffff },
++	{ 0x057, 0xff, 0, 0xffff },
++	{ 0x059, 0xff, 0, 0xffff },
++	{ 0x05b, 0xff, 0, 0xffff },
++	{ 0x05d, 0xff, 0, 0xffff },
++	{ 0x05f, 0xff, 0, 0xffff },
++	{ 0x061, 0xff, 0, 0xffff },
++	{ 0x06e, 0x00, 0, 0xffff },
++	{ 0x06f, 0x03, 0, 0xffff },
++	{ 0x070, 0x03, 0, 0xffff },
++	{ 0x071, 0x02, 0, 0xffff },
++	{ 0x072, 0x02, 0, 0xffff },
++	{ 0x073, 0x01, 0, 0xffff },
++	{ 0x074, 0x06, 0, 0xffff },
++	{ 0x075, 0x07, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x80, 0, 0xffff },
++	{ 0x082, 0x80, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0xf1, 0, 0xffff },
++	{ 0x086, 0x88, 0, 0xffff },
++	{ 0x087, 0x61, 0, 0xffff },
++	{ 0x088, 0x08, 0, 0xffff },
++	{ 0x089, 0x00, 0, 0xffff },
++	{ 0x08a, 0x73, 0, 0xffff },
++	{ 0x08b, 0x73, 0, 0xffff },
++	{ 0x08c, 0x73, 0, 0xffff },
++	{ 0x090, 0x6d, 0, 0xffff },
++	{ 0x091, 0x7e, 0, 0xffff },
++	{ 0x092, 0x66, 0, 0xffff },
++	{ 0x093, 0xa4, 0, 0xffff },
++	{ 0x094, 0x7c, 0, 0xffff },
++	{ 0x095, 0xa4, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x099, 0xa4, 0, 0xffff },
++	{ 0x09a, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x2e, 0, 0xffff },
++	{ 0x0a1, 0x00, 0, 0xffff },
++	{ 0x0a2, 0x00, 0, 0xffff },
++	{ 0x0ae, 0xa4, 0, 0xffff },
++	{ 0x0af, 0xa4, 0, 0xffff },
++	{ 0x0b0, 0xa4, 0, 0xffff },
++	{ 0x0b1, 0xa4, 0, 0xffff },
++	{ 0x0b2, 0xa4, 0, 0xffff },
++	{ 0x0b3, 0xa4, 0, 0xffff },
++	{ 0x0b6, 0x00, 0, 0xffff },
++	{ 0x0b7, 0x00, 0, 0xffff },
++	{ 0x0d1, 0xff, 0, 0xffff },
++	{ 0x0d6, 0xff, 0, 0xffff },
++	{ 0x0db, 0xff, 0, 0xffff },
++	{ 0x0ea, 0x5c, 0, 0xffff },
++	{ 0x0eb, 0x5c, 0, 0xffff },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x184, 0xff, 0, 0xffff },
++	{ 0x186, 0xff, 0, 0xffff },
++	{ 0x1a1, 0xce, 0, 0xffff },
++	{ 0x1a2, 0x0c, 0, 0xffff },
++	{ 0x1a3, 0x0c, 0, 0xffff },
++	{ 0x1a6, 0x00, 0, 0xffff },
++	{ 0x1a7, 0x00, 0, 0xffff },
++	{ 0x1a8, 0xa4, 0, 0xffff },
++	{ 0x1a9, 0xa4, 0, 0xffff },
++	{ 0x1ab, 0x2d, 0, 0xffff },
++	{ 0x1ac, 0x2d, 0, 0xffff },
++	{ 0x1b1, 0x00, 0, 0xffff },
++	{ 0x1bb, 0x00, 0, 0xffff },
++	{ 0x1bc, 0x00, 0, 0xffff },
++	{ 0x1bd, 0x00, 0, 0xffff },
++	{ 0x1be, 0x01, 0, 0xffff },
++	{ 0x1bf, 0x01, 0, 0xffff },
++	{ 0x1c0, 0x01, 0, 0xffff },
++	{ 0x1c1, 0x01, 0, 0xffff },
++	{ 0x1c2, 0x01, 0, 0xffff },
++	{ 0x280, 0x00, 0, 0xffff },
++	{ 0x281, 0x00, 0, 0xffff },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x040, 0x01, 0, 0xffff },
++};
++
++static const struct hwm_tab_entry HWM_TAB_MICRO_TEMP80[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x01b, 0x0f, 0, 0xffff },
++	{ 0x057, 0xff, 0, 0xffff },
++	{ 0x059, 0xff, 0, 0xffff },
++	{ 0x05b, 0xff, 0, 0xffff },
++	{ 0x05d, 0xff, 0, 0xffff },
++	{ 0x05f, 0xff, 0, 0xffff },
++	{ 0x061, 0xff, 0, 0xffff },
++	{ 0x06e, 0x00, 0, 0xffff },
++	{ 0x06f, 0x03, 0, 0xffff },
++	{ 0x070, 0x03, 0, 0xffff },
++	{ 0x071, 0x02, 0, 0xffff },
++	{ 0x072, 0x02, 0, 0xffff },
++	{ 0x073, 0x01, 0, 0xffff },
++	{ 0x074, 0x06, 0, 0xffff },
++	{ 0x075, 0x07, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x80, 0, 0xffff },
++	{ 0x082, 0x80, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0xf6, 0, 0xffff },
++	{ 0x086, 0x88, 0, 0xffff },
++	{ 0x087, 0x61, 0, 0xffff },
++	{ 0x088, 0x08, 0, 0xffff },
++	{ 0x089, 0x00, 0, 0xffff },
++	{ 0x08a, 0x73, 0, 0xffff },
++	{ 0x08b, 0x73, 0, 0xffff },
++	{ 0x08c, 0x73, 0, 0xffff },
++	{ 0x090, 0x6d, 0, 0xffff },
++	{ 0x091, 0x86, 0, 0xffff },
++	{ 0x092, 0x66, 0, 0xffff },
++	{ 0x093, 0xa4, 0, 0xffff },
++	{ 0x094, 0x7c, 0, 0xffff },
++	{ 0x095, 0xa4, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x099, 0xa4, 0, 0xffff },
++	{ 0x09a, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x2e, 0, 0xffff },
++	{ 0x0a1, 0x00, 0, 0xffff },
++	{ 0x0a2, 0x00, 0, 0xffff },
++	{ 0x0ae, 0xa4, 0, 0xffff },
++	{ 0x0af, 0xa4, 0, 0xffff },
++	{ 0x0b0, 0xa4, 0, 0xffff },
++	{ 0x0b1, 0xa4, 0, 0xffff },
++	{ 0x0b2, 0xa4, 0, 0xffff },
++	{ 0x0b3, 0xa4, 0, 0xffff },
++	{ 0x0b6, 0x00, 0, 0xffff },
++	{ 0x0b7, 0x00, 0, 0xffff },
++	{ 0x0d1, 0xff, 0, 0xffff },
++	{ 0x0d6, 0xff, 0, 0xffff },
++	{ 0x0db, 0xff, 0, 0xffff },
++	{ 0x0ea, 0x50, 0, 0xffff },
++	{ 0x0eb, 0x50, 0, 0xffff },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x184, 0xff, 0, 0xffff },
++	{ 0x186, 0xff, 0, 0xffff },
++	{ 0x1a1, 0xce, 0, 0xffff },
++	{ 0x1a2, 0x0c, 0, 0xffff },
++	{ 0x1a3, 0x0c, 0, 0xffff },
++	{ 0x1a6, 0x00, 0, 0xffff },
++	{ 0x1a7, 0x00, 0, 0xffff },
++	{ 0x1a8, 0xa4, 0, 0xffff },
++	{ 0x1a9, 0xa4, 0, 0xffff },
++	{ 0x1ab, 0x2d, 0, 0xffff },
++	{ 0x1ac, 0x2d, 0, 0xffff },
++	{ 0x1b1, 0x00, 0, 0xffff },
++	{ 0x1bb, 0x00, 0, 0xffff },
++	{ 0x1bc, 0x00, 0, 0xffff },
++	{ 0x1bd, 0x00, 0, 0xffff },
++	{ 0x1be, 0x01, 0, 0xffff },
++	{ 0x1bf, 0x01, 0, 0xffff },
++	{ 0x1c0, 0x01, 0, 0xffff },
++	{ 0x1c1, 0x01, 0, 0xffff },
++	{ 0x1c2, 0x01, 0, 0xffff },
++	{ 0x280, 0x00, 0, 0xffff },
++	{ 0x281, 0x00, 0, 0xffff },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x040, 0x01, 0, 0xffff },
++};
++
++static const struct hwm_tab_entry HWM_TAB_MICRO_EARLY_STEPPING[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x01b, 0x0f, 0, 0xffff },
++	{ 0x057, 0xff, 0, 0xffff },
++	{ 0x059, 0xff, 0, 0xffff },
++	{ 0x05b, 0xff, 0, 0xffff },
++	{ 0x05d, 0xff, 0, 0xffff },
++	{ 0x05f, 0xff, 0, 0xffff },
++	{ 0x061, 0xff, 0, 0xffff },
++	{ 0x06e, 0x01, 0, 0xffff },
++	{ 0x06f, 0x03, 0, 0xffff },
++	{ 0x070, 0x03, 0, 0xffff },
++	{ 0x071, 0x02, 0, 0xffff },
++	{ 0x072, 0x02, 0, 0xffff },
++	{ 0x073, 0x01, 0, 0xffff },
++	{ 0x074, 0x06, 0, 0xffff },
++	{ 0x075, 0x07, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x80, 0, 0xffff },
++	{ 0x082, 0x80, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0xfd, 0, 0xffff },
++	{ 0x086, 0x60, 0, 0xffff },
++	{ 0x087, 0x50, 0, 0xffff },
++	{ 0x088, 0x08, 0, 0xffff },
++	{ 0x089, 0x00, 0, 0xffff },
++	{ 0x08a, 0x73, 0, 0xffff },
++	{ 0x08b, 0x73, 0, 0xffff },
++	{ 0x08c, 0x73, 0, 0xffff },
++	{ 0x090, 0x6d, 0, 0xffff },
++	{ 0x091, 0x7a, 0, 0xffff },
++	{ 0x092, 0x6b, 0, 0xffff },
++	{ 0x093, 0xa4, 0, 0xffff },
++	{ 0x094, 0x78, 0, 0xffff },
++	{ 0x095, 0xa4, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x099, 0xa4, 0, 0xffff },
++	{ 0x09a, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x2e, 0, 0xffff },
++	{ 0x0a1, 0x00, 0, 0xffff },
++	{ 0x0a2, 0x00, 0, 0xffff },
++	{ 0x0ae, 0xa4, 0, 0xffff },
++	{ 0x0af, 0xa4, 0, 0xffff },
++	{ 0x0b0, 0xa4, 0, 0xffff },
++	{ 0x0b1, 0xa4, 0, 0xffff },
++	{ 0x0b2, 0xa4, 0, 0xffff },
++	{ 0x0b3, 0xa4, 0, 0xffff },
++	{ 0x0b6, 0x00, 0, 0xffff },
++	{ 0x0b7, 0x00, 0, 0xffff },
++	{ 0x0d1, 0xff, 0, 0xffff },
++	{ 0x0d6, 0xff, 0, 0xffff },
++	{ 0x0db, 0xff, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0xffff },
++	{ 0x0eb, 0x64, 0, 0xffff },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x184, 0xff, 0, 0xffff },
++	{ 0x186, 0xff, 0, 0xffff },
++	{ 0x1a1, 0xce, 0, 0xffff },
++	{ 0x1a2, 0x0c, 0, 0xffff },
++	{ 0x1a3, 0x0c, 0, 0xffff },
++	{ 0x1a6, 0x00, 0, 0xffff },
++	{ 0x1a7, 0x00, 0, 0xffff },
++	{ 0x1a8, 0xa4, 0, 0xffff },
++	{ 0x1a9, 0xa4, 0, 0xffff },
++	{ 0x1ab, 0x2d, 0, 0xffff },
++	{ 0x1ac, 0x2d, 0, 0xffff },
++	{ 0x1b1, 0x00, 0, 0xffff },
++	{ 0x1bb, 0x00, 0, 0xffff },
++	{ 0x1bc, 0x00, 0, 0xffff },
++	{ 0x1bd, 0x00, 0, 0xffff },
++	{ 0x1be, 0x01, 0, 0xffff },
++	{ 0x1bf, 0x01, 0, 0xffff },
++	{ 0x1c0, 0x01, 0, 0xffff },
++	{ 0x1c1, 0x01, 0, 0xffff },
++	{ 0x1c2, 0x01, 0, 0xffff },
++	{ 0x280, 0x00, 0, 0xffff },
++	{ 0x281, 0x00, 0, 0xffff },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff },
++	{ 0x040, 0x01, 0, 0xffff },
++};
++
++static const struct hwm_tab_entry HWM_TAB_SFF[] = {
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x040, 0x01, 0, 0xffff },
++	{ 0x072, 0x03, 0, 0xffff },
++	{ 0x075, 0x06, 0, 0xffff },
++	{ 0x07c, 0x00, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0x59, 0, 0xffff },
++	{ 0x086, 0x6a, 0, 0xffff },
++	{ 0x087, 0xc0, 0, 0xffff },
++	{ 0x08a, 0x33, 0, 0xffff },
++	{ 0x090, 0x77, 0, 0xffff },
++	{ 0x091, 0x66, 0, 0xffff },
++	{ 0x092, 0x94, 0, 0xffff },
++	{ 0x093, 0x90, 0, 0xffff },
++	{ 0x094, 0x68, 0, 0xffff },
++	{ 0x096, 0xa4, 0, 0xffff },
++	{ 0x097, 0xa4, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x099, 0xa4, 0, 0xffff },
++	{ 0x09a, 0xa4, 0, 0xffff },
++	{ 0x09b, 0xa4, 0, 0xffff },
++	{ 0x0a0, 0x3e, 0, 0xffff },
++	{ 0x0ae, 0x86, 0, 0xffff },
++	{ 0x0af, 0x86, 0, 0xffff },
++	{ 0x0b0, 0xa4, 0, 0xffff },
++	{ 0x0b1, 0xa4, 0, 0xffff },
++	{ 0x0b2, 0x90, 0, 0xffff },
++	{ 0x0b6, 0x48, 0, 0xffff },
++	{ 0x0b7, 0x48, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x1b1, 0x48, 0, 0xffff },
++	{ 0x1b8, 0x00, 0, 0xffff },
++	{ 0x1be, 0x95, 0, 0xffff },
++	{ 0x1c1, 0x90, 0, 0xffff },
++	{ 0x1c6, 0x00, 0, 0xffff },
++	{ 0x1c9, 0x00, 0, 0xffff },
++	{ 0x280, 0x68, 0, 0xffff },
++	{ 0x281, 0x10, 0, 0xffff },
++	{ 0x282, 0x03, 0, 0xffff },
++	{ 0x283, 0x0a, 0, 0xffff },
++	{ 0x284, 0x80, 0, 0xffff },
++	{ 0x285, 0x03, 0, 0xffff}
++};
++
++static const struct hwm_tab_entry HWM_TAB_MT[] = {
++	{ 0x005, 0x33, 0, 0xffff },
++	{ 0x018, 0x2f, 0, 0xffff },
++	{ 0x019, 0x2f, 0, 0xffff },
++	{ 0x01a, 0x2f, 0, 0xffff },
++	{ 0x080, 0x00, 0, 0xffff },
++	{ 0x081, 0x00, 0, 0xffff },
++	{ 0x082, 0x80, 0, 0xffff },
++	{ 0x083, 0xbb, 0, 0xffff },
++	{ 0x085, 0xb9, 0, 0x0010 },
++	{ 0x086, 0xac, 0, 0x0010 },
++	{ 0x087, 0x87, 0, 0x0010 },
++	{ 0x08a, 0x51, 0, 0x0010 },
++	{ 0x08b, 0x39, 0, 0x0010 },
++	{ 0x090, 0x78, 0, 0xffff },
++	{ 0x091, 0x6a, 0, 0xffff },
++	{ 0x092, 0x8f, 0, 0xffff },
++	{ 0x094, 0x68, 0, 0xffff },
++	{ 0x095, 0x5b, 0, 0xffff },
++	{ 0x096, 0x92, 0, 0xffff },
++	{ 0x097, 0x86, 0, 0xffff },
++	{ 0x098, 0xa4, 0, 0xffff },
++	{ 0x09a, 0x8b, 0, 0xffff },
++	{ 0x0a0, 0x0a, 0, 0xffff },
++	{ 0x0a1, 0x26, 0, 0xffff },
++	{ 0x0a2, 0xd1, 0, 0xffff },
++	{ 0x0ae, 0x7c, 0, 0xffff },
++	{ 0x0af, 0x7c, 0, 0xffff },
++	{ 0x0b0, 0x9a, 0, 0xffff },
++	{ 0x0b3, 0x7c, 0, 0xffff },
++	{ 0x0b6, 0x08, 0, 0xffff },
++	{ 0x0b7, 0x00, 0, 0xffff },
++	{ 0x0ea, 0x64, 0, 0xffff },
++	{ 0x0ef, 0xff, 0, 0xffff },
++	{ 0x0f8, 0x15, 0, 0xffff },
++	{ 0x0f9, 0x00, 0, 0xffff },
++	{ 0x0f0, 0x30, 0, 0xffff },
++	{ 0x0fd, 0x01, 0, 0xffff },
++	{ 0x1a1, 0x99, 0, 0xffff },
++	{ 0x1a2, 0x00, 0, 0xffff },
++	{ 0x1a4, 0x00, 0, 0xffff },
++	{ 0x1b1, 0x00, 0, 0xffff },
++	{ 0x1be, 0x90, 0, 0xffff },
++	{ 0x280, 0xc4, 0, 0xffff },
++	{ 0x281, 0x09, 0, 0xffff },
++	{ 0x282, 0x0a, 0, 0xffff },
++	{ 0x283, 0x14, 0, 0xffff },
++	{ 0x284, 0x01, 0, 0xffff },
++	{ 0x285, 0x01, 0, 0xffff },
++	{ 0x288, 0x94, 0, 0xffff },
++	{ 0x289, 0x11, 0, 0xffff },
++	{ 0x28a, 0x0a, 0, 0xffff },
++	{ 0x28b, 0x14, 0, 0xffff },
++	{ 0x28c, 0x01, 0, 0xffff },
++	{ 0x28d, 0x01, 0, 0xffff },
++	{ 0x294, 0x24, 0, 0xffff },
++};
++
++static uint8_t get_temp_target(void)
++{
++	uint8_t val = rdmsr(0x1a2).lo >> 8 & 0xff;
++	if (!val)
++		val = 20;
++	return 0x95 - val;
++}
++
++static uint16_t get_pkg_power(void)
++{
++	const unsigned int pkg_power = rdmsr(0x614).lo & 0x7fff;
++	const unsigned int power_unit = 1 << (rdmsr(0x606).lo & 0xf);
++	if (pkg_power / power_unit > 65)
++		return 32;
++	else
++		return 16;
++}
++
++static uint8_t get_core_cnt(void)
++{
++	// Intel describes this CPUID field as:
++	// > Maximum number of addressable IDs for processor cores in the physical package
++	if (cpuid(0).eax >= 4)
++		return cpuid_ext(4, 0).eax >> 26;
++	return 0;
++}
++
++static void apply_hwm_tab(const struct hwm_tab_entry *arr, size_t size)
++{
++	uint8_t temp_target = get_temp_target();
++	uint16_t pkg_power = get_pkg_power();
++
++	printk(BIOS_DEBUG, "Temp target = %#x\n", temp_target);
++	printk(BIOS_DEBUG, "Package power = %#x\n", pkg_power);
++
++	for (size_t i = 0; i < size; ++i) {
++		// Skip entry if it doesn't apply for this package power
++		if (arr[i].pkg_power != pkg_power &&
++		    arr[i].pkg_power != HWM_TAB_PKG_POWER_ANY)
++			continue;
++
++		uint8_t val = arr[i].val;
++
++		// Add temp target to value if requested (current tables never do)
++		if (arr[i].flags & HWM_TAB_ADD_TEMP_TARGET)
++			val += temp_target;
++
++		// Perform write
++		sch5555_mbox_write(1, arr[i].addr, val);
++	}
++}
++
++static void sch5555_ec_hwm_init(void *arg)
++{
++	uint8_t form_fac_id, saved_2fc, core_cnt;
++
++	printk(BIOS_DEBUG, "OptiPlex 3040 late HWM init\n");
++
++	form_fac_id = gpio_get(GPP_G2) | gpio_get(GPP_G3) << 1;
++	printk(BIOS_DEBUG, "Form Factor ID = %#x\n", form_fac_id);
++
++	saved_2fc = sch5555_mbox_read(1, 0x2fc);
++	sch5555_mbox_write(1, 0x2fc, 0xa0);
++	sch5555_mbox_write(1, 0x2fd, 0x32);
++
++	switch (form_fac_id) {
++	case FORM_FACTOR_MICRO:
++		// CPU stepping <= 3
++		if ((cpuid(1).eax & 0xf) <= 3)
++			apply_hwm_tab(HWM_TAB_MICRO_EARLY_STEPPING, ARRAY_SIZE(HWM_TAB_MICRO_EARLY_STEPPING));
++		// Tjunction == 80
++		else if ((rdmsr(0x1a2).lo >> 16 & 0xff) == 80)
++			apply_hwm_tab(HWM_TAB_MICRO_TEMP80, ARRAY_SIZE(HWM_TAB_MICRO_TEMP80));
++		else
++			apply_hwm_tab(HWM_TAB_MICRO_BASE, ARRAY_SIZE(HWM_TAB_MICRO_BASE));
++		break;
++	case FORM_FACTOR_SFF:
++		apply_hwm_tab(HWM_TAB_SFF, ARRAY_SIZE(HWM_TAB_SFF));
++		break;
++	default:
++		apply_hwm_tab(HWM_TAB_MT, ARRAY_SIZE(HWM_TAB_MT));
++		break;
++	}
++
++	core_cnt = get_core_cnt();
++	printk(BIOS_DEBUG, "CPU Core Count = %#x\n", core_cnt);
++	if (core_cnt > 2) {
++		sch5555_mbox_write(1, 0x9e, 0x30);
++		sch5555_mbox_write(1, 0xeb, sch5555_mbox_read(1, 0xea));
++	}
++
++	sch5555_mbox_write(1, 0x2fc, saved_2fc);
++	sch5555_mbox_read(1, 0xb8);
++}
++
++BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
+diff --git a/src/mainboard/dell/optiplex_3040/romstage.c b/src/mainboard/dell/optiplex_3040/romstage.c
+new file mode 100644
+index 0000000000..c2ce2369a4
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/romstage.c
+@@ -0,0 +1,22 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/romstage.h>
++#include <spd_bin.h>
++
++void mainboard_memory_init_params(FSPM_UPD *mupd)
++{
++	/*
++	 * OptiPlex 3040 Micro uses DDR3L SO-DIMMs.
++	 * SODIMM slots are at I2C addresses 0x50 (slot 0) and 0x52 (slot 1).
++	 * SPD size for DDR3L is 256 bytes.
++	 */
++	struct spd_block blk = { .addr_map = { 0x50, 0x52, } };
++	get_spd_smbus(&blk);
++	dump_spd_info(&blk);
++
++	FSP_M_CONFIG *mem_cfg = &mupd->FspmConfig;
++	mem_cfg->DqPinsInterleaved = true;
++	mem_cfg->MemorySpdDataLen  = blk.len;
++	mem_cfg->MemorySpdPtr00    = (uintptr_t)blk.spd_array[0];
++	mem_cfg->MemorySpdPtr10    = (uintptr_t)blk.spd_array[1];
++}
+diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.c b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
+new file mode 100644
+index 0000000000..1df5026531
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
+@@ -0,0 +1,54 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <arch/io.h>
++#include <device/pnp_ops.h>
++#include <superio/smsc/sch555x/sch555x.h>
++#include "sch5555_ec.h"
++
++uint8_t sch5555_mbox_read(uint8_t addr1, uint16_t addr2)
++{
++	// clear ec-to-host mailbox
++	uint8_t tmp = inb(SCH555x_EMI_IOBASE + 1);
++	outb(tmp, SCH555x_EMI_IOBASE + 1);
++
++	// send address
++	outw(0 | 0x8001, SCH555x_EMI_IOBASE + 2);
++	outw((addr1 * 2) | 0x100, SCH555x_EMI_IOBASE + 4);
++
++	outw(4 | 0x8002, SCH555x_EMI_IOBASE + 2);
++	outl(addr2 << 16, SCH555x_EMI_IOBASE + 4);
++
++	// send message to ec
++	outb(1, SCH555x_EMI_IOBASE);
++
++	// wait for ack
++	for (size_t retry = 0; retry < 0xfff; ++retry)
++		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
++			break;
++
++	// read result
++	outw(4 | 0x8000, SCH555x_EMI_IOBASE + 2);
++	return inb(SCH555x_EMI_IOBASE + 4);
++}
++
++void sch5555_mbox_write(uint8_t addr1, uint16_t addr2, uint8_t val)
++{
++	// clear ec-to-host mailbox
++	uint8_t tmp = inb(SCH555x_EMI_IOBASE + 1);
++	outb(tmp, SCH555x_EMI_IOBASE + 1);
++
++	// send address and value
++	outw(0 | 0x8001, SCH555x_EMI_IOBASE + 2);
++	outw((addr1 * 2) | 0x101, SCH555x_EMI_IOBASE + 4);
++
++	outw(4 | 0x8002, SCH555x_EMI_IOBASE + 2);
++	outl(val | (addr2 << 16), SCH555x_EMI_IOBASE + 4);
++
++	// send message to ec
++	outb(1, SCH555x_EMI_IOBASE);
++
++	// wait for ack
++	for (size_t retry = 0; retry < 0xfff; ++retry)
++		if (inb(SCH555x_EMI_IOBASE + 1) & 1)
++			break;
++}
+diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.h b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
+new file mode 100644
+index 0000000000..9d262d5787
+--- /dev/null
++++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#ifndef __SCH5555_EC_H__
++#define __SCH5555_EC_H__
++
++uint8_t sch5555_mbox_read(uint8_t addr1, uint16_t addr2);
++
++void sch5555_mbox_write(uint8_t addr1, uint16_t addr2, uint8_t val);
++
++#endif
+-- 
+2.53.0
+
