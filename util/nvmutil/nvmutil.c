@@ -1951,6 +1951,7 @@ prw(int fd, void *mem, size_t nrw,
 	int saved_errno;
 	int positional_rw;
 	struct stat st;
+	off_t verified;
 
 	if (mem == NULL)
 		goto err_prw;
@@ -2014,22 +2015,51 @@ real_pread_pwrite:
 	goto real_pread_pwrite;
 #else
 	if ((off_orig = lseek_loop(fd, (off_t)0, SEEK_CUR,
-	    loop_eagain, loop_eintr)) == (off_t)-1)
+	    loop_eagain, loop_eintr)) == (off_t)-1) {
 		r = -1;
-	else if (lseek_loop(fd, off, SEEK_SET,
-	    loop_eagain, loop_eintr) == (off_t)-1)
+	} else if (lseek_loop(fd, off, SEEK_SET,
+	    loop_eagain, loop_eintr) == (off_t)-1) {
 		r = -1;
+	} else {
+		verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
+		    loop_eagain, loop_eintr);
 
-	do {
-		if (rw_type == IO_PREAD)
-			r = read(fd, mem, nrw);
-		else if (rw_type == IO_PWRITE)
-			r = write(fd, mem, nrw);
+		/*
+		 * Partial thread-safety: detect
+		 * if the offset changed to what
+		 * we previously got. If it did,
+		 * then another thread may have
+		 * changed it.
+		 *
+		 * This is no substitute for real
+		 * pread/pwrite, which would be
+		 * fully atomic at kernel-level
+		 * and do not use file offsets.
+		 *
+		 * TODO: Add a toggle to make it
+		 *       recover instead, reset
+		 *	 to known offset, and
+		 *	 carry on operations.
+		 *
+		 * Failure is the better option
+		 * here, since recovery would
+		 * mask hidden bugs in code.
+		 */
+		if (off != verified)
+			goto err_prw;
 
-		r = rw_over_nrw(r, nrw);
-	} while (r == -1 &&
-	    (errno == try_err(loop_eintr, EINTR)
-	    || errno == try_err(loop_eagain, EAGAIN)));
+		do {
+			if (rw_type == IO_PREAD)
+				r = read(fd, mem, nrw);
+			else if (rw_type == IO_PWRITE)
+				r = write(fd, mem, nrw);
+
+			r = rw_over_nrw(r, nrw);
+
+		} while (r == -1 &&
+		    (errno == try_err(loop_eintr, EINTR)
+		    || errno == try_err(loop_eagain, EAGAIN)));
+	}
 
 	saved_errno = errno;
 	off_last = lseek_loop(fd, off_orig, SEEK_SET,
