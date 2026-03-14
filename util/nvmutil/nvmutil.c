@@ -1581,7 +1581,8 @@ check_written_part(size_t p)
 	else if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
 		rw_check_bad_part[p] = io_err_gbe = 1;
 
-	if (rw_check_err_read[p])
+	if (rw_check_err_read[p] ||
+	    rw_check_partial_read[p])
 		return;
 
 	/*
@@ -1620,7 +1621,8 @@ report_io_err_rw(void)
 			    "%s: pwrite: corrupt write on p%lu\n",
 			    fname, (ulong)p);
 
-		if (rw_check_err_read[p]) {
+		if (rw_check_err_read[p] ||
+		    rw_check_partial_read[p]) {
 			fprintf(stderr,
 			    "%s: p%lu: skipped checksum verification "
 			    "(because read failed)\n",
