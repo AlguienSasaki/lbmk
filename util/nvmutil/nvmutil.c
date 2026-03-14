@@ -16,6 +16,8 @@
  */
 
 /*
+ * I/O config (build-time)
+ *
  * Regarding:
  * Retries on zero-return.
  *
@@ -33,13 +35,26 @@
 #ifndef MAX_ZERO_RW_RETRY
 #define MAX_ZERO_RW_RETRY 10
 #endif
-
 /*
  * 0: portable pread/pwrite
  * 1: real pread/pwrite (thread-safe)
+ * Pass this at build-time
  */
 #ifndef HAVE_REAL_PREAD_PWRITE
 #define HAVE_REAL_PREAD_PWRITE 0
+#endif
+/*
+ * Configure whether to wait on
+ * EINTR on files, or EAGAIN on
+ * cmd cat (stdout).
+ *
+ * Pass these at build time.
+ */
+#ifndef LOOP_EAGAIN
+#define LOOP_EAGAIN 1
+#endif
+#ifndef LOOP_EINTR
+#define LOOP_EINTR 1
 #endif
 
 /*
@@ -473,9 +488,7 @@ static const char *argv0;
 #define ARGC_4 4
 
 #define NO_LOOP_EAGAIN 0
-#define LOOP_EAGAIN 1
 #define NO_LOOP_EINTR 0
-#define LOOP_EINTR 1
 
 enum {
 	IO_READ,
@@ -636,8 +649,8 @@ typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
 typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
 typedef char bool_no_invert[(NO_INVERT==0)?1:-1];
 typedef char bool_part_invert[(PART_INVERT==1)?1:-1];
-typedef char bool_loop_eintr[(LOOP_EINTR==1)?1:-1];
-typedef char bool_loop_eagain[(LOOP_EAGAIN==1)?1:-1];
+typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
+typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
 typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
 typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 
