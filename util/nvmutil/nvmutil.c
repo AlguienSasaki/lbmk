@@ -1563,7 +1563,7 @@ verify_gbe_bin_write(size_t p)
 		    fname, (ulong)p);
 
 	if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
-		err(errno, "%s: pwrite: corrupt write on part %lu",
+		err(EIO, "%s: pwrite: corrupt write on part %lu",
 		    fname, (ulong)p);
 }
 
