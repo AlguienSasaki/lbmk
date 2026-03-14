@@ -1601,6 +1601,7 @@ check_written_part(size_t p)
 	u8 *mem_offset;
 	off_t file_offset;
 	u8 *buf_restore;
+	struct stat st;
 
 	if (!part_modified[p])
 		return;
@@ -1612,6 +1613,12 @@ check_written_part(size_t p)
 	file_offset = (off_t)gbe_file_offset(p, "pwrite");
 
 	memset(pad, 0xff, sizeof(pad));
+
+	if (fstat(gbe_fd, &st) == -1)
+		err(errno, "%s: fstat (post-write)", fname);
+
+	if (st.st_dev != gbe_dev || st.st_ino != gbe_ino)
+		err(EIO, "%s: file changed during write", fname);
 
 	r = rw_gbe_file_exact(gbe_fd, pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
