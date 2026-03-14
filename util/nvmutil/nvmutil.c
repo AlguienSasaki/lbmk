@@ -416,6 +416,8 @@ static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     int off_reset);
+static int io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type);
 static int check_file(int fd, struct stat *st);
 static ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
@@ -1888,15 +1890,8 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	size_t nrw_cur;
 	void *mem_cur;
 
-	if (mem == NULL)
-		goto err_rw_file_exact;
-
-	if (fd < 0
-	    || off < 0
-	    || !nrw /* prevent zero read request */
-	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
-	    || (uint)rw_type > IO_PWRITE)
-		goto err_rw_file_exact;
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		return -1;
 
 	while (1) {
 	
@@ -1997,15 +1992,8 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_last;
 #endif
 
-	if (mem == NULL)
-		goto err_prw;
-
-	if (fd < 0
-	    || off < 0
-	    || !nrw /* prevent zero read request */
-	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
-	    || (uint)rw_type > IO_PWRITE)
-		goto err_prw;
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		return -1;
 
 	r = -1;
 
@@ -2130,6 +2118,27 @@ real_pread_pwrite:
 #endif
 
 err_prw:
+	errno = EIO;
+	return -1;
+}
+
+static int
+io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	if (mem == NULL)
+		goto err_io_args;
+
+	if (fd < 0
+	    || off < 0
+	    || !nrw /* prevent zero read request */
+	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
+	    || (uint)rw_type > IO_PWRITE)
+		goto err_io_args;
+
+	return 0;
+
+err_io_args:
 	errno = EIO;
 	return -1;
 }
