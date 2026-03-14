@@ -1952,6 +1952,7 @@ prw(int fd, void *mem, size_t nrw,
     int loop_eagain, int loop_eintr)
 {
 	off_t off_orig;
+	off_t off_last;
 	ssize_t r;
 	int saved_errno;
 	int positional_rw;
@@ -2022,11 +2023,14 @@ real_pread_pwrite:
 	    || errno == try_err(loop_eagain, EAGAIN)));
 
 	saved_errno = errno;
-	if (lseek_loop(fd, off_orig, SEEK_SET,
-	    loop_eagain, loop_eintr) == (off_t)-1) {
+	off_last = lseek_loop(fd, off_orig, SEEK_SET,
+	    loop_eagain, loop_eintr);
+	if (off_last == (off_t)-1) {
 		errno = saved_errno;
 		return -1;
 	}
+	if (off_last != off_orig)
+		goto err_prw;
 	errno = saved_errno;
 
 	return rw_over_nrw(r, nrw);
