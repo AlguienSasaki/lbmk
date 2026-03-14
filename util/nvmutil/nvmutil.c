@@ -705,12 +705,12 @@ main(int argc, char *argv[])
 
 #ifdef NVMUTIL_PLEDGE
 #ifdef NVMUTIL_UNVEIL
-	if (pledge("stdio rpath wpath unveil", NULL) == -1)
+	if (pledge("stdio flock rpath wpath unveil", NULL) == -1)
 		err(errno, "pledge");
 	if (unveil("/dev/null", "r") == -1)
 		err(errno, "unveil /dev/null");
 #else
-	if (pledge("stdio rpath wpath", NULL) == -1)
+	if (pledge("stdio flock rpath wpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
 #endif
@@ -727,19 +727,19 @@ main(int argc, char *argv[])
 			err(errno, "%s: unveil ro", fname);
 		if (unveil(NULL, NULL) == -1)
 			err(errno, "unveil block (ro)");
-		if (pledge("stdio rpath", NULL) == -1)
+		if (pledge("stdio flock rpath", NULL) == -1)
 			err(errno, "pledge ro (kill unveil)");
 	} else {
 		if (unveil(fname, "rw") == -1)
 			err(errno, "%s: unveil rw", fname);
 		if (unveil(NULL, NULL) == -1)
 			err(errno, "unveil block (rw)");
-		if (pledge("stdio rpath wpath", NULL) == -1)
+		if (pledge("stdio flock rpath wpath", NULL) == -1)
 			err(errno, "pledge rw (kill unveil)");
 	}
 #else
 	if (command[cmd_index].flags == O_RDONLY) {
-		if (pledge("stdio rpath", NULL) == -1)
+		if (pledge("stdio flock rpath", NULL) == -1)
 			err(errno, "pledge ro");
 	}
 #endif
