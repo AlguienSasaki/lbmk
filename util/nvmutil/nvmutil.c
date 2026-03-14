@@ -430,8 +430,8 @@ static int try_err(int loop_err, int errval);
 /*
  * Error handling and cleanup
  */
-static int close_files(void);
 static void err(int nvm_errval, const char *msg, ...);
+static int close_files(void);
 static const char *getnvmprogname(void);
 static void usage(int usage_exit);
 
@@ -2252,6 +2252,28 @@ try_err(int loop_err, int errval)
 	return -1;
 }
 
+static void
+err(int nvm_errval, const char *msg, ...)
+{
+	va_list args;
+
+	if (errno == 0)
+		errno = nvm_errval;
+
+	(void)close_files();
+
+	fprintf(stderr, "%s: ", getnvmprogname());
+
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+
+	fprintf(stderr, ": %s", strerror(errno));
+
+	fprintf(stderr, "\n");
+	exit(EXIT_FAILURE);
+}
+
 static int
 close_files(void)
 {
@@ -2271,30 +2293,6 @@ close_files(void)
 		return -1;
 
 	return 0;
-}
-
-static void
-err(int nvm_errval, const char *msg, ...)
-{
-	va_list args;
-
-	if (errno < 0)
-		errno = ECANCELED;
-	if (!errno)
-		errno = nvm_errval;
-
-	(void)close_files();
-
-	fprintf(stderr, "%s: ", getnvmprogname());
-
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
-
-	fprintf(stderr, ": %s", strerror(errno));
-
-	fprintf(stderr, "\n");
-	exit(EXIT_FAILURE);
 }
 
 static const char *
