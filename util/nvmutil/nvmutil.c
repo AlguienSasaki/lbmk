@@ -444,6 +444,11 @@ static const char *argv0;
 #define ARGC_3 3
 #define ARGC_4 4
 
+#define NO_LOOP_EAGAIN 0
+#define LOOP_EAGAIN 1
+#define NO_LOOP_EINTR 0
+#define LOOP_EINTR 1
+
 enum {
 	IO_READ,
 	IO_WRITE,
@@ -603,6 +608,10 @@ typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
 typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
 typedef char bool_no_invert[(NO_INVERT==0)?1:-1];
 typedef char bool_part_invert[(PART_INVERT==1)?1:-1];
+typedef char bool_loop_eintr[(LOOP_EINTR==1)?1:-1];
+typedef char bool_loop_eagain[(LOOP_EAGAIN==1)?1:-1];
+typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
+typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 
 static int use_prng = 0;
 
@@ -1192,7 +1201,8 @@ rhex(void)
 
 	if (!n) {
 		n = sizeof(rnum);
-		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ, 0, 1) == -1)
+		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ,
+		    NO_LOOP_EAGAIN, LOOP_EINTR) == -1)
 			err(errno, "Randomisation failed");
 	}
 
@@ -1361,7 +1371,7 @@ static void
 gbe_cat_buf(u8 *b)
 {
 	if (rw_file_exact(STDOUT_FILENO, b,
-	    GBE_PART_SIZE, 0, IO_WRITE, 1, 1) < 0)
+	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR) < 0)
 		err(errno, "stdout: cat");
 }
 
@@ -1721,7 +1731,8 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 	if (nrw > GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
-	return rw_file_exact(fd, mem, nrw, off, rw_type, 0, 1);
+	return rw_file_exact(fd, mem, nrw, off, rw_type,
+	    NO_LOOP_EAGAIN, LOOP_EINTR);
 
 err_rw_gbe_file_exact:
 	errno = EIO;
