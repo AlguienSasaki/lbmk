@@ -2052,10 +2052,10 @@ err_prw:
 static int
 check_file(int fd, struct stat *st)
 {
-	if (fstat(fd, st) == -1)
+	if (fstat(fd, st) == -1)	
 		goto err_is_file;
 
-	if (S_ISREG(st->st_mode))
+	if (!S_ISREG(st->st_mode))
 		goto err_is_file;
 
 	return 0;
