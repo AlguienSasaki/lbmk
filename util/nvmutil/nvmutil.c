@@ -1868,7 +1868,9 @@ err_rw_file_once:
  *
  * This limitation is acceptable, since nvmutil is
  * single-threaded. Portability is the main goal.
- * If you need real pwrite/pread, just edit prw()
+ *
+ * If you need real pwrite/pread, just compile
+ * with flag: HAVE_REAL_PREAD_PWRITE=1
  *
  * A fallback is provided for regular read/write.
  * rw_type can be IO_READ, IO_WRITE, IO_PREAD
@@ -1915,10 +1917,21 @@ prw(int fd, void *mem, size_t nrw,
 try_rw_again:
 
 	if (!positional_rw) {
+#if defined(HAVE_REAL_PREAD_PWRITE) && \
+    HAVE_REAL_PREAD_PWRITE > 0
+real_pread_pwrite:
+#endif
 		if (rw_type == IO_WRITE)
 			r = write(fd, mem, nrw);
 		else if (rw_type == IO_READ)
 			r = read(fd, mem, nrw);
+#if defined(HAVE_REAL_PREAD_PWRITE) && \
+    HAVE_REAL_PREAD_PWRITE > 0
+		else if (rw_type == IO_WRITE)
+			r = pwrite(fd, mem, nrw, off);
+		else if (rw_type == IO_PREAD)
+			r = pread(fd, mem, nrw, off);
+#endif
 
 		if (r == -1 && (errno == try_err(loop_eintr, EINTR)
 		    || errno == try_err(loop_eagain, EAGAIN)))
@@ -1940,6 +1953,10 @@ try_rw_again:
 	if (flags & O_APPEND)
 		goto err_prw;
 
+#if defined(HAVE_REAL_PREAD_PWRITE) && \
+    HAVE_REAL_PREAD_PWRITE > 0
+	goto real_pread_pwrite;
+#else
 	if ((off_orig = lseek_loop(fd, (off_t)0, SEEK_CUR,
 	    loop_eagain, loop_eintr)) == (off_t)-1)
 		r = -1;
@@ -1967,6 +1984,7 @@ try_rw_again:
 	errno = saved_errno;
 
 	return rw_over_nrw(r, nrw);
+#endif
 
 err_prw:
 	errno = EIO;
@@ -2017,6 +2035,8 @@ err_rw_over_nrw:
 	return -1;
 }
 
+#if !defined(HAVE_REAL_PREAD_PWRITE) || \
+    HAVE_REAL_PREAD_PWRITE < 1
 /*
  * lseek_loop() does lseek() but optionally
  * on an EINTR/EAGAIN wait loop. Used by prw()
@@ -2036,6 +2056,7 @@ lseek_loop(int fd, off_t off, int whence,
 
 	return old;
 }
+#endif
 
 /*
  * If a given error loop is enabled,
