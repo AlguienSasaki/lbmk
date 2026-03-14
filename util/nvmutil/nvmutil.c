@@ -355,8 +355,8 @@ static int try_err(int loop_err, int errval);
 /*
  * Error handling and cleanup
  */
+static int close_files(void);
 static void err(int nvm_errval, const char *msg, ...);
-static void close_files(void);
 static const char *getnvmprogname(void);
 static void usage(int usage_exit);
 
@@ -705,7 +705,8 @@ main(int argc, char *argv[])
 			err(EIO, "%s: bad write", fname);
 	}
 
-	close_files();
+	if (close_files() == -1)
+		err(EIO, "%s: close", fname);
 
 	return EXIT_SUCCESS;
 }
@@ -1999,17 +2000,42 @@ try_err(int loop_err, int errval)
 	return -1;
 }
 
+static int
+close_files(void)
+{
+	int close_err_gbe = 0;
+	int close_err_rand = 0;
+	int saved_errno = errno;
+
+	if (gbe_fd > -1) {
+		if (close(gbe_fd) == -1)
+			close_err_gbe = errno;
+		gbe_fd = -1;
+	}
+
+	if (urandom_fd > -1) {
+		if (close(urandom_fd) == -1)
+			close_err_rand = errno;
+		urandom_fd = -1;
+	}
+
+	if (saved_errno)
+		errno = saved_errno;
+
+	return -(close_err_gbe | close_err_rand);
+}
+
 static void
 err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 
-	if (nvm_errval >= 0) {
-		close_files();
-		errno = nvm_errval;
-	}
 	if (errno <= 0)
 		errno = ECANCELED;
+	if (!errno)
+		errno = nvm_errval;
+
+	(void)close_files();
 
 	fprintf(stderr, "%s: ", getnvmprogname());
 
@@ -2021,22 +2047,6 @@ err(int nvm_errval, const char *msg, ...)
 
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
-}
-
-static void
-close_files(void)
-{
-	if (gbe_fd > -1) {
-		if (close(gbe_fd) == -1)
-			err(-1, "%s: close failed", fname);
-		gbe_fd = -1;
-	}
-
-	if (urandom_fd > -1) {
-		if (close(urandom_fd) == -1)
-			err(-1, "%s: close failed", rname);
-		urandom_fd = -1;
-	}
 }
 
 static const char *
