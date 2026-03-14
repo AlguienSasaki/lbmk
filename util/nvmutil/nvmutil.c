@@ -1860,6 +1860,10 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 			return -1;
 		}
 
+		/* Prevent theoretical overflow */
+		if (rv > nrw - rc)
+			goto err_rw_file_exact;
+
 		rc += (size_t)rv;
 	}
 
