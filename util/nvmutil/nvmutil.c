@@ -163,17 +163,23 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
-typedef unsigned char  u8;
+typedef unsigned char u8;
 typedef unsigned short ushort;
-typedef unsigned int   uint;
+typedef unsigned int uint;
+typedef unsigned long ulong;
 
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
 typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
-typedef char static_assert_uint8_is_1[(sizeof(u8) == 1) ? 1 : -1];
-typedef char static_assert_uint16_is_2[(sizeof(ushort) >= 2) ? 1 : -1];
+typedef char static_assert_u8_is_1[
+    (sizeof(u8) == 1) ? 1 : -1];
+typedef char static_assert_ushort_is_2[
+    (sizeof(ushort) >= 2) ? 1 : -1];
 typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
-typedef char static_assert_uint32_is_4[(sizeof(uint) >= 4) ? 1 : -1];
+typedef char static_assert_uint_is_4[
+    (sizeof(uint) >= 4) ? 1 : -1];
+typedef char static_assert_ulong_is_4[
+    (sizeof(ulong) >= 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
@@ -183,6 +189,9 @@ typedef char static_assert_twos_complement[
  * We set _FILE_OFFSET_BITS 64, but we only handle
  * files that are 128KB in size at a maximum, so we
  * realistically only need 32-bit at a minimum.
+ *
+ * We set 64 anyway, because there's no reason not
+ * to, but some systems may ignore _FILE_OFFSET_BITS
  */
 typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 
@@ -278,7 +287,7 @@ static void set_mac_nib(size_t mac_str_pos,
 static ushort hextonum(char ch_s);
 static ushort rhex(void);
 static ushort fallback_rand(void);
-static unsigned long entropy_jitter(void);
+static ulong entropy_jitter(void);
 static void write_mac_part(size_t partnum);
 
 /*
@@ -347,7 +356,7 @@ static int try_err(int loop_err, int errval);
 static void err(int nvm_errval, const char *msg, ...);
 static void close_files(void);
 static const char *getnvmprogname(void);
-static void usage(u8 usage_exit);
+static void usage(int usage_exit);
 
 /*
  * Sizes in bytes:
@@ -698,19 +707,19 @@ sanitize_command_index(size_t c)
 
 	if (command[c].argc < 3)
 		err(EINVAL, "cmd index %lu: argc below 3, %d",
-		    (unsigned long)c, command[c].argc);
+		    (ulong)c, command[c].argc);
 
 	if (command[c].str == NULL)
 		err(EINVAL, "cmd index %lu: NULL str",
-		    (unsigned long)c);
+		    (ulong)c);
 	if (*command[c].str == '\0')
 		err(EINVAL, "cmd index %lu: empty str",
-		    (unsigned long)c);
+		    (ulong)c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
 		err(EINVAL, "cmd index %lu: str too long: %s",
-		    (unsigned long)c, command[c].str);
+		    (ulong)c, command[c].str);
 	}
 
 	mod_type = command[c].set_modified;
@@ -738,12 +747,12 @@ sanitize_command_index(size_t c)
 		break;
 	default:
 		err(EINVAL, "Unsupported rw_size: %lu",
-		    (unsigned long)gbe_rw_size);
+		    (ulong)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
 		err(EINVAL, "rw_size larger than GbE part: %lu",
-		    (unsigned long)gbe_rw_size);
+		    (ulong)gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
@@ -796,13 +805,13 @@ set_cmd_args(int argc, char *argv[])
 static size_t
 conv_argv_part_num(const char *part_str)
 {
-	unsigned char ch;
+	u8 ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
 		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined */
-	ch = (unsigned char)part_str[0];
+	ch = (u8)part_str[0];
 	if (ch < '0' || ch > '1')
 		err(EINVAL, "Bad part number (%c)", ch);
 
@@ -826,7 +835,7 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 
 	for (i = 0; i < maxlen; i++) {
 		if (a[i] != b[i])
-			return (unsigned char)a[i] - (unsigned char)b[i];
+			return (u8)a[i] - (u8)b[i];
 
 		if (a[i] == '\0')
 			return 0;
@@ -854,7 +863,7 @@ open_dev_urandom(void)
 
 	/* fallback on VERY VERY VERY old unix */
 	use_prng = 1;
-	srand((unsigned)(time(NULL) ^ getpid()));
+	srand((uint)(time(NULL) ^ getpid()));
 }
 
 static void
@@ -972,7 +981,7 @@ read_checksums(void)
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
 			err(ECANCELED, "%s: part %lu has a bad checksum",
-			    fname, (unsigned long)part);
+			    fname, (ulong)part);
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
 	}
@@ -1003,7 +1012,7 @@ check_command_num(size_t c)
 {
 	if (!valid_command(c))
 		err(EINVAL, "Invalid run_cmd arg: %lu",
-		    (unsigned long)c);
+		    (ulong)c);
 }
 
 static u8
@@ -1014,7 +1023,7 @@ valid_command(size_t c)
 
 	if (c != command[c].chk)
 		err(EINVAL, "Invalid cmd chk value (%lu) vs arg: %lu",
-		    (unsigned long)command[c].chk, (unsigned long)c);
+		    (ulong)command[c].chk, (ulong)c);
 
 	return 1;
 }
@@ -1128,14 +1137,14 @@ set_mac_nib(size_t mac_str_pos,
 static ushort
 hextonum(char ch_s)
 {
-	unsigned char ch = (unsigned char)ch_s;
+	u8 ch = (u8)ch_s;
 
-	if ((unsigned)(ch - '0') <= 9)
+	if ((uint)(ch - '0') <= 9)
 		return ch - '0';
 
 	ch |= 0x20;
 
-	if ((unsigned)(ch - 'a') <= 5)
+	if ((uint)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
 
 	if (ch == '?' || ch == 'x')
@@ -1165,15 +1174,15 @@ static ushort
 fallback_rand(void)
 {
 	struct timeval tv;
-	unsigned long mix;
-	static unsigned long counter = 0;
+	ulong mix;
+	static ulong counter = 0;
 
 	gettimeofday(&tv, NULL);
 
-	mix = (unsigned long)tv.tv_sec
-	    ^ (unsigned long)tv.tv_usec
-	    ^ (unsigned long)getpid()
-	    ^ (unsigned long)&mix
+	mix = (ulong)tv.tv_sec
+	    ^ (ulong)tv.tv_usec
+	    ^ (ulong)getpid()
+	    ^ (ulong)&mix
 	    ^ counter++
 	    ^ entropy_jitter();
 
@@ -1181,18 +1190,18 @@ fallback_rand(void)
 	 * Stack addresses can vary between
 	 * calls, thus increasing entropy.
 	 */
-	mix ^= (unsigned long)&mix;
-	mix ^= (unsigned long)&tv;
-	mix ^= (unsigned long)&counter;
+	mix ^= (ulong)&mix;
+	mix ^= (ulong)&tv;
+	mix ^= (ulong)&counter;
 
 	return (ushort)(mix & 0xf);
 }
 
-static unsigned long
+static ulong
 entropy_jitter(void)
 {
 	struct timeval a, b;
-	unsigned long mix = 0;
+	ulong mix = 0;
 	long mix_diff;
 	int i;
 
@@ -1209,8 +1218,8 @@ entropy_jitter(void)
 		if (mix_diff < 0)
 			mix_diff = -mix_diff;
 
-		mix ^= (unsigned long)(mix_diff);
-		mix ^= (unsigned long)&mix;
+		mix ^= (ulong)(mix_diff);
+		mix ^= (ulong)&mix;
 	}
 
 	return mix;
@@ -1229,7 +1238,7 @@ write_mac_part(size_t partnum)
 		set_nvm_word(w, partnum, mac_buf[w]);
 
 	printf("Wrote MAC address to part %lu: ",
-	    (unsigned long)partnum);
+	    (ulong)partnum);
 	print_mac_from_nvm(partnum);
 }
 
@@ -1246,11 +1255,11 @@ cmd_helper_dump(void)
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, partnum),
-			    (unsigned long)partnum,
+			    (ulong)partnum,
 			    calculated_checksum(partnum));
 
 		printf("MAC (part %lu): ",
-		    (unsigned long)partnum);
+		    (ulong)partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
@@ -1265,8 +1274,8 @@ print_mac_from_nvm(size_t partnum)
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
 		printf("%02x:%02x",
-		    (unsigned int)(val16 & 0xff),
-		    (unsigned int)(val16 >> 8));
+		    (uint)(val16 & 0xff),
+		    (uint)(val16 >> 8));
 		if (c == 2)
 			printf("\n");
 		else
@@ -1282,14 +1291,14 @@ hexdump(size_t partnum)
 	ushort val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08lx ", (unsigned long)((size_t)row << 4));
+		printf("%08lx ", (ulong)((size_t)row << 4));
 		for (c = 0; c < 8; c++) {
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
 			printf(" %02x %02x",
-			    (unsigned int)(val16 & 0xff),
-			    (unsigned int)(val16 >> 8));
+			    (uint)(val16 & 0xff),
+			    (uint)(val16 >> 8));
 		}
 		printf("\n");
 	}
@@ -1465,7 +1474,7 @@ check_nvm_bound(size_t c, size_t p)
 
 	if (c >= NVM_WORDS)
 		err(ECANCELED, "check_nvm_bound: out of bounds %lu",
-		    (unsigned long)c);
+		    (ulong)c);
 }
 
 static void
@@ -1473,7 +1482,7 @@ check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
 		err(EINVAL, "%s must be 0 or 1, but is %lu",
-		    a_name, (unsigned long)a);
+		    a_name, (ulong)a);
 }
 
 static void
@@ -1487,7 +1496,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
-		    fname, rw_type_str, (unsigned long)p, rw_type);
+		    fname, rw_type_str, (ulong)p, rw_type);
 
 	if (rw_type == IO_PWRITE)
 		invert = 0;
@@ -1502,7 +1511,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 	    gbe_rw_size, gbe_file_offset(p, rw_type_str),
 	    rw_type) == -1)
 		err(errno, "%s: %s: part %lu",
-		    fname, rw_type_str, (unsigned long)p);
+		    fname, rw_type_str, (ulong)p);
 }
 
 /*
@@ -1718,7 +1727,7 @@ prw(int fd, void *mem, size_t nrw,
 	    || off < 0
 	    || !nrw /* prevent zero read request */
 	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
-	    || (unsigned int)rw_type > IO_PWRITE)
+	    || (uint)rw_type > IO_PWRITE)
 		goto err_prw;
 
 	r = -1;
@@ -1916,7 +1925,7 @@ getnvmprogname(void)
 }
 
 static void
-usage(u8 usage_exit)
+usage(int usage_exit)
 {
 	const char *util = getnvmprogname();
 
