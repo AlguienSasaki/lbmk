@@ -1493,6 +1493,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 	u8 invert = command[cmd_index].invert;
 
 	u8 *mem_offset;
+	off_t file_offset;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
@@ -1506,12 +1507,38 @@ rw_gbe_file_part(size_t p, int rw_type,
 	 * E.g. read from p0 (file) to p1 (mem).
 	 */
 	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
+	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
 
 	if (rw_gbe_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, gbe_file_offset(p, rw_type_str),
-	    rw_type) == -1)
+	    gbe_rw_size, file_offset, rw_type) == -1)
 		err(errno, "%s: %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
+
+	/*
+	 * Next, we read back what was written,
+	 * to ensure that it was done correctly.
+	 * NOTE: using "pad" (only cat uses it)
+	 */
+
+	if (rw_type != IO_PWRITE)
+		return; /* skip for reads */
+
+	/*
+	 * We may otherwise read from
+	 * cache, so we must sync.
+	 */
+	if (fsync(gbe_fd) == -1)
+		err(errno, "%s: fsync: part %lu (post-verification)",
+		    fname, (ulong)p);
+
+	if (rw_gbe_file_exact(gbe_fd, pad,
+	    gbe_rw_size, file_offset, IO_PREAD) == -1)
+		err(errno, "%s: pread: part %lu (post-verification)",
+		    fname, (ulong)p);
+
+	if (memcmp(mem_offset, pad, gbe_rw_size))
+		err(errno, "%s: pwrite: corrupt write on part %lu",
+		    fname, (ulong)p);
 }
 
 /*
