@@ -937,6 +937,11 @@ open_gbe_file(void)
 	gbe_dev = gbe_st.st_dev;
 	gbe_ino = gbe_st.st_ino;
 
+	if (gbe_st.st_nlink > 1)
+		fprintf(stderr,
+		    "%s: warning: file has %lu hard links\n",
+		    fname, (ulong)gbe_st.st_nlink);
+
 	if (gbe_st.st_nlink == 0)
 		err(EIO, "%s: file unlinked while open", fname);
 
