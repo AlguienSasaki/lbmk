@@ -2149,6 +2149,14 @@ err_is_file:
 static ssize_t
 rw_over_nrw(ssize_t r, size_t nrw)
 {
+	/*
+	 * If a byte length of zero
+	 * was requested, that is
+	 * clearly a bug. No way.
+	 */
+	if (!nrw)
+		goto err_rw_over_nrw;
+
 	if (r == -1)
 		return r;
 
