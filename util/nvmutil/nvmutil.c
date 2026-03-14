@@ -1822,14 +1822,13 @@ static off_t
 lseek_eintr(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
 {
-	off_t old;
+	off_t old = -1;
 
 	do {
 		old = lseek(fd, off, whence);
-	} while (old == (off_t)-1
-	    && (!(
+	} while (old == (off_t)-1 && (
 	    errno == try_err(loop_eintr, EINTR) ||
-	    errno == try_err(loop_eagain, EAGAIN))));
+	    errno == try_err(loop_eagain, EAGAIN)));
 
 	return old;
 }
