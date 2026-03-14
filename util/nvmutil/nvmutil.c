@@ -1888,6 +1888,16 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	size_t nrw_cur;
 	void *mem_cur;
 
+	if (mem == NULL)
+		goto err_rw_file_exact;
+
+	if (fd < 0
+	    || off < 0
+	    || !nrw /* prevent zero read request */
+	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
+	    || (uint)rw_type > IO_PWRITE)
+		goto err_rw_file_exact;
+
 	while (1) {
 	
 		/* Prevent theoretical overflow */
