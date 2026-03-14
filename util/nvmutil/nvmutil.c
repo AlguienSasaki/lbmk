@@ -1436,7 +1436,7 @@ cmd_helper_cat(void)
 	fflush(NULL);
 
 	for (p = 0; p < 2; p++) {
-		gbe_cat_buf(buf + (ulong)(p * GBE_PART_SIZE));
+		gbe_cat_buf(buf + (size_t)(p * GBE_PART_SIZE));
 
 		for (ff = 0; ff < n; ff++)
 			gbe_cat_buf(pad);
@@ -1757,7 +1757,7 @@ gbe_mem_offset(size_t p, const char *f_op)
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_FILE_SIZE);
 
-	return (u8 *)(buf + (ulong)gbe_off);
+	return (u8 *)(buf + (size_t)gbe_off);
 }
 
 /*
@@ -1881,7 +1881,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 			break;
 
 		if ((rv = prw(fd,
-		    mem + (ulong)rc, nrw - rc, off + rc, rw_type,
+		    mem + (size_t)rc, nrw - rc, off + rc, rw_type,
 		    loop_eagain, loop_eintr)) < 0)
 			return -1;
 	
