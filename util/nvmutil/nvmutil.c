@@ -2126,14 +2126,28 @@ static int
 io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
 {
+	/* obviously */
 	if (mem == NULL)
 		goto err_io_args;
 
-	if (fd < 0
-	    || off < 0
-	    || !nrw /* prevent zero read request */
-	    || nrw > (size_t)SSIZE_MAX /* prevent overflow */
-	    || (uint)rw_type > IO_PWRITE)
+	/* uninitialised fd */
+	if (fd < 0)
+		goto err_io_args;
+
+	/* prevent underflow */
+	if (off < 0)
+		goto err_io_args;
+
+	/* prevent zero-byte rw */
+	if (!nrw)
+		goto err_io_args;
+
+	/* prevent overflow */
+	if (nrw > (size_t)SSIZE_MAX)
+		goto err_io_args;
+
+	/* prevent overflow */
+	if (((size_t)off + nrw) < (size_t)off)
 		goto err_io_args;
 
 	return 0;
