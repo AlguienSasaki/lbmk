@@ -1578,6 +1578,9 @@ check_written_part(size_t p)
 	else if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
 		rw_check_bad_part[p] = io_err_gbe = 1;
 
+	if (rw_check_err_read[p])
+		return;
+
 	/*
 	 * We only load one part on-file, into memory but
 	 * always at offset zero, for post-write checks.
@@ -1614,10 +1617,14 @@ report_io_err_rw(void)
 			    "%s: pwrite: corrupt write on p%lu\n",
 			    fname, (ulong)p);
 
-		/*
-		 * so that we can re-use main checksumming features
-		 * correct part to read always part 0
-		 */
+		if (rw_check_err_read[p]) {
+			fprintf(stderr,
+			    "%s: p%lu: skipped checksum verification "
+			    "(because read failed)\n",
+			    fname, (ulong)p);
+
+			continue;
+		}
 
 		fprintf(stderr, "%s: ", fname);
 
