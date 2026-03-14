@@ -337,7 +337,7 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
 static int rw_over_nrw(ssize_t r, size_t nrw);
-static off_t lseek_eintr(int fd, off_t off,
+static off_t lseek_loop(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 static int try_err(int loop_err, int errval);
 
@@ -1742,10 +1742,10 @@ try_rw_again:
 	if (flags & O_APPEND)
 		goto err_prw;
 
-	if ((off_orig = lseek_eintr(fd, (off_t)0, SEEK_CUR,
+	if ((off_orig = lseek_loop(fd, (off_t)0, SEEK_CUR,
 	    loop_eagain, loop_eintr)) == (off_t)-1)
 		r = -1;
-	else if (lseek_eintr(fd, off, SEEK_SET,
+	else if (lseek_loop(fd, off, SEEK_SET,
 	    loop_eagain, loop_eintr) == (off_t)-1)
 		r = -1;
 
@@ -1761,7 +1761,7 @@ try_rw_again:
 	    || errno == try_err(loop_eagain, EAGAIN)));
 
 	saved_errno = errno;
-	if (lseek_eintr(fd, off_orig, SEEK_SET,
+	if (lseek_loop(fd, off_orig, SEEK_SET,
 	    loop_eagain, loop_eintr) == (off_t)-1) {
 		if (r < 0)
 			errno = saved_errno;
@@ -1819,7 +1819,7 @@ err_rw_over_nrw:
 }
 
 static off_t
-lseek_eintr(int fd, off_t off, int whence,
+lseek_loop(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
 {
 	off_t old = -1;
