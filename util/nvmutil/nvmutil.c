@@ -652,6 +652,9 @@ static int rw_check_bad_part[] = {0, 0};
 
 static int post_rw_checksum[] = {0, 0};
 
+static dev_t gbe_dev;
+static ino_t gbe_ino;
+
 int
 main(int argc, char *argv[])
 {
@@ -929,6 +932,10 @@ open_gbe_file(void)
 
 	xopen(&gbe_fd, fname,
 	    command[cmd_index].flags | O_BINARY | O_NOFOLLOW, &gbe_st);
+
+	/* inode will be checked later on write */
+	gbe_dev = gbe_st.st_dev;
+	gbe_ino = gbe_st.st_ino;
 
 	if (gbe_st.st_nlink == 0)
 		err(EIO, "%s: file unlinked while open", fname);
@@ -1410,6 +1417,9 @@ write_gbe_file(void)
 	
 	if (fstat(gbe_fd, &gbe_st) == -1)
 		err(errno, "%s: re-check", fname);
+
+	if (gbe_st.st_dev != gbe_dev || gbe_st.st_ino != gbe_ino)
+		err(EIO, "%s: file replaced while open", fname);
 
 	if (gbe_st.st_size != gbe_file_size)
 		err(errno, "%s: file size changed before write", fname);
