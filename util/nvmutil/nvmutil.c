@@ -405,9 +405,6 @@ static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     size_t max_retries);
-static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
-    off_t off, int rw_type, int loop_eagain,
-    int loop_eintr, size_t max_retries);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
 static int check_file(int fd, struct stat *st);
@@ -1883,9 +1880,9 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		if ((size_t)rc >= nrw)
 			break;
 
-		if ((rv = rw_file_once(fd,
+		if ((rv = prw(fd,
 		    mem + rc, nrw - rc, off + rc, rw_type,
-		    loop_eagain, loop_eintr, max_retries)) < 0)
+		    loop_eagain, loop_eintr)) < 0)
 			return -1;
 	
 		/* Prevent theoretical overflow */
@@ -1907,53 +1904,6 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	return rw_over_nrw(rc, nrw);
 
 err_rw_file_exact:
-	errno = EIO;
-	return -1;
-}
-
-/*
- * rw_file_once() - Read less than perfectly
- *                  (and possibly die)
- *
- * Read/write, but don't insist on an
- * absolute read; e.g. if 100 bytes are
- * requested, this may return 80 <-- fine
- *
- * This function will never return zero.
- * It will only return below (error),
- * or above (success). On error, -1 is
- * returned and errno is set accordingly.
- *
- * Zero-byte returns are not allowed.
- */
-static ssize_t
-rw_file_once(int fd, u8 *mem, size_t nrw,
-    off_t off, int rw_type, int loop_eagain,
-    int loop_eintr, size_t max_retries)
-{
-	ssize_t rv;
-	size_t retries_on_zero = 0;
-
-	if (mem == NULL)
-		goto err_rw_file_once;
-
-read_again:
-	rv = prw(fd, mem, nrw, off, rw_type,
-	    loop_eagain, loop_eintr);
-
-	if (rv < 0)
-		return -1;
-
-	if ((size_t)rv > nrw)/* don't overflow */
-		goto err_rw_file_once;
-
-	if (rv != 0)
-		return rv;
-
-	if (retries_on_zero++ < max_retries)
-		goto read_again;
-
-err_rw_file_once:
 	errno = EIO;
 	return -1;
 }
