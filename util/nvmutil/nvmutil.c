@@ -335,7 +335,7 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, size_t rc, int loop_eagain);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain);
-static int rw_over_ssize_max(ssize_t r);
+static int rw_over_nrw(ssize_t r, size_t nrw);
 static off_t lseek_eintr(int fd, off_t off,
     int whence, int loop_eagain);
 static int err_eagain(int loop_eagain);
@@ -1709,7 +1709,7 @@ try_rw_again:
 		    || errno == err_eagain(loop_eagain)))
 			goto try_rw_again;
 
-		return rw_over_ssize_max(r);
+		return rw_over_nrw(r, nrw);
 	}
 
 	flags = fcntl(fd, F_GETFL);
@@ -1737,7 +1737,7 @@ try_rw_again:
 		else if (rw_type == IO_PWRITE)
 			r = write(fd, mem, nrw);
 
-		r = rw_over_ssize_max(r);
+		r = rw_over_nrw(r, nrw);
 	} while (r == -1 && (errno == EINTR
 	    || errno == err_eagain(loop_eagain)));
 
@@ -1750,35 +1750,53 @@ try_rw_again:
 	}
 	errno = saved_errno;
 
-	return rw_over_ssize_max(r);
+	return rw_over_nrw(r, nrw);
 
 err_prw:
 	errno = EIO;
 	return -1;
 }
 
-
 /*
- * Theoretical buggy libc
- * check. Extremely academic.
- *
- * Specifications never
- * allow this return value
- * to exceed SSIZE_MAX, but
- * spec != implementation
- *
- * Check this after using
- * [p]read() or [p]write()
+ * POSIX can say whatever it wants.
+ * specification != implementation
  */
 static int
-rw_over_ssize_max(ssize_t r)
+rw_over_nrw(ssize_t r, size_t nrw)
 {
+	if (r == -1)
+		return r;
+
 	if ((size_t)r > SSIZE_MAX) {
-		errno = EIO;
-		return -1;
+		/*
+		 * Theoretical buggy libc
+		 * check. Extremely academic.
+		 *
+		 * Specifications never
+		 * allow this return value
+		 * to exceed SSIZE_MAX, but
+		 * spec != implementation
+		 *
+		 * Check this after using
+		 * [p]read() or [p]write()
+		 */
+		goto err_rw_over_nrw;
 	}
 
+	/*
+	 * Theoretical buggy libc:
+	 * Should never return a number of
+	 * bytes above the requested length.
+	 */
+	if ((size_t)r > nrw)
+		goto err_rw_over_nrw;
+
 	return r;
+
+err_rw_over_nrw:
+
+	errno = EIO;
+	return -1;
 }
 
 static off_t
