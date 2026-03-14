@@ -15,6 +15,13 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__APPLE__)
+#ifndef HAVE_ARC4RANDOM_BUF
+#define HAVE_ARC4RANDOM_BUF 1
+#endif
+#endif
+
 /*
  * I/O config (build-time)
  *
@@ -329,7 +336,10 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static ushort hextonum(char ch_s);
 static ushort rhex(void);
+#if !defined(HAVE_ARC4RANDOM_BUF) || \
+    (HAVE_ARC4RANDOM_BUF) < 1
 static ulong entropy_jitter(void);
+#endif
 static void write_mac_part(size_t partnum);
 
 /*
@@ -660,6 +670,11 @@ static int post_rw_checksum[] = {0, 0};
 
 static dev_t gbe_dev;
 static ino_t gbe_ino;
+
+#if defined(HAVE_ARC4RANDOM_BUF) && \
+    (HAVE_ARC4RANDOM_BUF) > 0
+void arc4random_buf(void *buf, size_t n);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -1246,6 +1261,22 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
+#if defined(HAVE_ARC4RANDOM_BUF) && \
+    (HAVE_ARC4RANDOM_BUF) > 0
+static ushort
+rhex(void)
+{
+	static u8 num[12];
+	static size_t n = 0;
+
+	if (!n) {
+		n = 12;
+		arc4random_buf(num, 12);
+	}
+
+	return num[--n] & 0xf;
+}
+#else
 static ushort
 rhex(void)
 {
@@ -1300,6 +1331,7 @@ entropy_jitter(void)
 
 	return mix;
 }
+#endif
 
 static void
 write_mac_part(size_t partnum)
