@@ -1831,8 +1831,20 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain,
     int loop_eintr, size_t max_retries)
 {
+	struct stat st;
 	ssize_t rv;
 	size_t rc;
+
+	/* Programs like cat can use this,
+	   so we only check if it's a normal
+	   file if not looping EAGAIN */
+	if (!loop_eagain) {
+		if (fstat(fd, &st) == -1)
+			goto err_rw_file_exact;
+
+		if (S_ISREG(st.st_mode))
+			goto err_rw_file_exact;
+	}
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
 		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
@@ -1852,6 +1864,10 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	}
 
 	return rc;
+
+err_rw_file_exact:
+	errno = EIO;
+	return -1;
 }
 
 /*
