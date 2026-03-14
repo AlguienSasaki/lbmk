@@ -339,7 +339,7 @@ static ssize_t prw(int fd, void *mem, size_t nrw,
 static int rw_over_nrw(ssize_t r, size_t nrw);
 static off_t lseek_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
-static int err_eagain(int loop_err, int errval);
+static int try_err(int loop_err, int errval);
 
 /*
  * Error handling and cleanup
@@ -1722,8 +1722,8 @@ try_rw_again:
 		else if (rw_type == IO_READ)
 			r = read(fd, mem, nrw);
 
-		if (r == -1 && (errno == err_eagain(loop_eintr, EINTR)
-		    || errno == err_eagain(loop_eagain, EAGAIN)))
+		if (r == -1 && (errno == try_err(loop_eintr, EINTR)
+		    || errno == try_err(loop_eagain, EAGAIN)))
 			goto try_rw_again;
 
 		return rw_over_nrw(r, nrw);
@@ -1757,8 +1757,8 @@ try_rw_again:
 
 		r = rw_over_nrw(r, nrw);
 	} while (r == -1 &&
-	    (errno == err_eagain(loop_eintr, EINTR)
-	    || errno == err_eagain(loop_eagain, EAGAIN)));
+	    (errno == try_err(loop_eintr, EINTR)
+	    || errno == try_err(loop_eagain, EAGAIN)));
 
 	saved_errno = errno;
 	if (lseek_eintr(fd, off_orig, SEEK_SET,
@@ -1828,14 +1828,14 @@ lseek_eintr(int fd, off_t off, int whence,
 		old = lseek(fd, off, whence);
 	} while (old == (off_t)-1
 	    && (!(
-	    errno == err_eagain(loop_eintr, EINTR) ||
-	    errno == err_eagain(loop_eagain, EAGAIN))));
+	    errno == try_err(loop_eintr, EINTR) ||
+	    errno == try_err(loop_eagain, EAGAIN))));
 
 	return old;
 }
 
 static int
-err_eagain(int loop_err, int errval)
+try_err(int loop_err, int errval)
 {
 	if (loop_err)
 		return errval;
