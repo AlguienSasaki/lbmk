@@ -1611,8 +1611,17 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
 		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
-		    loop_eagain, loop_eintr)) <= 0)
+		    loop_eagain, loop_eintr)) < 0)
 			return -1;
+	
+		/* rw_file_once never returns
+		   zero, but it's still logically
+		   incorrect not to handle it here */
+	
+		if (rv == 0) {
+			errno = EIO;
+			return -1;
+		}
 
 		rc += (size_t)rv;
 	}
@@ -1627,6 +1636,11 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
  *
  * May not return all requested bytes (nrw).
  * Use rw_file_exact for guaranteed length.
+ *
+ * This function will never return zero.
+ * It will only return below (error),
+ * or above (success). On error, -1 is
+ * returned and errno is set accordingly.
  */
 static ssize_t
 rw_file_once(int fd, u8 *mem, size_t nrw,
