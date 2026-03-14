@@ -412,7 +412,7 @@ static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type);
 static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    size_t max_retries);
+    size_t max_retries, int off_reset);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     int off_reset);
@@ -1457,7 +1457,7 @@ gbe_cat_buf(u8 *b)
 {
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY) < 0)
+	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
 		err(errno, "stdout: cat");
 }
 
@@ -1835,7 +1835,8 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 		goto err_rw_gbe_file_exact;
 
 	return rw_file_exact(fd, mem, nrw, off, rw_type,
-	    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY);
+	    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY,
+	    OFF_ERR);
 
 err_rw_gbe_file_exact:
 	errno = EIO;
@@ -1875,7 +1876,8 @@ err_rw_gbe_file_exact:
 static ssize_t
 rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain,
-    int loop_eintr, size_t max_retries)
+    int loop_eintr, size_t max_retries,
+    int off_reset)
 {
 	ssize_t rv = 0;
 	ssize_t rc = 0;
@@ -1900,7 +1902,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 
 		rv = prw(fd, mem_cur, nrw_cur, off_cur,
 		    rw_type, loop_eagain, loop_eintr,
-		    OFF_ERR);
+		    off_reset);
 
 		if (rv < 0)
 			return -1;
