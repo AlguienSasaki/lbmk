@@ -289,12 +289,7 @@ static int xstrxcmp(const char *a, const char *b, size_t maxlen);
 
 /*
  * Prep files for reading
- *
- * Portability: /dev/urandom used
- * on Linux / old Unix, whereas
- * arc4random is used on BSD/MacOS.
  */
-static void open_dev_urandom(void);
 static void open_gbe_file(void);
 static void lock_gbe_file(void);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
@@ -328,7 +323,6 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static ushort hextonum(char ch_s);
 static ushort rhex(void);
-static ushort fallback_rand(void);
 static ulong entropy_jitter(void);
 static void write_mac_part(size_t partnum);
 
@@ -441,9 +435,6 @@ static u8 rnum[NUM_RANDOM_BYTES];
  */
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
-static const char newrandom[] = "/dev/urandom";
-static const char *rname = NULL;
-
 /*
  * GbE files can be 8KB, 16KB or 128KB,
  * but we only need the two 4KB parts
@@ -460,7 +451,6 @@ static u8 *buf = real_buf;
 static ushort mac_buf[3];
 static off_t gbe_file_size;
 
-static int urandom_fd = -1;
 static int gbe_fd = -1;
 static size_t part;
 static u8 part_modified[2];
@@ -655,8 +645,6 @@ typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
 typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
 typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 
-static int use_prng = 0;
-
 static int io_err_gbe = 0;
 static int rw_check_err_read[] = {0, 0};
 static int rw_check_partial_read[] = {0, 0};
@@ -677,8 +665,8 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio rpath wpath unveil", NULL) == -1)
 		err(errno, "pledge");
-	if (unveil("/dev/urandom", "r") == -1)
-		err(errno, "unveil /dev/urandom");
+	if (unveil("/dev/null", "r") == -1)
+		err(errno, "unveil /dev/null");
 #else
 	if (pledge("stdio rpath wpath", NULL) == -1)
 		err(errno, "pledge");
@@ -715,7 +703,7 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-	open_dev_urandom();
+	srand((uint)(time(NULL) ^ getpid()));
 
 	open_gbe_file();
 	lock_gbe_file();
@@ -931,19 +919,6 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 	 */
 	errno = EINVAL;
 	return -1;
-}
-
-static void
-open_dev_urandom(void)
-{
-	rname = newrandom;
-	urandom_fd = open(rname, O_RDONLY);
-	if (urandom_fd != -1)
-		return;
-
-	/* fallback on VERY VERY VERY old unix */
-	use_prng = 1;
-	srand((uint)(time(NULL) ^ getpid()));
 }
 
 static void
@@ -1249,24 +1224,6 @@ hextonum(char ch_s)
 
 static ushort
 rhex(void)
-{
-	static size_t n = 0;
-
-	if (use_prng)
-		return fallback_rand();
-
-	if (!n) {
-		n = sizeof(rnum);
-		if (rw_file_exact(urandom_fd, rnum, n, 0, IO_READ,
-		    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY) == -1)
-			err(errno, "Randomisation failed");
-	}
-
-	return (ushort)(rnum[--n] & 0xf);
-}
-
-static ushort
-fallback_rand(void)
 {
 	struct timeval tv;
 	ulong mix;
@@ -2154,7 +2111,6 @@ static int
 close_files(void)
 {
 	int close_err_gbe = 0;
-	int close_err_rand = 0;
 	int saved_errno = errno;
 
 	if (gbe_fd > -1) {
@@ -2163,16 +2119,10 @@ close_files(void)
 		gbe_fd = -1;
 	}
 
-	if (urandom_fd > -1) {
-		if (close(urandom_fd) == -1)
-			close_err_rand = errno;
-		urandom_fd = -1;
-	}
-
 	if (saved_errno)
 		errno = saved_errno;
 
-	if (close_err_gbe || close_err_rand)
+	if (close_err_gbe)
 		return -1;
 
 	return 0;
