@@ -1568,6 +1568,8 @@ check_written_part(size_t p)
 	mem_offset = gbe_mem_offset(p, "pwrite");
 	file_offset = (off_t)gbe_file_offset(p, "pwrite");
 
+	memset(pad, 0xff, sizeof(pad));
+
 	r = rw_gbe_file_exact(gbe_fd, pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
 
