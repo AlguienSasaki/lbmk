@@ -332,7 +332,7 @@ static void check_bin(size_t a, const char *a_name);
  */
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
-static void verify_gbe_bin_write(size_t p);
+static void check_written_part(size_t p);
 static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -675,8 +675,20 @@ main(int argc, char *argv[])
 
 	run_cmd(cmd_index);
 
-	if (command[cmd_index].flags == O_RDWR)
+	if (command[cmd_index].flags == O_RDWR) {
 		write_gbe_file();
+
+		/*
+		 * We may otherwise read from
+		 * cache, so we must sync.
+		 */
+		if (fsync(gbe_fd) == -1)
+			err(errno, "%s: fsync (pre-verification)",
+			    fname);
+
+		check_written_part(0);
+		check_written_part(1);
+	}
 
 	close_files();
 
@@ -1521,35 +1533,24 @@ rw_gbe_file_part(size_t p, int rw_type,
 	if ((size_t)r != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
-
-	/*
-	 * Next, we read back what was written,
-	 * to ensure that it was done correctly.
-	 * NOTE: using "pad" (only cat uses it)
-	 */
-	if (rw_type == IO_PWRITE)
-		verify_gbe_bin_write(p);
 }
 
 static void
-verify_gbe_bin_write(size_t p)
+check_written_part(size_t p)
 {
 	ssize_t r;
-	size_t gbe_rw_size = command[cmd_index].rw_size;
+	size_t gbe_rw_size;
 	u8 *mem_offset;
 	off_t file_offset;
+
+	if (!part_modified[p])
+		return;
+
+	gbe_rw_size = command[cmd_index].rw_size;
 
 	/* invert not needed for pwrite */
 	mem_offset = gbe_mem_offset(p, "pwrite");
 	file_offset = (off_t)gbe_file_offset(p, "pwrite");
-
-	/*
-	 * We may otherwise read from
-	 * cache, so we must sync.
-	 */
-	if (fsync(gbe_fd) == -1)
-		err(errno, "%s: fsync: part %lu (post-verification)",
-		    fname, (ulong)p);
 
 	r = rw_gbe_file_exact(gbe_fd, pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
