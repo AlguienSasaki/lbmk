@@ -412,8 +412,11 @@ static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
 static int check_file(int fd, struct stat *st);
 static ssize_t rw_over_nrw(ssize_t r, size_t nrw);
+#if !defined(HAVE_REAL_PREAD_PWRITE) || \
+    HAVE_REAL_PREAD_PWRITE < 1
 static off_t lseek_loop(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
+#endif
 static int try_err(int loop_err, int errval);
 
 /*
@@ -1945,13 +1948,16 @@ prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type,
     int loop_eagain, int loop_eintr)
 {
-	off_t off_orig;
-	off_t off_last;
 	ssize_t r;
-	int saved_errno;
 	int positional_rw;
 	struct stat st;
+#if !defined(HAVE_REAL_PREAD_PWRITE) || \
+    HAVE_REAL_PREAD_PWRITE < 1
+	int saved_errno;
 	off_t verified;
+	off_t off_orig;
+	off_t off_last;
+#endif
 
 	if (mem == NULL)
 		goto err_prw;
