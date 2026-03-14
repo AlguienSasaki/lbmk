@@ -1489,6 +1489,7 @@ static void
 rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str)
 {
+	ssize_t r;
 	size_t gbe_rw_size = command[cmd_index].rw_size;
 	u8 invert = command[cmd_index].invert;
 
@@ -1509,9 +1510,15 @@ rw_gbe_file_part(size_t p, int rw_type,
 	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
 
-	if (rw_gbe_file_exact(gbe_fd, mem_offset,
-	    gbe_rw_size, file_offset, rw_type) == -1)
+	r = rw_gbe_file_exact(gbe_fd, mem_offset,
+	    gbe_rw_size, file_offset, rw_type);
+
+	if (r == -1)
 		err(errno, "%s: %s: part %lu",
+		    fname, rw_type_str, (ulong)p);
+
+	if ((size_t)r != gbe_rw_size)
+		err(EIO, "%s: partial %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
 
 	/*
@@ -1531,12 +1538,18 @@ rw_gbe_file_part(size_t p, int rw_type,
 		err(errno, "%s: fsync: part %lu (post-verification)",
 		    fname, (ulong)p);
 
-	if (rw_gbe_file_exact(gbe_fd, pad,
-	    gbe_rw_size, file_offset, IO_PREAD) == -1)
+	r = rw_gbe_file_exact(gbe_fd, pad,
+	    gbe_rw_size, file_offset, IO_PREAD);
+
+	if (r == -1)
 		err(errno, "%s: pread: part %lu (post-verification)",
 		    fname, (ulong)p);
 
-	if (memcmp(mem_offset, pad, gbe_rw_size))
+	if ((size_t)r != gbe_rw_size)
+		err(EIO, "%s: partial pread: part %lu (post-verification)",
+		    fname, (ulong)p);
+
+	if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
 		err(errno, "%s: pwrite: corrupt write on part %lu",
 		    fname, (ulong)p);
 }
