@@ -333,6 +333,7 @@ static void check_bin(size_t a, const char *a_name);
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
 static void check_written_part(size_t p);
+static void report_io_err_rw(void);
 static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -408,8 +409,9 @@ static const char *rname = NULL;
  *
  * The code will handle this properly.
  */
-static u8 buf[GBE_FILE_SIZE];
-static u8 pad[GBE_PART_SIZE]; /* the file that wouldn't die */
+static u8 real_buf[GBE_FILE_SIZE];
+static u8 pad[GBE_FILE_SIZE]; /* the file that wouldn't die */
+static u8 *buf = real_buf;
 
 static ushort mac_buf[3];
 static off_t gbe_file_size;
@@ -604,6 +606,13 @@ typedef char bool_part_invert[(PART_INVERT==1)?1:-1];
 
 static int use_prng = 0;
 
+static int io_err_gbe = 0;
+static int rw_check_err_read[] = {0, 0};
+static int rw_check_partial_read[] = {0, 0};
+static int rw_check_bad_part[] = {0, 0};
+
+static int post_rw_checksum[] = {0, 0};
+
 int
 main(int argc, char *argv[])
 {
@@ -676,6 +685,7 @@ main(int argc, char *argv[])
 	run_cmd(cmd_index);
 
 	if (command[cmd_index].flags == O_RDWR) {
+
 		write_gbe_file();
 
 		/*
@@ -688,6 +698,11 @@ main(int argc, char *argv[])
 
 		check_written_part(0);
 		check_written_part(1);
+
+		report_io_err_rw();
+
+		if (io_err_gbe)
+			err(EIO, "%s: bad write", fname);
 	}
 
 	close_files();
@@ -1542,6 +1557,7 @@ check_written_part(size_t p)
 	size_t gbe_rw_size;
 	u8 *mem_offset;
 	off_t file_offset;
+	u8 *buf_restore;
 
 	if (!part_modified[p])
 		return;
@@ -1556,16 +1572,69 @@ check_written_part(size_t p)
 	    gbe_rw_size, file_offset, IO_PREAD);
 
 	if (r == -1)
-		err(errno, "%s: pread: part %lu (post-verification)",
-		    fname, (ulong)p);
+		rw_check_err_read[p] = io_err_gbe = 1;
+	else if ((size_t)r != gbe_rw_size)
+		rw_check_partial_read[p] = io_err_gbe = 1;
+	else if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
+		rw_check_bad_part[p] = io_err_gbe = 1;
 
-	if ((size_t)r != gbe_rw_size)
-		err(EIO, "%s: partial pread: part %lu (post-verification)",
-		    fname, (ulong)p);
+	/*
+	 * We only load one part on-file, into memory but
+	 * always at offset zero, for post-write checks.
+	 * That's why we hardcode good_checksum(0).
+	 */
+	buf_restore = buf;
+	buf = pad;
+	post_rw_checksum[p] = good_checksum(0);
+	buf = buf_restore;
+}
 
-	if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
-		err(EIO, "%s: pwrite: corrupt write on part %lu",
-		    fname, (ulong)p);
+static void
+report_io_err_rw(void)
+{
+	size_t p;
+
+	if (!io_err_gbe)
+		return;
+
+	for (p = 0; p < 2; p++) {
+		if (!part_modified[p])
+			continue;
+
+		if (rw_check_err_read[p])
+			fprintf(stderr,
+			    "%s: pread: p%lu (post-verification)\n",
+			    fname, (ulong)p);
+		if (rw_check_partial_read[p])
+			fprintf(stderr,
+			    "%s: partial pread: p%lu (post-verification)\n",
+			    fname, (ulong)p);
+		if (rw_check_bad_part[p])
+			fprintf(stderr,
+			    "%s: pwrite: corrupt write on p%lu\n",
+			    fname, (ulong)p);
+
+		/*
+		 * so that we can re-use main checksumming features
+		 * correct part to read always part 0
+		 */
+
+		fprintf(stderr, "%s: ", fname);
+
+		if (post_rw_checksum[p])
+			fprintf(stderr, "GOOD");
+		else
+			fprintf(stderr, "BAD");
+
+		fprintf(stderr, " checksum in p%lu on-disk.\n",
+		    (ulong)p);
+
+		if (post_rw_checksum[p]) {
+			fprintf(stderr,
+			    "    This does NOT mean it's safe. it may be\n"
+			    "    salvageable if you use the cat feature.\n");
+		}
+	}
 }
 
 /*
