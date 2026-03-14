@@ -1909,8 +1909,7 @@ try_rw_again:
 	saved_errno = errno;
 	if (lseek_loop(fd, off_orig, SEEK_SET,
 	    loop_eagain, loop_eintr) == (off_t)-1) {
-		if (r < 0)
-			errno = saved_errno;
+		errno = saved_errno;
 		return -1;
 	}
 	errno = saved_errno;
