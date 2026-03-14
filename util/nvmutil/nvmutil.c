@@ -2024,7 +2024,10 @@ close_files(void)
 	if (saved_errno)
 		errno = saved_errno;
 
-	return -(close_err_gbe | close_err_rand);
+	if (close_err_gbe || close_err_rand)
+		return -1;
+
+	return 0;
 }
 
 static void
