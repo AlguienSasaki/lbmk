@@ -1812,18 +1812,20 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 {
 	size_t mem_addr;
 	size_t buf_addr;
-	size_t buf_end;
 
 	if (mem == NULL)
 		goto err_rw_gbe_file_exact;
 
 	mem_addr = (size_t)(void *)mem;
 	buf_addr = (size_t)(void *)buf;
-	buf_end  = buf_addr + (size_t)GBE_FILE_SIZE;
 
-	if (mem != (void *)pad &&
-	    (mem_addr < buf_addr || mem_addr >= buf_end))
-	    goto err_rw_gbe_file_exact;
+	if (mem != (void *)pad) {
+		if (mem_addr < buf_addr)
+			goto err_rw_gbe_file_exact;
+
+		if ((mem_addr - buf_addr) >= (size_t)GBE_FILE_SIZE)
+			goto err_rw_gbe_file_exact;
+	}
 
 	if (off < 0 || off >= gbe_file_size)
 		goto err_rw_gbe_file_exact;
