@@ -21,7 +21,7 @@
  * Regarding:
  * Retries on zero-return.
  *
- * 10 retries is generous,
+ * 5 retries is generous,
  * but also conservative.
  * This is enough for e.g.
  * slow USB flash drives,
@@ -29,11 +29,17 @@
  * Any more is too much
  * and not of much benefit.
  *
+ * 3-5 will tolerate buggy
+ * USB drives for example,
+ * but won't spin as long
+ * on really buggy and slow
+ * networks e.g. slow NFS.
+ *
  * At least 3-5 recommended.
  * Pass this at build time.
  */
 #ifndef MAX_ZERO_RW_RETRY
-#define MAX_ZERO_RW_RETRY 10
+#define MAX_ZERO_RW_RETRY 5
 #endif
 /*
  * 0: portable pread/pwrite
