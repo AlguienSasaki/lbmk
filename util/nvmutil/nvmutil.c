@@ -1880,6 +1880,9 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	ssize_t rv = 0;
 	ssize_t rc = 0;
 	size_t retries_on_zero = 0;
+	off_t off_cur;
+	size_t nrw_cur;
+	void *mem_cur;
 
 	while (1) {
 	
@@ -1891,10 +1894,11 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		if ((size_t)rc >= nrw)
 			break;
 
-		rv = prw(fd,
-		    mem + (size_t)rc,
-		    nrw - (size_t)rc,
-		    (size_t)off + rc,
+		mem_cur = (void *)(mem + (size_t)rc);
+		nrw_cur = (size_t)(nrw - (size_t)rc);
+		off_cur = (off_t)((size_t)off + (size_t)rc);
+
+		rv = prw(fd, mem_cur, nrw_cur, off_cur,
 		    rw_type, loop_eagain, loop_eintr,
 		    OFF_ERR);
 
