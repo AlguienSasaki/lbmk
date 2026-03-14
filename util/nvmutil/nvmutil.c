@@ -390,6 +390,7 @@ static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
     int loop_eintr, size_t max_retries);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
+static int check_file(int fd, struct stat *st);
 static int rw_over_nrw(ssize_t r, size_t nrw);
 static off_t lseek_loop(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
@@ -1831,20 +1832,8 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain,
     int loop_eintr, size_t max_retries)
 {
-	struct stat st;
 	ssize_t rv;
 	size_t rc;
-
-	/* Programs like cat can use this,
-	   so we only check if it's a normal
-	   file if not looping EAGAIN */
-	if (!loop_eagain) {
-		if (fstat(fd, &st) == -1)
-			goto err_rw_file_exact;
-
-		if (S_ISREG(st.st_mode))
-			goto err_rw_file_exact;
-	}
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
 		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
@@ -1960,6 +1949,7 @@ prw(int fd, void *mem, size_t nrw,
 	ssize_t r;
 	int saved_errno;
 	int positional_rw;
+	struct stat st;
 
 	if (mem == NULL)
 		goto err_prw;
@@ -1972,6 +1962,20 @@ prw(int fd, void *mem, size_t nrw,
 		goto err_prw;
 
 	r = -1;
+
+	/* Programs like cat can use this,
+	   so we only check if it's a normal
+	   file if not looping EAGAIN */
+	if (!loop_eagain) {
+		/*
+		 * Checking on every run of prw()
+		 * is expensive if called many
+		 * times, but is defensive in
+		 * case the status changes.
+		 */
+		if (check_file(fd, &st) == -1)
+			return -1;
+	}
 
 	if (rw_type >= IO_PREAD)
 		positional_rw = 1; /* pread/pwrite */
@@ -2041,6 +2045,22 @@ real_pread_pwrite:
 #endif
 
 err_prw:
+	errno = EIO;
+	return -1;
+}
+
+static int
+check_file(int fd, struct stat *st)
+{
+	if (fstat(fd, st) == -1)
+		goto err_is_file;
+
+	if (S_ISREG(st->st_mode))
+		goto err_is_file;
+
+	return 0;
+
+err_is_file:
 	errno = EIO;
 	return -1;
 }
