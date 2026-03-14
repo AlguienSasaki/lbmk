@@ -1894,7 +1894,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		rv = prw(fd,
 		    mem + (size_t)rc,
 		    nrw - (size_t)rc,
-		    off + (off_t)rc,
+		    (size_t)off + rc,
 		    rw_type, loop_eagain, loop_eintr,
 		    OFF_ERR);
 
