@@ -930,6 +930,9 @@ open_gbe_file(void)
 	xopen(&gbe_fd, fname,
 	    command[cmd_index].flags | O_BINARY | O_NOFOLLOW, &gbe_st);
 
+	if (gbe_st.st_nlink == 0)
+		err(EIO, "%s: file unlinked while open", fname);
+
 	flags = fcntl(gbe_fd, F_GETFL);
 	if (flags == -1)
 		err(errno, "%s: fcntl(F_GETFL)", fname);
