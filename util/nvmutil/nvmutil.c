@@ -1740,21 +1740,35 @@ err_rw_gbe_file_exact:
 }
 
 /*
- * Read or write the exact contents of a file,
- * along with a buffer, (if applicable) offset,
- * and number of bytes to be read. It unifies
- * the functionality of read(), pread(), write()
- * and pwrite(), with retry-on-EINTR and also
- * prevents infinite loop on zero-reads.
+ * Safe I/O functions wrapping around
+ * read(), write() and providing a portable
+ * analog of both pread() and pwrite().
+ * These functions are designed for maximum
+ * robustness, checking NULL inputs, overflowed
+ * outputs, and all kinds of errors that the
+ * standard libc functions don't.
  *
- * The pread() and pwrite() functionality are
- * provided by yet another portable function,
- * prw() - see notes below.
+ * Looping on EINTR and EAGAIN is supported.
+ * EINTR/EAGAIN looping is done indefinitely.
+ */
+
+/*
+ * rw_file_exact() - Read perfectly or die
  *
- * This must only be used on files. It cannot
- * be used on sockets or pipes, because 0-byte
- * reads are treated like fatal errors. This
- * means that EOF is also considered fatal.
+ * Read/write, and absolutely insist on an
+ * absolute read; e.g. if 100 bytes are
+ * requested, this MUST return 100.
+ *
+ * This function will never return zero.
+ * It will only return below (error),
+ * or above (success). On error, -1 is
+ * returned and errno is set accordingly.
+ *
+ * Zero-byte returns are not allowed.
+ * It calls rw_file_once(), which will
+ * re-try on zero-read a finite number
+ * of times, to prevent infinite loops
+ * while also having fault tolerance.
  */
 static ssize_t
 rw_file_exact(int fd, u8 *mem, size_t nrw,
@@ -1785,17 +1799,19 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 }
 
 /*
- * Helper function for rw_file_exact, that
- * also does extra error handling pertaining
- * to GbE file offsets.
+ * rw_file_once() - Read less than perfectly
+ *                  (and possibly die)
  *
- * May not return all requested bytes (nrw).
- * Use rw_file_exact for guaranteed length.
+ * Read/write, but don't insist on an
+ * absolute read; e.g. if 100 bytes are
+ * requested, this may return 80 <-- fine
  *
  * This function will never return zero.
  * It will only return below (error),
  * or above (success). On error, -1 is
  * returned and errno is set accordingly.
+ *
+ * Zero-byte returns are not allowed.
  */
 static ssize_t
 rw_file_once(int fd, u8 *mem, size_t nrw,
@@ -1804,6 +1820,18 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 {
 	ssize_t rv;
 	size_t retries_on_zero = 0;
+
+	/*
+	 * Retries on zero-return.
+	 *
+	 * 10 retries is generous,
+	 * but also conservative.
+	 * This is enough for e.g.
+	 * slow USB flash drives,
+	 * busy NFS servers, etc.
+	 * Any more is too much
+	 * and not of much benefit.
+	 */
 	size_t max_retries = 10;
 
 	if (mem == NULL)
@@ -1840,6 +1868,7 @@ err_rw_file_once:
  *
  * This limitation is acceptable, since nvmutil is
  * single-threaded. Portability is the main goal.
+ * If you need real pwrite/pread, just edit prw()
  *
  * A fallback is provided for regular read/write.
  * rw_type can be IO_READ, IO_WRITE, IO_PREAD
@@ -1945,6 +1974,8 @@ err_prw:
 }
 
 /*
+ * Check overflows caused by buggy libc.
+ *
  * POSIX can say whatever it wants.
  * specification != implementation
  */
@@ -1986,6 +2017,11 @@ err_rw_over_nrw:
 	return -1;
 }
 
+/*
+ * lseek_loop() does lseek() but optionally
+ * on an EINTR/EAGAIN wait loop. Used by prw()
+ * for setting offsets for positional I/O.
+ */
 static off_t
 lseek_loop(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
@@ -2001,6 +2037,12 @@ lseek_loop(int fd, off_t off, int whence,
 	return old;
 }
 
+/*
+ * If a given error loop is enabled,
+ * e.g. EINTR or EAGAIN, an I/O operation
+ * will loop until errno isn't -1 and one
+ * of these, e.g. -1 and EINTR
+ */
 static int
 try_err(int loop_err, int errval)
 {
