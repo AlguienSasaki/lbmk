@@ -15,8 +15,14 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
+/*
+ * NOTE: older Linux lacked arc4random.
+ * added in glibc 2.36. Just pass HAVE_ARC4RANDOM_BUF=0
+ * at build time if you need old Linux / other libc.
+ */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__)
+    defined(__NetBSD__) || defined(__APPLE__) || \
+    defined(__linux__)
 #ifndef HAVE_ARC4RANDOM_BUF
 #define HAVE_ARC4RANDOM_BUF 1
 #endif
