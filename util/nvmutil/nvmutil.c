@@ -949,9 +949,23 @@ static void
 open_gbe_file(void)
 {
 	struct stat gbe_st;
+	int flags;
 
 	xopen(&gbe_fd, fname,
 	    command[cmd_index].flags | O_BINARY | O_NOFOLLOW, &gbe_st);
+
+	flags = fcntl(gbe_fd, F_GETFL);
+	if (flags == -1)
+		err(errno, "%s: fcntl(F_GETFL)", fname);
+
+	/*
+	 * O_APPEND must not be used, because this
+	 * allows POSIX write() to ignore the
+	 * current write offset and write at EOF,
+	 * which would therefore break pread/pwrite
+	 */
+	if (flags & O_APPEND)
+		err(EIO, "%s: O_APPEND flag");
 
 	gbe_file_size = gbe_st.st_size;
 
@@ -1924,7 +1938,6 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_orig;
 	ssize_t r;
 	int saved_errno;
-	int flags;
 	int positional_rw;
 
 	if (mem == NULL)
@@ -1969,19 +1982,6 @@ real_pread_pwrite:
 
 		return rw_over_nrw(r, nrw);
 	}
-
-	flags = fcntl(fd, F_GETFL);
-	if (flags == -1)
-		return -1;
-
-	/*
-	 * O_APPEND must not be used, because this
-	 * allows POSIX write() to ignore the
-	 * current write offset and write at EOF,
-	 * which would therefore break pread/pwrite
-	 */
-	if (flags & O_APPEND)
-		goto err_prw;
 
 #if defined(HAVE_REAL_PREAD_PWRITE) && \
     HAVE_REAL_PREAD_PWRITE > 0
