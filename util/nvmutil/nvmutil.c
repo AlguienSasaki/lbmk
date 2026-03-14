@@ -406,7 +406,7 @@ static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     size_t max_retries);
 static ssize_t rw_file_once(int fd, u8 *mem, size_t len,
-    off_t off, int rw_type, size_t rc, int loop_eagain,
+    off_t off, int rw_type, int loop_eagain,
     int loop_eintr, size_t max_retries);
 static ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr);
@@ -1873,11 +1873,15 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain,
     int loop_eintr, size_t max_retries)
 {
-	ssize_t rv;
-	size_t rc;
+	ssize_t rv = 0;
+	size_t rc = 0;
 
 	for (rc = 0, rv = 0; rc < nrw; ) {
-		if ((rv = rw_file_once(fd, mem, nrw, off, rw_type, rc,
+
+		rc += (size_t)rv;
+
+		if ((rv = rw_file_once(fd,
+		    mem + rc, nrw - rc, off + rc, rw_type,
 		    loop_eagain, loop_eintr, max_retries)) < 0)
 			return -1;
 	
@@ -1893,8 +1897,6 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		/* Prevent theoretical overflow */
 		if ((size_t)rv > nrw - rc)
 			goto err_rw_file_exact;
-
-		rc += (size_t)rv;
 	}
 
 	return rc;
@@ -1921,9 +1923,8 @@ err_rw_file_exact:
  */
 static ssize_t
 rw_file_once(int fd, u8 *mem, size_t nrw,
-    off_t off, int rw_type, size_t rc,
-    int loop_eagain, int loop_eintr,
-    size_t max_retries)
+    off_t off, int rw_type, int loop_eagain,
+    int loop_eintr, size_t max_retries)
 {
 	ssize_t rv;
 	size_t retries_on_zero = 0;
@@ -1932,13 +1933,13 @@ rw_file_once(int fd, u8 *mem, size_t nrw,
 		goto err_rw_file_once;
 
 read_again:
-	rv = prw(fd, mem + rc, nrw - rc, off + rc, rw_type,
+	rv = prw(fd, mem, nrw, off, rw_type,
 	    loop_eagain, loop_eintr);
 
 	if (rv < 0)
 		return -1;
 
-	if ((size_t)rv > (nrw - rc))/* don't overflow */
+	if ((size_t)rv > nrw)/* don't overflow */
 		goto err_rw_file_once;
 
 	if (rv != 0)
