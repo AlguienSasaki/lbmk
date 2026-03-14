@@ -2217,7 +2217,7 @@ err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 
-	if (errno <= 0)
+	if (errno < 0)
 		errno = ECANCELED;
 	if (!errno)
 		errno = nvm_errval;
