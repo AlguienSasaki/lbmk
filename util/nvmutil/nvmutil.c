@@ -1930,6 +1930,10 @@ err_rw_file_exact:
  * also mitigates a few theoretical libc bugs.
  * It is designed for extremely safe single-threaded
  * I/O on applications that need it.
+ *
+ * NOTE: If you use loop_eagain (1), you enable wait
+ * loop on EAGAIN. Beware if using this on a non-blocking
+ * pipe (it could spin indefinitely).
  */
 
 static ssize_t
