@@ -246,6 +246,9 @@ typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
 ];
+typedef char assert_ulong_ptr[
+    (sizeof(ulong) >= sizeof(void *)) ? 1 : -1
+];
 
 /*
  * We set _FILE_OFFSET_BITS 64, but we only handle
@@ -1801,15 +1804,15 @@ static ssize_t
 rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
     off_t off, int rw_type)
 {
-	size_t mem_addr;
-	size_t buf_addr;
-	size_t buf_end;
+	ulong mem_addr;
+	ulong buf_addr;
+	ulong buf_end;
 
 	if (mem == NULL)
 		goto err_rw_gbe_file_exact;
 
-	mem_addr = (size_t)(void *)mem;
-	buf_addr = (size_t)(void *)buf;
+	mem_addr = (ulong)(void *)mem;
+	buf_addr = (ulong)(void *)buf;
 	buf_end  = buf_addr + GBE_FILE_SIZE;
 
 	if (mem != (void *)pad &&
