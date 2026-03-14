@@ -1681,7 +1681,7 @@ prw(int fd, void *mem, size_t nrw,
 	ssize_t r;
 	int saved_errno;
 	int flags;
-	int positional_rw = 0;
+	int positional_rw;
 
 	if (mem == NULL)
 		goto err_prw;
@@ -1695,16 +1695,19 @@ prw(int fd, void *mem, size_t nrw,
 
 	r = -1;
 
+	if (rw_type >= IO_PREAD)
+		positional_rw = 1; /* pread/pwrite */
+	else
+		positional_rw = 0; /* read/write */
+
 try_rw_again:
 
-	if (rw_type == IO_WRITE)
-		r = write(fd, mem, nrw);
-	else if (rw_type == IO_READ)
-		r = read(fd, mem, nrw);
-	else
-		positional_rw = 1;
-
 	if (!positional_rw) {
+		if (rw_type == IO_WRITE)
+			r = write(fd, mem, nrw);
+		else if (rw_type == IO_READ)
+			r = read(fd, mem, nrw);
+
 		if (r == -1 && (errno == EINTR
 		    || errno == err_eagain(loop_eagain)))
 			goto try_rw_again;
