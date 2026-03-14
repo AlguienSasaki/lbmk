@@ -1882,6 +1882,10 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	size_t retries_on_zero = 0;
 
 	while (1) {
+	
+		/* Prevent theoretical overflow */
+		if ((size_t)rv > (nrw - rc))
+			goto err_rw_file_exact;
 
 		rc += rv;
 		if ((size_t)rc >= nrw)
@@ -1896,10 +1900,6 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 
 		if (rv < 0)
 			return -1;
-	
-		/* Prevent theoretical overflow */
-		if ((size_t)rv > (nrw - rc))
-			goto err_rw_file_exact;
 
 		if (rv == 0) {
 			if (retries_on_zero++ < max_retries)
