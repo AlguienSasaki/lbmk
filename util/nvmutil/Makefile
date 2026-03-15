@@ -3,7 +3,11 @@
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC?=cc
-CFLAGS?=-Os -Wall -Wextra -Werror -pedantic -std=c90
+CSTD?=-std=c90
+WERROR?=
+CWARN?=-Wall -Wextra -pedantic
+COPT?=-Os
+CFLAGS?=$(COPT) $(CWARN) $(CSTD)
 LDFLAGS?=
 DESTDIR?=
 PREFIX?=/usr/local
