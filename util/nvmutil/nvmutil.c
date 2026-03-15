@@ -2107,14 +2107,15 @@ real_pread_pwrite:
 	}
 
 	saved_errno = errno;
+
 	off_last = lseek_loop(fd, off_orig, SEEK_SET,
 	    loop_eagain, loop_eintr);
-	if (off_last == (off_t)-1) {
+
+	if (off_last != off_orig) {
 		errno = saved_errno;
-		return -1;
-	}
-	if (off_last != off_orig)
 		goto err_prw;
+	}
+
 	errno = saved_errno;
 
 	return rw_over_nrw(r, nrw);
