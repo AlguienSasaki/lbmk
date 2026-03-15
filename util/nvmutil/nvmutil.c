@@ -2126,8 +2126,10 @@ real_pread_pwrite:
 			else if (rw_type == IO_PWRITE)
 				r = write(fd, mem, nrw);
 
-			if (rw_over_nrw(r, nrw) == -1)
-				return -1;
+			if (rw_over_nrw(r, nrw) == -1) {
+				errno = EIO;
+				break;
+			}
 
 		} while (r == -1 &&
 		    (errno == try_err(loop_eintr, EINTR)
