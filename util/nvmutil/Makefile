@@ -5,7 +5,7 @@
 CC?=cc
 CSTD?=-std=c90
 WERROR?=
-CWARN?=-Wall -Wextra -pedantic
+CWARN?=-Wall -pedantic
 COPT?=-Os
 CFLAGS?=$(COPT) $(CWARN) $(CSTD)
 LDFLAGS?=
