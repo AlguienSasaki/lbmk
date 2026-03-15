@@ -381,6 +381,7 @@ static ushort hextonum(char ch_s);
 static ushort rhex(void);
 #if !defined(HAVE_ARC4RANDOM_BUF) || \
     (HAVE_ARC4RANDOM_BUF) < 1
+static ushort read_urandom(void);
 static ulong entropy_jitter(void);
 #endif
 static void write_mac_part(size_t partnum);
@@ -1370,6 +1371,11 @@ rhex(void)
 	struct timeval tv;
 	ulong mix;
 	static ulong counter = 0;
+	ushort r;
+
+	r = read_urandom();
+	if (r < 16)
+		return r;
 
 	gettimeofday(&tv, NULL);
 
@@ -1389,6 +1395,38 @@ rhex(void)
 	mix ^= (ulong)&counter;
 
 	return (ushort)(mix & 0xf);
+}
+
+static ushort
+read_urandom(void)
+{
+	static int fd = -1;
+	static ssize_t n = -1;
+
+	static u8 r[12];
+
+	if (fd < 0) {
+
+		fd = open("/dev/urandom", O_RDONLY);
+
+		if (fd < 0)
+			return 16;
+	}
+
+	if (n < 0) {
+
+		n = rw_file_exact(fd, r, 12, 0, IO_READ,
+		    LOOP_EAGAIN, LOOP_EINTR, 2, OFF_ERR);
+
+		if (n == 0)
+			n = -1;
+		if (n < 0)
+			return 16;
+
+		--n;
+	}
+
+	return r[n--] & 0xf;
 }
 
 static ulong
