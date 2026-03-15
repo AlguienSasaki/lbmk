@@ -1917,6 +1917,8 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 
 		mem_cur = (void *)(mem + (size_t)rc);
 		nrw_cur = (size_t)(nrw - (size_t)rc);
+		if (off < 0)
+			goto err_rw_file_exact;
 		off_cur = (off_t)((size_t)off + (size_t)rc);
 
 		rv = prw(fd, mem_cur, nrw_cur, off_cur,
