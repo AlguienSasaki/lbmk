@@ -1838,7 +1838,7 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 	if (nrw > (size_t)(gbe_file_size - off))
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > GBE_PART_SIZE)
+	if (nrw > (size_t)GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
 	return rw_file_exact(fd, mem, nrw, off, rw_type,
