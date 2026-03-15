@@ -2073,25 +2073,8 @@ real_pread_pwrite:
 		 * if the offset changed to what
 		 * we previously got. If it did,
 		 * then another thread may have
-		 * changed it.
-		 *
-		 * This is no substitute for real
-		 * pread/pwrite, which would be
-		 * fully atomic at kernel-level
-		 * and do not use file offsets.
-		 *
-		 * TODO: Add a toggle to make it
-		 *       recover instead, reset
-		 *	 to known offset, and
-		 *	 carry on operations.
-		 *
-		 * Failure is the better option
-		 * here, since recovery would
-		 * mask hidden bugs in code.
-		 * We cannot guarantee thread
-		 * safety, except in the event
-		 * that violations cause exit;
-		 * you would then debug it.
+		 * changed it. Enabled if
+		 * off_reset is OFF_RESET.
 		 */
 		if (off != verified) {
 			if (!off_reset)
@@ -2111,6 +2094,24 @@ real_pread_pwrite:
 			    loop_eagain, loop_eintr) == (off_t)-1)
 				return -1;
 		}
+
+		verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
+		    loop_eagain, loop_eintr);
+
+		/*
+		 * Verify again before I/O
+		 * (even with OFF_ERR)
+		 *
+		 * This implements the first check
+		 * even with OFF_ERR, but without
+		 * the recovery. On ERR_RESET, if
+		 * the check fails again, then we
+		 * know something else is touching
+		 * the file, so it's best that we
+		 * probably leave it alone and err.
+		 */
+		if (verified != off)
+			goto err_prw;
 
 		do {
 			if (rw_type == IO_PREAD)
