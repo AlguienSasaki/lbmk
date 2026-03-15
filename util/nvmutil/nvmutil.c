@@ -2097,25 +2097,30 @@ real_pread_pwrite:
 				return -1;
 		}
 
-		verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
-		    loop_eagain, loop_eintr);
-
-		/*
-		 * Verify again before I/O
-		 * (even with OFF_ERR)
-		 *
-		 * This implements the first check
-		 * even with OFF_ERR, but without
-		 * the recovery. On ERR_RESET, if
-		 * the check fails again, then we
-		 * know something else is touching
-		 * the file, so it's best that we
-		 * probably leave it alone and err.
-		 */
-		if (verified != off)
-			goto err_prw;
-
 		do {
+			/*
+			 * Verify again before I/O
+			 * (even with OFF_ERR)
+			 *
+			 * This implements the first check
+			 * even with OFF_ERR, but without
+			 * the recovery. On ERR_RESET, if
+			 * the check fails again, then we
+			 * know something else is touching
+			 * the file, so it's best that we
+			 * probably leave it alone and err.
+			 *
+			 * In other words, ERR_RESET only
+			 * tolerates one change. Any more
+			 * will cause an exit, including
+			 * per EINTR/EAGAIN re-spin.
+			 */
+			verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
+			    loop_eagain, loop_eintr);
+
+			if (verified != off)
+				goto err_prw;
+
 			if (rw_type == IO_PREAD)
 				r = read(fd, mem, nrw);
 			else if (rw_type == IO_PWRITE)
