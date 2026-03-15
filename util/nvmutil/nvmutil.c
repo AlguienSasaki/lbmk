@@ -300,6 +300,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_BINARY 0
 #endif
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 #ifndef O_NOFOLLOW
 #define O_NOFOLLOW 0
 #endif
@@ -979,7 +983,8 @@ open_gbe_file(void)
 	int flags;
 
 	xopen(&gbe_fd, fname,
-	    command[cmd_index].flags | O_BINARY | O_NOFOLLOW, &gbe_st);
+	    command[cmd_index].flags | O_BINARY |
+	    O_NOFOLLOW | O_CLOEXEC, &gbe_st);
 
 	/* inode will be checked later on write */
 	gbe_dev = gbe_st.st_dev;
