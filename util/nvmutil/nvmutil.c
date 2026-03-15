@@ -39,18 +39,6 @@
 #endif
 
 /*
- * NOTE: older Linux lacked arc4random.
- * added in glibc 2.36. Just pass HAVE_ARC4RANDOM_BUF=0
- * at build time if you need old Linux / other libc.
- */
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__)
-#ifndef HAVE_ARC4RANDOM_BUF
-#define HAVE_ARC4RANDOM_BUF 1
-#endif
-#endif
-
-/*
  * I/O config (build-time)
  *
  * Regarding:
@@ -379,11 +367,8 @@ static void set_mac_nib(size_t mac_str_pos,
     size_t mac_byte_pos, size_t mac_nib_pos);
 static ushort hextonum(char ch_s);
 static ushort rhex(void);
-#if !defined(HAVE_ARC4RANDOM_BUF) || \
-    (HAVE_ARC4RANDOM_BUF) < 1
 static ushort read_urandom(void);
 static ulong entropy_jitter(void);
-#endif
 static void write_mac_part(size_t partnum);
 
 /*
@@ -698,11 +683,6 @@ static ino_t gbe_ino;
 static dev_t tmp_dev;
 static ino_t tmp_ino;
 
-#if defined(HAVE_ARC4RANDOM_BUF) && \
-    (HAVE_ARC4RANDOM_BUF) > 0
-void arc4random_buf(void *buf, size_t n);
-#endif
-
 /*
  * No need to declare feature
  * macros. I jus declare the
@@ -732,8 +712,8 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
 		err(errno, "pledge, unveil");
-	if (unveil("/dev/null", "r") == -1)
-		err(errno, "unveil: /dev/null");
+	if (unveil("/dev/urandom", "r") == -1)
+		err(errno, "unveil: /dev/urandom");
 #else
 	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
 		err(errno, "pledge");
@@ -764,10 +744,7 @@ main(int argc, char *argv[])
 		err(errno, "pledge (kill unveil)");
 #endif
 
-#if !defined(HAVE_ARC4RANDOM_BUF) || \
-    (HAVE_ARC4RANDOM_BUF) < 1
 	srand((uint)(time(NULL) ^ getpid()));
-#endif
 
 	open_gbe_file();
 
@@ -1349,22 +1326,6 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-#if defined(HAVE_ARC4RANDOM_BUF) && \
-    (HAVE_ARC4RANDOM_BUF) > 0
-static ushort
-rhex(void)
-{
-	static u8 num[12];
-	static size_t n = 0;
-
-	if (!n) {
-		n = 12;
-		arc4random_buf(num, 12);
-	}
-
-	return num[--n] & 0xf;
-}
-#else
 static ushort
 rhex(void)
 {
@@ -1373,9 +1334,13 @@ rhex(void)
 	static ulong counter = 0;
 	ushort r;
 
+	/* Read /dev/urandom
+	 * if possible */
 	r = read_urandom();
 	if (r < 16)
 		return r;
+
+	/* Fallback */
 
 	gettimeofday(&tv, NULL);
 
@@ -1403,7 +1368,7 @@ read_urandom(void)
 	static int fd = -1;
 	static ssize_t n = -1;
 
-	static u8 r[12];
+	static u8 r[256];
 
 	if (fd < 0) {
 
@@ -1415,7 +1380,7 @@ read_urandom(void)
 
 	if (n < 0) {
 
-		n = rw_file_exact(fd, r, 12, 0, IO_READ,
+		n = rw_file_exact(fd, r, 256, 0, IO_READ,
 		    LOOP_EAGAIN, LOOP_EINTR, 2, OFF_ERR);
 
 		if (n == 0)
@@ -1456,7 +1421,6 @@ entropy_jitter(void)
 
 	return mix;
 }
-#endif
 
 static void
 write_mac_part(size_t partnum)
