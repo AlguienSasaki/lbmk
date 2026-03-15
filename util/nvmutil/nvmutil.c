@@ -2086,19 +2086,6 @@ real_pread_pwrite:
 			    loop_eagain, loop_eintr);
 
 		do {
-			if (off != verified)
-				goto err_prw;
-
-			if (rw_type == IO_PREAD)
-				r = read(fd, mem, nrw);
-			else if (rw_type == IO_PWRITE)
-				r = write(fd, mem, nrw);
-
-			if (rw_over_nrw(r, nrw) == -1) {
-				errno = EIO;
-				break;
-			}
-
 			/*
 			 * Verify again before I/O
 			 * (even with OFF_ERR)
@@ -2118,6 +2105,19 @@ real_pread_pwrite:
 			 */
 			verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
 			    loop_eagain, loop_eintr);
+
+			if (off != verified)
+				goto err_prw;
+
+			if (rw_type == IO_PREAD)
+				r = read(fd, mem, nrw);
+			else if (rw_type == IO_PWRITE)
+				r = write(fd, mem, nrw);
+
+			if (rw_over_nrw(r, nrw) == -1) {
+				errno = EIO;
+				break;
+			}
 
 		} while (r == -1 &&
 		    (errno == try_err(loop_eintr, EINTR)
