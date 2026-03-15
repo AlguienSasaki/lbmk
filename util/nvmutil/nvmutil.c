@@ -2088,6 +2088,16 @@ real_pread_pwrite:
 			if (!off_reset)
 				goto err_prw;
 
+			/*
+			 * Even if we allow to continue,
+			 * we still need to reset the
+			 * offset. If we can't, then
+			 * we can't recover at all.
+			 *
+			 * However, we must preserve
+			 * errno in that case, so
+			 * just return immediately.
+			 */
 			if (lseek_loop(fd, off, SEEK_SET,
 			    loop_eagain, loop_eintr) == (off_t)-1)
 				return -1;
