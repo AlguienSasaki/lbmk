@@ -947,11 +947,17 @@ xstrxcmp(const char *a, const char *b, size_t maxlen)
 		err(EINVAL, "Empty string in xstrxcmp");
 
 	for (i = 0; i < maxlen; i++) {
-		if (a[i] != b[i])
-			return (u8)a[i] - (u8)b[i];
+		u8 ac = (u8)a[i];
+		u8 bc = (u8)b[i];
 
-		if (a[i] == '\0')
-			return 0;
+		if (ac == '\0' || bc == '\0') {
+			if (ac == bc)
+				return 0;
+			return ac - bc;
+		}
+
+		if (ac != bc)
+			return ac - bc;
 	}
 
 	/*
