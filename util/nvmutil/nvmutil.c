@@ -1908,7 +1908,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	while (1) {
 	
 		/* Prevent theoretical overflow */
-		if ((size_t)rv > (nrw - rc))
+		if (rv >= 0 && (size_t)rv > (nrw - rc))
 			goto err_rw_file_exact;
 
 		rc += rv;
