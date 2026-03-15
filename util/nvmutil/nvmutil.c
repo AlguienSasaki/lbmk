@@ -745,7 +745,10 @@ main(int argc, char *argv[])
 #endif
 #endif
 
+#if !defined(HAVE_ARC4RANDOM_BUF) || \
+    (HAVE_ARC4RANDOM_BUF) < 1
 	srand((uint)(time(NULL) ^ getpid()));
+#endif
 
 	open_gbe_file();
 	lock_gbe_file();
