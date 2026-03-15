@@ -2158,7 +2158,7 @@ io_args(int fd, void *mem, size_t nrw,
 	if (fd < 0)
 		goto err_io_args;
 
-	/* prevent signed negative check */
+	/* negative offset */
 	if (off < 0)
 		goto err_io_args;
 
