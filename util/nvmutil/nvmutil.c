@@ -44,8 +44,7 @@
  * at build time if you need old Linux / other libc.
  */
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__) || \
-    defined(__linux__)
+    defined(__NetBSD__) || defined(__APPLE__)
 #ifndef HAVE_ARC4RANDOM_BUF
 #define HAVE_ARC4RANDOM_BUF 1
 #endif
