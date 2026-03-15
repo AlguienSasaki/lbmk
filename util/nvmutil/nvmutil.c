@@ -2150,6 +2150,9 @@ io_args(int fd, void *mem, size_t nrw,
 	if (((size_t)off + nrw) < (size_t)off)
 		goto err_io_args;
 
+	if (rw_type > IO_PWRITE)
+		goto err_io_args;
+
 	return 0;
 
 err_io_args:
