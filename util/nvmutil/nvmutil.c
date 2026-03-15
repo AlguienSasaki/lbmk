@@ -15,6 +15,24 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
+/*
+ * In practise, most people
+ * aren't going to use very
+ * long names, so even on old
+ * systems with weaker limits,
+ * it's OK to set this higher.
+ *
+ * 4096 is a good, conservative
+ * default these days.
+ */
+#ifndef PATH_LEN
+#ifdef PATH_MAX
+#define PATH_LEN (PATH_MAX)
+#else
+#define PATH_LEN 4096
+#endif
+#endif
+
 #define OFF_ERR 0
 #ifndef OFF_RESET
 #define OFF_RESET 1
@@ -308,6 +326,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_NOFOLLOW 0
 #endif
 
+#ifndef FD_CLOEXEC
+#define FD_CLOEXEC 0
+#endif
+
 /*
  * Sanitize command tables.
  */
@@ -326,7 +348,7 @@ static int xstrxcmp(const char *a, const char *b, size_t maxlen);
  * Prep files for reading
  */
 static void open_gbe_file(void);
-static void lock_gbe_file(void);
+static int lock_file(int fd);
 static void xopen(int *fd, const char *path, int flags, struct stat *st);
 
 /*
@@ -335,7 +357,7 @@ static void xopen(int *fd, const char *path, int flags, struct stat *st);
  *
  * After this, we can run commands.
  */
-static void read_gbe_file(void);
+static void copy_gbe(void);
 static void read_checksums(void);
 static int good_checksum(size_t partnum);
 
@@ -372,11 +394,20 @@ static void print_mac_from_nvm(size_t partnum);
 static void hexdump(size_t partnum);
 
 /*
+ * Helper functions for command: swap
+ */
+static void cmd_helper_swap(void);
+
+/*
+ * Helper functions for command: copy
+ */
+static void cmd_helper_copy(void);
+
+/*
  * Helper functions for commands:
  * cat, cat16 and cat128
  */
 static void cmd_helper_cat(void);
-static void gbe_cat_buf(u8 *b);
 
 /*
  * After command processing, write
@@ -386,7 +417,6 @@ static void gbe_cat_buf(u8 *b);
  * below for the actual functions.
  */
 static void write_gbe_file(void);
-static void override_part_modified(void);
 static void set_checksum(size_t part);
 static ushort calculated_checksum(size_t p);
 
@@ -406,8 +436,11 @@ static void check_bin(size_t a, const char *a_name);
  */
 static void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
+static void write_to_gbe_bin(void);
+static int gbe_mv(void);
 static void check_written_part(size_t p);
 static void report_io_err_rw(void);
+static int fsync_dir(const char *path);
 static u8 *gbe_mem_offset(size_t part, const char *f_op);
 static off_t gbe_file_offset(size_t part, const char *f_op);
 static off_t gbe_x_offset(size_t part, const char *f_op,
@@ -434,10 +467,15 @@ static int try_err(int loop_err, int errval);
 /*
  * Error handling and cleanup
  */
+static void usage(void);
 static void err(int nvm_errval, const char *msg, ...);
-static int close_files(void);
+static int exit_cleanup(void);
 static const char *getnvmprogname(void);
-static void usage(int usage_exit);
+
+/*
+ * a special kind of hell
+ */
+static char *new_tmpfile(int *fd, int local, const char *path);
 
 /*
  * Sizes in bytes:
@@ -447,6 +485,8 @@ static void usage(int usage_exit);
 #define SIZE_8KB (8 * SIZE_1KB)
 #define SIZE_16KB (16 * SIZE_1KB)
 #define SIZE_128KB (128 * SIZE_1KB)
+
+#define GBE_BUF_SIZE (SIZE_128KB)
 
 /*
  * First 128 bytes of a GbE part contains
@@ -460,8 +500,8 @@ static void usage(int usage_exit);
  * There is a second 4KB part with the same
  * rules, and it *should* be identical.
  */
-#define GBE_FILE_SIZE SIZE_8KB /* for buf */
-#define GBE_PART_SIZE (GBE_FILE_SIZE >> 1)
+#define GBE_WORK_SIZE (SIZE_8KB)
+#define GBE_PART_SIZE (GBE_WORK_SIZE >> 1)
 #define NVM_CHECKSUM 0xBABA
 #define NVM_SIZE 128
 #define NVM_WORDS (NVM_SIZE >> 1)
@@ -482,12 +522,14 @@ static void usage(int usage_exit);
  *
  * The code will handle this properly.
  */
-static u8 real_buf[GBE_FILE_SIZE];
-static u8 pad[GBE_FILE_SIZE]; /* the file that wouldn't die */
+static u8 real_buf[GBE_BUF_SIZE];
+static u8 bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
+static u8 pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
 static u8 *buf = real_buf;
 
 static ushort mac_buf[3];
 static off_t gbe_file_size;
+static off_t gbe_tmp_size;
 
 static int gbe_fd = -1;
 static size_t part;
@@ -495,20 +537,13 @@ static u8 part_modified[2];
 static u8 part_valid[2];
 
 static const char rmac[] = "xx:xx:xx:xx:xx:xx";
-static const char *mac_str;
-static const char *fname;
+static const char *mac_str = rmac;
+static const char *fname = NULL;
 static const char *argv0;
 
 #ifndef SSIZE_MAX
 #define SSIZE_MAX ((ssize_t)(~((size_t)1 << (sizeof(ssize_t)*CHAR_BIT-1))))
 #endif
-
-/*
- * Use these for .invert in command[]:
- * If set to 1: read/write inverter (p0->p1, p1->p0)
- */
-#define PART_INVERT 1
-#define NO_INVERT 0
 
 /*
  * Use these for .argc in command[]:
@@ -540,18 +575,6 @@ enum {
 	CMD_CAT128
 };
 
-/*
- * If set, a given part will always be written.
- */
-enum {
-	SET_MOD_OFF, /* don't manually set part modified */
-	SET_MOD_0, /* set part 0 modified */
-	SET_MOD_1, /* set part 1 modified */
-	SET_MOD_N, /* set user-specified part modified */
-		/* affected by command[].invert */
-	SET_MOD_BOTH /* set both parts modified */
-};
-
 enum {
 	ARG_NOPART,
 	ARG_PART
@@ -572,8 +595,6 @@ struct commands {
 	const char *str;
 	void (*run)(void);
 	int argc;
-	u8 invert;
-	u8 set_modified;
 	u8 arg_part;
 	u8 chksum_read;
 	u8 chksum_write;
@@ -586,50 +607,36 @@ struct commands {
  */
 static const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
-	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    NVM_SIZE, O_RDONLY },
 
 	{ CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
-	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, CHECKSUM_WRITE,
 	    NVM_SIZE, O_RDWR },
 
-	/*
-	 * OPTIMISATION: Read inverted, so no copying is needed.
-	 */
-	{ CMD_SWAP, "swap", NULL, ARGC_3,
-	    PART_INVERT, SET_MOD_BOTH,
+	{ CMD_SWAP, "swap", cmd_helper_swap, ARGC_3,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE, O_RDWR },
 
-	/*
-	 * OPTIMISATION: Read inverted, so no copying is needed.
-	 * The non-target part will not be read.
-	 */
-	{ CMD_COPY, "copy", NULL, ARGC_4,
-	    PART_INVERT, SET_MOD_N,
+	{ CMD_COPY, "copy", cmd_helper_copy, ARGC_4,
 	    ARG_PART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE, O_RDWR },
 
 	{ CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
-	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE, O_RDONLY },
 
 	{ CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
-	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE, O_RDONLY },
 
 	{ CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
-	    NO_INVERT, SET_MOD_OFF,
 	    ARG_NOPART,
 	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 	    GBE_PART_SIZE, O_RDONLY },
@@ -653,6 +660,7 @@ typedef char assert_read[(IO_READ==0)?1:-1];
 typedef char assert_write[(IO_WRITE==1)?1:-1];
 typedef char assert_pread[(IO_PREAD==2)?1:-1];
 typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
+typedef char assert_pathlen[(PATH_LEN>=256)?1:-1];
 /* commands */
 typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
 typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
@@ -661,12 +669,6 @@ typedef char assert_cmd_copy[(CMD_COPY==3)?1:-1];
 typedef char assert_cmd_cat[(CMD_CAT==4)?1:-1];
 typedef char assert_cmd_cat16[(CMD_CAT16==5)?1:-1];
 typedef char assert_cmd_cat128[(CMD_CAT128==6)?1:-1];
-/* mod_type */
-typedef char assert_mod_off[(SET_MOD_OFF==0)?1:-1];
-typedef char assert_mod_0[(SET_MOD_0==1)?1:-1];
-typedef char assert_mod_1[(SET_MOD_1==2)?1:-1];
-typedef char assert_mod_n[(SET_MOD_N==3)?1:-1];
-typedef char assert_mod_both[(SET_MOD_BOTH==4)?1:-1];
 /* bool */
 typedef char bool_arg_nopart[(ARG_NOPART==0)?1:-1];
 typedef char bool_arg_part[(ARG_PART==1)?1:-1];
@@ -674,8 +676,6 @@ typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
 typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
 typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
 typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
-typedef char bool_no_invert[(NO_INVERT==0)?1:-1];
-typedef char bool_part_invert[(PART_INVERT==1)?1:-1];
 typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
 typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
 typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
@@ -683,7 +683,8 @@ typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 typedef char bool_off_err[(OFF_ERR==0)?1:-1];
 typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 
-static int io_err_gbe = 0;
+static int io_err_gbe = 0; /* intermediary write (verification) */
+static int io_err_gbe_bin = 0; /* final write (real file) */
 static int rw_check_err_read[] = {0, 0};
 static int rw_check_partial_read[] = {0, 0};
 static int rw_check_bad_part[] = {0, 0};
@@ -693,28 +694,47 @@ static int post_rw_checksum[] = {0, 0};
 static dev_t gbe_dev;
 static ino_t gbe_ino;
 
+static dev_t tmp_dev;
+static ino_t tmp_ino;
+
 #if defined(HAVE_ARC4RANDOM_BUF) && \
     (HAVE_ARC4RANDOM_BUF) > 0
 void arc4random_buf(void *buf, size_t n);
 #endif
+
+/*
+ * No need to declare feature
+ * macros. I jus declare the
+ * prototypes. Should be safe
+ * on most Unices and compilers
+ */
+int mkstemp(char *template);
+int fchmod(int fd, mode_t mode);
+
+static int tmp_fd = -1;
+static char *tname = NULL;
 
 int
 main(int argc, char *argv[])
 {
 	argv0 = argv[0];
 	if (argc < 3)
-		usage(1);
+		usage();
 
 	fname = argv[1];
 
+	tname = new_tmpfile(&tmp_fd, 0, NULL);
+	if (tname == NULL)
+		err(errno, "Can't create tmpfile");
+
 #ifdef NVMUTIL_PLEDGE
 #ifdef NVMUTIL_UNVEIL
-	if (pledge("stdio flock rpath wpath unveil", NULL) == -1)
-		err(errno, "pledge");
+	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
+		err(errno, "pledge, unveil");
 	if (unveil("/dev/null", "r") == -1)
-		err(errno, "unveil /dev/null");
+		err(errno, "unveil: /dev/null");
 #else
-	if (pledge("stdio flock rpath wpath", NULL) == -1)
+	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
 		err(errno, "pledge");
 #endif
 #endif
@@ -724,29 +744,23 @@ main(int argc, char *argv[])
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
 
-#ifdef NVMUTIL_PLEDGE
 #ifdef NVMUTIL_UNVEIL
 	if (command[cmd_index].flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
-			err(errno, "%s: unveil ro", fname);
-		if (unveil(NULL, NULL) == -1)
-			err(errno, "unveil block (ro)");
-		if (pledge("stdio flock rpath", NULL) == -1)
-			err(errno, "pledge ro (kill unveil)");
+			err(errno, "%s: unveil r", fname);
 	} else {
-		if (unveil(fname, "rw") == -1)
+		if (unveil(fname, "rwc") == -1)
 			err(errno, "%s: unveil rw", fname);
-		if (unveil(NULL, NULL) == -1)
-			err(errno, "unveil block (rw)");
-		if (pledge("stdio flock rpath wpath", NULL) == -1)
-			err(errno, "pledge rw (kill unveil)");
 	}
-#else
-	if (command[cmd_index].flags == O_RDONLY) {
-		if (pledge("stdio flock rpath", NULL) == -1)
-			err(errno, "pledge ro");
-	}
-#endif
+
+	if (unveil(tname, "rwc") == -1)
+		err(errno, "%s: unveil rwc", tname);
+
+	if (unveil(NULL, NULL) == -1)
+		err(errno, "unveil block (rw)");
+
+	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
+		err(errno, "pledge (kill unveil)");
 #endif
 
 #if !defined(HAVE_ARC4RANDOM_BUF) || \
@@ -755,46 +769,32 @@ main(int argc, char *argv[])
 #endif
 
 	open_gbe_file();
-	lock_gbe_file();
 
-#ifdef NVMUTIL_PLEDGE
-	if (pledge("stdio", NULL) == -1)
-		err(errno, "pledge stdio (main)");
-#endif
+	memset(buf, 0, GBE_BUF_SIZE);
+	memset(bufcmp, 0, GBE_BUF_SIZE);
 
 	/*
 	 * Used by CMD_CAT, for padding
 	 */
 	memset(pad, 0xff, sizeof(pad));
 
-	read_gbe_file();
+	copy_gbe();
+
 	read_checksums();
 
 	run_cmd(cmd_index);
 
-	if (command[cmd_index].flags == O_RDWR) {
+	if (command[cmd_index].flags == O_RDWR)
+		write_to_gbe_bin();
 
-		write_gbe_file();
-
-		/*
-		 * We may otherwise read from
-		 * cache, so we must sync.
-		 */
-		if (fsync(gbe_fd) == -1)
-			err(errno, "%s: fsync (pre-verification)",
-			    fname);
-
-		check_written_part(0);
-		check_written_part(1);
-
-		report_io_err_rw();
-
-		if (io_err_gbe)
-			err(EIO, "%s: bad write", fname);
-	}
-
-	if (close_files() == -1)
+	if (exit_cleanup() == -1)
 		err(EIO, "%s: close", fname);
+
+	if (io_err_gbe_bin)
+		err(EIO, "%s: error writing final file");
+
+	if (tname != NULL)
+		free(tname);
 
 	return EXIT_SUCCESS;
 }
@@ -817,7 +817,6 @@ sanitize_command_list(void)
 static void
 sanitize_command_index(size_t c)
 {
-	u8 mod_type;
 	size_t gbe_rw_size;
 
 	check_command_num(c);
@@ -839,19 +838,10 @@ sanitize_command_index(size_t c)
 		    (ulong)c, command[c].str);
 	}
 
-	mod_type = command[c].set_modified;
-	switch (mod_type) {
-	case SET_MOD_0:
-	case SET_MOD_1:
-	case SET_MOD_N:
-	case SET_MOD_BOTH:
-	case SET_MOD_OFF:
-		break;
-	default:
-		err(EINVAL, "Unsupported set_mod type: %u", mod_type);
-	}
+	if (command[c].run == NULL)
+		err(EINVAL, "cmd index %lu: cmd ptr null",
+		    (ulong)c);
 
-	check_bin(command[c].invert, "cmd.invert");
 	check_bin(command[c].arg_part, "cmd.arg_part");
 	check_bin(command[c].chksum_read, "cmd.chksum_read");
 	check_bin(command[c].chksum_write, "cmd.chksum_write");
@@ -901,7 +891,7 @@ set_cmd_args(int argc, char *argv[])
 	u8 arg_part;
 
 	if (!valid_command(cmd_index) || argc < 3)
-		usage(1);
+		usage();
 
 	arg_part = command[cmd_index].arg_part;
 
@@ -1009,7 +999,7 @@ open_gbe_file(void)
 	 * which would therefore break pread/pwrite
 	 */
 	if (flags & O_APPEND)
-		err(EIO, "%s: O_APPEND flag");
+		err(EIO, "%s: O_APPEND flag", fname);
 
 	gbe_file_size = gbe_st.st_size;
 
@@ -1021,10 +1011,13 @@ open_gbe_file(void)
 	default:
 		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
+
+	if (lock_file(gbe_fd) == -1)
+		err(errno, "%s: can't lock", fname);
 }
 
-static void
-lock_gbe_file(void)
+static int
+lock_file(int fd)
 {
 	struct flock fl;
 
@@ -1037,8 +1030,10 @@ lock_gbe_file(void)
 
 	fl.l_whence = SEEK_SET;
 
-	if (fcntl(gbe_fd, F_SETLK, &fl) == -1)
-		err(errno, "file is locked by another process");
+	if (fcntl(fd, F_SETLK, &fl) == -1)
+		return -1;
+
+	return 0;
 }
 
 static void
@@ -1048,7 +1043,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 		err(errno, "%s", path);
 
 	if (fstat(*fd_ptr, st) == -1)
-		err(errno, "%s", path);
+		err(errno, "%s: stat", path);
 
 	if (!S_ISREG(st->st_mode))
 		err(errno, "%s: not a regular file", path);
@@ -1057,23 +1052,87 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 		err(errno, "%s: file not seekable", path);
 }
 
+/*
+ * We copy the entire gbe file
+ * to the tmpfile, and then we
+ * work on that. We copy back
+ * afterward. this is the copy.
+ *
+ * we copy to tmpfile even on
+ * read-only commands, for the
+ * double-read verification,
+ * which also benefits cmd_cat.
+ */
 static void
-read_gbe_file(void)
+copy_gbe(void)
 {
-	size_t p;
-	u8 do_read[2] = {1, 1};
+	ssize_t r;
+	struct stat st;
+
+	/* read main file */
+	r = rw_file_exact(gbe_fd, buf, gbe_file_size,
+	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (r < 0)
+		err(errno, "%s: read failed", fname);
+
+	/* copy to tmpfile */
+
+	r = rw_file_exact(tmp_fd, buf, gbe_file_size,
+	    0, IO_PWRITE, NO_LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (r < 0)
+		err(errno, "%s: %s: copy failed",
+		    fname, tname);
 
 	/*
-	 * Commands specifying a partnum only
-	 * need the given GbE part to be read.
+	 * file size comparison
 	 */
-	if (command[cmd_index].arg_part)
-		do_read[part ^ 1] = 0;
 
-	for (p = 0; p < 2; p++) {
-		if (do_read[p])
-			rw_gbe_file_part(p, IO_PREAD, "pread");
-	}
+	if (fstat(tmp_fd, &st) == -1)
+		err(errno, "%s: stat", tname);
+
+	gbe_tmp_size = st.st_size;
+
+	if (gbe_tmp_size != gbe_file_size)
+		err(EIO, "%s: %s: not the same size", fname, tname);
+
+	/*
+	 * fsync tmp gbe file, because we will compare
+	 * its contents to what was read (for safety)
+	 */
+	if (fsync(tmp_fd) == -1)
+		err(errno, "%s: fsync (tmpfile copy)", tname);
+
+	r = rw_file_exact(tmp_fd, bufcmp, gbe_file_size,
+	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (r < 0)
+		err(errno, "%s: read failed (cmp)", tname);
+
+	if (memcmp(buf, bufcmp, gbe_file_size) != 0)
+		err(errno, "%s: %s: read contents differ (pre-test)",
+		    fname, tname);
+
+	/*
+	 regular operations post-read operate only on the first
+	 8KB, because each GbE part is the first 4KB of each
+	 half of the file.
+
+	 we no longer care about anything past 8KB, until we get
+	 to writing, at which point we will flush the buffer
+	 again
+	 */
+
+	if (gbe_file_size == SIZE_8KB)
+		return;
+
+	memcpy(buf + (size_t)GBE_PART_SIZE,
+	    buf + (size_t)(gbe_file_size >> 1),
+	    (size_t)GBE_PART_SIZE);
 }
 
 static void
@@ -1081,7 +1140,6 @@ read_checksums(void)
 {
 	size_t p;
 	size_t skip_part;
-	u8 invert;
 	u8 arg_part;
 	u8 num_invalid;
 	u8 max_invalid;
@@ -1095,7 +1153,6 @@ read_checksums(void)
 	num_invalid = 0;
 	max_invalid = 2;
 
-	invert = command[cmd_index].invert;
 	arg_part = command[cmd_index].arg_part;
 	if (arg_part)
 		max_invalid = 1;
@@ -1104,7 +1161,7 @@ read_checksums(void)
 	 * Skip verification on this part,
 	 * but only when arg_part is set.
 	 */
-	skip_part = part ^ 1 ^ invert;
+	skip_part = part ^ 1;
 
 	for (p = 0; p < 2; p++) {
 		/*
@@ -1143,8 +1200,11 @@ static void
 run_cmd(size_t c)
 {
 	check_command_num(c);
-	if (command[c].run != NULL)
-		command[c].run();
+
+	if (command[c].run == NULL)
+		err(EINVAL, "Command %lu: null ptr", (ulong)c);
+
+	command[c].run();
 }
 
 static void
@@ -1445,34 +1505,45 @@ hexdump(size_t partnum)
 }
 
 static void
-cmd_helper_cat(void)
+cmd_helper_swap(void)
 {
-	size_t p;
-	size_t ff;
-	size_t n = 0;
+	memcpy(
+	    buf + (size_t)GBE_WORK_SIZE,
+	    buf,
+	    GBE_PART_SIZE);
 
-	if (cmd_index == CMD_CAT16)
-		n = 1;
-	else if (cmd_index == CMD_CAT128)
-		n = 15;
-	else if (cmd_index != CMD_CAT)
-		err(EINVAL, "cmd_helper_cat called erroneously");
+	memcpy(
+	    buf,
+	    buf + (size_t)GBE_PART_SIZE,
+	    GBE_PART_SIZE);
 
-	fflush(NULL);
+	memcpy(
+	    buf + (size_t)GBE_PART_SIZE,
+	    buf + (size_t)GBE_WORK_SIZE,
+	    GBE_PART_SIZE);
 
-	for (p = 0; p < 2; p++) {
-		gbe_cat_buf(buf + (size_t)(p * GBE_PART_SIZE));
-
-		for (ff = 0; ff < n; ff++)
-			gbe_cat_buf(pad);
-	}
+	set_part_modified(0);
+	set_part_modified(1);
 }
 
 static void
-gbe_cat_buf(u8 *b)
+cmd_helper_copy(void)
 {
-	if (rw_file_exact(STDOUT_FILENO, b,
-	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
+	memcpy(
+	    buf + (size_t)((part ^ 1) * GBE_PART_SIZE),
+	    buf + (size_t)(part * GBE_PART_SIZE),
+	    GBE_PART_SIZE);
+
+	set_part_modified(part ^ 1);
+}
+
+static void
+cmd_helper_cat(void)
+{
+	fflush(NULL);
+
+	if (rw_file_exact(STDOUT_FILENO, bufcmp,
+	    gbe_file_size, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
 		err(errno, "stdout: cat");
 }
@@ -1481,67 +1552,42 @@ static void
 write_gbe_file(void)
 {
 	struct stat gbe_st;
+	struct stat tmp_st;
 
 	size_t p;
-	size_t partnum;
 	u8 update_checksum;
 
 	if (command[cmd_index].flags == O_RDONLY)
 		return;
 
-	update_checksum = command[cmd_index].chksum_write;
-
-	override_part_modified();
-	
 	if (fstat(gbe_fd, &gbe_st) == -1)
 		err(errno, "%s: re-check", fname);
-
 	if (gbe_st.st_dev != gbe_dev || gbe_st.st_ino != gbe_ino)
 		err(EIO, "%s: file replaced while open", fname);
-
 	if (gbe_st.st_size != gbe_file_size)
 		err(errno, "%s: file size changed before write", fname);
-
 	if (!S_ISREG(gbe_st.st_mode))
 		err(errno, "%s: file type changed before write", fname);
 
-	for (p = 0; p < 2; p++) {
-		partnum = p ^ command[cmd_index].invert;
+	if (fstat(tmp_fd, &tmp_st) == -1)
+		err(errno, "%s: re-check", tname);
+	if (tmp_st.st_dev != tmp_dev || tmp_st.st_ino != tmp_ino)
+		err(EIO, "%s: file replaced while open", tname);
+	if (tmp_st.st_size != gbe_file_size)
+		err(errno, "%s: file size changed before write", tname);
+	if (!S_ISREG(tmp_st.st_mode))
+		err(errno, "%s: file type changed before write", tname);
 
-		if (!part_modified[partnum])
+	update_checksum = command[cmd_index].chksum_write;
+
+	for (p = 0; p < 2; p++) {
+		if (!part_modified[p])
 			continue;
 
 		if (update_checksum)
-			set_checksum(partnum);
+			set_checksum(p);
 
-		rw_gbe_file_part(partnum, IO_PWRITE, "pwrite");
-	}
-}
-
-static void
-override_part_modified(void)
-{
-	u8 mod_type = command[cmd_index].set_modified;
-
-	switch (mod_type) {
-	case SET_MOD_0:
-		set_part_modified(0);
-		break;
-	case SET_MOD_1:
-		set_part_modified(1);
-		break;
-	case SET_MOD_N:
-		set_part_modified(part ^ command[cmd_index].invert);
-		break;
-	case SET_MOD_BOTH:
-		set_part_modified(0);
-		set_part_modified(1);
-		break;
-	case SET_MOD_OFF:
-		break;
-	default:
-		err(EINVAL, "Unsupported set_mod type: %u",
-		    mod_type);
+		rw_gbe_file_part(p, IO_PWRITE, "pwrite");
 	}
 }
 
@@ -1635,7 +1681,6 @@ rw_gbe_file_part(size_t p, int rw_type,
 {
 	ssize_t r;
 	size_t gbe_rw_size = command[cmd_index].rw_size;
-	u8 invert = command[cmd_index].invert;
 
 	u8 *mem_offset;
 	off_t file_offset;
@@ -1644,17 +1689,10 @@ rw_gbe_file_part(size_t p, int rw_type,
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
 		    fname, rw_type_str, (ulong)p, rw_type);
 
-	if (rw_type == IO_PWRITE)
-		invert = 0;
-
-	/*
-	 * Inverted reads are used by copy/swap.
-	 * E.g. read from p0 (file) to p1 (mem).
-	 */
-	mem_offset = gbe_mem_offset(p ^ invert, rw_type_str);
+	mem_offset = gbe_mem_offset(p, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
 
-	r = rw_gbe_file_exact(gbe_fd, mem_offset,
+	r = rw_gbe_file_exact(tmp_fd, mem_offset,
 	    gbe_rw_size, file_offset, rw_type);
 
 	if (r == -1)
@@ -1664,6 +1702,92 @@ rw_gbe_file_part(size_t p, int rw_type,
 	if ((size_t)r != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
+}
+
+static void
+write_to_gbe_bin(void)
+{
+	int saved_errno;
+	int mv;
+
+	if (command[cmd_index].flags != O_RDWR)
+		return;
+
+	write_gbe_file();
+
+	/*
+	 * We may otherwise read from
+	 * cache, so we must sync.
+	 */
+	if (fsync(tmp_fd) == -1)
+		err(errno, "%s: fsync (pre-verification)",
+		    tname);
+
+	check_written_part(0);
+	check_written_part(1);
+
+	report_io_err_rw();
+
+	if (io_err_gbe)
+		err(EIO, "%s: bad write", fname);
+
+	/*
+	 * success!
+	 * now just rename the tmpfile
+	 */
+
+	saved_errno = errno;
+
+	if (close(tmp_fd) == -1) {
+		fprintf(stderr, "FAIL: %s: close\n", tname);
+		io_err_gbe_bin = 1;
+	}
+
+	if (close(gbe_fd) == -1) {
+		fprintf(stderr, "FAIL: %s: close\n", fname);
+		io_err_gbe_bin = 1;
+	}
+
+	errno = saved_errno;
+
+	tmp_fd = -1;
+	gbe_fd = -1;
+
+	if (!io_err_gbe_bin) {
+
+		mv = gbe_mv();
+
+		if (mv < 0) {
+			io_err_gbe_bin = 1;
+			fprintf(stderr, "%s: %s\n",
+			    fname, strerror(errno));
+		} else {
+			/*
+			 * tmpfile removed
+			 * by the rename
+			 */
+
+			if (tname != NULL)
+				free(tname);
+
+			tname = NULL;
+		}
+	}
+
+	/*
+	 * finally:
+	 * must sync to disk!
+	 * very nearly done
+	 */
+
+	if (!io_err_gbe_bin)
+		return;
+
+	fprintf(stderr, "FAIL (rename): %s: skipping fsync\n",
+	    fname);
+	if (errno)
+		fprintf(stderr,
+		    "errno %d: %s\n", errno, strerror(errno));
 }
 
 static void
@@ -1689,11 +1813,15 @@ check_written_part(size_t p)
 
 	if (fstat(gbe_fd, &st) == -1)
 		err(errno, "%s: fstat (post-write)", fname);
-
 	if (st.st_dev != gbe_dev || st.st_ino != gbe_ino)
 		err(EIO, "%s: file changed during write", fname);
 
-	r = rw_gbe_file_exact(gbe_fd, pad,
+	if (fstat(tmp_fd, &st) == -1)
+		err(errno, "%s: fstat (post-write)", tname);
+	if (st.st_dev != tmp_dev || st.st_ino != tmp_ino)
+		err(EIO, "%s: file changed during write", tname);
+
+	r = rw_gbe_file_exact(tmp_fd, pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
 
 	if (r == -1)
@@ -1771,6 +1899,212 @@ report_io_err_rw(void)
 	}
 }
 
+static int
+gbe_mv(void)
+{
+	int r;
+	int saved_errno;
+	int tmp_gbe_bin_exists = 1;
+
+	char *dest_tmp = NULL;
+	int dest_fd = -1;
+
+	saved_errno = errno;
+
+	r = rename(tname, fname);
+
+	if (r > -1) {
+		/*
+		 * same filesystem
+		 */
+
+		tmp_gbe_bin_exists = 0;
+
+		if (fsync_dir(fname) < 0)
+			r = -1;
+
+		goto ret_gbe_mv;
+	}
+
+	if (errno != EXDEV)
+		goto ret_gbe_mv;
+
+	/* cross-filesystem rename */
+
+	if ((r = tmp_fd = open(tname,
+	    O_RDONLY | O_BINARY)) == -1)
+		goto ret_gbe_mv;
+
+	/* create replacement temp in target directory */
+	dest_tmp = new_tmpfile(&dest_fd, 1, fname);
+	if (dest_tmp == NULL)
+		goto ret_gbe_mv;
+
+	/* copy data */
+
+	r = rw_file_exact(tmp_fd, bufcmp,
+	    gbe_file_size, 0, IO_PREAD,
+	    NO_LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (r < 0)
+		goto ret_gbe_mv;
+
+	r = rw_file_exact(dest_fd, bufcmp,
+	    gbe_file_size, 0, IO_PWRITE,
+	    NO_LOOP_EAGAIN, LOOP_EINTR,
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (r < 0)
+		goto ret_gbe_mv;
+
+	if (fsync(dest_fd) == -1)
+		goto ret_gbe_mv;
+
+	if (close(dest_fd) == -1)
+		goto ret_gbe_mv;
+
+	if (rename(dest_tmp, fname) == -1)
+		goto ret_gbe_mv;
+
+	if (fsync_dir(fname) < 0)
+		goto ret_gbe_mv;
+
+	free(dest_tmp);
+	dest_tmp = NULL;
+
+ret_gbe_mv:
+
+	if (gbe_fd > -1) {
+		if (close(gbe_fd) < 0)
+			r = -1;
+		if (fsync_dir(fname) < 0)
+			r = -1;
+		gbe_fd = -1;
+	}
+
+	if (tmp_fd > -1) {
+		if (close(tmp_fd) < 0)
+			r = -1;
+
+		tmp_fd = -1;
+	}
+
+	/*
+	 * before this function is called,
+	 * tmp_fd may have been moved
+	 */
+	if (tmp_gbe_bin_exists) {
+		if (unlink(tname) < 0)
+			r = -1;
+		else
+			tmp_gbe_bin_exists = 0;
+	}
+
+	if (r < 0) {
+		/*
+		 * if nothing set errno,
+		 * we assume EIO, or we
+		 * use what was set
+		 */
+		if (errno == saved_errno)
+			errno = EIO;
+	} else {
+		errno = saved_errno;
+	}
+
+	return r;
+}
+
+/*
+ * Ensure rename() is durable by syncing the
+ * directory containing the target file.
+ */
+static int
+fsync_dir(const char *path)
+{
+#if defined(PATH_LEN) && \
+    (PATH_LEN) >= 256
+	size_t maxlen = PATH_LEN;
+#else
+	size_t maxlen = 4096;
+#endif
+	size_t pathlen;
+/*	char dirbuf[maxlen]; */
+	char *dirbuf = NULL;
+	char *slash;
+	int dfd = -1;
+
+	struct stat st;
+
+	int saved_errno = errno;
+
+	pathlen = xstrxlen(path, maxlen);
+
+	if (pathlen >= maxlen) {
+		fprintf(stderr, "Path too long for fsync_parent_dir\n");
+		goto err_fsync_dir;
+	}
+
+	dirbuf = malloc(pathlen + 1);
+	if (dirbuf == NULL)
+		goto err_fsync_dir;
+
+	memcpy(dirbuf, path, pathlen + 1);
+	slash = strrchr(dirbuf, '/');
+
+	if (slash != NULL) {
+		*slash = '\0';
+		if (*dirbuf == '\0')
+			strcpy(dirbuf, "/");
+	} else {
+		strcpy(dirbuf, ".");
+	}
+
+	dfd = open(dirbuf, O_RDONLY);
+	if (dfd == -1)
+		goto err_fsync_dir;
+
+	if (fstat(dfd, &st) < 0)
+		goto err_fsync_dir;
+
+	if (!S_ISDIR(st.st_mode)) {
+		fprintf(stderr, "%s: not a directory\n", dirbuf);
+		goto err_fsync_dir;
+	}
+
+	/* sync file on disk */
+	if (fsync(dfd) == -1)
+		goto err_fsync_dir;
+
+	if (close(dfd) == -1)
+		goto err_fsync_dir;
+
+	if (dirbuf != NULL)
+		free(dirbuf);
+
+	errno = saved_errno;
+	return 0;
+
+err_fsync_dir:
+	if (!errno)
+		errno = EIO;
+
+	if (errno != saved_errno)
+		fprintf(stderr, "%s: %s\n", fname, strerror(errno));
+
+	if (dirbuf != NULL)
+		free(dirbuf);
+
+	if (dfd > -1)
+		close(dfd);
+
+	io_err_gbe_bin = 1;
+	errno = saved_errno;
+
+	return -1;
+}
+
 /*
  * This one is similar to gbe_file_offset,
  * but used to check Gbe bounds in memory,
@@ -1780,7 +2114,7 @@ static u8 *
 gbe_mem_offset(size_t p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
-	    GBE_PART_SIZE, GBE_FILE_SIZE);
+	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
 	return (u8 *)(buf + (size_t)gbe_off);
 }
@@ -1840,7 +2174,7 @@ rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
 		if (mem_addr < buf_addr)
 			goto err_rw_gbe_file_exact;
 
-		if ((mem_addr - buf_addr) >= (size_t)GBE_FILE_SIZE)
+		if ((mem_addr - buf_addr) >= (size_t)GBE_WORK_SIZE)
 			goto err_rw_gbe_file_exact;
 	}
 
@@ -1924,7 +2258,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		nrw_cur = (size_t)(nrw - (size_t)rc);
 		if (off < 0)
 			goto err_rw_file_exact;
-		off_cur = (off_t)((size_t)off + (size_t)rc);
+		off_cur = off + (off_t)rc;
 
 		rv = prw(fd, mem_cur, nrw_cur, off_cur,
 		    rw_type, loop_eagain, loop_eintr,
@@ -2297,14 +2631,37 @@ try_err(int loop_err, int errval)
 }
 
 static void
+usage(void)
+{
+	const char *util = getnvmprogname();
+
+	fprintf(stderr,
+	    "Modify Intel GbE NVM images e.g. set MAC\n"
+	    "USAGE:\n"
+	    "\t%s FILE dump\n"
+	    "\t%s FILE setmac [MAC]\n"
+	    "\t%s FILE swap\n"
+	    "\t%s FILE copy 0|1\n"
+	    "\t%s FILE cat\n"
+	    "\t%s FILE cat16\n"
+	    "\t%s FILE cat128\n",
+	    util, util, util, util,
+	    util, util, util);
+
+	err(EINVAL, "Too few arguments");
+}
+
+static void
 err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 
 	if (errno == 0)
 		errno = nvm_errval;
+	if (!errno)
+		errno = ECANCELED;
 
-	(void)close_files();
+	(void)exit_cleanup();
 
 	fprintf(stderr, "%s: ", getnvmprogname());
 
@@ -2315,25 +2672,41 @@ err(int nvm_errval, const char *msg, ...)
 	fprintf(stderr, ": %s", strerror(errno));
 
 	fprintf(stderr, "\n");
+
+	if (tname != NULL)
+		free(tname);
+
 	exit(EXIT_FAILURE);
 }
 
 static int
-close_files(void)
+exit_cleanup(void)
 {
-	int close_err_gbe = 0;
+	int close_err = 0;
 	int saved_errno = errno;
 
 	if (gbe_fd > -1) {
 		if (close(gbe_fd) == -1)
-			close_err_gbe = errno;
+			close_err = 1;
 		gbe_fd = -1;
 	}
+
+	if (tmp_fd > -1) {
+		if (close(tmp_fd) == -1)
+			close_err = 1;
+	}
+
+	if (tname != NULL) {
+		if (unlink(tname) == -1)
+			close_err = 1;
+	}
+
+	tmp_fd = -1;
 
 	if (saved_errno)
 		errno = saved_errno;
 
-	if (close_err_gbe)
+	if (close_err)
 		return -1;
 
 	return 0;
@@ -2355,28 +2728,204 @@ getnvmprogname(void)
 		return argv0;
 }
 
-static void
-usage(int usage_exit)
+/*
+ * create new tmpfile path
+ *
+ * ON SUCCESS:
+ *
+ * returns ptr to path string on success
+ * ALSO: the int at *fd will be set,
+ *       indicating the file descriptor
+ *
+ * ON ERROR:
+ *
+ * return NULL (*fd not touched)
+ *
+ * malloc() may set errno, but you should
+ * not rely on errno from this function
+ *
+ * local: if non-zero, then only a file
+ * name will be given, relative to
+ * the current file name. for this,
+ * the 3rd argument (path) must be non-null
+ *
+ * if local is zero, then 3rd arg (path)
+ * is irrelevant and can be NULL
+ */
+static char *
+new_tmpfile(int *fd, int local, const char *path)
 {
-	const char *util = getnvmprogname();
+	size_t maxlen;
+	struct stat st;
 
-#ifdef NVMUTIL_PLEDGE
-	if (pledge("stdio", NULL) == -1)
-		err(errno, "pledge");
+	/*
+	 * please do not modify the
+	 * strings or I will get mad
+	 */
+	char tmp_none[] = "";
+	char tmp_default[] = "/tmp";
+	char default_tmpname[] = "tmpXXXXXX";
+	char *tmpname;
+
+	char *base = NULL;
+	char *dest = NULL;
+
+	size_t tmpdir_len = 0;
+	size_t tmpname_len = 0;
+	size_t tmppath_len = 0;
+
+	int fd_tmp = -1;
+	int flags;
+
+	/*
+	 * 256 is the most
+	 * conservative path
+	 * size limit (posix),
+	 * but 4096 is modern
+	 *
+	 * set PATH_LEN as you
+	 * wish, at build time
+	 */
+
+#if defined(PATH_LEN) && \
+    (PATH_LEN) >= 256
+	maxlen = PATH_LEN;
+#else
+	maxlen = 4096;
 #endif
-	fprintf(stderr,
-	    "Modify Intel GbE NVM images e.g. set MAC\n"
-	    "USAGE:\n"
-	    "\t%s FILE dump\n"
-	    "\t%s FILE setmac [MAC]\n"
-	    "\t%s FILE swap\n"
-	    "\t%s FILE copy 0|1\n"
-	    "\t%s FILE cat\n"
-	    "\t%s FILE cat16\n"
-	    "\t%s FILE cat128\n",
-	    util, util, util, util,
-	    util, util, util);
 
-	if (usage_exit)
-		err(EINVAL, "Too few arguments");
+	tmpname = default_tmpname;
+	if (local) {
+		if (path == NULL)
+			goto err_new_tmpfile;
+		if (*path == '\0')
+			goto err_new_tmpfile;
+
+		if (stat(path, &st) == -1)
+			goto err_new_tmpfile;
+
+		if (!S_ISREG(st.st_mode))
+			goto err_new_tmpfile;
+
+		tmpname = (char *)path;
+	}
+
+	if (local) {
+		base = tmp_none;
+
+		/*
+		 * appended to filename for tmp:
+		 */
+		tmpdir_len = sizeof(default_tmpname);
+	} else {
+		base = getenv("TMPDIR");
+
+		if (base == NULL)
+			base = tmp_default;
+		if (*base == '\0')
+			base = tmp_default;
+
+		tmpdir_len = xstrxlen(base, maxlen);
+	}
+
+	tmpname_len = xstrxlen(tmpname, maxlen);
+
+	tmppath_len = tmpdir_len + tmpname_len;
+	++tmppath_len; /* for '/' or '.' */
+
+	/*
+	 * max length -1 of maxlen
+	 * for termination
+	 */
+	if (tmpdir_len > maxlen - tmpname_len - 1)
+		goto err_new_tmpfile;
+
+	/* +1 for NULL */
+	dest = malloc(tmppath_len + 1);
+	if (dest == NULL)
+		goto err_new_tmpfile;
+
+	if (local) {
+
+		*dest = '.'; /* hidden file */
+
+		memcpy(dest + (size_t)1, tmpname, tmpname_len);
+
+		memcpy(dest + (size_t)1 + tmpname_len,
+		    default_tmpname, tmpdir_len);
+	} else {
+
+		memcpy(dest, base, tmpdir_len);
+
+		dest[tmpdir_len] = '/';
+
+		memcpy(dest + tmpdir_len + 1, tmpname, tmpname_len);
+	}
+
+	dest[tmppath_len] = '\0';
+
+	fd_tmp = mkstemp(dest);
+	if (fd_tmp == -1)
+		goto err_new_tmpfile;
+
+	if (fchmod(fd_tmp, 0600) == -1)
+		goto err_new_tmpfile;
+
+	if (lock_file(fd_tmp) == -1)
+		goto err_new_tmpfile;
+
+	if (fstat(fd_tmp, &st) == -1)
+		goto err_new_tmpfile;
+
+	/*
+	 * Extremely defensive
+	 * likely pointless checks
+	 */
+
+	/* check if it's a file */
+	if (!S_ISREG(st.st_mode))
+		goto err_new_tmpfile;
+
+	/* check if it's seekable */
+	if (lseek(fd_tmp, 0, SEEK_CUR) == (off_t)-1)
+		goto err_new_tmpfile;
+
+	/* inode will be checked later on write */
+	tmp_dev = st.st_dev;
+	tmp_ino = st.st_ino;
+
+	/* tmpfile has >1 hardlinks */
+	if (st.st_nlink > 1)
+		goto err_new_tmpfile;
+
+	/* tmpfile unlinked while opened */
+	if (st.st_nlink == 0)
+		goto err_new_tmpfile;
+
+	flags = fcntl(fd_tmp, F_GETFL);
+
+	if (flags == -1)
+		goto err_new_tmpfile;
+
+	/*
+	 * O_APPEND would permit offsets
+	 * to be ignored, which breaks
+	 * positional read/write
+	 */
+	if (flags & O_APPEND)
+		goto err_new_tmpfile;
+
+	*fd = fd_tmp;
+
+	return dest;
+
+err_new_tmpfile:
+
+	if (dest != NULL)
+		free(dest);
+
+	if (fd_tmp > -1)
+		close(fd_tmp);
+
+	return NULL;
 }
