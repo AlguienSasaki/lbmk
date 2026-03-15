@@ -7,7 +7,7 @@ CSTD?=-std=c90
 WERROR?=-Werror
 CWARN?=-Wall -Wextra -pedantic
 COPT?=-Os
-CFLAGS?=$(COPT) $(CWARN) $(CSTD)
+CFLAGS?=-I. $(COPT) $(CWARN) $(CSTD)
 LDFLAGS?=
 DESTDIR?=
 PREFIX?=/usr/local
