@@ -408,6 +408,7 @@ static void cmd_helper_copy(void);
  * cat, cat16 and cat128
  */
 static void cmd_helper_cat(void);
+static void cat_buf(u8 *b);
 
 /*
  * After command processing, write
@@ -772,11 +773,6 @@ main(int argc, char *argv[])
 
 	memset(buf, 0, GBE_BUF_SIZE);
 	memset(bufcmp, 0, GBE_BUF_SIZE);
-
-	/*
-	 * Used by CMD_CAT, for padding
-	 */
-	memset(pad, 0xff, sizeof(pad));
 
 	copy_gbe();
 
@@ -1540,10 +1536,41 @@ cmd_helper_copy(void)
 static void
 cmd_helper_cat(void)
 {
+	size_t p = 0;
+	size_t ff = 0;
+	size_t nff = 0;
+
 	fflush(NULL);
 
-	if (rw_file_exact(STDOUT_FILENO, bufcmp,
-	    gbe_file_size, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
+	memset(pad, 0xff, GBE_PART_SIZE);
+
+	switch (cmd_index) {
+	case CMD_CAT:
+		nff = 0;
+		break;
+	case CMD_CAT16:
+		nff = 1;
+		break;
+	case CMD_CAT128:
+		nff = 15;
+		break;
+	default:
+		err(EINVAL, "erroneous call to cat");
+	}
+
+	for (p = 0; p < 2; p++) {
+		cat_buf(bufcmp + (size_t)(p * (gbe_file_size >> 1)));
+
+		for (ff = 0; ff < nff; ff++)
+			cat_buf(pad);
+	}
+}
+
+static void
+cat_buf(u8 *b)
+{
+	if (rw_file_exact(STDOUT_FILENO, b,
+	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
 		err(errno, "stdout: cat");
 }
