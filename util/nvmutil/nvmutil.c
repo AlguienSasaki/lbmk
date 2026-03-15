@@ -2077,27 +2077,28 @@ real_pread_pwrite:
 		 * then another thread may have
 		 * changed it. Enabled if
 		 * off_reset is OFF_RESET.
+		 *
+		 * We do this *once*, on the theory
+		 * that nothing is touching it now.
 		 */
-		if (off != verified) {
-			if (!off_reset)
-				goto err_prw;
-
-			/*
-			 * Even if we allow to continue,
-			 * we still need to reset the
-			 * offset. If we can't, then
-			 * we can't recover at all.
-			 *
-			 * However, we must preserve
-			 * errno in that case, so
-			 * just return immediately.
-			 */
-			if (lseek_loop(fd, off, SEEK_SET,
-			    loop_eagain, loop_eintr) == (off_t)-1)
-				return -1;
-		}
+		if (off_reset && off != verified)
+			lseek_loop(fd, off, SEEK_SET,
+			    loop_eagain, loop_eintr);
 
 		do {
+			if (off != verified)
+				return -1;
+
+			if (rw_type == IO_PREAD)
+				r = read(fd, mem, nrw);
+			else if (rw_type == IO_PWRITE)
+				r = write(fd, mem, nrw);
+
+			if (rw_over_nrw(r, nrw) == -1) {
+				errno = EIO;
+				break;
+			}
+
 			/*
 			 * Verify again before I/O
 			 * (even with OFF_ERR)
@@ -2117,19 +2118,6 @@ real_pread_pwrite:
 			 */
 			verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
 			    loop_eagain, loop_eintr);
-
-			if (verified != off)
-				goto err_prw;
-
-			if (rw_type == IO_PREAD)
-				r = read(fd, mem, nrw);
-			else if (rw_type == IO_PWRITE)
-				r = write(fd, mem, nrw);
-
-			if (rw_over_nrw(r, nrw) == -1) {
-				errno = EIO;
-				break;
-			}
 
 		} while (r == -1 &&
 		    (errno == try_err(loop_eintr, EINTR)
