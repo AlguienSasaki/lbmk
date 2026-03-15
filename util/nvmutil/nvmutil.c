@@ -2087,7 +2087,7 @@ real_pread_pwrite:
 
 		do {
 			if (off != verified)
-				return -1;
+				goto err_prw;
 
 			if (rw_type == IO_PREAD)
 				r = read(fd, mem, nrw);
