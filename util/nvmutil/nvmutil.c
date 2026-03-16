@@ -234,9 +234,6 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
-typedef long ssize_t;
-typedef unsigned long size_t;
-
 typedef unsigned char u8;
 typedef unsigned short ushort;
 typedef unsigned int uint;
@@ -261,8 +258,8 @@ typedef char static_assert_twos_complement[
 typedef char assert_ulong_ptr[
     (sizeof(ulong) >= sizeof(void *)) ? 1 : -1
 ];
-typedef char assert_size_t_ptr[
-    (sizeof(size_t) >= sizeof(void *)) ? 1 : -1
+typedef char assert_unsigned_long_ptr[
+    (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
 ];
 
 /*
@@ -327,15 +324,15 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
  * Sanitize command tables.
  */
 static void sanitize_command_list(void);
-static void sanitize_command_index(size_t c);
+static void sanitize_command_index(unsigned long c);
 
 /*
  * Argument handling (user input)
  */
 static void set_cmd(int argc, char *argv[]);
 static void set_cmd_args(int argc, char *argv[]);
-static size_t conv_argv_part_num(const char *part_str);
-static int xstrxcmp(const char *a, const char *b, size_t maxlen);
+static unsigned long conv_argv_part_num(const char *part_str);
+static int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
 
 /*
  * Prep files for reading
@@ -352,15 +349,15 @@ static void xopen(int *fd, const char *path, int flags, struct stat *st);
  */
 static void copy_gbe(void);
 static void read_checksums(void);
-static int good_checksum(size_t partnum);
+static int good_checksum(unsigned long partnum);
 
 /*
  * Execute user command on GbE data.
  * These are stubs that call helpers.
  */
-static void run_cmd(size_t c);
-static void check_command_num(size_t c);
-static u8 valid_command(size_t c);
+static void run_cmd(unsigned long c);
+static void check_command_num(unsigned long c);
+static u8 valid_command(unsigned long c);
 
 /*
  * portable timeval
@@ -375,23 +372,23 @@ struct x_st_timeval {
  */
 static void cmd_helper_setmac(void);
 static void parse_mac_string(void);
-static size_t xstrxlen(const char *scmp, size_t maxlen);
-static void set_mac_byte(size_t mac_byte_pos);
-static void set_mac_nib(size_t mac_str_pos,
-    size_t mac_byte_pos, size_t mac_nib_pos);
+static unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
+static void set_mac_byte(unsigned long mac_byte_pos);
+static void set_mac_nib(unsigned long mac_str_pos,
+    unsigned long mac_byte_pos, unsigned long mac_nib_pos);
 static ushort hextonum(char ch_s);
 static ushort rhex(void);
 static ushort read_urandom(void);
 static ulong entropy_jitter(void);
 static int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
-static void write_mac_part(size_t partnum);
+static void write_mac_part(unsigned long partnum);
 
 /*
  * Helper functions for command: dump
  */
 static void cmd_helper_dump(void);
-static void print_mac_from_nvm(size_t partnum);
-static void hexdump(size_t partnum);
+static void print_mac_from_nvm(unsigned long partnum);
+static void hexdump(unsigned long partnum);
 
 /*
  * Helper functions for command: swap
@@ -418,46 +415,46 @@ static void cat_buf(u8 *b);
  * below for the actual functions.
  */
 static void write_gbe_file(void);
-static void set_checksum(size_t part);
-static ushort calculated_checksum(size_t p);
+static void set_checksum(unsigned long part);
+static ushort calculated_checksum(unsigned long p);
 
 /*
  * Helper functions for accessing
  * the NVM area during operation.
  */
-static ushort nvm_word(size_t pos16, size_t part);
-static void set_nvm_word(size_t pos16, size_t part, ushort val16);
-static void set_part_modified(size_t p);
-static void check_nvm_bound(size_t pos16, size_t part);
-static void check_bin(size_t a, const char *a_name);
+static ushort nvm_word(unsigned long pos16, unsigned long part);
+static void set_nvm_word(unsigned long pos16, unsigned long part, ushort val16);
+static void set_part_modified(unsigned long p);
+static void check_nvm_bound(unsigned long pos16, unsigned long part);
+static void check_bin(unsigned long a, const char *a_name);
 
 /*
  * Helper functions for stub functions
  * that handle GbE file reads/writes.
  */
-static void rw_gbe_file_part(size_t p, int rw_type,
+static void rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str);
 static void write_to_gbe_bin(void);
 static int gbe_mv(void);
-static void check_written_part(size_t p);
+static void check_written_part(unsigned long p);
 static void report_io_err_rw(void);
 static int fsync_dir(const char *path);
-static u8 *gbe_mem_offset(size_t part, const char *f_op);
-static off_t gbe_file_offset(size_t part, const char *f_op);
-static off_t gbe_x_offset(size_t part, const char *f_op,
+static u8 *gbe_mem_offset(unsigned long part, const char *f_op);
+static off_t gbe_file_offset(unsigned long part, const char *f_op);
+static off_t gbe_x_offset(unsigned long part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static ssize_t rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
+static long rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type);
-static ssize_t rw_file_exact(int fd, u8 *mem, size_t len,
+static long rw_file_exact(int fd, u8 *mem, unsigned long len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    size_t max_retries, int off_reset);
-static ssize_t prw(int fd, void *mem, size_t nrw,
+    unsigned long max_retries, int off_reset);
+static long prw(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     int off_reset);
-static int io_args(int fd, void *mem, size_t nrw,
+static int io_args(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type);
 static int check_file(int fd, struct stat *st);
-static ssize_t rw_over_nrw(ssize_t r, size_t nrw);
+static long rw_over_nrw(long r, unsigned long nrw);
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
     HAVE_REAL_PREAD_PWRITE < 1
 static off_t lseek_loop(int fd, off_t off,
@@ -534,7 +531,7 @@ static off_t gbe_file_size;
 static off_t gbe_tmp_size;
 
 static int gbe_fd = -1;
-static size_t part;
+static unsigned long part;
 static u8 part_modified[2];
 static u8 part_valid[2];
 
@@ -593,14 +590,14 @@ enum {
 };
 
 struct commands {
-	size_t chk;
+	unsigned long chk;
 	const char *str;
 	void (*run)(void);
 	int argc;
 	u8 arg_part;
 	u8 chksum_read;
 	u8 chksum_write;
-	size_t rw_size; /* within the 4KB GbE part */
+	unsigned long rw_size; /* within the 4KB GbE part */
 	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
 
@@ -651,7 +648,7 @@ static const struct commands command[] = {
 /*
  * Index in command[], will be set later
  */
-static size_t cmd_index = CMD_NULL;
+static unsigned long cmd_index = CMD_NULL;
 
 /*
  * asserts (variables/defines sanity check)
@@ -811,7 +808,7 @@ main(int argc, char *argv[])
 static void
 sanitize_command_list(void)
 {
-	size_t c;
+	unsigned long c;
 
 	for (c = 0; c < N_COMMANDS; c++)
 		sanitize_command_index(c);
@@ -821,9 +818,9 @@ sanitize_command_list(void)
  * TODO: specific config checks per command
  */
 static void
-sanitize_command_index(size_t c)
+sanitize_command_index(unsigned long c)
 {
-	size_t gbe_rw_size;
+	unsigned long gbe_rw_size;
 
 	check_command_num(c);
 
@@ -915,7 +912,7 @@ set_cmd_args(int argc, char *argv[])
 		part = conv_argv_part_num(argv[3]);
 }
 
-static size_t
+static unsigned long
 conv_argv_part_num(const char *part_str)
 {
 	u8 ch;
@@ -928,7 +925,7 @@ conv_argv_part_num(const char *part_str)
 	if (ch < '0' || ch > '1')
 		err(EINVAL, "Bad part number (%c)", ch);
 
-	return (size_t)(ch - '0');
+	return (unsigned long)(ch - '0');
 }
 
 /*
@@ -936,9 +933,9 @@ conv_argv_part_num(const char *part_str)
  * strings. Even stricter than strncmp().
  */
 static int
-xstrxcmp(const char *a, const char *b, size_t maxlen)
+xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 {
-	size_t i;
+	unsigned long i;
 
 	if (a == NULL || b == NULL)
 		err(EINVAL, "NULL input to xstrxcmp");
@@ -1072,7 +1069,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 static void
 copy_gbe(void)
 {
-	ssize_t r;
+	long r;
 	struct stat st;
 
 	/* read main file */
@@ -1136,16 +1133,16 @@ copy_gbe(void)
 	if (gbe_file_size == SIZE_8KB)
 		return;
 
-	memcpy(buf + (size_t)GBE_PART_SIZE,
-	    buf + (size_t)(gbe_file_size >> 1),
-	    (size_t)GBE_PART_SIZE);
+	memcpy(buf + (unsigned long)GBE_PART_SIZE,
+	    buf + (unsigned long)(gbe_file_size >> 1),
+	    (unsigned long)GBE_PART_SIZE);
 }
 
 static void
 read_checksums(void)
 {
-	size_t p;
-	size_t skip_part;
+	unsigned long p;
+	unsigned long skip_part;
 	u8 arg_part;
 	u8 num_invalid;
 	u8 max_invalid;
@@ -1191,7 +1188,7 @@ read_checksums(void)
 }
 
 static int
-good_checksum(size_t partnum)
+good_checksum(unsigned long partnum)
 {
 	ushort expected_checksum = calculated_checksum(partnum);
 	ushort current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
@@ -1203,7 +1200,7 @@ good_checksum(size_t partnum)
 }
 
 static void
-run_cmd(size_t c)
+run_cmd(unsigned long c)
 {
 	check_command_num(c);
 
@@ -1214,7 +1211,7 @@ run_cmd(size_t c)
 }
 
 static void
-check_command_num(size_t c)
+check_command_num(unsigned long c)
 {
 	if (!valid_command(c))
 		err(EINVAL, "Invalid run_cmd arg: %lu",
@@ -1222,7 +1219,7 @@ check_command_num(size_t c)
 }
 
 static u8
-valid_command(size_t c)
+valid_command(unsigned long c)
 {
 	if (c >= N_COMMANDS)
 		return 0;
@@ -1237,7 +1234,7 @@ valid_command(size_t c)
 static void
 cmd_helper_setmac(void)
 {
-	size_t partnum;
+	unsigned long partnum;
 
 	printf("MAC address to be written: %s\n", mac_str);
 	parse_mac_string();
@@ -1249,7 +1246,7 @@ cmd_helper_setmac(void)
 static void
 parse_mac_string(void)
 {
-	size_t mac_byte;
+	unsigned long mac_byte;
 
 	if (xstrxlen(mac_str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
@@ -1272,10 +1269,10 @@ parse_mac_string(void)
  * strnlen() was standardized in POSIX.1-2008 and is not
  * available on some older systems, so we provide our own.
  */
-static size_t
-xstrxlen(const char *scmp, size_t maxlen)
+static unsigned long
+xstrxlen(const char *scmp, unsigned long maxlen)
 {
-	size_t xstr_index;
+	unsigned long xstr_index;
 
 	if (scmp == NULL)
 		err(EINVAL, "NULL input to xstrxlen");
@@ -1294,10 +1291,10 @@ xstrxlen(const char *scmp, size_t maxlen)
 }
 
 static void
-set_mac_byte(size_t mac_byte_pos)
+set_mac_byte(unsigned long mac_byte_pos)
 {
-	size_t mac_str_pos = mac_byte_pos * 3;
-	size_t mac_nib_pos;
+	unsigned long mac_str_pos = mac_byte_pos * 3;
+	unsigned long mac_nib_pos;
 	char separator;
 
 	if (mac_str_pos < 15) {
@@ -1311,8 +1308,8 @@ set_mac_byte(size_t mac_byte_pos)
 }
 
 static void
-set_mac_nib(size_t mac_str_pos,
-    size_t mac_byte_pos, size_t mac_nib_pos)
+set_mac_nib(unsigned long mac_str_pos,
+    unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
 	char mac_ch;
 	ushort hex_num;
@@ -1399,7 +1396,7 @@ static ushort
 read_urandom(void)
 {
 	static int fd = -1;
-	static ssize_t n = -1;
+	static long n = -1;
 
 	static u8 r[256];
 
@@ -1477,9 +1474,9 @@ x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 }
 
 static void
-write_mac_part(size_t partnum)
+write_mac_part(unsigned long partnum)
 {
-	size_t w;
+	unsigned long w;
 
 	check_bin(partnum, "part number");
 	if (!part_valid[partnum])
@@ -1496,7 +1493,7 @@ write_mac_part(size_t partnum)
 static void
 cmd_helper_dump(void)
 {
-	size_t partnum;
+	unsigned long partnum;
 
 	part_valid[0] = good_checksum(0);
 	part_valid[1] = good_checksum(1);
@@ -1517,9 +1514,9 @@ cmd_helper_dump(void)
 }
 
 static void
-print_mac_from_nvm(size_t partnum)
+print_mac_from_nvm(unsigned long partnum)
 {
-	size_t c;
+	unsigned long c;
 	ushort val16;
 
 	for (c = 0; c < 3; c++) {
@@ -1535,14 +1532,14 @@ print_mac_from_nvm(size_t partnum)
 }
 
 static void
-hexdump(size_t partnum)
+hexdump(unsigned long partnum)
 {
-	size_t c;
-	size_t row;
+	unsigned long c;
+	unsigned long row;
 	ushort val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08lx ", (ulong)((size_t)row << 4));
+		printf("%08lx ", (ulong)((unsigned long)row << 4));
 		for (c = 0; c < 8; c++) {
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
@@ -1559,18 +1556,18 @@ static void
 cmd_helper_swap(void)
 {
 	memcpy(
-	    buf + (size_t)GBE_WORK_SIZE,
+	    buf + (unsigned long)GBE_WORK_SIZE,
 	    buf,
 	    GBE_PART_SIZE);
 
 	memcpy(
 	    buf,
-	    buf + (size_t)GBE_PART_SIZE,
+	    buf + (unsigned long)GBE_PART_SIZE,
 	    GBE_PART_SIZE);
 
 	memcpy(
-	    buf + (size_t)GBE_PART_SIZE,
-	    buf + (size_t)GBE_WORK_SIZE,
+	    buf + (unsigned long)GBE_PART_SIZE,
+	    buf + (unsigned long)GBE_WORK_SIZE,
 	    GBE_PART_SIZE);
 
 	set_part_modified(0);
@@ -1581,8 +1578,8 @@ static void
 cmd_helper_copy(void)
 {
 	memcpy(
-	    buf + (size_t)((part ^ 1) * GBE_PART_SIZE),
-	    buf + (size_t)(part * GBE_PART_SIZE),
+	    buf + (unsigned long)((part ^ 1) * GBE_PART_SIZE),
+	    buf + (unsigned long)(part * GBE_PART_SIZE),
 	    GBE_PART_SIZE);
 
 	set_part_modified(part ^ 1);
@@ -1591,9 +1588,9 @@ cmd_helper_copy(void)
 static void
 cmd_helper_cat(void)
 {
-	size_t p = 0;
-	size_t ff = 0;
-	size_t nff = 0;
+	unsigned long p = 0;
+	unsigned long ff = 0;
+	unsigned long nff = 0;
 
 	fflush(NULL);
 
@@ -1614,7 +1611,7 @@ cmd_helper_cat(void)
 	}
 
 	for (p = 0; p < 2; p++) {
-		cat_buf(bufcmp + (size_t)(p * (gbe_file_size >> 1)));
+		cat_buf(bufcmp + (unsigned long)(p * (gbe_file_size >> 1)));
 
 		for (ff = 0; ff < nff; ff++)
 			cat_buf(pad);
@@ -1636,7 +1633,7 @@ write_gbe_file(void)
 	struct stat gbe_st;
 	struct stat tmp_st;
 
-	size_t p;
+	unsigned long p;
 	u8 update_checksum;
 
 	if (command[cmd_index].flags == O_RDONLY)
@@ -1674,16 +1671,16 @@ write_gbe_file(void)
 }
 
 static void
-set_checksum(size_t p)
+set_checksum(unsigned long p)
 {
 	check_bin(p, "part number");
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
 static ushort
-calculated_checksum(size_t p)
+calculated_checksum(unsigned long p)
 {
-	size_t c;
+	unsigned long c;
 	uint val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
@@ -1701,9 +1698,9 @@ calculated_checksum(size_t p)
  */
 
 static ushort
-nvm_word(size_t pos16, size_t p)
+nvm_word(unsigned long pos16, unsigned long p)
 {
-	size_t pos;
+	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -1713,9 +1710,9 @@ nvm_word(size_t pos16, size_t p)
 }
 
 static void
-set_nvm_word(size_t pos16, size_t p, ushort val16)
+set_nvm_word(unsigned long pos16, unsigned long p, ushort val16)
 {
-	size_t pos;
+	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -1727,14 +1724,14 @@ set_nvm_word(size_t pos16, size_t p, ushort val16)
 }
 
 static void
-set_part_modified(size_t p)
+set_part_modified(unsigned long p)
 {
 	check_bin(p, "part number");
 	part_modified[p] = 1;
 }
 
 static void
-check_nvm_bound(size_t c, size_t p)
+check_nvm_bound(unsigned long c, unsigned long p)
 {
 	/*
 	 * NVM_SIZE assumed as the limit, because this
@@ -1750,7 +1747,7 @@ check_nvm_bound(size_t c, size_t p)
 }
 
 static void
-check_bin(size_t a, const char *a_name)
+check_bin(unsigned long a, const char *a_name)
 {
 	if (a > 1)
 		err(EINVAL, "%s must be 0 or 1, but is %lu",
@@ -1758,11 +1755,11 @@ check_bin(size_t a, const char *a_name)
 }
 
 static void
-rw_gbe_file_part(size_t p, int rw_type,
+rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
-	ssize_t r;
-	size_t gbe_rw_size = command[cmd_index].rw_size;
+	long r;
+	unsigned long gbe_rw_size = command[cmd_index].rw_size;
 
 	u8 *mem_offset;
 	off_t file_offset;
@@ -1781,7 +1778,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 		err(errno, "%s: %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
 
-	if ((size_t)r != gbe_rw_size)
+	if ((unsigned long)r != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
 		    fname, rw_type_str, (ulong)p);
 }
@@ -1873,10 +1870,10 @@ write_to_gbe_bin(void)
 }
 
 static void
-check_written_part(size_t p)
+check_written_part(unsigned long p)
 {
-	ssize_t r;
-	size_t gbe_rw_size;
+	long r;
+	unsigned long gbe_rw_size;
 	u8 *mem_offset;
 	off_t file_offset;
 	u8 *buf_restore;
@@ -1908,7 +1905,7 @@ check_written_part(size_t p)
 
 	if (r == -1)
 		rw_check_err_read[p] = io_err_gbe = 1;
-	else if ((size_t)r != gbe_rw_size)
+	else if ((unsigned long)r != gbe_rw_size)
 		rw_check_partial_read[p] = io_err_gbe = 1;
 	else if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
 		rw_check_bad_part[p] = io_err_gbe = 1;
@@ -1931,7 +1928,7 @@ check_written_part(size_t p)
 static void
 report_io_err_rw(void)
 {
-	size_t p;
+	unsigned long p;
 
 	if (!io_err_gbe)
 		return;
@@ -2107,11 +2104,11 @@ fsync_dir(const char *path)
 {
 #if defined(PATH_LEN) && \
     (PATH_LEN) >= 256
-	size_t maxlen = PATH_LEN;
+	unsigned long maxlen = PATH_LEN;
 #else
-	size_t maxlen = 1024;
+	unsigned long maxlen = 1024;
 #endif
-	size_t pathlen;
+	unsigned long pathlen;
 /*	char dirbuf[maxlen]; */
 	char *dirbuf = NULL;
 	char *slash;
@@ -2193,12 +2190,12 @@ err_fsync_dir:
  * and it is *also* used during file I/O.
  */
 static u8 *
-gbe_mem_offset(size_t p, const char *f_op)
+gbe_mem_offset(unsigned long p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
-	return (u8 *)(buf + (size_t)gbe_off);
+	return (u8 *)(buf + (unsigned long)gbe_off);
 }
 
 /*
@@ -2209,7 +2206,7 @@ gbe_mem_offset(size_t p, const char *f_op)
  * This check is called, to ensure just that.
  */
 static off_t
-gbe_file_offset(size_t p, const char *f_op)
+gbe_file_offset(unsigned long p, const char *f_op)
 {
 	off_t gbe_file_half_size = gbe_file_size >> 1;
 
@@ -2218,7 +2215,7 @@ gbe_file_offset(size_t p, const char *f_op)
 }
 
 static off_t
-gbe_x_offset(size_t p, const char *f_op, const char *d_type,
+gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
 	off_t off;
@@ -2238,35 +2235,35 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	return off;
 }
 
-static ssize_t
-rw_gbe_file_exact(int fd, u8 *mem, size_t nrw,
+static long
+rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
-	size_t mem_addr;
-	size_t buf_addr;
-	ssize_t r;
+	unsigned long mem_addr;
+	unsigned long buf_addr;
+	long r;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
 
-	mem_addr = (size_t)(void *)mem;
-	buf_addr = (size_t)(void *)buf;
+	mem_addr = (unsigned long)(void *)mem;
+	buf_addr = (unsigned long)(void *)buf;
 
 	if (mem != (void *)pad) {
 		if (mem_addr < buf_addr)
 			goto err_rw_gbe_file_exact;
 
-		if ((mem_addr - buf_addr) >= (size_t)GBE_WORK_SIZE)
+		if ((mem_addr - buf_addr) >= (unsigned long)GBE_WORK_SIZE)
 			goto err_rw_gbe_file_exact;
 	}
 
 	if (off < 0 || off >= gbe_file_size)
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > (size_t)(gbe_file_size - off))
+	if (nrw > (unsigned long)(gbe_file_size - off))
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > (size_t)GBE_PART_SIZE)
+	if (nrw > (unsigned long)GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
 	r = rw_file_exact(fd, mem, nrw, off, rw_type,
@@ -2310,17 +2307,17 @@ err_rw_gbe_file_exact:
  * times upon zero-return, to recover,
  * otherwise it will return an error.
  */
-static ssize_t
-rw_file_exact(int fd, u8 *mem, size_t nrw,
+static long
+rw_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain,
-    int loop_eintr, size_t max_retries,
+    int loop_eintr, unsigned long max_retries,
     int off_reset)
 {
-	ssize_t rv = 0;
-	ssize_t rc = 0;
-	size_t retries_on_zero = 0;
+	long rv = 0;
+	long rc = 0;
+	unsigned long retries_on_zero = 0;
 	off_t off_cur;
-	size_t nrw_cur;
+	unsigned long nrw_cur;
 	void *mem_cur;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
@@ -2329,15 +2326,15 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 	while (1) {
 	
 		/* Prevent theoretical overflow */
-		if (rv >= 0 && (size_t)rv > (nrw - rc))
+		if (rv >= 0 && (unsigned long)rv > (nrw - rc))
 			goto err_rw_file_exact;
 
 		rc += rv;
-		if ((size_t)rc >= nrw)
+		if ((unsigned long)rc >= nrw)
 			break;
 
-		mem_cur = (void *)(mem + (size_t)rc);
-		nrw_cur = (size_t)(nrw - (size_t)rc);
+		mem_cur = (void *)(mem + (unsigned long)rc);
+		nrw_cur = (unsigned long)(nrw - (unsigned long)rc);
 		if (off < 0)
 			goto err_rw_file_exact;
 		off_cur = off + (off_t)rc;
@@ -2358,7 +2355,7 @@ rw_file_exact(int fd, u8 *mem, size_t nrw,
 		retries_on_zero = 0;
 	}
 
-	if ((size_t)rc != nrw)
+	if ((unsigned long)rc != nrw)
 		goto err_rw_file_exact;
 
 	return rw_over_nrw(rc, nrw);
@@ -2410,13 +2407,13 @@ err_rw_file_exact:
  *            we reset and continue, and pray for the worst.
  */
 
-static ssize_t
-prw(int fd, void *mem, size_t nrw,
+static long
+prw(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type,
     int loop_eagain, int loop_eintr,
     int off_reset)
 {
-	ssize_t r;
+	long r;
 	int positional_rw;
 	struct stat st;
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
@@ -2566,7 +2563,7 @@ err_prw:
 }
 
 static int
-io_args(int fd, void *mem, size_t nrw,
+io_args(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
 	/* obviously */
@@ -2586,11 +2583,11 @@ io_args(int fd, void *mem, size_t nrw,
 		goto err_io_args;
 
 	/* prevent overflow */
-	if (nrw > (size_t)X_LONG_MAX)
+	if (nrw > (unsigned long)X_LONG_MAX)
 		goto err_io_args;
 
 	/* prevent overflow */
-	if (((size_t)off + nrw) < (size_t)off)
+	if (((unsigned long)off + nrw) < (unsigned long)off)
 		goto err_io_args;
 
 	if (rw_type > IO_PWRITE)
@@ -2625,8 +2622,8 @@ err_is_file:
  * POSIX can say whatever it wants.
  * specification != implementation
  */
-static ssize_t
-rw_over_nrw(ssize_t r, size_t nrw)
+static long
+rw_over_nrw(long r, unsigned long nrw)
 {
 	/*
 	 * If a byte length of zero
@@ -2639,7 +2636,7 @@ rw_over_nrw(ssize_t r, size_t nrw)
 	if (r == -1)
 		return r;
 
-	if ((size_t)r > X_LONG_MAX) {
+	if ((unsigned long)r > X_LONG_MAX) {
 		/*
 		 * Theoretical buggy libc
 		 * check. Extremely academic.
@@ -2660,7 +2657,7 @@ rw_over_nrw(ssize_t r, size_t nrw)
 	 * Should never return a number of
 	 * bytes above the requested length.
 	 */
-	if ((size_t)r > nrw)
+	if ((unsigned long)r > nrw)
 		goto err_rw_over_nrw;
 
 	return r;
@@ -2837,7 +2834,7 @@ getnvmprogname(void)
 static char *
 new_tmpfile(int *fd, int local, const char *path)
 {
-	size_t maxlen;
+	unsigned long maxlen;
 	struct stat st;
 
 	/*
@@ -2852,9 +2849,9 @@ new_tmpfile(int *fd, int local, const char *path)
 	char *base = NULL;
 	char *dest = NULL;
 
-	size_t tmpdir_len = 0;
-	size_t tmpname_len = 0;
-	size_t tmppath_len = 0;
+	unsigned long tmpdir_len = 0;
+	unsigned long tmpname_len = 0;
+	unsigned long tmppath_len = 0;
 
 	int fd_tmp = -1;
 	int flags;
@@ -2931,9 +2928,9 @@ new_tmpfile(int *fd, int local, const char *path)
 
 		*dest = '.'; /* hidden file */
 
-		memcpy(dest + (size_t)1, tmpname, tmpname_len);
+		memcpy(dest + (unsigned long)1, tmpname, tmpname_len);
 
-		memcpy(dest + (size_t)1 + tmpname_len,
+		memcpy(dest + (unsigned long)1 + tmpname_len,
 		    default_tmpname, tmpdir_len);
 	} else {
 
