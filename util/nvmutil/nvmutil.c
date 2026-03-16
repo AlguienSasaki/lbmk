@@ -492,6 +492,10 @@ static void *x_v_memcpy(void *dst,
 static int x_i_memcmp(const void *a,
     const void *b, unsigned long n);
 static int x_i_fchmod(int fd, mode_t mode);
+static int x_try_fdpath(const char *prefix,
+    int fd, mode_t mode);
+static unsigned long x_conv_fd(char *buf,
+    unsigned long n);
 
 /*
  * Sizes in bytes:
@@ -3180,38 +3184,57 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 static int
 x_i_fchmod(int fd, mode_t mode)
 {
-	char path[32];
-	char tmp[16];
-	int i = 0;
-	int j = 0;
-	int n;
+	if (x_try_fdpath("/dev/fd/", fd, mode) == 0)
+		return 0;
 
-	/* build "/dev/fd/" */
-	path[i++] = '/';
-	path[i++] = 'd';
-	path[i++] = 'e';
-	path[i++] = 'v';
-	path[i++] = '/';
-	path[i++] = 'f';
-	path[i++] = 'd';
-	path[i++] = '/';
+	if (x_try_fdpath("/proc/self/fd/", fd, mode) == 0)
+		return 0;
 
-	/* convert fd to decimal */
-	n = fd;
+	errno = ENOSYS;
+	return -1;
+}
 
-	if (n == 0) {
-		path[i++] = '0';
-	} else {
-		while (n > 0) {
-			tmp[j++] = (char)('0' + (n % 10));
-			n /= 10;
-		}
+static int
+x_try_fdpath(const char *prefix, int fd, mode_t mode)
+{
+	char path[PATH_LEN];
 
-		while (j > 0)
-			path[i++] = tmp[--j];
+	unsigned long i = 0;
+	unsigned long j;
+
+	while (prefix[i]) {
+		path[i] = prefix[i];
+		i++;
 	}
+
+	j = x_conv_fd(path + i, (unsigned long)fd);
+	i += j;
 
 	path[i] = '\0';
 
 	return chmod(path, mode);
+}
+
+static unsigned long
+x_conv_fd(char *buf, unsigned long n)
+{
+	char tmp[256];
+
+	unsigned long i = 0;
+	unsigned long j = 0;
+
+	if (n == 0) {
+		buf[0] = '0';
+		return 1;
+	}
+
+	while (n > 0) {
+		tmp[i++] = (char)('0' + (n % 10));
+		n /= 10;
+	}
+
+	while (i > 0)
+		buf[j++] = tmp[--i];
+
+	return j;
 }
