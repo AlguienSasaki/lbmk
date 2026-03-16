@@ -234,29 +234,21 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
-typedef unsigned char u8;
-typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long ulong;
-
 /* type asserts */
 typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
 typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
-typedef char static_assert_u8_is_1[
-    (sizeof(u8) == 1) ? 1 : -1];
-typedef char static_assert_ushort_is_2[
-    (sizeof(ushort) >= 2) ? 1 : -1];
+typedef char static_assert_unsigned_char_is_1[
+    (sizeof(unsigned char) == 1) ? 1 : -1];
+typedef char static_assert_unsigned_short_is_2[
+    (sizeof(unsigned short) >= 2) ? 1 : -1];
 typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
-typedef char static_assert_uint_is_4[
-    (sizeof(uint) >= 4) ? 1 : -1];
-typedef char static_assert_ulong_is_4[
-    (sizeof(ulong) >= 4) ? 1 : -1];
+typedef char static_assert_unsigned_int_is_4[
+    (sizeof(unsigned int) >= 4) ? 1 : -1];
+typedef char static_assert_unsigned_long_is_4[
+    (sizeof(unsigned long) >= 4) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
-];
-typedef char assert_ulong_ptr[
-    (sizeof(ulong) >= sizeof(void *)) ? 1 : -1
 ];
 typedef char assert_unsigned_long_ptr[
     (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
@@ -365,7 +357,7 @@ int good_checksum(unsigned long partnum);
  */
 void run_cmd(unsigned long c);
 void check_command_num(unsigned long c);
-u8 valid_command(unsigned long c);
+unsigned char valid_command(unsigned long c);
 
 /*
  * portable timeval
@@ -384,10 +376,10 @@ unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
 void set_mac_byte(unsigned long mac_byte_pos);
 void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
-ushort hextonum(char ch_s);
-ushort rhex(void);
-ushort read_urandom(void);
-ulong entropy_jitter(void);
+unsigned short hextonum(char ch_s);
+unsigned short rhex(void);
+unsigned short read_urandom(void);
+unsigned long entropy_jitter(void);
 int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
 void write_mac_part(unsigned long partnum);
 
@@ -413,7 +405,7 @@ void cmd_helper_copy(void);
  * cat, cat16 and cat128
  */
 void cmd_helper_cat(void);
-void cat_buf(u8 *b);
+void cat_buf(unsigned char *b);
 
 /*
  * After command processing, write
@@ -424,14 +416,14 @@ void cat_buf(u8 *b);
  */
 void write_gbe_file(void);
 void set_checksum(unsigned long part);
-ushort calculated_checksum(unsigned long p);
+unsigned short calculated_checksum(unsigned long p);
 
 /*
  * Helper functions for accessing
  * the NVM area during operation.
  */
-ushort nvm_word(unsigned long pos16, unsigned long part);
-void set_nvm_word(unsigned long pos16, unsigned long part, ushort val16);
+unsigned short nvm_word(unsigned long pos16, unsigned long part);
+void set_nvm_word(unsigned long pos16, unsigned long part, unsigned short val16);
 void set_part_modified(unsigned long p);
 void check_nvm_bound(unsigned long pos16, unsigned long part);
 void check_bin(unsigned long a, const char *a_name);
@@ -447,13 +439,13 @@ int gbe_mv(void);
 void check_written_part(unsigned long p);
 void report_io_err_rw(void);
 int fsync_dir(const char *path);
-u8 *gbe_mem_offset(unsigned long part, const char *f_op);
+unsigned char *gbe_mem_offset(unsigned long part, const char *f_op);
 off_t gbe_file_offset(unsigned long part, const char *f_op);
 off_t gbe_x_offset(unsigned long part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-long rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
+long rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type);
-long rw_file_exact(int fd, u8 *mem, unsigned long len,
+long rw_file_exact(int fd, unsigned char *mem, unsigned long len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     unsigned long max_retries, int off_reset);
 long prw(int fd, void *mem, unsigned long nrw,
@@ -542,19 +534,19 @@ unsigned long x_conv_fd(char *buf,
  *
  * The code will handle this properly.
  */
-u8 real_buf[GBE_BUF_SIZE];
-u8 bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
-u8 pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
-u8 *buf = real_buf;
+unsigned char real_buf[GBE_BUF_SIZE];
+unsigned char bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
+unsigned char pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
+unsigned char *buf = real_buf;
 
-ushort mac_buf[3];
+unsigned short mac_buf[3];
 off_t gbe_file_size;
 off_t gbe_tmp_size;
 
 int gbe_fd = -1;
 unsigned long part;
-u8 part_modified[2];
-u8 part_valid[2];
+unsigned char part_modified[2];
+unsigned char part_valid[2];
 
 const char rmac[] = "xx:xx:xx:xx:xx:xx";
 const char *mac_str = rmac;
@@ -615,9 +607,9 @@ struct commands {
 	const char *str;
 	void (*run)(void);
 	int argc;
-	u8 arg_part;
-	u8 chksum_read;
-	u8 chksum_write;
+	unsigned char arg_part;
+	unsigned char chksum_read;
+	unsigned char chksum_write;
 	unsigned long rw_size; /* within the 4KB GbE part */
 	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
@@ -788,7 +780,7 @@ main(int argc, char *argv[])
 		err(errno, "pledge (kill unveil)");
 #endif
 
-	srand((uint)(time(NULL) ^ getpid()));
+	srand((unsigned int)(time(NULL) ^ getpid()));
 
 	open_gbe_file();
 
@@ -840,24 +832,24 @@ sanitize_command_index(unsigned long c)
 
 	if (command[c].argc < 3)
 		err(EINVAL, "cmd index %lu: argc below 3, %d",
-		    (ulong)c, command[c].argc);
+		    (unsigned long)c, command[c].argc);
 
 	if (command[c].str == NULL)
 		err(EINVAL, "cmd index %lu: NULL str",
-		    (ulong)c);
+		    (unsigned long)c);
 	if (*command[c].str == '\0')
 		err(EINVAL, "cmd index %lu: empty str",
-		    (ulong)c);
+		    (unsigned long)c);
 
 	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
 		err(EINVAL, "cmd index %lu: str too long: %s",
-		    (ulong)c, command[c].str);
+		    (unsigned long)c, command[c].str);
 	}
 
 	if (command[c].run == NULL)
 		err(EINVAL, "cmd index %lu: cmd ptr null",
-		    (ulong)c);
+		    (unsigned long)c);
 
 	check_bin(command[c].arg_part, "cmd.arg_part");
 	check_bin(command[c].chksum_read, "cmd.chksum_read");
@@ -871,12 +863,12 @@ sanitize_command_index(unsigned long c)
 		break;
 	default:
 		err(EINVAL, "Unsupported rw_size: %lu",
-		    (ulong)gbe_rw_size);
+		    (unsigned long)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
 		err(EINVAL, "rw_size larger than GbE part: %lu",
-		    (ulong)gbe_rw_size);
+		    (unsigned long)gbe_rw_size);
 
 	if (command[c].flags != O_RDONLY &&
 	    command[c].flags != O_RDWR)
@@ -905,7 +897,7 @@ set_cmd(int argc, char *argv[])
 void
 set_cmd_args(int argc, char *argv[])
 {
-	u8 arg_part;
+	unsigned char arg_part;
 
 	if (!valid_command(cmd_index) || argc < 3)
 		usage();
@@ -929,13 +921,13 @@ set_cmd_args(int argc, char *argv[])
 unsigned long
 conv_argv_part_num(const char *part_str)
 {
-	u8 ch;
+	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
 		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined */
-	ch = (u8)part_str[0];
+	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
 		err(EINVAL, "Bad part number (%c)", ch);
 
@@ -958,8 +950,8 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 		err(EINVAL, "Empty string in xstrxcmp");
 
 	for (i = 0; i < maxlen; i++) {
-		u8 ac = (u8)a[i];
-		u8 bc = (u8)b[i];
+		unsigned char ac = (unsigned char)a[i];
+		unsigned char bc = (unsigned char)b[i];
 
 		if (ac == '\0' || bc == '\0') {
 			if (ac == bc)
@@ -1000,7 +992,7 @@ open_gbe_file(void)
 	if (gbe_st.st_nlink > 1)
 		fprintf(stderr,
 		    "%s: warning: file has %lu hard links\n",
-		    fname, (ulong)gbe_st.st_nlink);
+		    fname, (unsigned long)gbe_st.st_nlink);
 
 	if (gbe_st.st_nlink == 0)
 		err(EIO, "%s: file unlinked while open", fname);
@@ -1157,9 +1149,9 @@ read_checksums(void)
 {
 	unsigned long p;
 	unsigned long skip_part;
-	u8 arg_part;
-	u8 num_invalid;
-	u8 max_invalid;
+	unsigned char arg_part;
+	unsigned char num_invalid;
+	unsigned char max_invalid;
 
 	part_valid[0] = 0;
 	part_valid[1] = 0;
@@ -1195,7 +1187,7 @@ read_checksums(void)
 	if (num_invalid >= max_invalid) {
 		if (max_invalid == 1)
 			err(ECANCELED, "%s: part %lu has a bad checksum",
-			    fname, (ulong)part);
+			    fname, (unsigned long)part);
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    fname);
 	}
@@ -1204,8 +1196,8 @@ read_checksums(void)
 int
 good_checksum(unsigned long partnum)
 {
-	ushort expected_checksum = calculated_checksum(partnum);
-	ushort current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
+	unsigned short expected_checksum = calculated_checksum(partnum);
+	unsigned short current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
 
 	if (current_checksum == expected_checksum)
 		return 1;
@@ -1219,7 +1211,7 @@ run_cmd(unsigned long c)
 	check_command_num(c);
 
 	if (command[c].run == NULL)
-		err(EINVAL, "Command %lu: null ptr", (ulong)c);
+		err(EINVAL, "Command %lu: null ptr", (unsigned long)c);
 
 	command[c].run();
 }
@@ -1229,10 +1221,10 @@ check_command_num(unsigned long c)
 {
 	if (!valid_command(c))
 		err(EINVAL, "Invalid run_cmd arg: %lu",
-		    (ulong)c);
+		    (unsigned long)c);
 }
 
-u8
+unsigned char
 valid_command(unsigned long c)
 {
 	if (c >= N_COMMANDS)
@@ -1240,7 +1232,7 @@ valid_command(unsigned long c)
 
 	if (c != command[c].chk)
 		err(EINVAL, "Invalid cmd chk value (%lu) vs arg: %lu",
-		    (ulong)command[c].chk, (ulong)c);
+		    (unsigned long)command[c].chk, (unsigned long)c);
 
 	return 1;
 }
@@ -1326,7 +1318,7 @@ set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
 	char mac_ch;
-	ushort hex_num;
+	unsigned short hex_num;
 
 	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
 
@@ -1351,17 +1343,17 @@ set_mac_nib(unsigned long mac_str_pos,
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
-ushort
+unsigned short
 hextonum(char ch_s)
 {
-	u8 ch = (u8)ch_s;
+	unsigned char ch = (unsigned char)ch_s;
 
-	if ((uint)(ch - '0') <= 9)
+	if ((unsigned int)(ch - '0') <= 9)
 		return ch - '0';
 
 	ch |= 0x20;
 
-	if ((uint)(ch - 'a') <= 5)
+	if ((unsigned int)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
 
 	if (ch == '?' || ch == 'x')
@@ -1370,13 +1362,13 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-ushort
+unsigned short
 rhex(void)
 {
 	struct x_st_timeval tv;
-	ulong mix;
-	static ulong counter = 0;
-	ushort r;
+	unsigned long mix;
+	static unsigned long counter = 0;
+	unsigned short r;
 
 	/* Read /dev/urandom
 	 * if possible */
@@ -1388,10 +1380,10 @@ rhex(void)
 
 	x_i_gettimeofday(&tv, NULL);
 
-	mix = (ulong)tv.tv_sec
-	    ^ (ulong)tv.tv_usec
-	    ^ (ulong)getpid()
-	    ^ (ulong)&mix
+	mix = (unsigned long)tv.tv_sec
+	    ^ (unsigned long)tv.tv_usec
+	    ^ (unsigned long)getpid()
+	    ^ (unsigned long)&mix
 	    ^ counter++
 	    ^ entropy_jitter();
 
@@ -1399,20 +1391,20 @@ rhex(void)
 	 * Stack addresses can vary between
 	 * calls, thus increasing entropy.
 	 */
-	mix ^= (ulong)&mix;
-	mix ^= (ulong)&tv;
-	mix ^= (ulong)&counter;
+	mix ^= (unsigned long)&mix;
+	mix ^= (unsigned long)&tv;
+	mix ^= (unsigned long)&counter;
 
-	return (ushort)(mix & 0xf);
+	return (unsigned short)(mix & 0xf);
 }
 
-ushort
+unsigned short
 read_urandom(void)
 {
 	static int fd = -1;
 	static long n = -1;
 
-	static u8 r[256];
+	static unsigned char r[256];
 
 	if (fd < 0) {
 
@@ -1444,11 +1436,11 @@ read_urandom(void)
 	return r[n--] & 0xf;
 }
 
-ulong
+unsigned long
 entropy_jitter(void)
 {
 	struct x_st_timeval a, b;
-	ulong mix = 0;
+	unsigned long mix = 0;
 	long mix_diff;
 	int i;
 
@@ -1465,8 +1457,8 @@ entropy_jitter(void)
 		if (mix_diff < 0)
 			mix_diff = -mix_diff;
 
-		mix ^= (ulong)(mix_diff);
-		mix ^= (ulong)&mix;
+		mix ^= (unsigned long)(mix_diff);
+		mix ^= (unsigned long)&mix;
 	}
 
 	return mix;
@@ -1502,7 +1494,7 @@ write_mac_part(unsigned long partnum)
 		set_nvm_word(w, partnum, mac_buf[w]);
 
 	printf("Wrote MAC address to part %lu: ",
-	    (ulong)partnum);
+	    (unsigned long)partnum);
 	print_mac_from_nvm(partnum);
 }
 
@@ -1519,11 +1511,11 @@ cmd_helper_dump(void)
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, partnum),
-			    (ulong)partnum,
+			    (unsigned long)partnum,
 			    calculated_checksum(partnum));
 
 		printf("MAC (part %lu): ",
-		    (ulong)partnum);
+		    (unsigned long)partnum);
 		print_mac_from_nvm(partnum);
 		hexdump(partnum);
 	}
@@ -1533,13 +1525,13 @@ void
 print_mac_from_nvm(unsigned long partnum)
 {
 	unsigned long c;
-	ushort val16;
+	unsigned short val16;
 
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
 		printf("%02x:%02x",
-		    (uint)(val16 & 0xff),
-		    (uint)(val16 >> 8));
+		    (unsigned int)(val16 & 0xff),
+		    (unsigned int)(val16 >> 8));
 		if (c == 2)
 			printf("\n");
 		else
@@ -1552,17 +1544,17 @@ hexdump(unsigned long partnum)
 {
 	unsigned long c;
 	unsigned long row;
-	ushort val16;
+	unsigned short val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08lx ", (ulong)((unsigned long)row << 4));
+		printf("%08lx ", (unsigned long)((unsigned long)row << 4));
 		for (c = 0; c < 8; c++) {
 			val16 = nvm_word((row << 3) + c, partnum);
 			if (c == 4)
 				printf(" ");
 			printf(" %02x %02x",
-			    (uint)(val16 & 0xff),
-			    (uint)(val16 >> 8));
+			    (unsigned int)(val16 & 0xff),
+			    (unsigned int)(val16 >> 8));
 		}
 		printf("\n");
 	}
@@ -1635,7 +1627,7 @@ cmd_helper_cat(void)
 }
 
 void
-cat_buf(u8 *b)
+cat_buf(unsigned char *b)
 {
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
@@ -1650,7 +1642,7 @@ write_gbe_file(void)
 	struct stat tmp_st;
 
 	unsigned long p;
-	u8 update_checksum;
+	unsigned char update_checksum;
 
 	if (command[cmd_index].flags == O_RDONLY)
 		return;
@@ -1693,16 +1685,16 @@ set_checksum(unsigned long p)
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
-ushort
+unsigned short
 calculated_checksum(unsigned long p)
 {
 	unsigned long c;
-	uint val16 = 0;
+	unsigned int val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
-		val16 += (uint)nvm_word(c, p);
+		val16 += (unsigned int)nvm_word(c, p);
 
-	return (ushort)((NVM_CHECKSUM - val16) & 0xffff);
+	return (unsigned short)((NVM_CHECKSUM - val16) & 0xffff);
 }
 
 /*
@@ -1713,7 +1705,7 @@ calculated_checksum(unsigned long p)
  * file, but we assume otherwise and adapt accordingly.
  */
 
-ushort
+unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
 {
 	unsigned long pos;
@@ -1721,20 +1713,20 @@ nvm_word(unsigned long pos16, unsigned long p)
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (ushort)buf[pos] |
-	    ((ushort)buf[pos + 1] << 8);
+	return (unsigned short)buf[pos] |
+	    ((unsigned short)buf[pos + 1] << 8);
 }
 
 void
-set_nvm_word(unsigned long pos16, unsigned long p, ushort val16)
+set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 {
 	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	buf[pos] = (u8)(val16 & 0xff);
-	buf[pos + 1] = (u8)(val16 >> 8);
+	buf[pos] = (unsigned char)(val16 & 0xff);
+	buf[pos + 1] = (unsigned char)(val16 >> 8);
 
 	set_part_modified(p);
 }
@@ -1759,7 +1751,7 @@ check_nvm_bound(unsigned long c, unsigned long p)
 
 	if (c >= NVM_WORDS)
 		err(ECANCELED, "check_nvm_bound: out of bounds %lu",
-		    (ulong)c);
+		    (unsigned long)c);
 }
 
 void
@@ -1767,7 +1759,7 @@ check_bin(unsigned long a, const char *a_name)
 {
 	if (a > 1)
 		err(EINVAL, "%s must be 0 or 1, but is %lu",
-		    a_name, (ulong)a);
+		    a_name, (unsigned long)a);
 }
 
 void
@@ -1777,12 +1769,12 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 	long r;
 	unsigned long gbe_rw_size = command[cmd_index].rw_size;
 
-	u8 *mem_offset;
+	unsigned char *mem_offset;
 	off_t file_offset;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
-		    fname, rw_type_str, (ulong)p, rw_type);
+		    fname, rw_type_str, (unsigned long)p, rw_type);
 
 	mem_offset = gbe_mem_offset(p, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
@@ -1792,11 +1784,11 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 
 	if (r == -1)
 		err(errno, "%s: %s: part %lu",
-		    fname, rw_type_str, (ulong)p);
+		    fname, rw_type_str, (unsigned long)p);
 
 	if ((unsigned long)r != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
-		    fname, rw_type_str, (ulong)p);
+		    fname, rw_type_str, (unsigned long)p);
 }
 
 void
@@ -1890,9 +1882,9 @@ check_written_part(unsigned long p)
 {
 	long r;
 	unsigned long gbe_rw_size;
-	u8 *mem_offset;
+	unsigned char *mem_offset;
 	off_t file_offset;
-	u8 *buf_restore;
+	unsigned char *buf_restore;
 	struct stat st;
 
 	if (!part_modified[p])
@@ -1956,22 +1948,22 @@ report_io_err_rw(void)
 		if (rw_check_err_read[p])
 			fprintf(stderr,
 			    "%s: pread: p%lu (post-verification)\n",
-			    fname, (ulong)p);
+			    fname, (unsigned long)p);
 		if (rw_check_partial_read[p])
 			fprintf(stderr,
 			    "%s: partial pread: p%lu (post-verification)\n",
-			    fname, (ulong)p);
+			    fname, (unsigned long)p);
 		if (rw_check_bad_part[p])
 			fprintf(stderr,
 			    "%s: pwrite: corrupt write on p%lu\n",
-			    fname, (ulong)p);
+			    fname, (unsigned long)p);
 
 		if (rw_check_err_read[p] ||
 		    rw_check_partial_read[p]) {
 			fprintf(stderr,
 			    "%s: p%lu: skipped checksum verification "
 			    "(because read failed)\n",
-			    fname, (ulong)p);
+			    fname, (unsigned long)p);
 
 			continue;
 		}
@@ -1984,7 +1976,7 @@ report_io_err_rw(void)
 			fprintf(stderr, "BAD");
 
 		fprintf(stderr, " checksum in p%lu on-disk.\n",
-		    (ulong)p);
+		    (unsigned long)p);
 
 		if (post_rw_checksum[p]) {
 			fprintf(stderr,
@@ -2205,13 +2197,13 @@ err_fsync_dir:
  * but used to check Gbe bounds in memory,
  * and it is *also* used during file I/O.
  */
-u8 *
+unsigned char *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
-	return (u8 *)(buf + (unsigned long)gbe_off);
+	return (unsigned char *)(buf + (unsigned long)gbe_off);
 }
 
 /*
@@ -2252,7 +2244,7 @@ gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
 }
 
 long
-rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
+rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
 	unsigned long mem_addr;
@@ -2324,7 +2316,7 @@ err_rw_gbe_file_exact:
  * otherwise it will return an error.
  */
 long
-rw_file_exact(int fd, u8 *mem, unsigned long nrw,
+rw_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain,
     int loop_eintr, unsigned long max_retries,
     int off_reset)
