@@ -1363,7 +1363,7 @@ hextonum(char ch_s)
 		return ch - 'a' + 10;
 
 	if (ch == '?' || ch == 'x')
-		return rlong() & 0xf;
+		return (unsigned short)rlong() & 0xf;
 
 	return 16; /* invalid character */
 }
