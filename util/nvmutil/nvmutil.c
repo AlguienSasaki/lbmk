@@ -221,7 +221,6 @@ also consider:
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -361,6 +360,14 @@ static void check_command_num(size_t c);
 static u8 valid_command(size_t c);
 
 /*
+ * portable timeval
+ */
+struct x_st_timeval {
+	long tv_sec;
+	long tv_usec;
+};
+
+/*
  * Helper functions for command: setmac
  */
 static void cmd_helper_setmac(void);
@@ -373,7 +380,7 @@ static ushort hextonum(char ch_s);
 static ushort rhex(void);
 static ushort read_urandom(void);
 static ulong entropy_jitter(void);
-static int x_i_gettimeofday(struct timeval *tv, void *tz);
+static int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
 static void write_mac_part(size_t partnum);
 
 /*
@@ -1349,7 +1356,7 @@ hextonum(char ch_s)
 static ushort
 rhex(void)
 {
-	struct timeval tv;
+	struct x_st_timeval tv;
 	ulong mix;
 	static ulong counter = 0;
 	ushort r;
@@ -1421,7 +1428,7 @@ read_urandom(void)
 static ulong
 entropy_jitter(void)
 {
-	struct timeval a, b;
+	struct x_st_timeval a, b;
 	ulong mix = 0;
 	long mix_diff;
 	int i;
@@ -1446,8 +1453,10 @@ entropy_jitter(void)
 	return mix;
 }
 
+
+
 static int
-x_i_gettimeofday(struct timeval *tv, void *tz)
+x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 {
 	time_t t;
 
