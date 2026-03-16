@@ -26,11 +26,7 @@
  * default these days.
  */
 #ifndef PATH_LEN
-#ifdef PATH_MAX
-#define PATH_LEN (PATH_MAX)
-#else
 #define PATH_LEN 1024
-#endif
 #endif
 
 #define OFF_ERR 0
