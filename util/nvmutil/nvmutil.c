@@ -234,6 +234,9 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
+typedef long ssize_t;
+typedef unsigned long size_t;
+
 typedef unsigned char u8;
 typedef unsigned short ushort;
 typedef unsigned int uint;
