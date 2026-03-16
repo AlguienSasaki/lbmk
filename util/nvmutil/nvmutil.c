@@ -305,7 +305,7 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #endif
 
 #ifndef O_NONBLOCK
-#define O_NONBLOCK
+#define O_NONBLOCK 0
 #endif
 
 #ifndef O_CLOEXEC
