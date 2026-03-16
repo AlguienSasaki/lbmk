@@ -3231,6 +3231,8 @@ x_try_fdpath(const char *prefix, int fd, mode_t mode)
 	unsigned long i = 0;
 	unsigned long j;
 
+	struct stat st;
+
 	while (prefix[i]) {
 		if (i >= PATH_LEN - 1)
 			return -1;
@@ -3245,6 +3247,9 @@ x_try_fdpath(const char *prefix, int fd, mode_t mode)
 
 	i += j;
 	path[i] = '\0';
+
+	if (stat(path, &st) < 0)
+		return -1;
 
 	return chmod(path, mode);
 }
