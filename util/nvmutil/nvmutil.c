@@ -3088,15 +3088,18 @@ static char *
 x_c_tmpdir(void)
 {
 	char *t;
+	struct stat st;
 
 	t = getenv("TMPDIR");
-	if (t && *t)
-		return t;
+	if (t && *t) {
+		if (stat(t, &st) == 0 && S_ISDIR(st.st_mode))
+			return t;
+	}
 
-	if (access("/tmp", W_OK) == 0)
+	if (stat("/tmp", &st) == 0 && S_ISDIR(st.st_mode))
 		return "/tmp";
 
-	if (access("/var/tmp", W_OK) == 0)
+	if (stat("/var/tmp", &st) == 0 && S_ISDIR(st.st_mode))
 		return "/var/tmp";
 
 	return ".";
