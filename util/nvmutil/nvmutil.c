@@ -719,6 +719,9 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
+	if (CHAR_BIT != 8)
+		err(EINVAL, "Unsupported char size");
+
 	fname = argv[1];
 
 #ifdef NVMUTIL_UNVEIL
