@@ -479,6 +479,10 @@ static char *x_c_strrchr(const char *s, int c);
 static int x_i_rename(const char *src, const char *dst);
 static char *x_c_tmpdir(void);
 static int x_i_close(int fd);
+static void *x_v_memcpy(void *dst,
+    const void *src, unsigned long n);
+static int x_i_memcmp(const void *a,
+    const void *b, unsigned long n);
 
 /*
  * Sizes in bytes:
@@ -1119,7 +1123,7 @@ copy_gbe(void)
 	if (r < 0)
 		err(errno, "%s: read failed (cmp)", tname);
 
-	if (memcmp(buf, bufcmp, gbe_file_size) != 0)
+	if (x_i_memcmp(buf, bufcmp, gbe_file_size) != 0)
 		err(errno, "%s: %s: read contents differ (pre-test)",
 		    fname, tname);
 
@@ -1136,7 +1140,7 @@ copy_gbe(void)
 	if (gbe_file_size == SIZE_8KB)
 		return;
 
-	memcpy(buf + (unsigned long)GBE_PART_SIZE,
+	x_v_memcpy(buf + (unsigned long)GBE_PART_SIZE,
 	    buf + (unsigned long)(gbe_file_size >> 1),
 	    (unsigned long)GBE_PART_SIZE);
 }
@@ -1558,17 +1562,17 @@ hexdump(unsigned long partnum)
 static void
 cmd_helper_swap(void)
 {
-	memcpy(
+	x_v_memcpy(
 	    buf + (unsigned long)GBE_WORK_SIZE,
 	    buf,
 	    GBE_PART_SIZE);
 
-	memcpy(
+	x_v_memcpy(
 	    buf,
 	    buf + (unsigned long)GBE_PART_SIZE,
 	    GBE_PART_SIZE);
 
-	memcpy(
+	x_v_memcpy(
 	    buf + (unsigned long)GBE_PART_SIZE,
 	    buf + (unsigned long)GBE_WORK_SIZE,
 	    GBE_PART_SIZE);
@@ -1580,7 +1584,7 @@ cmd_helper_swap(void)
 static void
 cmd_helper_copy(void)
 {
-	memcpy(
+	x_v_memcpy(
 	    buf + (unsigned long)((part ^ 1) * GBE_PART_SIZE),
 	    buf + (unsigned long)(part * GBE_PART_SIZE),
 	    GBE_PART_SIZE);
@@ -1904,7 +1908,7 @@ check_written_part(unsigned long p)
 		rw_check_err_read[p] = io_err_gbe = 1;
 	else if ((unsigned long)r != gbe_rw_size)
 		rw_check_partial_read[p] = io_err_gbe = 1;
-	else if (memcmp(mem_offset, pad, gbe_rw_size) != 0)
+	else if (x_i_memcmp(mem_offset, pad, gbe_rw_size) != 0)
 		rw_check_bad_part[p] = io_err_gbe = 1;
 
 	if (rw_check_err_read[p] ||
@@ -2125,7 +2129,7 @@ fsync_dir(const char *path)
 	if (dirbuf == NULL)
 		goto err_fsync_dir;
 
-	memcpy(dirbuf, path, pathlen + 1);
+	x_v_memcpy(dirbuf, path, pathlen + 1);
 	slash = x_c_strrchr(dirbuf, '/');
 
 	if (slash != NULL) {
@@ -2922,17 +2926,17 @@ new_tmpfile(int *fd, int local, const char *path)
 
 		*dest = '.'; /* hidden file */
 
-		memcpy(dest + (unsigned long)1, tmpname, tmpname_len);
+		x_v_memcpy(dest + (unsigned long)1, tmpname, tmpname_len);
 
-		memcpy(dest + (unsigned long)1 + tmpname_len,
+		x_v_memcpy(dest + (unsigned long)1 + tmpname_len,
 		    default_tmpname, tmpdir_len);
 	} else {
 
-		memcpy(dest, base, tmpdir_len);
+		x_v_memcpy(dest, base, tmpdir_len);
 
 		dest[tmpdir_len] = '/';
 
-		memcpy(dest + tmpdir_len + 1, tmpname, tmpname_len);
+		x_v_memcpy(dest + tmpdir_len + 1, tmpname, tmpname_len);
 	}
 
 	dest[tmppath_len] = '\0';
@@ -3116,4 +3120,32 @@ x_i_close(int fd)
 	} while (r == -1 && errno == EINTR);
 
 	return r;
+}
+
+static void *
+x_v_memcpy(void *dst, const void *src, unsigned long n)
+{
+	unsigned char *d = (unsigned char *)dst;
+	const unsigned char *s = (const unsigned char *)src;
+
+	while (n--)
+		*d++ = *s++;
+
+	return dst;
+}
+
+static int
+x_i_memcmp(const void *a, const void *b, unsigned long n)
+{
+	const unsigned char *pa = (const unsigned char *)a;
+	const unsigned char *pb = (const unsigned char *)b;
+
+	while (n--) {
+		if (*pa != *pb)
+			return *pa - *pb;
+		pa++;
+		pb++;
+	}
+
+	return 0;
 }
