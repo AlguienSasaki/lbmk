@@ -466,6 +466,7 @@ static const char *getnvmprogname(void);
  * a special kind of hell
  */
 static char *new_tmpfile(int *fd, int local, const char *path);
+static int x_i_mkstemp(char *template);
 
 /*
  * Sizes in bytes:
@@ -693,7 +694,6 @@ static ino_t tmp_ino;
  * prototypes. Should be safe
  * on most Unices and compilers
  */
-int mkstemp(char *template);
 int fchmod(int fd, mode_t mode);
 
 static int tmp_fd = -1;
@@ -2910,7 +2910,7 @@ new_tmpfile(int *fd, int local, const char *path)
 
 	dest[tmppath_len] = '\0';
 
-	fd_tmp = mkstemp(dest);
+	fd_tmp = x_i_mkstemp(dest);
 	if (fd_tmp == -1)
 		goto err_new_tmpfile;
 
@@ -2974,4 +2974,19 @@ err_new_tmpfile:
 		close(fd_tmp);
 
 	return NULL;
+}
+
+/*
+ * portable mkstemp
+ */
+static int
+x_i_mkstemp(char *template)
+{
+	int fd;
+
+	if (mktemp(template) == NULL)
+		return -1;
+
+	fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
+	return fd;
 }
