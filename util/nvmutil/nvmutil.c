@@ -991,8 +991,8 @@ open_gbe_file(void)
 	gbe_ino = gbe_st.st_ino;
 
 	if (gbe_st.st_nlink > 1)
-		fprintf(stderr,
-		    "%s: warning: file has %lu hard links\n",
+		err(EINVAL,
+		    "%s: warning: file has multiple (%lu) hard links\n",
 		    fname, (unsigned long)gbe_st.st_nlink);
 
 	if (gbe_st.st_nlink == 0)
