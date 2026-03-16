@@ -29,7 +29,7 @@
 #ifdef PATH_MAX
 #define PATH_LEN (PATH_MAX)
 #else
-#define PATH_LEN 4096
+#define PATH_LEN 1024
 #endif
 #endif
 
@@ -2103,7 +2103,7 @@ fsync_dir(const char *path)
     (PATH_LEN) >= 256
 	size_t maxlen = PATH_LEN;
 #else
-	size_t maxlen = 4096;
+	size_t maxlen = 1024;
 #endif
 	size_t pathlen;
 /*	char dirbuf[maxlen]; */
@@ -2867,7 +2867,7 @@ new_tmpfile(int *fd, int local, const char *path)
     (PATH_LEN) >= 256
 	maxlen = PATH_LEN;
 #else
-	maxlen = 4096;
+	maxlen = 1024;
 #endif
 
 	tmpname = default_tmpname;
