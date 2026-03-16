@@ -695,6 +695,7 @@ static ino_t tmp_ino;
  * prototypes. Should be safe
  * on most Unices and compilers
  */
+char *mktemp(char *template);
 int fchmod(int fd, mode_t mode);
 
 static int tmp_fd = -1;
