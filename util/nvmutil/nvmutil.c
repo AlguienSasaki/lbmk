@@ -484,6 +484,7 @@ int x_try_fdpath(const char *prefix,
     int fd, mode_t mode);
 unsigned long x_conv_fd(char *buf,
     unsigned long n);
+int x_i_fsync(int fd);
 
 /*
  * Sizes in bytes:
@@ -1116,7 +1117,7 @@ copy_gbe(void)
 	 * fsync tmp gbe file, because we will compare
 	 * its contents to what was read (for safety)
 	 */
-	if (fsync(tmp_fd) == -1)
+	if (x_i_fsync(tmp_fd) == -1)
 		err(errno, "%s: fsync (tmpfile copy)", tname);
 
 	r = rw_file_exact(tmp_fd, bufcmp, gbe_file_size,
@@ -1810,7 +1811,7 @@ write_to_gbe_bin(void)
 	 * We may otherwise read from
 	 * cache, so we must sync.
 	 */
-	if (fsync(tmp_fd) == -1)
+	if (x_i_fsync(tmp_fd) == -1)
 		err(errno, "%s: fsync (pre-verification)",
 		    tname);
 
@@ -2049,7 +2050,7 @@ gbe_mv(void)
 	if (r < 0)
 		goto ret_gbe_mv;
 
-	if (fsync(dest_fd) == -1)
+	if (x_i_fsync(dest_fd) == -1)
 		goto ret_gbe_mv;
 
 	if (x_i_close(dest_fd) == -1)
@@ -2165,7 +2166,7 @@ fsync_dir(const char *path)
 	}
 
 	/* sync file on disk */
-	if (fsync(dfd) == -1)
+	if (x_i_fsync(dfd) == -1)
 		goto err_fsync_dir;
 
 	if (x_i_close(dfd) == -1)
@@ -3104,7 +3105,7 @@ x_i_rename(const char *src, const char *dst)
 		return -1;
 	}
 
-	fsync(dfd);
+	x_i_fsync(dfd);
 
 	x_i_close(sfd);
 	x_i_close(dfd);
@@ -3232,4 +3233,16 @@ x_conv_fd(char *buf, unsigned long n)
 		buf[j++] = tmp[--i];
 
 	return j;
+}
+
+int
+x_i_fsync(int fd)
+{
+	int r;
+
+	do {
+		r = fsync(fd);
+	} while (r == -1 && errno == EINTR);
+
+	return r;
 }
