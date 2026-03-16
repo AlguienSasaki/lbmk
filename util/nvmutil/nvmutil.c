@@ -373,8 +373,7 @@ void set_mac_byte(unsigned long mac_byte_pos);
 void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
 unsigned short hextonum(char ch_s);
-unsigned short rhex(void);
-unsigned short read_urandom(void);
+unsigned long rlong(void);
 unsigned long entropy_jitter(void);
 int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
 void write_mac_part(unsigned long partnum);
@@ -1364,30 +1363,25 @@ hextonum(char ch_s)
 		return ch - 'a' + 10;
 
 	if (ch == '?' || ch == 'x')
-		return rhex(); /* random character */
+		return rlong() & 0xf;
 
 	return 16; /* invalid character */
 }
 
-unsigned short
-rhex(void)
+unsigned long
+rlong(void)
 {
 	struct x_st_timeval tv;
-	unsigned long mix;
+	static unsigned long mix = 0;
 	static unsigned long counter = 0;
-	unsigned short r;
 
-	/* Read /dev/urandom
-	 * if possible */
-	r = read_urandom();
-	if (r < 16)
-		return r;
-
-	/* Fallback */
+	static int fd = -1;
+	unsigned long rval = 0;
+	long nr = -1;
 
 	x_i_gettimeofday(&tv, NULL);
 
-	mix = (unsigned long)tv.tv_sec
+	mix ^= (unsigned long)tv.tv_sec
 	    ^ (unsigned long)tv.tv_usec
 	    ^ (unsigned long)getpid()
 	    ^ (unsigned long)&mix
@@ -1402,45 +1396,45 @@ rhex(void)
 	mix ^= (unsigned long)&tv;
 	mix ^= (unsigned long)&counter;
 
-	return (unsigned short)(mix & 0xf);
-}
+	/*
+	 * Now, we won't use this mix
+	 * immediately. We'll try to
+	 * read urandom first, which is
+	 * likely safer, and pass that,
+	 * falling back to the mixture
+	 * if urandom fails.
+	 *
+	 * Since urandom is likely
+	 * reliable, the number of
+	 * times it will fail is
+	 * likely extremely random,
+	 * thus, building more than
+	 * sufficient entropy by the
+	 * time we do eventually use
+	 * the fallback code
+	 */
 
-unsigned short
-read_urandom(void)
-{
-	static int fd = -1;
-	static long n = -1;
+	if (fd < 0)
+		fd = open("/dev/urandom", O_RDONLY | O_BINARY | O_NONBLOCK);
 
-	static unsigned char r[256];
-
-	if (fd < 0) {
-
-		fd = open("/dev/urandom", O_RDONLY | O_NONBLOCK);
-#ifndef NVMUTIL_UNVEIL
-		if (fd < 0) /* older openbsd */
-			fd = open("/dev/arandom", O_RDONLY | O_NONBLOCK);
+#if !(defined(__OpenBSD__) && defined(OpenBSD)) || \
+    (defined(__OpenBSD__) && defined(OpenBSD) && \
+    OpenBSD < 604)
+	if (fd < 0) /* old openbsd */
+		fd = open("/dev/arandom", O_RDONLY | O_BINARY | O_NONBLOCK);
 #endif
-		if (fd < 0) /* super old unix (could block) */
-			fd = open("/dev/random", O_RDONLY | O_NONBLOCK);
 
-		if (fd < 0)
-			return 16;
-	}
+	if (fd < 0)
+		fd = open("/dev/random", O_RDONLY | O_BINARY | O_NONBLOCK);
 
-	if (n < 0) {
+	nr = rw_file_exact(fd, (unsigned char *)&rval,
+	    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
+	    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
 
-		n = rw_file_exact(fd, r, 256, 0, IO_READ,
-		    LOOP_EAGAIN, LOOP_EINTR, 2, OFF_ERR);
+	if (nr == sizeof(unsigned long))
+		return rval;
 
-		if (n == 0)
-			n = -1;
-		if (n < 0)
-			return 16;
-
-		--n;
-	}
-
-	return r[n--] & 0xf;
+	return mix;
 }
 
 unsigned long
@@ -1451,8 +1445,9 @@ entropy_jitter(void)
 	long mix_diff;
 	int i;
 
+	x_i_gettimeofday(&a, NULL);
+
 	for (i = 0; i < 8; i++) {
-		x_i_gettimeofday(&a, NULL);
 		getpid();
 		x_i_gettimeofday(&b, NULL);
 
@@ -3043,7 +3038,7 @@ x_i_mkstemp(char *template)
 	for (i = 0; i < 100; i++) {
 
 		for (j = 0; j < 6; j++)
-			p[j] = ch[rhex() & 31];
+			p[j] = ch[rlong() & 31];
 
 		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
 
