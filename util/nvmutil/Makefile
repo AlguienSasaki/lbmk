@@ -4,21 +4,22 @@
 
 CC?=cc
 CSTD?=-std=c90
-WERROR?=
+WERROR?=-Werror
 CWARN?=-Wall -Wextra -pedantic
 COPT?=-Os
-CFLAGS?=-I. $(COPT) $(CWARN) $(CSTD)
+CFLAGS?=$(COPT) $(CWARN) $(CSTD)
 LDFLAGS?=
 DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
+LDIR?=-I.
 
 PROG=nvmutil
 
 all: $(PROG)
 
 $(PROG): nvmutil.c
-	$(CC) $(CFLAGS) $(WERROR) $(LDFLAGS) nvmutil.c -o $(PROG)
+	$(CC) $(LDIR) $(WERROR) $(CFLAGS) $(LDFLAGS) nvmutil.c -o $(PROG)
 
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
