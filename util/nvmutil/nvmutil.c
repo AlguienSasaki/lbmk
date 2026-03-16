@@ -756,6 +756,8 @@ main(int argc, char *argv[])
 		err(errno, "pledge, unveil");
 	if (unveil("/dev/urandom", "r") == -1)
 		err(errno, "unveil: /dev/urandom");
+	if (unveil("/dev/random", "r") == -1)
+		err(errno, "unveil: /dev/random");
 #else
 	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
 		err(errno, "pledge");
@@ -1415,8 +1417,10 @@ read_urandom(void)
 	if (fd < 0) {
 
 		fd = open("/dev/urandom", O_RDONLY | O_NONBLOCK);
+#ifndef NVMUTIL_UNVEIL
 		if (fd < 0) /* older openbsd */
 			fd = open("/dev/arandom", O_RDONLY | O_NONBLOCK);
+#endif
 		if (fd < 0) /* super old unix (could block) */
 			fd = open("/dev/random", O_RDONLY | O_NONBLOCK);
 
