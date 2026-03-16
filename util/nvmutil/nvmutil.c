@@ -717,10 +717,6 @@ char *tname = NULL;
 #endif
 #endif
 
-#ifndef S_ISREG
-#define S_ISREG(m) (((m) & (S_IFMT) == (S_IFREG))
-#endif
-
 int
 main(int argc, char *argv[])
 {
