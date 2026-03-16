@@ -712,6 +712,8 @@ static char *tname = NULL;
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
 
+extern void *malloc();
+
 int
 main(int argc, char *argv[])
 {
