@@ -477,6 +477,7 @@ static char *new_tmpfile(int *fd, int local, const char *path);
 static int x_i_mkstemp(char *template);
 static char *x_c_strrchr(const char *s, int c);
 static int x_i_rename(const char *src, const char *dst);
+static char *x_c_tmpdir(void);
 
 /*
  * Sizes in bytes:
@@ -2889,7 +2890,7 @@ new_tmpfile(int *fd, int local, const char *path)
 		 */
 		tmpdir_len = sizeof(default_tmpname);
 	} else {
-		base = getenv("TMPDIR");
+		base = x_c_tmpdir();
 
 		if (base == NULL)
 			base = tmp_default;
@@ -3074,4 +3075,22 @@ x_i_rename(const char *src, const char *dst)
 		return -1;
 
 	return 0;
+}
+
+static char *
+x_c_tmpdir(void)
+{
+	char *t;
+
+	t = getenv("TMPDIR");
+	if (t && *t)
+		return t;
+
+	if (access("/tmp", W_OK) == 0)
+		return "/tmp";
+
+	if (access("/var/tmp", W_OK) == 0)
+		return "/var/tmp";
+
+	return ".";
 }
