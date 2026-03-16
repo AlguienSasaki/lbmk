@@ -472,7 +472,13 @@ const char *getnvmprogname(void);
 char *new_tmpfile(int *fd, int local, const char *path);
 int x_i_mkstemp(char *template);
 char *x_c_strrchr(const char *s, int c);
+/* x_i_rename not suitable
+ * for atomic writes. kept
+ * commentted for use in a
+ * library in the future */
+/*
 int x_i_rename(const char *src, const char *dst);
+*/
 char *x_c_tmpdir(void);
 int x_i_close(int fd);
 void *x_v_memcpy(void *dst,
@@ -1999,7 +2005,7 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	r = x_i_rename(tname, fname);
+	r = rename(tname, fname);
 
 	if (r > -1) {
 		/*
@@ -2052,7 +2058,7 @@ gbe_mv(void)
 	if (x_i_close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (x_i_rename(dest_tmp, fname) == -1)
+	if (rename(dest_tmp, fname) == -1)
 		goto ret_gbe_mv;
 
 	if (fsync_dir(fname) < 0)
@@ -2105,7 +2111,7 @@ ret_gbe_mv:
 }
 
 /*
- * Ensure x_i_rename() is durable by syncing the
+ * Ensure rename() is durable by syncing the
  * directory containing the target file.
  */
 int
@@ -3069,6 +3075,7 @@ x_c_strrchr(const char *s, int c)
 	return (char *)p;
 }
 
+/*
 int
 x_i_rename(const char *src, const char *dst)
 {
@@ -3111,6 +3118,7 @@ x_i_rename(const char *src, const char *dst)
 
 	return 0;
 }
+*/
 
 char *
 x_c_tmpdir(void)
