@@ -3204,6 +3204,12 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 	return 0;
 }
 
+/*
+ * emulate fchmod() using file descriptor
+ * paths, for old unix portability. should
+ * work on e.g. BSD/MacOS (/dev/fd/N),
+ * Linux (/proc/self/fd/N) and others 
+ */
 int
 x_i_fchmod(int fd, mode_t mode)
 {
