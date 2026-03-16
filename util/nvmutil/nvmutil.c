@@ -714,14 +714,14 @@ char *tname = NULL;
 
 #ifndef S_ISREG
 #ifdef S_IFMT
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#define S_ISREG(m) (((m) & (S_IFMT)) == (S_IFREG))
 #else
-#define S_ISREG(m) (((m) & S_IFREG) == S_IFREG)
+#define S_ISREG(m) (((m) & (S_IFREG)) == (S_IFREG))
 #endif
 #endif
 
 #ifndef S_ISREG
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#define S_ISREG(m) (((m) & (S_IFMT) == (S_IFREG))
 #endif
 
 int
