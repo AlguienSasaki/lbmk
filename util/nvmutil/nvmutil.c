@@ -3232,13 +3232,18 @@ x_try_fdpath(const char *prefix, int fd, mode_t mode)
 	unsigned long j;
 
 	while (prefix[i]) {
+		if (i >= PATH_LEN - 1)
+			return -1;
 		path[i] = prefix[i];
 		i++;
 	}
 
 	j = x_conv_fd(path + i, (unsigned long)fd);
-	i += j;
 
+	if (i + j >= PATH_LEN)
+		return -1;
+
+	i += j;
 	path[i] = '\0';
 
 	return chmod(path, mode);
