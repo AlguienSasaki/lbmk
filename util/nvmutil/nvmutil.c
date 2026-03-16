@@ -142,7 +142,7 @@
  *	codebase would allow me to write a separate C
  *	program to test some finer intricacies
  * TODO: the unit tests would basically test regressions
- * TODO: after writing back a gbe to file, close() and
+ * TODO: after writing back a gbe to file, x_i_close() and
  *	open() it again, read it again, and check that
  *	the contents were written correctly, providing
  *	a warning if they were. do this in the main
@@ -478,6 +478,7 @@ static int x_i_mkstemp(char *template);
 static char *x_c_strrchr(const char *s, int c);
 static int x_i_rename(const char *src, const char *dst);
 static char *x_c_tmpdir(void);
+static int x_i_close(int fd);
 
 /*
  * Sizes in bytes:
@@ -1813,12 +1814,12 @@ write_to_gbe_bin(void)
 
 	saved_errno = errno;
 
-	if (close(tmp_fd) == -1) {
+	if (x_i_close(tmp_fd) == -1) {
 		fprintf(stderr, "FAIL: %s: close\n", tname);
 		io_err_gbe_bin = 1;
 	}
 
-	if (close(gbe_fd) == -1) {
+	if (x_i_close(gbe_fd) == -1) {
 		fprintf(stderr, "FAIL: %s: close\n", fname);
 		io_err_gbe_bin = 1;
 	}
@@ -2035,7 +2036,7 @@ gbe_mv(void)
 
 	sync();
 
-	if (close(dest_fd) == -1)
+	if (x_i_close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
 	if (x_i_rename(dest_tmp, fname) == -1)
@@ -2050,7 +2051,7 @@ gbe_mv(void)
 ret_gbe_mv:
 
 	if (gbe_fd > -1) {
-		if (close(gbe_fd) < 0)
+		if (x_i_close(gbe_fd) < 0)
 			r = -1;
 		if (fsync_dir(fname) < 0)
 			r = -1;
@@ -2058,7 +2059,7 @@ ret_gbe_mv:
 	}
 
 	if (tmp_fd > -1) {
-		if (close(tmp_fd) < 0)
+		if (x_i_close(tmp_fd) < 0)
 			r = -1;
 
 		tmp_fd = -1;
@@ -2149,7 +2150,7 @@ fsync_dir(const char *path)
 
 	sync();
 
-	if (close(dfd) == -1)
+	if (x_i_close(dfd) == -1)
 		goto err_fsync_dir;
 
 	if (dirbuf != NULL)
@@ -2169,7 +2170,7 @@ err_fsync_dir:
 		free(dirbuf);
 
 	if (dfd > -1)
-		close(dfd);
+		x_i_close(dfd);
 
 	io_err_gbe_bin = 1;
 	errno = saved_errno;
@@ -2758,13 +2759,13 @@ exit_cleanup(void)
 	int saved_errno = errno;
 
 	if (gbe_fd > -1) {
-		if (close(gbe_fd) == -1)
+		if (x_i_close(gbe_fd) == -1)
 			close_err = 1;
 		gbe_fd = -1;
 	}
 
 	if (tmp_fd > -1) {
-		if (close(tmp_fd) == -1)
+		if (x_i_close(tmp_fd) == -1)
 			close_err = 1;
 	}
 
@@ -2997,7 +2998,7 @@ err_new_tmpfile:
 		free(dest);
 
 	if (fd_tmp > -1)
-		close(fd_tmp);
+		x_i_close(fd_tmp);
 
 	return NULL;
 }
@@ -3054,29 +3055,29 @@ x_i_rename(const char *src, const char *dst)
 
 	dfd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (dfd < 0) {
-		close(sfd);
+		x_i_close(sfd);
 		return -1;
 	}
 
 	while ((r = read(sfd, buf, sizeof(buf))) > 0) {
 		ssize_t w = write(dfd, buf, r);
 		if (w != r) {
-			close(sfd);
-			close(dfd);
+			x_i_close(sfd);
+			x_i_close(dfd);
 			return -1;
 		}
 	}
 
 	if (r < 0) {
-		close(sfd);
-		close(dfd);
+		x_i_close(sfd);
+		x_i_close(dfd);
 		return -1;
 	}
 
 	sync();
 
-	close(sfd);
-	close(dfd);
+	x_i_close(sfd);
+	x_i_close(dfd);
 
 	if (unlink(src) < 0)
 		return -1;
@@ -3103,4 +3104,16 @@ x_c_tmpdir(void)
 		return "/var/tmp";
 
 	return ".";
+}
+
+static int
+x_i_close(int fd)
+{
+	int r;
+
+	do {
+		r = close(fd);
+	} while (r == -1 && errno == EINTR);
+
+	return r;
 }
