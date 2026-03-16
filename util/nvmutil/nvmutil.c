@@ -706,6 +706,8 @@ static ino_t tmp_ino;
  */
 char *mktemp(char *template);
 int fchmod(int fd, mode_t mode);
+void sync(void);
+int syncfs(int fd);
 
 static int tmp_fd = -1;
 static char *tname = NULL;
@@ -1106,12 +1108,7 @@ copy_gbe(void)
 	if (gbe_tmp_size != gbe_file_size)
 		err(EIO, "%s: %s: not the same size", fname, tname);
 
-	/*
-	 * fsync tmp gbe file, because we will compare
-	 * its contents to what was read (for safety)
-	 */
-	if (fsync(tmp_fd) == -1)
-		err(errno, "%s: fsync (tmpfile copy)", tname);
+	sync();
 
 	r = rw_file_exact(tmp_fd, bufcmp, gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
@@ -1798,13 +1795,7 @@ write_to_gbe_bin(void)
 
 	write_gbe_file();
 
-	/*
-	 * We may otherwise read from
-	 * cache, so we must sync.
-	 */
-	if (fsync(tmp_fd) == -1)
-		err(errno, "%s: fsync (pre-verification)",
-		    tname);
+	sync();
 
 	check_written_part(0);
 	check_written_part(1);
@@ -2041,8 +2032,7 @@ gbe_mv(void)
 	if (r < 0)
 		goto ret_gbe_mv;
 
-	if (fsync(dest_fd) == -1)
-		goto ret_gbe_mv;
+	sync();
 
 	if (close(dest_fd) == -1)
 		goto ret_gbe_mv;
@@ -2156,9 +2146,7 @@ fsync_dir(const char *path)
 		goto err_fsync_dir;
 	}
 
-	/* sync file on disk */
-	if (fsync(dfd) == -1)
-		goto err_fsync_dir;
+	sync();
 
 	if (close(dfd) == -1)
 		goto err_fsync_dir;
@@ -3077,7 +3065,7 @@ x_i_rename(const char *src, const char *dst)
 		return -1;
 	}
 
-	fsync(dfd);
+	sync();
 
 	close(sfd);
 	close(dfd);
