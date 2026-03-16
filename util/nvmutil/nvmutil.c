@@ -373,6 +373,7 @@ static ushort hextonum(char ch_s);
 static ushort rhex(void);
 static ushort read_urandom(void);
 static ulong entropy_jitter(void);
+static int x_i_gettimeofday(struct timeval *tv, void *tz);
 static void write_mac_part(size_t partnum);
 
 /*
@@ -1356,7 +1357,7 @@ rhex(void)
 
 	/* Fallback */
 
-	gettimeofday(&tv, NULL);
+	x_i_gettimeofday(&tv, NULL);
 
 	mix = (ulong)tv.tv_sec
 	    ^ (ulong)tv.tv_usec
@@ -1421,9 +1422,9 @@ entropy_jitter(void)
 	int i;
 
 	for (i = 0; i < 8; i++) {
-		gettimeofday(&a, NULL);
+		x_i_gettimeofday(&a, NULL);
 		getpid();
-		gettimeofday(&b, NULL);
+		x_i_gettimeofday(&b, NULL);
 
 		/*
 		 * prevent negative numbers to prevent overflow,
@@ -1438,6 +1439,21 @@ entropy_jitter(void)
 	}
 
 	return mix;
+}
+
+static int
+x_i_gettimeofday(struct timeval *tv, void *tz)
+{
+	time_t t;
+
+	(void)tz;
+
+	t = time(NULL);
+
+	tv->tv_sec = t;
+	tv->tv_usec = (long)clock() % 1000000;
+
+	return 0;
 }
 
 static void
