@@ -2150,7 +2150,11 @@ fsync_dir(const char *path)
 		strcpy(dirbuf, ".");
 	}
 
-	dfd = open(dirbuf, O_RDONLY);
+	dfd = open(dirbuf, O_RDONLY
+#ifdef O_DIRECTORY
+	    | O_DIRECTORY
+#endif
+	);
 	if (dfd == -1)
 		goto err_fsync_dir;
 
