@@ -132,7 +132,7 @@
  *	files at once (noting limitations with cat)
  *	BONUS: implement own getopt(), for portability
  *
- * TODO: document fuzzing / static analysis methods
+ * TODO: document fuzzing / analysis methods
  * 	for the code, and:
  * TODO: implement rigorous unit tests (separate util)
  *	NOTE: this would *include* known good test files
@@ -155,7 +155,7 @@
  *	featureset of nvmutil.
  * TODO: write a manpage
  * TODO: simplify the command sanitization, implement more
- *	of it as build time checks, e.g. static asserts.
+ *	of it as build time checks, e.g. asserts.
  *	generally remove cleverness from the code, instead
  *	prefyerring readibility
  * TODO: also document nvmutil's coding style, which is
@@ -198,7 +198,7 @@ further note when fuzzing is implemented:
 use deterministic randomisation, with a
 guaranteed seed - so e.g. don't use /dev/urandom
 in test builds. e.g. just use normal rand()
-but with a static seed e.g. 1234
+but with a seed e.g. 1234
 */
 /*
 TODO: stricter build flags, e.g.
@@ -331,23 +331,23 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 /*
  * Sanitize command tables.
  */
-static void sanitize_command_list(void);
-static void sanitize_command_index(unsigned long c);
+void sanitize_command_list(void);
+void sanitize_command_index(unsigned long c);
 
 /*
  * Argument handling (user input)
  */
-static void set_cmd(int argc, char *argv[]);
-static void set_cmd_args(int argc, char *argv[]);
-static unsigned long conv_argv_part_num(const char *part_str);
-static int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
+void set_cmd(int argc, char *argv[]);
+void set_cmd_args(int argc, char *argv[]);
+unsigned long conv_argv_part_num(const char *part_str);
+int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
 
 /*
  * Prep files for reading
  */
-static void open_gbe_file(void);
-static int lock_file(int fd);
-static void xopen(int *fd, const char *path, int flags, struct stat *st);
+void open_gbe_file(void);
+int lock_file(int fd);
+void xopen(int *fd, const char *path, int flags, struct stat *st);
 
 /*
  * Read GbE file and verify
@@ -355,17 +355,17 @@ static void xopen(int *fd, const char *path, int flags, struct stat *st);
  *
  * After this, we can run commands.
  */
-static void copy_gbe(void);
-static void read_checksums(void);
-static int good_checksum(unsigned long partnum);
+void copy_gbe(void);
+void read_checksums(void);
+int good_checksum(unsigned long partnum);
 
 /*
  * Execute user command on GbE data.
  * These are stubs that call helpers.
  */
-static void run_cmd(unsigned long c);
-static void check_command_num(unsigned long c);
-static u8 valid_command(unsigned long c);
+void run_cmd(unsigned long c);
+void check_command_num(unsigned long c);
+u8 valid_command(unsigned long c);
 
 /*
  * portable timeval
@@ -378,42 +378,42 @@ struct x_st_timeval {
 /*
  * Helper functions for command: setmac
  */
-static void cmd_helper_setmac(void);
-static void parse_mac_string(void);
-static unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
-static void set_mac_byte(unsigned long mac_byte_pos);
-static void set_mac_nib(unsigned long mac_str_pos,
+void cmd_helper_setmac(void);
+void parse_mac_string(void);
+unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
+void set_mac_byte(unsigned long mac_byte_pos);
+void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
-static ushort hextonum(char ch_s);
-static ushort rhex(void);
-static ushort read_urandom(void);
-static ulong entropy_jitter(void);
-static int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
-static void write_mac_part(unsigned long partnum);
+ushort hextonum(char ch_s);
+ushort rhex(void);
+ushort read_urandom(void);
+ulong entropy_jitter(void);
+int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
+void write_mac_part(unsigned long partnum);
 
 /*
  * Helper functions for command: dump
  */
-static void cmd_helper_dump(void);
-static void print_mac_from_nvm(unsigned long partnum);
-static void hexdump(unsigned long partnum);
+void cmd_helper_dump(void);
+void print_mac_from_nvm(unsigned long partnum);
+void hexdump(unsigned long partnum);
 
 /*
  * Helper functions for command: swap
  */
-static void cmd_helper_swap(void);
+void cmd_helper_swap(void);
 
 /*
  * Helper functions for command: copy
  */
-static void cmd_helper_copy(void);
+void cmd_helper_copy(void);
 
 /*
  * Helper functions for commands:
  * cat, cat16 and cat128
  */
-static void cmd_helper_cat(void);
-static void cat_buf(u8 *b);
+void cmd_helper_cat(void);
+void cat_buf(u8 *b);
 
 /*
  * After command processing, write
@@ -422,79 +422,79 @@ static void cat_buf(u8 *b);
  * These are stub functions: check
  * below for the actual functions.
  */
-static void write_gbe_file(void);
-static void set_checksum(unsigned long part);
-static ushort calculated_checksum(unsigned long p);
+void write_gbe_file(void);
+void set_checksum(unsigned long part);
+ushort calculated_checksum(unsigned long p);
 
 /*
  * Helper functions for accessing
  * the NVM area during operation.
  */
-static ushort nvm_word(unsigned long pos16, unsigned long part);
-static void set_nvm_word(unsigned long pos16, unsigned long part, ushort val16);
-static void set_part_modified(unsigned long p);
-static void check_nvm_bound(unsigned long pos16, unsigned long part);
-static void check_bin(unsigned long a, const char *a_name);
+ushort nvm_word(unsigned long pos16, unsigned long part);
+void set_nvm_word(unsigned long pos16, unsigned long part, ushort val16);
+void set_part_modified(unsigned long p);
+void check_nvm_bound(unsigned long pos16, unsigned long part);
+void check_bin(unsigned long a, const char *a_name);
 
 /*
  * Helper functions for stub functions
  * that handle GbE file reads/writes.
  */
-static void rw_gbe_file_part(unsigned long p, int rw_type,
+void rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str);
-static void write_to_gbe_bin(void);
-static int gbe_mv(void);
-static void check_written_part(unsigned long p);
-static void report_io_err_rw(void);
-static int fsync_dir(const char *path);
-static u8 *gbe_mem_offset(unsigned long part, const char *f_op);
-static off_t gbe_file_offset(unsigned long part, const char *f_op);
-static off_t gbe_x_offset(unsigned long part, const char *f_op,
+void write_to_gbe_bin(void);
+int gbe_mv(void);
+void check_written_part(unsigned long p);
+void report_io_err_rw(void);
+int fsync_dir(const char *path);
+u8 *gbe_mem_offset(unsigned long part, const char *f_op);
+off_t gbe_file_offset(unsigned long part, const char *f_op);
+off_t gbe_x_offset(unsigned long part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-static long rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
+long rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type);
-static long rw_file_exact(int fd, u8 *mem, unsigned long len,
+long rw_file_exact(int fd, u8 *mem, unsigned long len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     unsigned long max_retries, int off_reset);
-static long prw(int fd, void *mem, unsigned long nrw,
+long prw(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     int off_reset);
-static int io_args(int fd, void *mem, unsigned long nrw,
+int io_args(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type);
-static int check_file(int fd, struct stat *st);
-static long rw_over_nrw(long r, unsigned long nrw);
+int check_file(int fd, struct stat *st);
+long rw_over_nrw(long r, unsigned long nrw);
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
     HAVE_REAL_PREAD_PWRITE < 1
-static off_t lseek_loop(int fd, off_t off,
+off_t lseek_loop(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 #endif
-static int try_err(int loop_err, int errval);
+int try_err(int loop_err, int errval);
 
 /*
  * Error handling and cleanup
  */
-static void usage(void);
-static void err(int nvm_errval, const char *msg, ...);
-static int exit_cleanup(void);
-static const char *getnvmprogname(void);
+void usage(void);
+void err(int nvm_errval, const char *msg, ...);
+int exit_cleanup(void);
+const char *getnvmprogname(void);
 
 /*
  * a special kind of hell
  */
-static char *new_tmpfile(int *fd, int local, const char *path);
-static int x_i_mkstemp(char *template);
-static char *x_c_strrchr(const char *s, int c);
-static int x_i_rename(const char *src, const char *dst);
-static char *x_c_tmpdir(void);
-static int x_i_close(int fd);
-static void *x_v_memcpy(void *dst,
+char *new_tmpfile(int *fd, int local, const char *path);
+int x_i_mkstemp(char *template);
+char *x_c_strrchr(const char *s, int c);
+int x_i_rename(const char *src, const char *dst);
+char *x_c_tmpdir(void);
+int x_i_close(int fd);
+void *x_v_memcpy(void *dst,
     const void *src, unsigned long n);
-static int x_i_memcmp(const void *a,
+int x_i_memcmp(const void *a,
     const void *b, unsigned long n);
-static int x_i_fchmod(int fd, mode_t mode);
-static int x_try_fdpath(const char *prefix,
+int x_i_fchmod(int fd, mode_t mode);
+int x_try_fdpath(const char *prefix,
     int fd, mode_t mode);
-static unsigned long x_conv_fd(char *buf,
+unsigned long x_conv_fd(char *buf,
     unsigned long n);
 
 /*
@@ -542,24 +542,24 @@ static unsigned long x_conv_fd(char *buf,
  *
  * The code will handle this properly.
  */
-static u8 real_buf[GBE_BUF_SIZE];
-static u8 bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
-static u8 pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
-static u8 *buf = real_buf;
+u8 real_buf[GBE_BUF_SIZE];
+u8 bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
+u8 pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
+u8 *buf = real_buf;
 
-static ushort mac_buf[3];
-static off_t gbe_file_size;
-static off_t gbe_tmp_size;
+ushort mac_buf[3];
+off_t gbe_file_size;
+off_t gbe_tmp_size;
 
-static int gbe_fd = -1;
-static unsigned long part;
-static u8 part_modified[2];
-static u8 part_valid[2];
+int gbe_fd = -1;
+unsigned long part;
+u8 part_modified[2];
+u8 part_valid[2];
 
-static const char rmac[] = "xx:xx:xx:xx:xx:xx";
-static const char *mac_str = rmac;
-static const char *fname = NULL;
-static const char *argv0;
+const char rmac[] = "xx:xx:xx:xx:xx:xx";
+const char *mac_str = rmac;
+const char *fname = NULL;
+const char *argv0;
 
 #ifndef X_LONG_MAX
 #define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
@@ -625,7 +625,7 @@ struct commands {
 /*
  * Command table, for nvmutil commands
  */
-static const struct commands command[] = {
+const struct commands command[] = {
 	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
 	    ARG_NOPART,
 	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
@@ -669,7 +669,7 @@ static const struct commands command[] = {
 /*
  * Index in command[], will be set later
  */
-static unsigned long cmd_index = CMD_NULL;
+unsigned long cmd_index = CMD_NULL;
 
 /*
  * asserts (variables/defines sanity check)
@@ -703,22 +703,22 @@ typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 typedef char bool_off_err[(OFF_ERR==0)?1:-1];
 typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 
-static int io_err_gbe = 0; /* intermediary write (verification) */
-static int io_err_gbe_bin = 0; /* final write (real file) */
-static int rw_check_err_read[] = {0, 0};
-static int rw_check_partial_read[] = {0, 0};
-static int rw_check_bad_part[] = {0, 0};
+int io_err_gbe = 0; /* intermediary write (verification) */
+int io_err_gbe_bin = 0; /* final write (real file) */
+int rw_check_err_read[] = {0, 0};
+int rw_check_partial_read[] = {0, 0};
+int rw_check_bad_part[] = {0, 0};
 
-static int post_rw_checksum[] = {0, 0};
+int post_rw_checksum[] = {0, 0};
 
-static dev_t gbe_dev;
-static ino_t gbe_ino;
+dev_t gbe_dev;
+ino_t gbe_ino;
 
-static dev_t tmp_dev;
-static ino_t tmp_ino;
+dev_t tmp_dev;
+ino_t tmp_ino;
 
-static int tmp_fd = -1;
-static char *tname = NULL;
+int tmp_fd = -1;
+char *tname = NULL;
 
 #ifndef S_ISREG
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
@@ -819,7 +819,7 @@ main(int argc, char *argv[])
 /*
  * Guard against regressions by maintainers (command table)
  */
-static void
+void
 sanitize_command_list(void)
 {
 	unsigned long c;
@@ -831,7 +831,7 @@ sanitize_command_list(void)
 /*
  * TODO: specific config checks per command
  */
-static void
+void
 sanitize_command_index(unsigned long c)
 {
 	unsigned long gbe_rw_size;
@@ -883,7 +883,7 @@ sanitize_command_index(unsigned long c)
 		err(EINVAL, "invalid cmd.flags setting");
 }
 
-static void
+void
 set_cmd(int argc, char *argv[])
 {
 	const char *cmd_str;
@@ -902,7 +902,7 @@ set_cmd(int argc, char *argv[])
 	cmd_index = CMD_NULL;
 }
 
-static void
+void
 set_cmd_args(int argc, char *argv[])
 {
 	u8 arg_part;
@@ -926,7 +926,7 @@ set_cmd_args(int argc, char *argv[])
 		part = conv_argv_part_num(argv[3]);
 }
 
-static unsigned long
+unsigned long
 conv_argv_part_num(const char *part_str)
 {
 	u8 ch;
@@ -946,7 +946,7 @@ conv_argv_part_num(const char *part_str)
  * Portable strcmp() but blocks NULL/empty/unterminated
  * strings. Even stricter than strncmp().
  */
-static int
+int
 xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 {
 	unsigned long i;
@@ -983,7 +983,7 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 	return -1;
 }
 
-static void
+void
 open_gbe_file(void)
 {
 	struct stat gbe_st;
@@ -1033,7 +1033,7 @@ open_gbe_file(void)
 		err(errno, "%s: can't lock", fname);
 }
 
-static int
+int
 lock_file(int fd)
 {
 	struct flock fl;
@@ -1053,7 +1053,7 @@ lock_file(int fd)
 	return 0;
 }
 
-static void
+void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
 	if ((*fd_ptr = open(path, flags)) == -1)
@@ -1080,7 +1080,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
  * double-read verification,
  * which also benefits cmd_cat.
  */
-static void
+void
 copy_gbe(void)
 {
 	long r;
@@ -1152,7 +1152,7 @@ copy_gbe(void)
 	    (unsigned long)GBE_PART_SIZE);
 }
 
-static void
+void
 read_checksums(void)
 {
 	unsigned long p;
@@ -1201,7 +1201,7 @@ read_checksums(void)
 	}
 }
 
-static int
+int
 good_checksum(unsigned long partnum)
 {
 	ushort expected_checksum = calculated_checksum(partnum);
@@ -1213,7 +1213,7 @@ good_checksum(unsigned long partnum)
 	return 0;
 }
 
-static void
+void
 run_cmd(unsigned long c)
 {
 	check_command_num(c);
@@ -1224,7 +1224,7 @@ run_cmd(unsigned long c)
 	command[c].run();
 }
 
-static void
+void
 check_command_num(unsigned long c)
 {
 	if (!valid_command(c))
@@ -1232,7 +1232,7 @@ check_command_num(unsigned long c)
 		    (ulong)c);
 }
 
-static u8
+u8
 valid_command(unsigned long c)
 {
 	if (c >= N_COMMANDS)
@@ -1245,7 +1245,7 @@ valid_command(unsigned long c)
 	return 1;
 }
 
-static void
+void
 cmd_helper_setmac(void)
 {
 	unsigned long partnum;
@@ -1257,7 +1257,7 @@ cmd_helper_setmac(void)
 		write_mac_part(partnum);
 }
 
-static void
+void
 parse_mac_string(void)
 {
 	unsigned long mac_byte;
@@ -1283,7 +1283,7 @@ parse_mac_string(void)
  * strnlen() was standardized in POSIX.1-2008 and is not
  * available on some older systems, so we provide our own.
  */
-static unsigned long
+unsigned long
 xstrxlen(const char *scmp, unsigned long maxlen)
 {
 	unsigned long xstr_index;
@@ -1304,7 +1304,7 @@ xstrxlen(const char *scmp, unsigned long maxlen)
 	return xstr_index;
 }
 
-static void
+void
 set_mac_byte(unsigned long mac_byte_pos)
 {
 	unsigned long mac_str_pos = mac_byte_pos * 3;
@@ -1321,7 +1321,7 @@ set_mac_byte(unsigned long mac_byte_pos)
 		set_mac_nib(mac_str_pos, mac_byte_pos, mac_nib_pos);
 }
 
-static void
+void
 set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
@@ -1351,7 +1351,7 @@ set_mac_nib(unsigned long mac_str_pos,
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
 
-static ushort
+ushort
 hextonum(char ch_s)
 {
 	u8 ch = (u8)ch_s;
@@ -1370,7 +1370,7 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-static ushort
+ushort
 rhex(void)
 {
 	struct x_st_timeval tv;
@@ -1406,7 +1406,7 @@ rhex(void)
 	return (ushort)(mix & 0xf);
 }
 
-static ushort
+ushort
 read_urandom(void)
 {
 	static int fd = -1;
@@ -1444,7 +1444,7 @@ read_urandom(void)
 	return r[n--] & 0xf;
 }
 
-static ulong
+ulong
 entropy_jitter(void)
 {
 	struct x_st_timeval a, b;
@@ -1474,7 +1474,7 @@ entropy_jitter(void)
 
 
 
-static int
+int
 x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 {
 	time_t t;
@@ -1489,7 +1489,7 @@ x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 	return 0;
 }
 
-static void
+void
 write_mac_part(unsigned long partnum)
 {
 	unsigned long w;
@@ -1506,7 +1506,7 @@ write_mac_part(unsigned long partnum)
 	print_mac_from_nvm(partnum);
 }
 
-static void
+void
 cmd_helper_dump(void)
 {
 	unsigned long partnum;
@@ -1529,7 +1529,7 @@ cmd_helper_dump(void)
 	}
 }
 
-static void
+void
 print_mac_from_nvm(unsigned long partnum)
 {
 	unsigned long c;
@@ -1547,7 +1547,7 @@ print_mac_from_nvm(unsigned long partnum)
 	}
 }
 
-static void
+void
 hexdump(unsigned long partnum)
 {
 	unsigned long c;
@@ -1568,7 +1568,7 @@ hexdump(unsigned long partnum)
 	}
 }
 
-static void
+void
 cmd_helper_swap(void)
 {
 	x_v_memcpy(
@@ -1590,7 +1590,7 @@ cmd_helper_swap(void)
 	set_part_modified(1);
 }
 
-static void
+void
 cmd_helper_copy(void)
 {
 	x_v_memcpy(
@@ -1601,7 +1601,7 @@ cmd_helper_copy(void)
 	set_part_modified(part ^ 1);
 }
 
-static void
+void
 cmd_helper_cat(void)
 {
 	unsigned long p = 0;
@@ -1634,7 +1634,7 @@ cmd_helper_cat(void)
 	}
 }
 
-static void
+void
 cat_buf(u8 *b)
 {
 	if (rw_file_exact(STDOUT_FILENO, b,
@@ -1643,7 +1643,7 @@ cat_buf(u8 *b)
 		err(errno, "stdout: cat");
 }
 
-static void
+void
 write_gbe_file(void)
 {
 	struct stat gbe_st;
@@ -1686,14 +1686,14 @@ write_gbe_file(void)
 	}
 }
 
-static void
+void
 set_checksum(unsigned long p)
 {
 	check_bin(p, "part number");
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
-static ushort
+ushort
 calculated_checksum(unsigned long p)
 {
 	unsigned long c;
@@ -1713,7 +1713,7 @@ calculated_checksum(unsigned long p)
  * file, but we assume otherwise and adapt accordingly.
  */
 
-static ushort
+ushort
 nvm_word(unsigned long pos16, unsigned long p)
 {
 	unsigned long pos;
@@ -1725,7 +1725,7 @@ nvm_word(unsigned long pos16, unsigned long p)
 	    ((ushort)buf[pos + 1] << 8);
 }
 
-static void
+void
 set_nvm_word(unsigned long pos16, unsigned long p, ushort val16)
 {
 	unsigned long pos;
@@ -1739,14 +1739,14 @@ set_nvm_word(unsigned long pos16, unsigned long p, ushort val16)
 	set_part_modified(p);
 }
 
-static void
+void
 set_part_modified(unsigned long p)
 {
 	check_bin(p, "part number");
 	part_modified[p] = 1;
 }
 
-static void
+void
 check_nvm_bound(unsigned long c, unsigned long p)
 {
 	/*
@@ -1762,7 +1762,7 @@ check_nvm_bound(unsigned long c, unsigned long p)
 		    (ulong)c);
 }
 
-static void
+void
 check_bin(unsigned long a, const char *a_name)
 {
 	if (a > 1)
@@ -1770,7 +1770,7 @@ check_bin(unsigned long a, const char *a_name)
 		    a_name, (ulong)a);
 }
 
-static void
+void
 rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
@@ -1799,7 +1799,7 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 		    fname, rw_type_str, (ulong)p);
 }
 
-static void
+void
 write_to_gbe_bin(void)
 {
 	int saved_errno;
@@ -1885,7 +1885,7 @@ write_to_gbe_bin(void)
 		    "errno %d: %s\n", errno, strerror(errno));
 }
 
-static void
+void
 check_written_part(unsigned long p)
 {
 	long r;
@@ -1941,7 +1941,7 @@ check_written_part(unsigned long p)
 	buf = buf_restore;
 }
 
-static void
+void
 report_io_err_rw(void)
 {
 	unsigned long p;
@@ -1994,7 +1994,7 @@ report_io_err_rw(void)
 	}
 }
 
-static int
+int
 gbe_mv(void)
 {
 	int r;
@@ -2115,7 +2115,7 @@ ret_gbe_mv:
  * Ensure x_i_rename() is durable by syncing the
  * directory containing the target file.
  */
-static int
+int
 fsync_dir(const char *path)
 {
 #if defined(PATH_LEN) && \
@@ -2205,7 +2205,7 @@ err_fsync_dir:
  * but used to check Gbe bounds in memory,
  * and it is *also* used during file I/O.
  */
-static u8 *
+u8 *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
@@ -2221,7 +2221,7 @@ gbe_mem_offset(unsigned long p, const char *f_op)
  *
  * This check is called, to ensure just that.
  */
-static off_t
+off_t
 gbe_file_offset(unsigned long p, const char *f_op)
 {
 	off_t gbe_file_half_size = gbe_file_size >> 1;
@@ -2230,7 +2230,7 @@ gbe_file_offset(unsigned long p, const char *f_op)
 	    gbe_file_half_size, gbe_file_size);
 }
 
-static off_t
+off_t
 gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
@@ -2251,7 +2251,7 @@ gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
 	return off;
 }
 
-static long
+long
 rw_gbe_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
@@ -2323,7 +2323,7 @@ err_rw_gbe_file_exact:
  * times upon zero-return, to recover,
  * otherwise it will return an error.
  */
-static long
+long
 rw_file_exact(int fd, u8 *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain,
     int loop_eintr, unsigned long max_retries,
@@ -2423,7 +2423,7 @@ err_rw_file_exact:
  *            we reset and continue, and pray for the worst.
  */
 
-static long
+long
 prw(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type,
     int loop_eagain, int loop_eintr,
@@ -2578,7 +2578,7 @@ err_prw:
 	return -1;
 }
 
-static int
+int
 io_args(int fd, void *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
@@ -2616,7 +2616,7 @@ err_io_args:
 	return -1;
 }
 
-static int
+int
 check_file(int fd, struct stat *st)
 {
 	if (fstat(fd, st) == -1)	
@@ -2638,7 +2638,7 @@ err_is_file:
  * POSIX can say whatever it wants.
  * specification != implementation
  */
-static long
+long
 rw_over_nrw(long r, unsigned long nrw)
 {
 	/*
@@ -2691,7 +2691,7 @@ err_rw_over_nrw:
  * on an EINTR/EAGAIN wait loop. Used by prw()
  * for setting offsets for positional I/O.
  */
-static off_t
+off_t
 lseek_loop(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
 {
@@ -2713,7 +2713,7 @@ lseek_loop(int fd, off_t off, int whence,
  * will loop until errno isn't -1 and one
  * of these, e.g. -1 and EINTR
  */
-static int
+int
 try_err(int loop_err, int errval)
 {
 	if (loop_err)
@@ -2725,7 +2725,7 @@ try_err(int loop_err, int errval)
 	return -1;
 }
 
-static void
+void
 usage(void)
 {
 	const char *util = getnvmprogname();
@@ -2746,7 +2746,7 @@ usage(void)
 	err(EINVAL, "Too few arguments");
 }
 
-static void
+void
 err(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
@@ -2774,7 +2774,7 @@ err(int nvm_errval, const char *msg, ...)
 	exit(EXIT_FAILURE);
 }
 
-static int
+int
 exit_cleanup(void)
 {
 	int close_err = 0;
@@ -2807,7 +2807,7 @@ exit_cleanup(void)
 	return 0;
 }
 
-static const char *
+const char *
 getnvmprogname(void)
 {
 	const char *p;
@@ -2847,7 +2847,7 @@ getnvmprogname(void)
  * if local is zero, then 3rd arg (path)
  * is irrelevant and can be NULL
  */
-static char *
+char *
 new_tmpfile(int *fd, int local, const char *path)
 {
 	unsigned long maxlen;
@@ -3028,7 +3028,7 @@ err_new_tmpfile:
 /*
  * portable mkstemp
  */
-static int
+int
 x_i_mkstemp(char *template)
 {
 	int fd;
@@ -3064,7 +3064,7 @@ x_i_mkstemp(char *template)
 	return -1;
 }
 
-static char *
+char *
 x_c_strrchr(const char *s, int c)
 {
 	const char *p = NULL;
@@ -3081,7 +3081,7 @@ x_c_strrchr(const char *s, int c)
 	return (char *)p;
 }
 
-static int
+int
 x_i_rename(const char *src, const char *dst)
 {
 	int sfd, dfd;
@@ -3124,7 +3124,7 @@ x_i_rename(const char *src, const char *dst)
 	return 0;
 }
 
-static char *
+char *
 x_c_tmpdir(void)
 {
 	char *t;
@@ -3145,7 +3145,7 @@ x_c_tmpdir(void)
 	return ".";
 }
 
-static int
+int
 x_i_close(int fd)
 {
 	int r;
@@ -3157,7 +3157,7 @@ x_i_close(int fd)
 	return r;
 }
 
-static void *
+void *
 x_v_memcpy(void *dst, const void *src, unsigned long n)
 {
 	unsigned char *d = (unsigned char *)dst;
@@ -3169,7 +3169,7 @@ x_v_memcpy(void *dst, const void *src, unsigned long n)
 	return dst;
 }
 
-static int
+int
 x_i_memcmp(const void *a, const void *b, unsigned long n)
 {
 	const unsigned char *pa = (const unsigned char *)a;
@@ -3185,7 +3185,7 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 	return 0;
 }
 
-static int
+int
 x_i_fchmod(int fd, mode_t mode)
 {
 	if (x_try_fdpath("/dev/fd/", fd, mode) == 0)
@@ -3198,7 +3198,7 @@ x_i_fchmod(int fd, mode_t mode)
 	return -1;
 }
 
-static int
+int
 x_try_fdpath(const char *prefix, int fd, mode_t mode)
 {
 	char path[PATH_LEN];
@@ -3219,7 +3219,7 @@ x_try_fdpath(const char *prefix, int fd, mode_t mode)
 	return chmod(path, mode);
 }
 
-static unsigned long
+unsigned long
 x_conv_fd(char *buf, unsigned long n)
 {
 	char tmp[256];
