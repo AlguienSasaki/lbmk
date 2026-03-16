@@ -308,6 +308,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_EXCL 0
 #endif
 
+#ifndef O_CREAT
+#define O_CREAT 0
+#endif
+
 #ifndef O_NONBLOCK
 #define O_NONBLOCK 0
 #endif
@@ -3009,7 +3013,7 @@ x_i_mkstemp(char *template)
 	unsigned long len;
 	char *p;
 
-	char ch[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+	char ch[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 	len = xstrxlen(template, PATH_LEN);
 
