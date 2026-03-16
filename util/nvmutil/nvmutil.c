@@ -1478,7 +1478,7 @@ x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 	t = time(NULL);
 
 	tv->tv_sec = t;
-	tv->tv_usec = (long)clock() % 1000000;
+	tv->tv_usec = (long)((unsigned long)clock() % 1000000UL);
 
 	return 0;
 }
