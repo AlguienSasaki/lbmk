@@ -2164,10 +2164,13 @@ fsync_dir(const char *path)
 
 	if (slash != NULL) {
 		*slash = '\0';
-		if (*dirbuf == '\0')
-			strcpy(dirbuf, "/");
+		if (*dirbuf == '\0') {
+			dirbuf[0] = '/';
+			dirbuf[1] = '\0';
+		}
 	} else {
-		strcpy(dirbuf, ".");
+		dirbuf[0] = '.';
+		dirbuf[1] = '\0';
 	}
 
 	dfd = open(dirbuf, O_RDONLY
