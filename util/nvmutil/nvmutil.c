@@ -2251,21 +2251,16 @@ long
 rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
-	unsigned long mem_addr;
-	unsigned long buf_addr;
 	long r;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
 
-	mem_addr = (unsigned long)(void *)mem;
-	buf_addr = (unsigned long)(void *)buf;
-
 	if (mem != (void *)pad) {
-		if (mem_addr < buf_addr)
+		if (mem < buf)
 			goto err_rw_gbe_file_exact;
 
-		if ((mem_addr - buf_addr) >= (unsigned long)GBE_WORK_SIZE)
+		if ((unsigned long)(mem - buf) >= GBE_WORK_SIZE)
 			goto err_rw_gbe_file_exact;
 	}
 
