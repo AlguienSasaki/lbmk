@@ -2154,6 +2154,9 @@ fsync_dir(const char *path)
 #ifdef O_DIRECTORY
 	    | O_DIRECTORY
 #endif
+#ifdef O_NOFOLLOW
+	    | O_NOFOLLOW
+#endif
 	);
 	if (dfd == -1)
 		goto err_fsync_dir;
