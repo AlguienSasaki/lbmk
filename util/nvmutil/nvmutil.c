@@ -3026,8 +3026,10 @@ x_i_mkstemp(char *template)
 	char *p;
 
 	char ch[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	unsigned long chlen;
 
 	len = xstrxlen(template, PATH_LEN);
+	chlen = xstrxlen(ch, 100);
 
 	/* find trailing XXXXXX */
 	if (len < 6)
@@ -3038,7 +3040,7 @@ x_i_mkstemp(char *template)
 	for (i = 0; i < 100; i++) {
 
 		for (j = 0; j < 6; j++)
-			p[j] = ch[rlong() & 31];
+			p[j] = ch[rlong() % chlen];
 
 		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
 
