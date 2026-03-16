@@ -2135,6 +2135,12 @@ fsync_dir(const char *path)
 		goto err_fsync_dir;
 	}
 
+	if (pathlen == 0)
+	{
+		errno = EINVAL;
+		goto err_fsync_dir;
+	}
+
 	dirbuf = malloc(pathlen + 1);
 	if (dirbuf == NULL)
 		goto err_fsync_dir;
