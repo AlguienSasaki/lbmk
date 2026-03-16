@@ -714,11 +714,25 @@ ino_t tmp_ino;
 int tmp_fd = -1;
 char *tname = NULL;
 
+/*
+ * Used for checking whether.
+ * a file is a file via stat().
+ *
+ * Portable macro for compatibility
+ * with older unix e.g. v7 unix (has S_IFREG),
+ * 4.2bsd (has S_IFMT) or POSIX (has S_ISREG)
+ *
+ * Fallback works where S_IFREG == 0100000
+ * (classic unix bitmask)
+ */
+
 #ifndef S_ISREG
-#ifdef S_IFMT
-#define S_ISREG(m) (((m) & (S_IFMT)) == (S_IFREG))
+#if defined(S_IFMT) && defined(S_IFREG)
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#elif defined(S_IFREG)
+#define S_ISREG(m) (((m) & S_IFREG) != 0)
 #else
-#define S_ISREG(m) (((m) & (S_IFREG)) == (S_IFREG))
+#error "can't determine types with stat()"
 #endif
 #endif
 
