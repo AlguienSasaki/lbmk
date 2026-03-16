@@ -491,6 +491,7 @@ static void *x_v_memcpy(void *dst,
     const void *src, unsigned long n);
 static int x_i_memcmp(const void *a,
     const void *b, unsigned long n);
+static int x_i_fchmod(int fd, mode_t mode);
 
 /*
  * Sizes in bytes:
@@ -2954,7 +2955,7 @@ new_tmpfile(int *fd, int local, const char *path)
 	if (fd_tmp == -1)
 		goto err_new_tmpfile;
 
-	if (fchmod(fd_tmp, 0600) == -1)
+	if (x_i_fchmod(fd_tmp, 0600) == -1)
 		goto err_new_tmpfile;
 
 	if (lock_file(fd_tmp) == -1)
@@ -3174,4 +3175,43 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 	}
 
 	return 0;
+}
+
+static int
+x_i_fchmod(int fd, mode_t mode)
+{
+	char path[32];
+	char tmp[16];
+	int i = 0;
+	int j = 0;
+	int n;
+
+	/* build "/dev/fd/" */
+	path[i++] = '/';
+	path[i++] = 'd';
+	path[i++] = 'e';
+	path[i++] = 'v';
+	path[i++] = '/';
+	path[i++] = 'f';
+	path[i++] = 'd';
+	path[i++] = '/';
+
+	/* convert fd to decimal */
+	n = fd;
+
+	if (n == 0) {
+		path[i++] = '0';
+	} else {
+		while (n > 0) {
+			tmp[j++] = (char)('0' + (n % 10));
+			n /= 10;
+		}
+
+		while (j > 0)
+			path[i++] = tmp[--j];
+	}
+
+	path[i] = '\0';
+
+	return chmod(path, mode);
 }
