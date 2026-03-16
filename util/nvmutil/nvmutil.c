@@ -543,8 +543,8 @@ static const char *mac_str = rmac;
 static const char *fname = NULL;
 static const char *argv0;
 
-#ifndef SSIZE_MAX
-#define SSIZE_MAX ((ssize_t)(~((size_t)1 << (sizeof(ssize_t)*CHAR_BIT-1))))
+#ifndef X_LONG_MAX
+#define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
 #endif
 
 /*
@@ -2586,7 +2586,7 @@ io_args(int fd, void *mem, size_t nrw,
 		goto err_io_args;
 
 	/* prevent overflow */
-	if (nrw > (size_t)SSIZE_MAX)
+	if (nrw > (size_t)X_LONG_MAX)
 		goto err_io_args;
 
 	/* prevent overflow */
@@ -2639,14 +2639,14 @@ rw_over_nrw(ssize_t r, size_t nrw)
 	if (r == -1)
 		return r;
 
-	if ((size_t)r > SSIZE_MAX) {
+	if ((size_t)r > X_LONG_MAX) {
 		/*
 		 * Theoretical buggy libc
 		 * check. Extremely academic.
 		 *
 		 * Specifications never
 		 * allow this return value
-		 * to exceed SSIZE_MAX, but
+		 * to exceed SSIZE_T, but
 		 * spec != implementation
 		 *
 		 * Check this after using
