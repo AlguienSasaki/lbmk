@@ -305,6 +305,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_BINARY 0
 #endif
 
+#ifndef O_NONBLOCK
+#define O_NONBLOCK
+#endif
+
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0
 #endif
@@ -1382,9 +1386,11 @@ read_urandom(void)
 
 	if (fd < 0) {
 
-		fd = open("/dev/urandom", O_RDONLY);
-		if (fd < 0)
-			fd = open("/dev/random", O_RDONLY);
+		fd = open("/dev/urandom", O_RDONLY | O_NONBLOCK);
+		if (fd < 0) /* older openbsd */
+			fd = open("/dev/arandom", O_RDONLY | O_NONBLOCK);
+		if (fd < 0) /* super old unix (could block) */
+			fd = open("/dev/random", O_RDONLY | O_NONBLOCK);
 
 		if (fd < 0)
 			return 16;
