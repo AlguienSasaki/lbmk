@@ -704,7 +704,17 @@ main(int argc, char *argv[])
 
 	fname = argv[1];
 
+#ifdef NVMUTIL_UNVEIL
+	/*
+	 * if global tmp is a different filesystem,
+	 * unveil would trap on final file rename
+	 * and we can't know the path in advance
+	 */
+	tname = new_tmpfile(&tmp_fd, 1, NULL);
+#else
 	tname = new_tmpfile(&tmp_fd, 0, NULL);
+#endif
+
 	if (tname == NULL)
 		err(errno, "Can't create tmpfile");
 
