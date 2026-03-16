@@ -475,6 +475,8 @@ static const char *getnvmprogname(void);
  */
 static char *new_tmpfile(int *fd, int local, const char *path);
 static int x_i_mkstemp(char *template);
+static char *x_c_strrchr(const char *s, int c);
+static int x_i_rename(const char *src, const char *dst);
 
 /*
  * Sizes in bytes:
@@ -1992,7 +1994,7 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	r = rename(tname, fname);
+	r = x_i_rename(tname, fname);
 
 	if (r > -1) {
 		/*
@@ -2045,7 +2047,7 @@ gbe_mv(void)
 	if (close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (rename(dest_tmp, fname) == -1)
+	if (x_i_rename(dest_tmp, fname) == -1)
 		goto ret_gbe_mv;
 
 	if (fsync_dir(fname) < 0)
@@ -2098,7 +2100,7 @@ ret_gbe_mv:
 }
 
 /*
- * Ensure rename() is durable by syncing the
+ * Ensure x_i_rename() is durable by syncing the
  * directory containing the target file.
  */
 static int
@@ -2132,7 +2134,7 @@ fsync_dir(const char *path)
 		goto err_fsync_dir;
 
 	memcpy(dirbuf, path, pathlen + 1);
-	slash = strrchr(dirbuf, '/');
+	slash = x_c_strrchr(dirbuf, '/');
 
 	if (slash != NULL) {
 		*slash = '\0';
@@ -2801,7 +2803,7 @@ getnvmprogname(void)
 	if (argv0 == NULL || *argv0 == '\0')
 		return "";
 
-	p = strrchr(argv0, '/');
+	p = x_c_strrchr(argv0, '/');
 
 	if (p)
 		return p + 1;
@@ -3024,4 +3026,64 @@ x_i_mkstemp(char *template)
 
 	fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
 	return fd;
+}
+
+static char *
+x_c_strrchr(const char *s, int c)
+{
+	const char *p = NULL;
+
+	while (*s) {
+		if (*s == (char)c)
+			p = s;
+		s++;
+	}
+
+	if (c == '\0')
+		return (char *)s;
+
+	return (char *)p;
+}
+
+static int
+x_i_rename(const char *src, const char *dst)
+{
+	int sfd, dfd;
+	ssize_t r;
+	char buf[8192];
+
+	sfd = open(src, O_RDONLY);
+	if (sfd < 0)
+		return -1;
+
+	dfd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (dfd < 0) {
+		close(sfd);
+		return -1;
+	}
+
+	while ((r = read(sfd, buf, sizeof(buf))) > 0) {
+		ssize_t w = write(dfd, buf, r);
+		if (w != r) {
+			close(sfd);
+			close(dfd);
+			return -1;
+		}
+	}
+
+	if (r < 0) {
+		close(sfd);
+		close(dfd);
+		return -1;
+	}
+
+	fsync(dfd);
+
+	close(sfd);
+	close(dfd);
+
+	if (unlink(src) < 0)
+		return -1;
+
+	return 0;
 }
