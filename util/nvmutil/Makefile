@@ -4,7 +4,7 @@
 
 CC?=cc
 CSTD?=-std=c90
-WERROR?=-Werror
+WERROR?=
 CWARN?=-Wall -Wextra -pedantic
 COPT?=-Os
 CFLAGS?=-I. $(COPT) $(CWARN) $(CSTD)
@@ -18,7 +18,7 @@ PROG=nvmutil
 all: $(PROG)
 
 $(PROG): nvmutil.c
-	$(CC) $(CFLAGS) $(LDFLAGS) nvmutil.c -o $(PROG)
+	$(CC) $(CFLAGS) $(WERROR) $(LDFLAGS) nvmutil.c -o $(PROG)
 
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
