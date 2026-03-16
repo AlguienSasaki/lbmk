@@ -701,6 +701,10 @@ int fchmod(int fd, mode_t mode);
 static int tmp_fd = -1;
 static char *tname = NULL;
 
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+
 int
 main(int argc, char *argv[])
 {
