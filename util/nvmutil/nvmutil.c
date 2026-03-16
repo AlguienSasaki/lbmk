@@ -3009,12 +3009,19 @@ static int
 x_i_mkstemp(char *template)
 {
 	int fd;
+	int i;
 
-	if (mktemp(template) == NULL)
-		return -1;
+	for (i = 0; i < 10; i++) {
+		if (mktemp(template) == NULL)
+			return -1;
 
-	fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
-	return fd;
+		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fd >= 0)
+			return fd;
+	}
+
+	errno = EEXIST;
+	return -1;
 }
 
 static char *
