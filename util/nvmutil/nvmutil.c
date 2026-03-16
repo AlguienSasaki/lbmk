@@ -304,6 +304,10 @@ typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
 #define O_BINARY 0
 #endif
 
+#ifndef O_EXCL
+#define O_EXCL 0
+#endif
+
 #ifndef O_NONBLOCK
 #define O_NONBLOCK 0
 #endif
@@ -3001,15 +3005,32 @@ static int
 x_i_mkstemp(char *template)
 {
 	int fd;
-	int i;
+	int i, j;
+	unsigned long len;
+	char *p;
 
-	for (i = 0; i < 10; i++) {
-		if (mktemp(template) == NULL)
-			return -1;
+	char ch[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+	len = xstrxlen(template, PATH_LEN);
+
+	/* find trailing XXXXXX */
+	if (len < 6)
+		return -1;
+
+	p = template + len - 6;
+
+	for (i = 0; i < 100; i++) {
+
+		for (j = 0; j < 6; j++)
+			p[j] = ch[rhex() & 31];
 
 		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
+
 		if (fd >= 0)
 			return fd;
+
+		if (errno != EEXIST)
+			return -1;
 	}
 
 	errno = EEXIST;
