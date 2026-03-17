@@ -94,7 +94,7 @@ new_xstate(void)
 	/* ->mac */
 	{NULL, "xx:xx:xx:xx:xx:xx", {0, 0, 0}}, /* .str, .rmac, .mac_buf */
 
-	/* .buf */
+	/* .f */
 	{0},
 
 	/* .argv0 (for our getprogname implementation) */
