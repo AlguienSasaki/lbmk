@@ -151,6 +151,10 @@ main(int argc, char *argv[])
 {
 	struct commands *cmd;
 	struct xfile *f;
+	int fd;
+	struct stat st;
+
+	char *tmp_path = NULL;
 
 	unsigned long *i;
 
@@ -161,20 +165,8 @@ main(int argc, char *argv[])
 		err(EINVAL, "Unsupported char size");
 #endif
 
-	nv = new_xstate();
-
-	if (nv == NULL)
-		err(errno, NULL);
-	if (nv->f.buf == NULL)
-		err(EINVAL, "Work buffer not initialised");
-
-	nv->argv0 = argv[0];
 	if (argc < 3)
 		usage();
-
-	f = &nv->f;
-
-	f->fname = argv[1];
 
 #ifdef NVMUTIL_UNVEIL
 	/*
@@ -182,12 +174,12 @@ main(int argc, char *argv[])
 	 * unveil would trap on final file rename
 	 * and we can't know the path in advance
 	 */
-	f->tname = new_tmpfile(&f->tmp_fd, 1, NULL);
+	tmp_path = new_tmpfile(&fd, 1, NULL);
 #else
-	f->tname = new_tmpfile(&f->tmp_fd, 0, NULL);
+	tmp_path = new_tmpfile(&fd, 0, NULL);
 #endif
 
-	if (f->tname == NULL)
+	if (tmp_path == NULL)
 		err(errno, "Can't create tmpfile");
 
 #ifdef NVMUTIL_PLEDGE
@@ -204,6 +196,26 @@ main(int argc, char *argv[])
 #endif
 #endif
 
+	nv = new_xstate();
+
+	if (nv == NULL)
+		err(errno, NULL);
+	if (nv->f.buf == NULL)
+		err(EINVAL, "Work buffer not initialised");
+
+	nv->argv0 = argv[0];
+	f = &nv->f;
+
+	f->fname = argv[1];
+	f->tname = tmp_path;
+	f->tmp_fd = fd;
+
+	if(fstat(fd, &st) < 0)
+		err(errno, "can't stat tmpfile");
+
+	f->tmp_dev = st.st_dev;
+	f->tmp_ino = st.st_ino;
+
 	sanitize_command_list();
 
 	set_cmd(argc, argv);
@@ -214,11 +226,11 @@ main(int argc, char *argv[])
 
 #ifdef NVMUTIL_UNVEIL
 	if (cmd->flags == O_RDONLY) {
-		if (unveil(fname, "r") == -1)
-			err(errno, "%s: unveil r", fname);
+		if (unveil(f->fname, "r") == -1)
+			err(errno, "%s: unveil r", f->fname);
 	} else {
-		if (unveil(fname, "rwc") == -1)
-			err(errno, "%s: unveil rw", fname);
+		if (unveil(f->tname, "rwc") == -1)
+			err(errno, "%s: unveil rw", f->tname);
 	}
 
 	if (unveil(tname, "rwc") == -1)
@@ -513,19 +525,18 @@ open_gbe_file(void)
 		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 
-	if (lock_file(f->gbe_fd) == -1)
+	if (lock_file(f->gbe_fd, cmd->flags) == -1)
 		err(errno, "%s: can't lock", f->fname);
 }
 
 int
-lock_file(int fd)
+lock_file(int fd, int flags)
 {
 	struct flock fl;
-	struct commands *cmd = &nv->cmd[nv->i];
 
 	memset(&fl, 0, sizeof(fl));
 
-	if (cmd->flags == O_RDONLY)
+	if ((flags & O_ACCMODE) == O_RDONLY)
 		fl.l_type = F_RDLCK;
 	else
 		fl.l_type = F_WRLCK;
@@ -2340,8 +2351,6 @@ usage(void)
 void
 err(int nvm_errval, const char *msg, ...)
 {
-	struct xfile *f = &nv->f;
-
 	va_list args;
 
 	if (errno == 0)
@@ -2357,12 +2366,7 @@ err(int nvm_errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	fprintf(stderr, ": %s", strerror(errno));
-
-	fprintf(stderr, "\n");
-
-	if (f->tname != NULL)
-		free(f->tname);
+	fprintf(stderr, ": %s\n", strerror(errno));
 
 	exit(EXIT_FAILURE);
 }
@@ -2370,28 +2374,32 @@ err(int nvm_errval, const char *msg, ...)
 int
 exit_cleanup(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f;
 
 	int close_err = 0;
 	int saved_errno = errno;
 
-	if (f->gbe_fd > -1) {
-		if (x_i_close(f->gbe_fd) == -1)
-			close_err = 1;
-		f->gbe_fd = -1;
-	}
+	if (nv != NULL) {
+		f = &nv->f;
 
-	if (f->tmp_fd > -1) {
-		if (x_i_close(f->tmp_fd) == -1)
-			close_err = 1;
-	}
+		if (f->gbe_fd > -1) {
+			if (x_i_close(f->gbe_fd) == -1)
+				close_err = 1;
+			f->gbe_fd = -1;
+		}
 
-	if (f->tname != NULL) {
-		if (unlink(f->tname) == -1)
-			close_err = 1;
-	}
+		if (f->tmp_fd > -1) {
+			if (x_i_close(f->tmp_fd) == -1)
+				close_err = 1;
+		}
 
-	f->tmp_fd = -1;
+		if (f->tname != NULL) {
+			if (unlink(f->tname) == -1)
+				close_err = 1;
+		}
+
+		f->tmp_fd = -1;
+	}
 
 	if (saved_errno)
 		errno = saved_errno;
@@ -2445,8 +2453,6 @@ getnvmprogname(void)
 char *
 new_tmpfile(int *fd, int local, const char *path)
 {
-	struct xfile *f = &nv->f;
-
 	unsigned long maxlen;
 	struct stat st;
 
@@ -2563,7 +2569,20 @@ new_tmpfile(int *fd, int local, const char *path)
 	if (x_i_fchmod(fd_tmp, 0600) == -1)
 		goto err_new_tmpfile;
 
-	if (lock_file(fd_tmp) == -1)
+	flags = fcntl(fd_tmp, F_GETFL);
+
+	if (flags == -1)
+		goto err_new_tmpfile;
+
+	/*
+	 * O_APPEND would permit offsets
+	 * to be ignored, which breaks
+	 * positional read/write
+	 */
+	if (flags & O_APPEND)
+		goto err_new_tmpfile;
+
+	if (lock_file(fd_tmp, flags) == -1)
 		goto err_new_tmpfile;
 
 	if (fstat(fd_tmp, &st) == -1)
@@ -2582,29 +2601,12 @@ new_tmpfile(int *fd, int local, const char *path)
 	if (lseek(fd_tmp, 0, SEEK_CUR) == (off_t)-1)
 		goto err_new_tmpfile;
 
-	/* inode will be checked later on write */
-	f->tmp_dev = st.st_dev;
-	f->tmp_ino = st.st_ino;
-
 	/* tmpfile has >1 hardlinks */
 	if (st.st_nlink > 1)
 		goto err_new_tmpfile;
 
 	/* tmpfile unlinked while opened */
 	if (st.st_nlink == 0)
-		goto err_new_tmpfile;
-
-	flags = fcntl(fd_tmp, F_GETFL);
-
-	if (flags == -1)
-		goto err_new_tmpfile;
-
-	/*
-	 * O_APPEND would permit offsets
-	 * to be ignored, which breaks
-	 * positional read/write
-	 */
-	if (flags & O_APPEND)
 		goto err_new_tmpfile;
 
 	*fd = fd_tmp;

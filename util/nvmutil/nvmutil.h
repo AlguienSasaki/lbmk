@@ -66,6 +66,10 @@
 #define EXIT_SUCCESS 0
 #endif
 
+#ifndef O_ACCMODE
+#define O_ACCMODE (O_RDONLY | O_WRONLY | O_RDWR)
+#endif
+
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
@@ -311,7 +315,7 @@ int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
  * Prep files for reading
  */
 void open_gbe_file(void);
-int lock_file(int fd);
+int lock_file(int fd, int flags);
 void xopen(int *fd, const char *path, int flags, struct stat *st);
 
 /*
