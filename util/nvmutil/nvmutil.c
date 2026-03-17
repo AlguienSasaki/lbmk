@@ -154,6 +154,13 @@ main(int argc, char *argv[])
 
 	unsigned long *i;
 
+#ifndef CHAR_BIT
+	err(ECANCELED, "Unknown char size");
+#else
+	if (CHAR_BIT != 8)
+		err(EINVAL, "Unsupported char size");
+#endif
+
 	nv = new_xstate();
 	if (nv == NULL)
 		err(errno, NULL);
@@ -164,9 +171,6 @@ main(int argc, char *argv[])
 
 	if (nv->f.buf == NULL)
 		err(EINVAL, "Work buffer not initialised");
-
-	if (CHAR_BIT != 8)
-		err(EINVAL, "Unsupported char size");
 
 	f = &nv->f;
 
