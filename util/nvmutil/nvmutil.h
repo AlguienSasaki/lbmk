@@ -4,6 +4,11 @@
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  */
 
+/* Use this shorthand in cmd helpers. e.g.
+   in cmd_setmac function:
+   check_cmd(cmd_helper_cat);
+*/
+
 #ifndef NVMUTIL_H
 #define NVMUTIL_H
 
@@ -290,6 +295,10 @@ struct xstate {
 	/* store size of a struct here.
 	   (can be used to copy old state) */
 	unsigned long xsize;
+
+	/* Cat commands set this.
+	   the cat cmd helpers check it */
+	int cat;
 };
 
 
@@ -374,7 +383,12 @@ void cmd_helper_copy(void);
  * cat, cat16 and cat128
  */
 void cmd_helper_cat(void);
+void cmd_helper_cat16(void);
+void cmd_helper_cat128(void);
+void cat(unsigned long nff);
 void cat_buf(unsigned char *b);
+
+void check_cmd(void (*fn)(void), const char *name);
 
 /*
  * After command processing, write

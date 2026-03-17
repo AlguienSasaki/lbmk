@@ -79,12 +79,12 @@ new_xstate(void)
 		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 		GBE_PART_SIZE, O_RDONLY
 	}, {
-		CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
+		CMD_CAT16, "cat16", cmd_helper_cat16, ARGC_3,
 		ARG_NOPART,
 		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 		GBE_PART_SIZE, O_RDONLY
 	}, {
-		CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
+		CMD_CAT128, "cat128", cmd_helper_cat128, ARGC_3,
 		ARG_NOPART,
 		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
 		GBE_PART_SIZE, O_RDONLY
@@ -107,7 +107,10 @@ new_xstate(void)
 	1,
 
 	/* .xsize (size of the stuct will be stored here later) */
-	0
+	0,
+
+	/* .cat (cat helpers set this) */
+	-1
 
 	};
 
@@ -144,7 +147,7 @@ new_xstate(void)
 	return xs_new;
 }
 
-static struct xstate *nv = NULL;
+static struct xstate *x = NULL;
 
 int
 main(int argc, char *argv[])
@@ -196,15 +199,15 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-	nv = new_xstate();
+	x = new_xstate();
 
-	if (nv == NULL)
+	if (x == NULL)
 		err(errno, NULL);
-	if (nv->f.buf == NULL)
+	if (x->f.buf == NULL)
 		err(EINVAL, "Work buffer not initialised");
 
-	nv->argv0 = argv[0];
-	f = &nv->f;
+	x->argv0 = argv[0];
+	f = &x->f;
 
 	f->fname = argv[1];
 	f->tname = tmp_path;
@@ -221,8 +224,8 @@ main(int argc, char *argv[])
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
 
-	i = &nv->i;
-	cmd = &nv->cmd[*i];
+	i = &x->i;
+	cmd = &x->cmd[*i];
 
 #ifdef NVMUTIL_UNVEIL
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY) {
@@ -278,7 +281,7 @@ void
 sanitize_command_list(void)
 {
 	unsigned long c;
-	unsigned long num_commands = items(nv->cmd);
+	unsigned long num_commands = items(x->cmd);
 
 	for (c = 0; c < num_commands; c++)
 		sanitize_command_index(c);
@@ -292,7 +295,7 @@ sanitize_command_index(unsigned long c)
 {
 	unsigned long gbe_rw_size;
 
-	struct commands *cmd = &nv->cmd[c];
+	struct commands *cmd = &x->cmd[c];
 
 	int _flag;
 
@@ -353,18 +356,18 @@ set_cmd(int argc, char *argv[])
 
 	unsigned long i = 0;
 
-	for (i = 0; i < items(nv->cmd); i++) {
+	for (i = 0; i < items(x->cmd); i++) {
 
-		cmd = nv->cmd[i].str;
+		cmd = x->cmd[i].str;
 
 		/* not the right command */
 		if (xstrxcmp(argv[2], cmd, MAX_CMD_LEN) != 0)
 			continue;
 
 		/* valid command found */
-		if (argc >= nv->cmd[i].argc) {
-			nv->no_cmd = 0;
-			nv->i = i; /* set command */
+		if (argc >= x->cmd[i].argc) {
+			x->no_cmd = 0;
+			x->i = i; /* set command */
 
 			return;
 		}
@@ -373,7 +376,7 @@ set_cmd(int argc, char *argv[])
 		    "Too few args on command '%s'", cmd);
 	}
 
-	nv->no_cmd = 1;
+	x->no_cmd = 1;
 }
 
 void
@@ -385,16 +388,16 @@ set_cmd_args(int argc, char *argv[])
 	struct xfile *f;
 	struct commands *cmd;
 
-	if (!valid_command(nv->i) || argc < 3)
+	if (!valid_command(x->i) || argc < 3)
 		usage();
 
-	if (nv->no_cmd)
+	if (x->no_cmd)
 		usage();
 
-	i = nv->i;
-	f = &nv->f;
+	i = x->i;
+	f = &x->f;
 
-	cmd = &nv->cmd[i];
+	cmd = &x->cmd[i];
 
 	arg_part = cmd->arg_part;
 
@@ -410,9 +413,9 @@ set_cmd_args(int argc, char *argv[])
 	if (i == CMD_SETMAC) {
 
 		if (argc >= 4)
-			nv->mac.str = argv[3];
+			x->mac.str = argv[3];
 		else
-			nv->mac.str = nv->mac.rmac;
+			x->mac.str = x->mac.rmac;
 
 	} else if (arg_part) {
 
@@ -483,11 +486,11 @@ open_gbe_file(void)
 	struct stat _st;
 	int _flags;
 
-	unsigned long *i = &nv->i;
+	unsigned long *i = &x->i;
 
-	struct commands *cmd = &nv->cmd[*i];
+	struct commands *cmd = &x->cmd[*i];
 
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	xopen(&f->gbe_fd, f->fname,
 	    cmd->flags | O_BINARY |
@@ -598,7 +601,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 void
 copy_gbe(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	read_file();
 
@@ -626,7 +629,7 @@ read_file(void)
 	long _r;
 	struct stat _st;
 
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	/* read main file */
 	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
@@ -686,8 +689,8 @@ read_checksums(void)
 	unsigned char _num_invalid;
 	unsigned char _max_invalid;
 
-	struct xfile *f = &nv->f;
-	struct commands *cmd = &nv->cmd[nv->i];
+	struct xfile *f = &x->f;
+	struct commands *cmd = &x->cmd[x->i];
 
 	f->part_valid[0] = 0;
 	f->part_valid[1] = 0;
@@ -746,8 +749,8 @@ run_cmd(void)
 	unsigned long cmd_num;
 	struct commands *cmd;
 
-	cmd_num = nv->i;
-	cmd = &nv->cmd[cmd_num];
+	cmd_num = x->i;
+	cmd = &x->cmd[cmd_num];
 
 	check_command_num(cmd_num);
 
@@ -770,10 +773,10 @@ valid_command(unsigned long c)
 {
 	struct commands *cmd;
 
-	if (c >= items(nv->cmd))
+	if (c >= items(x->cmd))
 		return 0;
 
-	cmd = &nv->cmd[c];
+	cmd = &x->cmd[c];
 
 	if (c != cmd->chk)
 		err(EINVAL,
@@ -787,7 +790,9 @@ void
 cmd_helper_setmac(void)
 {
 	unsigned long partnum;
-	struct macaddr *mac = &nv->mac;
+	struct macaddr *mac = &x->mac;
+
+	check_cmd(cmd_helper_setmac, "setmac");
 
 	printf("MAC address to be written: %s\n", mac->str);
 	parse_mac_string();
@@ -801,9 +806,9 @@ parse_mac_string(void)
 {
 	unsigned long mac_byte;
 
-	struct macaddr *mac = &nv->mac;
+	struct macaddr *mac = &x->mac;
 
-	if (xstrxlen(nv->mac.str, 18) != 17)
+	if (xstrxlen(x->mac.str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
 	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
@@ -852,7 +857,7 @@ set_mac_byte(unsigned long mac_byte_pos)
 	unsigned long mac_nib_pos;
 	char separator;
 
-	struct macaddr *mac = &nv->mac;
+	struct macaddr *mac = &x->mac;
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac->str[mac_str_pos + 2]) != ':')
@@ -871,7 +876,7 @@ set_mac_nib(unsigned long mac_str_pos,
 	char mac_ch;
 	unsigned short hex_num;
 
-	struct macaddr *mac = &nv->mac;
+	struct macaddr *mac = &x->mac;
 
 	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
@@ -1035,8 +1040,8 @@ write_mac_part(unsigned long partnum)
 {
 	unsigned long w;
 
-	struct xfile *f = &nv->f;
-	struct macaddr *mac = &nv->mac;
+	struct xfile *f = &x->f;
+	struct macaddr *mac = &x->mac;
 
 	check_bin(partnum, "part number");
 	if (!f->part_valid[partnum])
@@ -1055,7 +1060,9 @@ cmd_helper_dump(void)
 {
 	unsigned long partnum;
 
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
+
+	check_cmd(cmd_helper_dump, "dump");
 
 	f->part_valid[0] = good_checksum(0);
 	f->part_valid[1] = good_checksum(1);
@@ -1117,7 +1124,9 @@ hexdump(unsigned long partnum)
 void
 cmd_helper_swap(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
+
+	check_cmd(cmd_helper_swap, "swap");
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)GBE_WORK_SIZE,
@@ -1141,7 +1150,9 @@ cmd_helper_swap(void)
 void
 cmd_helper_copy(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
+
+	check_cmd(cmd_helper_copy, "copy");
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
@@ -1152,33 +1163,55 @@ cmd_helper_copy(void)
 }
 
 void
-cmd_helper_cat(void)
+cmd_helper_cat(void) {
+	check_cmd(cmd_helper_cat, "cat");
+
+	x->cat = 0;
+	cat(0);
+}
+
+void
+cmd_helper_cat16(void) {
+	check_cmd(cmd_helper_cat16, "cat16");
+
+	x->cat = 1;
+	cat(1);
+}
+
+void
+cmd_helper_cat128(void) {
+	check_cmd(cmd_helper_cat128, "cat128");
+
+	x->cat = 15;
+	cat(15);
+}
+
+void
+check_cmd(void (*fn)(void), const char *name)
 {
-	struct xfile *f = &nv->f;
+	if (x->cmd[x->i].run != fn)
+		err(ECANCELED, "Running %s, but cmd %s is set",
+		    name, x->cmd[x->i].str);
+}
+
+void
+cat(unsigned long nff)
+{
+	struct xfile *f = &x->f;
+	struct commands *cmd = &x->cmd[x->i];
 
 	unsigned long p = 0;
 	unsigned long ff = 0;
-	unsigned long nff = 0;
 
-	unsigned long cmd_num = nv->i;
+	if ((unsigned long)x->cat != nff ||
+	    !((cmd->run == cmd_helper_cat && nff == 0) ||
+	    (cmd->run == cmd_helper_cat16 && nff == 1) ||
+	    (cmd->run == cmd_helper_cat128 && nff == 15)))
+		err(ECANCELED, "erroneous call to cat");
 
 	fflush(NULL);
 
 	memset(f->pad, 0xff, GBE_PART_SIZE);
-
-	switch (cmd_num) {
-	case CMD_CAT:
-		nff = 0;
-		break;
-	case CMD_CAT16:
-		nff = 1;
-		break;
-	case CMD_CAT128:
-		nff = 15;
-		break;
-	default:
-		err(EINVAL, "erroneous call to cat");
-	}
 
 	for (p = 0; p < 2; p++) {
 		cat_buf(f->bufcmp +
@@ -1192,6 +1225,13 @@ cmd_helper_cat(void)
 void
 cat_buf(unsigned char *b)
 {
+	struct commands *cmd = &x->cmd[x->i];
+
+	if (!((cmd->run == cmd_helper_cat && x->cat == 0) ||
+	    (cmd->run == cmd_helper_cat16 && x->cat == 1) ||
+	    (cmd->run == cmd_helper_cat128 && x->cat == 15)))
+		err(ECANCELED, "erroneous call to cat");
+
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
@@ -1207,8 +1247,8 @@ write_gbe_file(void)
 	unsigned long p;
 	unsigned char update_checksum;
 
-	struct commands *cmd = &nv->cmd[nv->i];
-	struct xfile *f = &nv->f;
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
 		return;
@@ -1274,7 +1314,7 @@ calculated_checksum(unsigned long p)
 unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	unsigned long pos;
 
@@ -1288,7 +1328,7 @@ nvm_word(unsigned long pos16, unsigned long p)
 void
 set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
@@ -1303,7 +1343,7 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 void
 set_part_modified(unsigned long p)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	check_bin(p, "part number");
 	f->part_modified[p] = 1;
@@ -1337,8 +1377,8 @@ void
 rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
-	struct xfile *f = &nv->f;
-	struct commands *cmd = &nv->cmd[nv->i];
+	struct xfile *f = &x->f;
+	struct commands *cmd = &x->cmd[x->i];
 
 	long r;
 	unsigned long gbe_rw_size;
@@ -1371,12 +1411,12 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 void
 write_to_gbe_bin(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	int saved_errno;
 	int mv;
 
-	struct commands *cmd = &nv->cmd[nv->i];
+	struct commands *cmd = &x->cmd[x->i];
 
 	if ((cmd->flags & O_ACCMODE) != O_RDWR)
 		return;
@@ -1463,8 +1503,8 @@ write_to_gbe_bin(void)
 void
 check_written_part(unsigned long p)
 {
-	struct commands *cmd = &nv->cmd[nv->i];
-	struct xfile *f = &nv->f;
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	unsigned long gbe_rw_size;
 	unsigned char *mem_offset;
@@ -1522,7 +1562,7 @@ check_written_part(unsigned long p)
 void
 report_io_err_rw(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	unsigned long p;
 
@@ -1577,7 +1617,7 @@ report_io_err_rw(void)
 int
 gbe_mv(void)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	int r;
 	int saved_errno;
@@ -1811,7 +1851,7 @@ err_fsync_dir:
 unsigned char *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
@@ -1829,7 +1869,7 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 off_t
 gbe_file_offset(unsigned long p, const char *f_op)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	off_t gbe_file_half_size = f->gbe_file_size >> 1;
 
@@ -1841,7 +1881,7 @@ off_t
 gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	off_t off;
 
@@ -1864,7 +1904,7 @@ long
 rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
-	struct xfile *f = &nv->f;
+	struct xfile *f = &x->f;
 
 	long r;
 
@@ -2383,8 +2423,8 @@ exit_cleanup(void)
 	int close_err = 0;
 	int saved_errno = errno;
 
-	if (nv != NULL) {
-		f = &nv->f;
+	if (x != NULL) {
+		f = &x->f;
 
 		if (f->gbe_fd > -1) {
 			if (x_i_close(f->gbe_fd) == -1)
@@ -2419,15 +2459,15 @@ getnvmprogname(void)
 {
 	const char *p;
 
-	if (nv->argv0 == NULL || *nv->argv0 == '\0')
+	if (x->argv0 == NULL || *x->argv0 == '\0')
 		return "";
 
-	p = x_c_strrchr(nv->argv0, '/');
+	p = x_c_strrchr(x->argv0, '/');
 
 	if (p)
 		return p + 1;
 	else
-		return nv->argv0;
+		return x->argv0;
 }
 
 /*
