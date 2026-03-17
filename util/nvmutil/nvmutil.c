@@ -531,6 +531,21 @@ lock_file(int fd)
 	return 0;
 }
 
+/*
+ * TODO: make generic. S_ISREG: check every other
+ * type, erring only if it doesn't match what was
+ * passed as type requested.
+ * also:
+ * have variable need_seek, only err on seek if
+ * need_seek is set.
+ * also consider the stat check in this generic
+ * context
+ * make tthe return type an int, not a void.
+ * return -1 with errno set to indicate error,
+ * though the syscalls mostly handle that.
+ * save errno before lseek, resetting it after
+ * the check if return >-1
+ */
 void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
@@ -1442,7 +1457,6 @@ check_written_part(unsigned long p)
 
 	gbe_rw_size = cmd->rw_size;
 
-	/* invert not needed for pwrite */
 	mem_offset = gbe_mem_offset(p, "pwrite");
 	file_offset = (off_t)gbe_file_offset(p, "pwrite");
 
