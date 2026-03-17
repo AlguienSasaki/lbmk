@@ -321,6 +321,7 @@ void xopen(int *fd, const char *path, int flags, struct stat *st);
  * After this, we can run commands.
  */
 void copy_gbe(void);
+void read_file(void);
 void read_checksums(void);
 int good_checksum(unsigned long partnum);
 

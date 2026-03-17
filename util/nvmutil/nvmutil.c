@@ -561,6 +561,31 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 void
 copy_gbe(void)
 {
+	struct xfile *f = &nv->f;
+
+	read_file();
+
+	/*
+	 regular operations post-read operate only on the first
+	 8KB, because each GbE part is the first 4KB of each
+	 half of the file.
+
+	 we no longer care about anything past 8KB, until we get
+	 to writing, at which point we will flush the buffer
+	 again
+	 */
+
+	if (f->gbe_file_size == SIZE_8KB)
+		return;
+
+	x_v_memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
+	    f->buf + (unsigned long)(f->gbe_file_size >> 1),
+	    (unsigned long)GBE_PART_SIZE);
+}
+
+void
+read_file(void)
+{
 	long _r;
 	struct stat _st;
 
@@ -614,23 +639,6 @@ copy_gbe(void)
 	if (x_i_memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
 		err(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
-
-	/*
-	 regular operations post-read operate only on the first
-	 8KB, because each GbE part is the first 4KB of each
-	 half of the file.
-
-	 we no longer care about anything past 8KB, until we get
-	 to writing, at which point we will flush the buffer
-	 again
-	 */
-
-	if (f->gbe_file_size == SIZE_8KB)
-		return;
-
-	x_v_memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
-	    f->buf + (unsigned long)(f->gbe_file_size >> 1),
-	    (unsigned long)GBE_PART_SIZE);
 }
 
 void
