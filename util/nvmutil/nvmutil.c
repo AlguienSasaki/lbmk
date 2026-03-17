@@ -1553,8 +1553,10 @@ gbe_mv(void)
 
 		tmp_gbe_bin_exists = 0;
 
-		if (fsync_dir(f->fname) < 0)
+		if (fsync_dir(f->fname) < 0) {
+			f->io_err_gbe_bin = 1;
 			r = -1;
+		}
 
 		goto ret_gbe_mv;
 	}
@@ -1600,8 +1602,10 @@ gbe_mv(void)
 	if (rename(dest_tmp, f->fname) == -1)
 		goto ret_gbe_mv;
 
-	if (fsync_dir(f->fname) < 0)
+	if (fsync_dir(f->fname) < 0) {
+		f->io_err_gbe_bin = 1;
 		goto ret_gbe_mv;
+	}
 
 	free(dest_tmp);
 	dest_tmp = NULL;
@@ -1611,8 +1615,10 @@ ret_gbe_mv:
 	if (f->gbe_fd > -1) {
 		if (x_i_close(f->gbe_fd) < 0)
 			r = -1;
-		if (fsync_dir(f->fname) < 0)
+		if (fsync_dir(f->fname) < 0) {
+			f->io_err_gbe_bin = 1;
 			r = -1;
+		}
 		f->gbe_fd = -1;
 	}
 
@@ -1656,8 +1662,6 @@ ret_gbe_mv:
 int
 fsync_dir(const char *path)
 {
-	struct xfile *f = &nv->f;
-
 #if defined(PATH_LEN) && \
     (PATH_LEN) >= 256
 	unsigned long maxlen = PATH_LEN;
@@ -1742,7 +1746,7 @@ err_fsync_dir:
 		errno = EIO;
 
 	if (errno != saved_errno)
-		fprintf(stderr, "%s: %s\n", f->fname, strerror(errno));
+		fprintf(stderr, "%s: %s\n", path, strerror(errno));
 
 	if (dirbuf != NULL)
 		free(dirbuf);
@@ -1750,7 +1754,6 @@ err_fsync_dir:
 	if (dfd > -1)
 		x_i_close(dfd);
 
-	f->io_err_gbe_bin = 1;
 	errno = saved_errno;
 
 	return -1;
