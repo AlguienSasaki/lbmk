@@ -291,6 +291,7 @@ struct xstate {
 
 
 
+static struct xstate *new_xstate(void);
 
 /*
  * Sanitize command tables.

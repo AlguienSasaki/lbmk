@@ -144,7 +144,7 @@ new_xstate(void)
 	return xs_new;
 }
 
-struct xstate *nv = NULL;
+static struct xstate *nv = NULL;
 
 int
 main(int argc, char *argv[])
