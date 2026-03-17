@@ -15,204 +15,6 @@
  * -Os -Wall -Wextra -Werror -pedantic -std=c90
  */
 
-/*
- * In practise, most people
- * aren't going to use very
- * long names, so even on old
- * systems with weaker limits,
- * it's OK to set this higher.
- *
- * 4096 is a good, conservative
- * default these days.
- */
-#ifndef PATH_LEN
-#define PATH_LEN 1024
-#endif
-
-#define OFF_ERR 0
-#ifndef OFF_RESET
-#define OFF_RESET 1
-#endif
-
-/*
- * I/O config (build-time)
- *
- * Regarding:
- * Retries on zero-return.
- *
- * 5 retries is generous,
- * but also conservative.
- * This is enough for e.g.
- * slow USB flash drives,
- * busy NFS servers, etc.
- * Any more is too much
- * and not of much benefit.
- *
- * 3-5 will tolerate buggy
- * USB drives for example,
- * but won't spin as long
- * on really buggy and slow
- * networks e.g. slow NFS.
- *
- * At least 3-5 recommended.
- * Pass this at build time.
- */
-#ifndef MAX_ZERO_RW_RETRY
-#define MAX_ZERO_RW_RETRY 5
-#endif
-/*
- * 0: portable pread/pwrite
- * 1: real pread/pwrite (thread-safe)
- * Pass this at build-time
- */
-#ifndef HAVE_REAL_PREAD_PWRITE
-#define HAVE_REAL_PREAD_PWRITE 0
-#endif
-/*
- * Configure whether to wait on
- * EINTR on files, or EAGAIN on
- * cmd cat (stdout).
- *
- * Pass these at build time.
- */
-#ifndef LOOP_EAGAIN
-#define LOOP_EAGAIN 1
-#endif
-#ifndef LOOP_EINTR
-#define LOOP_EINTR 1
-#endif
-
-/*
- * Major TODO: split this into multiple files.
- * This program has become quite large now, mostly
- * due to all the extra sanity checks / portability.
- * Make most of nvmutil a *library* for re-use
- *
- * TODO: gettimeofday not posible - use portable functions.
- * TODO: ux fallback: modify the program instead
- * to run on 16-bit systems: smaller buffers, and do
- * operations byte-based instead of word-based.
- *
- * TODO: _XOPEN_SOURCE 500 probably not needed anymore.
- * the portable fallbacks alone are likely enough.
- * e.g. i don't need stdint, and i don't use pwrite/pread
- * anymore.
- *
- * TODO: version detection of various BSDs to detect
- * arc4random, use that if available. but also work on
- * older versions of those BSDs (also MacOS) that lack it.
- *
- * TODO: portability/testing on non-Unix systems:
- * old DOS. all windows versions (probably irrelevant
- * because you can use cygwin/wsl, whatever), classic MacOS,
- * also test really old unix e.g. sunos and irix. Be/Haiku too!
- *
- * TODO: reliance on global variables for status. make
- * functions use structs passed as args instead, make
- * functions re-useable (including libraries), etc.
- *
- * TODO: bound checks for files per-command, e.g. only
- * first 6 bytes for CMD_SETMAC
- *
- * TODO: in command sanitizer: verify that each given
- * entry corresponds to the correct function, in the
- * pointer (this check is currently missing)
- *
- * TODO: general modularisierung of the entire codebase.
- * TODO: better explain copy/swap read inversion trick
- *       by improving existing comments
- * TODO: lots of overwritten comments in code. tidy it up.
- *
- * TODO: use getopt for nvmutil args, so that multiple
- *      operations can be performed, and also on many
- *	files at once (noting limitations with cat)
- *	BONUS: implement own getopt(), for portability
- *
- * TODO: document fuzzing / analysis methods
- * 	for the code, and:
- * TODO: implement rigorous unit tests (separate util)
- *	NOTE: this would *include* known good test files
- *	in various configurations, also invalid files.
- *	the tests would likely be portable posix shell
- *	scripts rather than a new C program, but a modularisiert
- *	codebase would allow me to write a separate C
- *	program to test some finer intricacies
- * TODO: the unit tests would basically test regressions
- * TODO: after writing back a gbe to file, x_i_close() and
- *	open() it again, read it again, and check that
- *	the contents were written correctly, providing
- *	a warning if they were. do this in the main
- *	program.
- * TODO: the unit tests would include an aggressive set
- *	of fuzz tests, under controlled conditions
- *
- * TODO: also document the layout of Intel GbE files, so
- *       that wily individuals can easily expand the
- *	featureset of nvmutil.
- * TODO: write a manpage
- * TODO: simplify the command sanitization, implement more
- *	of it as build time checks, e.g. asserts.
- *	generally remove cleverness from the code, instead
- *	prefyerring readibility
- * TODO: also document nvmutil's coding style, which is
- *	its own style at this point!
- * TODO: when all the above (and possibly more) is done,
- *	submit this tool to coreboot with a further change
- *	to their build system that lets users modify
- *	GbE images, especially set MAC addresses, when
- *	including GbE files in coreboot configs.
- */
-/*
- BONUS TODO:
- CI/CD. woodpecker is good enough, sourcehut also has one.
-	tie this in with other things mentioned here, 
-	e.g. fuzzer / unit tests
-*/
-
-/* Major TODO: reproducible builds
-Test with and without these:
-
-CFLAGS += -fno-record-gcc-switches
-CFLAGS += -ffile-prefix-map=$(PWD)=.
-CFLAGS += -fdebug-prefix-map=$(PWD)=.
-
-I already avoid unique timestamps per-build,
-by not using them, e.g. not reporting build
-time in the program.
-
-When splitting the nvmutil.c file later, do e.g.:
-
-SRC = main.c io.c nvm.c cmd.c
-OBJ = $(SRC:.c=.o)
-
-^ explicitly declare the order in which to build
-*/
-
-/*
-TODO:
-further note when fuzzing is implemented:
-use deterministic randomisation, with a
-guaranteed seed - so e.g. don't use /dev/urandom
-in test builds. e.g. just use normal rand()
-but with a seed e.g. 1234
-*/
-/*
-TODO: stricter build flags, e.g.
-CFLAGS += -fstack-protector-strong
-CFLAGS += -fno-common
-CFLAGS += -D_FORTIFY_SOURCE=2
-CFLAGS += -fPIE
-
-also consider:
--fstack-clash-protection
--Wl,-z,relro
--Wl,-z,now
-*/
-
-#ifndef _FILE_OFFSET_BITS
-#define _FILE_OFFSET_BITS 64
-#endif
-
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
@@ -230,481 +32,7 @@ also consider:
 #include <time.h>
 #include <unistd.h>
 
-/* type asserts */
-typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
-typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
-typedef char static_assert_unsigned_char_is_1[
-    (sizeof(unsigned char) == 1) ? 1 : -1];
-typedef char static_assert_unsigned_short_is_2[
-    (sizeof(unsigned short) >= 2) ? 1 : -1];
-typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
-typedef char static_assert_unsigned_int_is_4[
-    (sizeof(unsigned int) >= 4) ? 1 : -1];
-typedef char static_assert_unsigned_long_is_4[
-    (sizeof(unsigned long) >= 4) ? 1 : -1];
-typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
-typedef char static_assert_twos_complement[
-    ((-1 & 3) == 3) ? 1 : -1
-];
-typedef char assert_unsigned_long_ptr[
-    (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
-];
-
-/*
- * We set _FILE_OFFSET_BITS 64, but we only handle
- * files that are 128KB in size at a maximum, so we
- * realistically only need 32-bit at a minimum.
- *
- * We set 64 anyway, because there's no reason not
- * to, but some systems may ignore _FILE_OFFSET_BITS
- */
-typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
-
-/*
- * Older versions of BSD to the early 2000s
- * could compile nvmutil, but pledge was
- * added in the 2010s. Therefore, for extra
- * portability, we will only pledge/unveil
- * on OpenBSD versions that have it.
- */
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if OpenBSD >= 604
-#ifndef NVMUTIL_UNVEIL
-#define NVMUTIL_UNVEIL 1
-#endif
-#endif
-#if OpenBSD >= 509
-#ifndef NVMUTIL_PLEDGE
-#define NVMUTIL_PLEDGE 1
-#endif
-#endif
-#endif
-
-#ifndef EXIT_FAILURE
-#define EXIT_FAILURE 1
-#endif
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS 0
-#endif
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-#ifndef O_EXCL
-#define O_EXCL 0
-#endif
-
-#ifndef O_CREAT
-#define O_CREAT 0
-#endif
-
-#ifndef O_NONBLOCK
-#define O_NONBLOCK 0
-#endif
-
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 0
-#endif
-
-#ifndef O_NOFOLLOW
-#define O_NOFOLLOW 0
-#endif
-
-#ifndef FD_CLOEXEC
-#define FD_CLOEXEC 0
-#endif
-
-/*
- * Sanitize command tables.
- */
-void sanitize_command_list(void);
-void sanitize_command_index(unsigned long c);
-
-/*
- * Argument handling (user input)
- */
-void set_cmd(int argc, char *argv[]);
-void set_cmd_args(int argc, char *argv[]);
-unsigned long conv_argv_part_num(const char *part_str);
-int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
-
-/*
- * Prep files for reading
- */
-void open_gbe_file(void);
-int lock_file(int fd);
-void xopen(int *fd, const char *path, int flags, struct stat *st);
-
-/*
- * Read GbE file and verify
- * checksums.
- *
- * After this, we can run commands.
- */
-void copy_gbe(void);
-void read_checksums(void);
-int good_checksum(unsigned long partnum);
-
-/*
- * Execute user command on GbE data.
- * These are stubs that call helpers.
- */
-void run_cmd(void);
-void check_command_num(unsigned long c);
-unsigned char valid_command(unsigned long c);
-
-/*
- * portable timeval
- */
-struct x_st_timeval {
-	long tv_sec;
-	long tv_usec;
-};
-
-/*
- * Helper functions for command: setmac
- */
-void cmd_helper_setmac(void);
-void parse_mac_string(void);
-unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
-void set_mac_byte(unsigned long mac_byte_pos);
-void set_mac_nib(unsigned long mac_str_pos,
-    unsigned long mac_byte_pos, unsigned long mac_nib_pos);
-unsigned short hextonum(char ch_s);
-unsigned long rlong(void);
-unsigned long entropy_jitter(void);
-int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
-void write_mac_part(unsigned long partnum);
-
-/*
- * Helper functions for command: dump
- */
-void cmd_helper_dump(void);
-void print_mac_from_nvm(unsigned long partnum);
-void hexdump(unsigned long partnum);
-
-/*
- * Helper functions for command: swap
- */
-void cmd_helper_swap(void);
-
-/*
- * Helper functions for command: copy
- */
-void cmd_helper_copy(void);
-
-/*
- * Helper functions for commands:
- * cat, cat16 and cat128
- */
-void cmd_helper_cat(void);
-void cat_buf(unsigned char *b);
-
-/*
- * After command processing, write
- * the modified GbE file back.
- *
- * These are stub functions: check
- * below for the actual functions.
- */
-void write_gbe_file(void);
-void set_checksum(unsigned long part);
-unsigned short calculated_checksum(unsigned long p);
-
-/*
- * Helper functions for accessing
- * the NVM area during operation.
- */
-unsigned short nvm_word(unsigned long pos16, unsigned long part);
-void set_nvm_word(unsigned long pos16,
-    unsigned long part, unsigned short val16);
-void set_part_modified(unsigned long p);
-void check_nvm_bound(unsigned long pos16, unsigned long part);
-void check_bin(unsigned long a, const char *a_name);
-
-/*
- * Helper functions for stub functions
- * that handle GbE file reads/writes.
- */
-void rw_gbe_file_part(unsigned long p, int rw_type,
-    const char *rw_type_str);
-void write_to_gbe_bin(void);
-int gbe_mv(void);
-void check_written_part(unsigned long p);
-void report_io_err_rw(void);
-int fsync_dir(const char *path);
-unsigned char *gbe_mem_offset(unsigned long part, const char *f_op);
-off_t gbe_file_offset(unsigned long part, const char *f_op);
-off_t gbe_x_offset(unsigned long part, const char *f_op,
-    const char *d_type, off_t nsize, off_t ncmp);
-long rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
-    off_t off, int rw_type);
-long rw_file_exact(int fd, unsigned char *mem, unsigned long len,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    unsigned long max_retries, int off_reset);
-long prw(int fd, void *mem, unsigned long nrw,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    int off_reset);
-int io_args(int fd, void *mem, unsigned long nrw,
-    off_t off, int rw_type);
-int check_file(int fd, struct stat *st);
-long rw_over_nrw(long r, unsigned long nrw);
-#if !defined(HAVE_REAL_PREAD_PWRITE) || \
-    HAVE_REAL_PREAD_PWRITE < 1
-off_t lseek_loop(int fd, off_t off,
-    int whence, int loop_eagain, int loop_eintr);
-#endif
-int try_err(int loop_err, int errval);
-
-/*
- * Error handling and cleanup
- */
-void usage(void);
-void err(int nvm_errval, const char *msg, ...);
-int exit_cleanup(void);
-const char *getnvmprogname(void);
-
-/*
- * a special kind of hell
- */
-char *new_tmpfile(int *fd, int local, const char *path);
-int x_i_mkstemp(char *template);
-char *x_c_strrchr(const char *s, int c);
-/* x_i_rename not suitable
- * for atomic writes. kept
- * commentted for use in a
- * library in the future */
-/*
-int x_i_rename(const char *src, const char *dst);
-*/
-char *x_c_tmpdir(void);
-int x_i_close(int fd);
-void *x_v_memcpy(void *dst,
-    const void *src, unsigned long n);
-int x_i_memcmp(const void *a,
-    const void *b, unsigned long n);
-int x_i_fchmod(int fd, mode_t mode);
-int x_try_fdpath(const char *prefix,
-    int fd, mode_t mode);
-unsigned long x_conv_fd(char *buf,
-    unsigned long n);
-int x_i_fsync(int fd);
-
-/*
- * Sizes in bytes:
- */
-#define SIZE_1KB 1024
-#define SIZE_4KB (4 * SIZE_1KB)
-#define SIZE_8KB (8 * SIZE_1KB)
-#define SIZE_16KB (16 * SIZE_1KB)
-#define SIZE_128KB (128 * SIZE_1KB)
-
-#define GBE_BUF_SIZE (SIZE_128KB)
-
-/*
- * First 128 bytes of a GbE part contains
- * the regular NVM (Non-Volatile-Memory)
- * area. All of these bytes must add up,
- * truncated to 0xBABA.
- *
- * The full GbE region is 4KB, but only
- * the first 128 bytes are used here.
- *
- * There is a second 4KB part with the same
- * rules, and it *should* be identical.
- */
-#define GBE_WORK_SIZE (SIZE_8KB)
-#define GBE_PART_SIZE (GBE_WORK_SIZE >> 1)
-#define NVM_CHECKSUM 0xBABA
-#define NVM_SIZE 128
-#define NVM_WORDS (NVM_SIZE >> 1)
-#define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
-
-/*
- * Portable macro based on BSD nitems.
- * Used to count the number of commands (see below).
- */
-#define items(x) (sizeof((x)) / sizeof((x)[0]))
-
-/*
- * GbE files can be 8KB, 16KB or 128KB,
- * but we only need the two 4KB parts
- * from offset zero and offset 64KB in
- * a 128KB file, or zero and 8KB in a 16KB
- * file, or zero and 4KB in an 8KB file.
- *
- * The code will handle this properly.
- */
-unsigned char real_buf[GBE_BUF_SIZE];
-unsigned char bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
-unsigned char pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
-unsigned char *buf = real_buf;
-
-unsigned short mac_buf[3];
-off_t gbe_file_size;
-off_t gbe_tmp_size;
-
-int gbe_fd = -1;
-unsigned long part;
-unsigned char part_modified[2];
-unsigned char part_valid[2];
-
-const char rmac[] = "xx:xx:xx:xx:xx:xx";
-const char *mac_str = rmac;
-const char *fname = NULL;
-const char *argv0;
-
-#ifndef X_LONG_MAX
-#define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
-#endif
-
-/*
- * Use these for .argc in command[]:
- */
-#define ARGC_3 3
-#define ARGC_4 4
-
-#define NO_LOOP_EAGAIN 0
-#define NO_LOOP_EINTR 0
-
-enum {
-	IO_READ,
-	IO_WRITE,
-	IO_PREAD,
-	IO_PWRITE
-};
-
-/*
- * Used as indices for command[]
- * MUST be in the same order as entries in command[]
- */
-enum {
-	CMD_DUMP,
-	CMD_SETMAC,
-	CMD_SWAP,
-	CMD_COPY,
-	CMD_CAT,
-	CMD_CAT16,
-	CMD_CAT128
-};
-
-enum {
-	ARG_NOPART,
-	ARG_PART
-};
-
-enum {
-	SKIP_CHECKSUM_READ,
-	CHECKSUM_READ
-};
-
-enum {
-	SKIP_CHECKSUM_WRITE,
-	CHECKSUM_WRITE
-};
-
-
-/*
- * asserts (variables/defines sanity check)
- */
-typedef char assert_argc3[(ARGC_3==3)?1:-1];
-typedef char assert_argc4[(ARGC_4==4)?1:-1];
-typedef char assert_read[(IO_READ==0)?1:-1];
-typedef char assert_write[(IO_WRITE==1)?1:-1];
-typedef char assert_pread[(IO_PREAD==2)?1:-1];
-typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
-typedef char assert_pathlen[(PATH_LEN>=256)?1:-1];
-/* commands */
-typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
-typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
-typedef char assert_cmd_swap[(CMD_SWAP==2)?1:-1];
-typedef char assert_cmd_copy[(CMD_COPY==3)?1:-1];
-typedef char assert_cmd_cat[(CMD_CAT==4)?1:-1];
-typedef char assert_cmd_cat16[(CMD_CAT16==5)?1:-1];
-typedef char assert_cmd_cat128[(CMD_CAT128==6)?1:-1];
-/* bool */
-typedef char bool_arg_nopart[(ARG_NOPART==0)?1:-1];
-typedef char bool_arg_part[(ARG_PART==1)?1:-1];
-typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
-typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
-typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
-typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
-typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
-typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
-typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
-typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
-typedef char bool_off_err[(OFF_ERR==0)?1:-1];
-typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
-
-int io_err_gbe = 0; /* intermediary write (verification) */
-int io_err_gbe_bin = 0; /* final write (real file) */
-int rw_check_err_read[] = {0, 0};
-int rw_check_partial_read[] = {0, 0};
-int rw_check_bad_part[] = {0, 0};
-
-int post_rw_checksum[] = {0, 0};
-
-dev_t gbe_dev;
-ino_t gbe_ino;
-
-dev_t tmp_dev;
-ino_t tmp_ino;
-
-int tmp_fd = -1;
-char *tname = NULL;
-
-/*
- * Used for checking whether.
- * a file is a file via stat().
- *
- * Portable macro for compatibility
- * with older unix e.g. v7 unix (has S_IFREG),
- * 4.2bsd (has S_IFMT) or POSIX (has S_ISREG)
- *
- * Fallback works where S_IFREG == 0100000
- * (classic unix bitmask)
- */
-
-#ifndef S_ISREG
-#if defined(S_IFMT) && defined(S_IFREG)
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#elif defined(S_IFREG)
-#define S_ISREG(m) (((m) & S_IFREG) != 0)
-#else
-#error "can't determine types with stat()"
-#endif
-#endif
-
-struct commands {
-	unsigned long chk;
-	const char *str;
-	void (*run)(void);
-	int argc;
-	unsigned char arg_part;
-	unsigned char chksum_read;
-	unsigned char chksum_write;
-	unsigned long rw_size; /* within the 4KB GbE part */
-	int flags; /* e.g. O_RDWR or O_RDONLY */
-};
-
-#define MAX_CMD_LEN 50
-
-/*
- * BE CAREFUL when editing this
- * to ensure that you also update
- * the tables in new_xstate()
- */
-struct xstate {
-	struct commands cmd[7];
-	unsigned long i; /* index to cmd[] for current command */
-	int no_cmd;
-
-	/* store size of a struct here.
-	   (can be used to copy old state) */
-	unsigned long xsize;
-};
+#include "nvmutil.h"
 
 /*
  * Program state/command table
@@ -718,7 +46,12 @@ struct xstate *
 new_xstate(void)
 {
 	static struct xstate us = {
-	/* .cmd (update cmd[] in the struct if adding to it) */
+	/* .cmd (update cmd[] in the struct if adding to it)
+	         DO NOT FORGET. or C will init zeroes/NULLs */
+
+	/* cmd[] members */
+		/* DO NOT MESS THIS UP */
+		/* items must be set *exactly* */
 	{
 	{
 		CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
@@ -757,22 +90,56 @@ new_xstate(void)
 		GBE_PART_SIZE, O_RDONLY
 	}
 	},
-	/* .cmd_index */
+
+	/* ->mac */
+	{NULL, "xx:xx:xx:xx:xx:xx", {0, 0, 0}}, /* .str, .rmac, .mac_buf */
+
+	/* .buf */
+	{0},
+
+	/* .argv0 (for our getprogname implementation) */
+	NULL,
+
+	/* ->i   (index to cmd[]) */
 	0,
+
 	/* .no_cmd (set 0 when a command is found) */
 	1,
+
 	/* .xsize (size of the stuct will be stored here later) */
 	0
+
 	};
 
 	struct xstate *xs_new;
 
 	us.xsize = sizeof(us);
 
-	if ((xs_new = malloc(us.xsize)) == NULL)
+	xs_new = malloc(us.xsize);
+	if (xs_new == NULL)
 		err(ECANCELED, "Could not initialise new state");
 
 	memcpy(xs_new, &us, us.xsize);
+
+	/*
+	 * Some pointers should be set
+	 * in the copy, not the template,
+	 * if they point to other items
+	 * in the struct, because if they
+	 * were set before copy, then copied,
+	 * the copied pointer would be invalid,
+	 * referring to the reference struct
+	 *
+	 * e.g. ->f.buf (gbe tmp file work memory):
+	 */
+
+	xs_new->f.buf = xs_new->f.real_buf;
+
+	xs_new->f.gbe_fd = -1;
+	xs_new->f.tmp_fd = -1;
+
+	xs_new->f.tname = NULL;
+	xs_new->f.fname = NULL;
 
 	return xs_new;
 }
@@ -783,19 +150,24 @@ int
 main(int argc, char *argv[])
 {
 	struct commands *cmd;
+	struct xfile *f;
+
+	unsigned long *i;
 
 	nv = new_xstate();
 	if (nv == NULL)
 		err(errno, NULL);
 
-	argv0 = argv[0];
+	nv->argv0 = argv[0];
 	if (argc < 3)
 		usage();
 
 	if (CHAR_BIT != 8)
 		err(EINVAL, "Unsupported char size");
 
-	fname = argv[1];
+	f = &nv->f;
+
+	f->fname = argv[1];
 
 #ifdef NVMUTIL_UNVEIL
 	/*
@@ -803,12 +175,12 @@ main(int argc, char *argv[])
 	 * unveil would trap on final file rename
 	 * and we can't know the path in advance
 	 */
-	tname = new_tmpfile(&tmp_fd, 1, NULL);
+	f->tname = new_tmpfile(&f->tmp_fd, 1, NULL);
 #else
-	tname = new_tmpfile(&tmp_fd, 0, NULL);
+	f->tname = new_tmpfile(&f->tmp_fd, 0, NULL);
 #endif
 
-	if (tname == NULL)
+	if (f->tname == NULL)
 		err(errno, "Can't create tmpfile");
 
 #ifdef NVMUTIL_PLEDGE
@@ -830,10 +202,11 @@ main(int argc, char *argv[])
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
 
-	cmd = &nv->cmd[nv->i];
+	i = &nv->i;
+	cmd = &nv->cmd[*i];
 
 #ifdef NVMUTIL_UNVEIL
-	if (command[cmd_index].flags == O_RDONLY) {
+	if (cmd->flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
 			err(errno, "%s: unveil r", fname);
 	} else {
@@ -855,8 +228,8 @@ main(int argc, char *argv[])
 
 	open_gbe_file();
 
-	memset(buf, 0, GBE_BUF_SIZE);
-	memset(bufcmp, 0, GBE_BUF_SIZE);
+	memset(f->buf, 0, GBE_BUF_SIZE);
+	memset(f->bufcmp, 0, GBE_BUF_SIZE);
 
 	copy_gbe();
 
@@ -868,13 +241,13 @@ main(int argc, char *argv[])
 		write_to_gbe_bin();
 
 	if (exit_cleanup() == -1)
-		err(EIO, "%s: close", fname);
+		err(EIO, "%s: close", f->fname);
 
-	if (io_err_gbe_bin)
+	if (f->io_err_gbe_bin)
 		err(EIO, "%s: error writing final file");
 
-	if (tname != NULL)
-		free(tname);
+	if (f->tname != NULL)
+		free(f->tname);
 
 	return EXIT_SUCCESS;
 }
@@ -984,16 +357,21 @@ void
 set_cmd_args(int argc, char *argv[])
 {
 	unsigned char arg_part;
-	unsigned long index;
+	unsigned long i;
 
+	struct xfile *f;
 	struct commands *cmd;
 
 	if (!valid_command(nv->i) || argc < 3)
 		usage();
 
-	index = nv->i;
+	if (nv->no_cmd)
+		usage();
 
-	cmd = &nv->cmd[index];
+	i = nv->i;
+	f = &nv->f;
+
+	cmd = &nv->cmd[i];
 
 	arg_part = cmd->arg_part;
 
@@ -1002,17 +380,20 @@ set_cmd_args(int argc, char *argv[])
 		err(EINVAL,
 		    "arg_part set for command that needs argc4");
 
-	if (arg_part && index == CMD_SETMAC)
+	if (arg_part && i == CMD_SETMAC)
 		err(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
-	if (index == CMD_SETMAC) {
+	if (i == CMD_SETMAC) {
 
-		mac_str = argc >= 4 ? argv[3] : rmac;
+		if (argc >= 4)
+			nv->mac.str = argv[3];
+		else
+			nv->mac.str = nv->mac.rmac;
 
 	} else if (arg_part) {
 
-		part = conv_argv_part_num(argv[3]);
+		f->part = conv_argv_part_num(argv[3]);
 	}
 }
 
@@ -1076,30 +457,34 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 void
 open_gbe_file(void)
 {
-	struct stat gbe_st;
-	int flags;
+	struct stat _st;
+	int _flags;
 
-	struct commands *cmd = &nv->cmd[nv->i];
+	unsigned long *i = &nv->i;
 
-	xopen(&gbe_fd, fname,
+	struct commands *cmd = &nv->cmd[*i];
+
+	struct xfile *f = &nv->f;
+
+	xopen(&f->gbe_fd, f->fname,
 	    cmd->flags | O_BINARY |
-	    O_NOFOLLOW | O_CLOEXEC, &gbe_st);
+	    O_NOFOLLOW | O_CLOEXEC, &_st);
 
 	/* inode will be checked later on write */
-	gbe_dev = gbe_st.st_dev;
-	gbe_ino = gbe_st.st_ino;
+	f->gbe_dev = _st.st_dev;
+	f->gbe_ino = _st.st_ino;
 
-	if (gbe_st.st_nlink > 1)
+	if (_st.st_nlink > 1)
 		err(EINVAL,
 		    "%s: warning: file has multiple (%lu) hard links\n",
-		    fname, (unsigned long)gbe_st.st_nlink);
+		    f->fname, (unsigned long)_st.st_nlink);
 
-	if (gbe_st.st_nlink == 0)
-		err(EIO, "%s: file unlinked while open", fname);
+	if (_st.st_nlink == 0)
+		err(EIO, "%s: file unlinked while open", f->fname);
 
-	flags = fcntl(gbe_fd, F_GETFL);
-	if (flags == -1)
-		err(errno, "%s: fcntl(F_GETFL)", fname);
+	_flags = fcntl(f->gbe_fd, F_GETFL);
+	if (_flags == -1)
+		err(errno, "%s: fcntl(F_GETFL)", f->fname);
 
 	/*
 	 * O_APPEND must not be used, because this
@@ -1107,12 +492,12 @@ open_gbe_file(void)
 	 * current write offset and write at EOF,
 	 * which would therefore break pread/pwrite
 	 */
-	if (flags & O_APPEND)
-		err(EIO, "%s: O_APPEND flag", fname);
+	if (_flags & O_APPEND)
+		err(EIO, "%s: O_APPEND flag", f->fname);
 
-	gbe_file_size = gbe_st.st_size;
+	f->gbe_file_size = _st.st_size;
 
-	switch (gbe_file_size) {
+	switch (f->gbe_file_size) {
 	case SIZE_8KB:
 	case SIZE_16KB:
 	case SIZE_128KB:
@@ -1121,8 +506,8 @@ open_gbe_file(void)
 		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 
-	if (lock_file(gbe_fd) == -1)
-		err(errno, "%s: can't lock", fname);
+	if (lock_file(f->gbe_fd) == -1)
+		err(errno, "%s: can't lock", f->fname);
 }
 
 int
@@ -1176,56 +561,59 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 void
 copy_gbe(void)
 {
-	long r;
-	struct stat st;
+	long _r;
+	struct stat _st;
+
+	struct xfile *f = &nv->f;
 
 	/* read main file */
-	r = rw_file_exact(gbe_fd, buf, gbe_file_size,
+	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (r < 0)
-		err(errno, "%s: read failed", fname);
+	if (_r < 0)
+		err(errno, "%s: read failed", f->fname);
 
 	/* copy to tmpfile */
 
-	r = rw_file_exact(tmp_fd, buf, gbe_file_size,
+	_r = rw_file_exact(f->tmp_fd, f->buf, f->gbe_file_size,
 	    0, IO_PWRITE, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (r < 0)
+	if (_r < 0)
 		err(errno, "%s: %s: copy failed",
-		    fname, tname);
+		    f->fname, f->tname);
 
 	/*
 	 * file size comparison
 	 */
 
-	if (fstat(tmp_fd, &st) == -1)
-		err(errno, "%s: stat", tname);
+	if (fstat(f->tmp_fd, &_st) == -1)
+		err(errno, "%s: stat", f->tname);
 
-	gbe_tmp_size = st.st_size;
+	f->gbe_tmp_size = _st.st_size;
 
-	if (gbe_tmp_size != gbe_file_size)
-		err(EIO, "%s: %s: not the same size", fname, tname);
+	if (f->gbe_tmp_size != f->gbe_file_size)
+		err(EIO, "%s: %s: not the same size",
+		    f->fname, f->tname);
 
 	/*
 	 * fsync tmp gbe file, because we will compare
 	 * its contents to what was read (for safety)
 	 */
-	if (x_i_fsync(tmp_fd) == -1)
-		err(errno, "%s: fsync (tmpfile copy)", tname);
+	if (x_i_fsync(f->tmp_fd) == -1)
+		err(errno, "%s: fsync (tmpfile copy)", f->tname);
 
-	r = rw_file_exact(tmp_fd, bufcmp, gbe_file_size,
+	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (r < 0)
-		err(errno, "%s: read failed (cmp)", tname);
+	if (_r < 0)
+		err(errno, "%s: read failed (cmp)", f->tname);
 
-	if (x_i_memcmp(buf, bufcmp, gbe_file_size) != 0)
+	if (x_i_memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
 		err(errno, "%s: %s: read contents differ (pre-test)",
-		    fname, tname);
+		    f->fname, f->tname);
 
 	/*
 	 regular operations post-read operate only on the first
@@ -1237,62 +625,61 @@ copy_gbe(void)
 	 again
 	 */
 
-	if (gbe_file_size == SIZE_8KB)
+	if (f->gbe_file_size == SIZE_8KB)
 		return;
 
-	x_v_memcpy(buf + (unsigned long)GBE_PART_SIZE,
-	    buf + (unsigned long)(gbe_file_size >> 1),
+	x_v_memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
+	    f->buf + (unsigned long)(f->gbe_file_size >> 1),
 	    (unsigned long)GBE_PART_SIZE);
 }
 
 void
 read_checksums(void)
 {
-	unsigned long p;
-	unsigned long skip_part;
-	unsigned char arg_part;
-	unsigned char num_invalid;
-	unsigned char max_invalid;
+	unsigned long _p;
+	unsigned long _skip_part;
+	unsigned char _num_invalid;
+	unsigned char _max_invalid;
 
+	struct xfile *f = &nv->f;
 	struct commands *cmd = &nv->cmd[nv->i];
 
-	part_valid[0] = 0;
-	part_valid[1] = 0;
+	f->part_valid[0] = 0;
+	f->part_valid[1] = 0;
 
 	if (!cmd->chksum_read)
 		return;
 
-	num_invalid = 0;
-	max_invalid = 2;
+	_num_invalid = 0;
+	_max_invalid = 2;
 
-	arg_part = cmd->arg_part;
-	if (arg_part)
-		max_invalid = 1;
+	if (cmd->arg_part)
+		_max_invalid = 1;
 
 	/*
 	 * Skip verification on this part,
 	 * but only when arg_part is set.
 	 */
-	skip_part = part ^ 1;
+	_skip_part = f->part ^ 1;
 
-	for (p = 0; p < 2; p++) {
+	for (_p = 0; _p < 2; _p++) {
 		/*
 		 * Only verify a part if it was *read*
 		 */
-		if (arg_part && (p == skip_part))
+		if (cmd->arg_part && (_p == _skip_part))
 			continue;
 
-		part_valid[p] = good_checksum(p);
-		if (!part_valid[p])
-			++num_invalid;
+		f->part_valid[_p] = good_checksum(_p);
+		if (!f->part_valid[_p])
+			++_num_invalid;
 	}
 
-	if (num_invalid >= max_invalid) {
-		if (max_invalid == 1)
+	if (_num_invalid >= _max_invalid) {
+		if (_max_invalid == 1)
 			err(ECANCELED, "%s: part %lu has a bad checksum",
-			    fname, (unsigned long)part);
+			    f->fname, (unsigned long)f->part);
 		err(ECANCELED, "%s: No valid checksum found in file",
-		    fname);
+		    f->fname);
 	}
 }
 
@@ -1355,8 +742,9 @@ void
 cmd_helper_setmac(void)
 {
 	unsigned long partnum;
+	struct macaddr *mac = &nv->mac;
 
-	printf("MAC address to be written: %s\n", mac_str);
+	printf("MAC address to be written: %s\n", mac->str);
 	parse_mac_string();
 
 	for (partnum = 0; partnum < 2; partnum++)
@@ -1368,18 +756,20 @@ parse_mac_string(void)
 {
 	unsigned long mac_byte;
 
-	if (xstrxlen(mac_str, 18) != 17)
+	struct macaddr *mac = &nv->mac;
+
+	if (xstrxlen(nv->mac.str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
 
-	memset(mac_buf, 0, sizeof(mac_buf));
+	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
 
 	for (mac_byte = 0; mac_byte < 6; mac_byte++)
 		set_mac_byte(mac_byte);
 
-	if ((mac_buf[0] | mac_buf[1] | mac_buf[2]) == 0)
+	if ((mac->mac_buf[0] | mac->mac_buf[1] | mac->mac_buf[2]) == 0)
 		err(EINVAL, "Must not specify all-zeroes MAC address");
 
-	if (mac_buf[0] & 1)
+	if (mac->mac_buf[0] & 1)
 		err(EINVAL, "Must not specify multicast MAC address");
 }
 
@@ -1417,8 +807,10 @@ set_mac_byte(unsigned long mac_byte_pos)
 	unsigned long mac_nib_pos;
 	char separator;
 
+	struct macaddr *mac = &nv->mac;
+
 	if (mac_str_pos < 15) {
-		if ((separator = mac_str[mac_str_pos + 2]) != ':')
+		if ((separator = mac->str[mac_str_pos + 2]) != ':')
 			err(EINVAL, "Invalid MAC address separator '%c'",
 			    separator);
 	}
@@ -1434,11 +826,13 @@ set_mac_nib(unsigned long mac_str_pos,
 	char mac_ch;
 	unsigned short hex_num;
 
-	mac_ch = mac_str[mac_str_pos + mac_nib_pos];
+	struct macaddr *mac = &nv->mac;
+
+	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
 	if ((hex_num = hextonum(mac_ch)) > 15)
 		err(EINVAL, "Invalid character '%c'",
-		    mac_str[mac_str_pos + mac_nib_pos]);
+		    mac->str[mac_str_pos + mac_nib_pos]);
 
 	/*
 	 * If random, ensure that local/unicast bits are set.
@@ -1452,7 +846,7 @@ set_mac_nib(unsigned long mac_str_pos,
 	 * MAC words stored big endian in-file, little-endian
 	 * logically, so we reverse the order.
 	 */
-	mac_buf[mac_byte_pos >> 1] |= hex_num <<
+	mac->mac_buf[mac_byte_pos >> 1] |= hex_num <<
 	    (((mac_byte_pos & 1) << 3) /* left or right byte? */
 	    | ((mac_nib_pos ^ 1) << 2)); /* left or right nib? */
 }
@@ -1596,12 +990,15 @@ write_mac_part(unsigned long partnum)
 {
 	unsigned long w;
 
+	struct xfile *f = &nv->f;
+	struct macaddr *mac = &nv->mac;
+
 	check_bin(partnum, "part number");
-	if (!part_valid[partnum])
+	if (!f->part_valid[partnum])
 		return;
 
 	for (w = 0; w < 3; w++)
-		set_nvm_word(w, partnum, mac_buf[w]);
+		set_nvm_word(w, partnum, mac->mac_buf[w]);
 
 	printf("Wrote MAC address to part %lu: ",
 	    (unsigned long)partnum);
@@ -1613,11 +1010,13 @@ cmd_helper_dump(void)
 {
 	unsigned long partnum;
 
-	part_valid[0] = good_checksum(0);
-	part_valid[1] = good_checksum(1);
+	struct xfile *f = &nv->f;
+
+	f->part_valid[0] = good_checksum(0);
+	f->part_valid[1] = good_checksum(1);
 
 	for (partnum = 0; partnum < 2; partnum++) {
-		if (!part_valid[partnum])
+		if (!f->part_valid[partnum])
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, partnum),
@@ -1673,19 +1072,21 @@ hexdump(unsigned long partnum)
 void
 cmd_helper_swap(void)
 {
+	struct xfile *f = &nv->f;
+
 	x_v_memcpy(
-	    buf + (unsigned long)GBE_WORK_SIZE,
-	    buf,
+	    f->buf + (unsigned long)GBE_WORK_SIZE,
+	    f->buf,
 	    GBE_PART_SIZE);
 
 	x_v_memcpy(
-	    buf,
-	    buf + (unsigned long)GBE_PART_SIZE,
+	    f->buf,
+	    f->buf + (unsigned long)GBE_PART_SIZE,
 	    GBE_PART_SIZE);
 
 	x_v_memcpy(
-	    buf + (unsigned long)GBE_PART_SIZE,
-	    buf + (unsigned long)GBE_WORK_SIZE,
+	    f->buf + (unsigned long)GBE_PART_SIZE,
+	    f->buf + (unsigned long)GBE_WORK_SIZE,
 	    GBE_PART_SIZE);
 
 	set_part_modified(0);
@@ -1695,17 +1096,21 @@ cmd_helper_swap(void)
 void
 cmd_helper_copy(void)
 {
+	struct xfile *f = &nv->f;
+
 	x_v_memcpy(
-	    buf + (unsigned long)((part ^ 1) * GBE_PART_SIZE),
-	    buf + (unsigned long)(part * GBE_PART_SIZE),
+	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
+	    f->buf + (unsigned long)(f->part * GBE_PART_SIZE),
 	    GBE_PART_SIZE);
 
-	set_part_modified(part ^ 1);
+	set_part_modified(f->part ^ 1);
 }
 
 void
 cmd_helper_cat(void)
 {
+	struct xfile *f = &nv->f;
+
 	unsigned long p = 0;
 	unsigned long ff = 0;
 	unsigned long nff = 0;
@@ -1714,7 +1119,7 @@ cmd_helper_cat(void)
 
 	fflush(NULL);
 
-	memset(pad, 0xff, GBE_PART_SIZE);
+	memset(f->pad, 0xff, GBE_PART_SIZE);
 
 	switch (cmd_num) {
 	case CMD_CAT:
@@ -1731,10 +1136,11 @@ cmd_helper_cat(void)
 	}
 
 	for (p = 0; p < 2; p++) {
-		cat_buf(bufcmp + (unsigned long)(p * (gbe_file_size >> 1)));
+		cat_buf(f->bufcmp +
+		    (unsigned long)(p * (f->gbe_file_size >> 1)));
 
 		for (ff = 0; ff < nff; ff++)
-			cat_buf(pad);
+			cat_buf(f->pad);
 	}
 }
 
@@ -1750,39 +1156,40 @@ cat_buf(unsigned char *b)
 void
 write_gbe_file(void)
 {
-	struct stat gbe_st;
-	struct stat tmp_st;
+	struct stat _gbe_st;
+	struct stat _tmp_st;
 
 	unsigned long p;
 	unsigned char update_checksum;
 
 	struct commands *cmd = &nv->cmd[nv->i];
+	struct xfile *f = &nv->f;
 
 	if (cmd->flags == O_RDONLY)
 		return;
 
-	if (fstat(gbe_fd, &gbe_st) == -1)
-		err(errno, "%s: re-check", fname);
-	if (gbe_st.st_dev != gbe_dev || gbe_st.st_ino != gbe_ino)
-		err(EIO, "%s: file replaced while open", fname);
-	if (gbe_st.st_size != gbe_file_size)
-		err(errno, "%s: file size changed before write", fname);
-	if (!S_ISREG(gbe_st.st_mode))
-		err(errno, "%s: file type changed before write", fname);
+	if (fstat(f->gbe_fd, &_gbe_st) == -1)
+		err(errno, "%s: re-check", f->fname);
+	if (_gbe_st.st_dev != f->gbe_dev || _gbe_st.st_ino != f->gbe_ino)
+		err(EIO, "%s: file replaced while open", f->fname);
+	if (_gbe_st.st_size != f->gbe_file_size)
+		err(errno, "%s: file size changed before write", f->fname);
+	if (!S_ISREG(_gbe_st.st_mode))
+		err(errno, "%s: file type changed before write", f->fname);
 
-	if (fstat(tmp_fd, &tmp_st) == -1)
-		err(errno, "%s: re-check", tname);
-	if (tmp_st.st_dev != tmp_dev || tmp_st.st_ino != tmp_ino)
-		err(EIO, "%s: file replaced while open", tname);
-	if (tmp_st.st_size != gbe_file_size)
-		err(errno, "%s: file size changed before write", tname);
-	if (!S_ISREG(tmp_st.st_mode))
-		err(errno, "%s: file type changed before write", tname);
+	if (fstat(f->tmp_fd, &_tmp_st) == -1)
+		err(errno, "%s: re-check", f->tname);
+	if (_tmp_st.st_dev != f->tmp_dev || _tmp_st.st_ino != f->tmp_ino)
+		err(EIO, "%s: file replaced while open", f->tname);
+	if (_tmp_st.st_size != f->gbe_file_size)
+		err(errno, "%s: file size changed before write", f->tname);
+	if (!S_ISREG(_tmp_st.st_mode))
+		err(errno, "%s: file type changed before write", f->tname);
 
 	update_checksum = cmd->chksum_write;
 
 	for (p = 0; p < 2; p++) {
-		if (!part_modified[p])
+		if (!f->part_modified[p])
 			continue;
 
 		if (update_checksum)
@@ -1822,25 +1229,28 @@ calculated_checksum(unsigned long p)
 unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
 {
+	struct xfile *f = &nv->f;
+
 	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	return (unsigned short)buf[pos] |
-	    ((unsigned short)buf[pos + 1] << 8);
+	return (unsigned short)f->buf[pos] |
+	    ((unsigned short)f->buf[pos + 1] << 8);
 }
 
 void
 set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 {
+	struct xfile *f = &nv->f;
 	unsigned long pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
 
-	buf[pos] = (unsigned char)(val16 & 0xff);
-	buf[pos + 1] = (unsigned char)(val16 >> 8);
+	f->buf[pos] = (unsigned char)(val16 & 0xff);
+	f->buf[pos + 1] = (unsigned char)(val16 >> 8);
 
 	set_part_modified(p);
 }
@@ -1848,8 +1258,10 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 void
 set_part_modified(unsigned long p)
 {
+	struct xfile *f = &nv->f;
+
 	check_bin(p, "part number");
-	part_modified[p] = 1;
+	f->part_modified[p] = 1;
 }
 
 void
@@ -1880,9 +1292,11 @@ void
 rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
+	struct xfile *f = &nv->f;
+	struct commands *cmd = &nv->cmd[nv->i];
+
 	long r;
 	unsigned long gbe_rw_size;
-	struct commands *cmd = &nv->cmd[nv->i];
 
 	unsigned char *mem_offset;
 
@@ -1892,26 +1306,28 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
-		    fname, rw_type_str, (unsigned long)p, rw_type);
+		    f->fname, rw_type_str, (unsigned long)p, rw_type);
 
 	mem_offset = gbe_mem_offset(p, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
 
-	r = rw_gbe_file_exact(tmp_fd, mem_offset,
+	r = rw_gbe_file_exact(f->tmp_fd, mem_offset,
 	    gbe_rw_size, file_offset, rw_type);
 
 	if (r == -1)
 		err(errno, "%s: %s: part %lu",
-		    fname, rw_type_str, (unsigned long)p);
+		    f->fname, rw_type_str, (unsigned long)p);
 
 	if ((unsigned long)r != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
-		    fname, rw_type_str, (unsigned long)p);
+		    f->fname, rw_type_str, (unsigned long)p);
 }
 
 void
 write_to_gbe_bin(void)
 {
+	struct xfile *f = &nv->f;
+
 	int saved_errno;
 	int mv;
 
@@ -1926,17 +1342,17 @@ write_to_gbe_bin(void)
 	 * We may otherwise read from
 	 * cache, so we must sync.
 	 */
-	if (x_i_fsync(tmp_fd) == -1)
+	if (x_i_fsync(f->tmp_fd) == -1)
 		err(errno, "%s: fsync (pre-verification)",
-		    tname);
+		    f->tname);
 
 	check_written_part(0);
 	check_written_part(1);
 
 	report_io_err_rw();
 
-	if (io_err_gbe)
-		err(EIO, "%s: bad write", fname);
+	if (f->io_err_gbe)
+		err(EIO, "%s: bad write", f->fname);
 
 	/*
 	 * success!
@@ -1945,39 +1361,41 @@ write_to_gbe_bin(void)
 
 	saved_errno = errno;
 
-	if (x_i_close(tmp_fd) == -1) {
-		fprintf(stderr, "FAIL: %s: close\n", tname);
-		io_err_gbe_bin = 1;
+	if (x_i_close(f->tmp_fd) == -1) {
+		fprintf(stderr, "FAIL: %s: close\n", f->tname);
+		f->io_err_gbe_bin = 1;
 	}
 
-	if (x_i_close(gbe_fd) == -1) {
-		fprintf(stderr, "FAIL: %s: close\n", fname);
-		io_err_gbe_bin = 1;
+	if (x_i_close(f->gbe_fd) == -1) {
+		fprintf(stderr, "FAIL: %s: close\n", f->fname);
+		f->io_err_gbe_bin = 1;
 	}
 
 	errno = saved_errno;
 
-	tmp_fd = -1;
-	gbe_fd = -1;
+	f->tmp_fd = -1;
+	f->gbe_fd = -1;
 
-	if (!io_err_gbe_bin) {
+	if (!f->io_err_gbe_bin) {
 
 		mv = gbe_mv();
 
 		if (mv < 0) {
-			io_err_gbe_bin = 1;
+
+			f->io_err_gbe_bin = 1;
+
 			fprintf(stderr, "%s: %s\n",
-			    fname, strerror(errno));
+			    f->fname, strerror(errno));
 		} else {
 			/*
 			 * tmpfile removed
 			 * by the rename
 			 */
 
-			if (tname != NULL)
-				free(tname);
+			if (f->tname != NULL)
+				free(f->tname);
 
-			tname = NULL;
+			f->tname = NULL;
 		}
 	}
 
@@ -1987,11 +1405,11 @@ write_to_gbe_bin(void)
 	 * very nearly done
 	 */
 
-	if (!io_err_gbe_bin)
+	if (!f->io_err_gbe_bin)
 		return;
 
 	fprintf(stderr, "FAIL (rename): %s: skipping fsync\n",
-	    fname);
+	    f->fname);
 	if (errno)
 		fprintf(stderr,
 		    "errno %d: %s\n", errno, strerror(errno));
@@ -2000,16 +1418,18 @@ write_to_gbe_bin(void)
 void
 check_written_part(unsigned long p)
 {
-	long r;
+	struct commands *cmd = &nv->cmd[nv->i];
+	struct xfile *f = &nv->f;
+
 	unsigned long gbe_rw_size;
 	unsigned char *mem_offset;
 	off_t file_offset;
 	unsigned char *buf_restore;
 	struct stat st;
 
-	struct commands *cmd = &nv->cmd[nv->i];
+	long r;
 
-	if (!part_modified[p])
+	if (!f->part_modified[p])
 		return;
 
 	gbe_rw_size = cmd->rw_size;
@@ -2018,30 +1438,30 @@ check_written_part(unsigned long p)
 	mem_offset = gbe_mem_offset(p, "pwrite");
 	file_offset = (off_t)gbe_file_offset(p, "pwrite");
 
-	memset(pad, 0xff, sizeof(pad));
+	memset(f->pad, 0xff, sizeof(f->pad));
 
-	if (fstat(gbe_fd, &st) == -1)
-		err(errno, "%s: fstat (post-write)", fname);
-	if (st.st_dev != gbe_dev || st.st_ino != gbe_ino)
-		err(EIO, "%s: file changed during write", fname);
+	if (fstat(f->gbe_fd, &st) == -1)
+		err(errno, "%s: fstat (post-write)", f->fname);
+	if (st.st_dev != f->gbe_dev || st.st_ino != f->gbe_ino)
+		err(EIO, "%s: file changed during write", f->fname);
 
-	if (fstat(tmp_fd, &st) == -1)
-		err(errno, "%s: fstat (post-write)", tname);
-	if (st.st_dev != tmp_dev || st.st_ino != tmp_ino)
-		err(EIO, "%s: file changed during write", tname);
+	if (fstat(f->tmp_fd, &st) == -1)
+		err(errno, "%s: fstat (post-write)", f->tname);
+	if (st.st_dev != f->tmp_dev || st.st_ino != f->tmp_ino)
+		err(EIO, "%s: file changed during write", f->tname);
 
-	r = rw_gbe_file_exact(tmp_fd, pad,
+	r = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
 
 	if (r == -1)
-		rw_check_err_read[p] = io_err_gbe = 1;
+		f->rw_check_err_read[p] = f->io_err_gbe = 1;
 	else if ((unsigned long)r != gbe_rw_size)
-		rw_check_partial_read[p] = io_err_gbe = 1;
-	else if (x_i_memcmp(mem_offset, pad, gbe_rw_size) != 0)
-		rw_check_bad_part[p] = io_err_gbe = 1;
+		f->rw_check_partial_read[p] = f->io_err_gbe = 1;
+	else if (x_i_memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
+		f->rw_check_bad_part[p] = f->io_err_gbe = 1;
 
-	if (rw_check_err_read[p] ||
-	    rw_check_partial_read[p])
+	if (f->rw_check_err_read[p] ||
+	    f->rw_check_partial_read[p])
 		return;
 
 	/*
@@ -2049,50 +1469,52 @@ check_written_part(unsigned long p)
 	 * always at offset zero, for post-write checks.
 	 * That's why we hardcode good_checksum(0).
 	 */
-	buf_restore = buf;
-	buf = pad;
-	post_rw_checksum[p] = good_checksum(0);
-	buf = buf_restore;
+	buf_restore = f->buf;
+	f->buf = f->pad;
+	f->post_rw_checksum[p] = good_checksum(0);
+	f->buf = buf_restore;
 }
 
 void
 report_io_err_rw(void)
 {
+	struct xfile *f = &nv->f;
+
 	unsigned long p;
 
-	if (!io_err_gbe)
+	if (!f->io_err_gbe)
 		return;
 
 	for (p = 0; p < 2; p++) {
-		if (!part_modified[p])
+		if (!f->part_modified[p])
 			continue;
 
-		if (rw_check_err_read[p])
+		if (f->rw_check_err_read[p])
 			fprintf(stderr,
 			    "%s: pread: p%lu (post-verification)\n",
-			    fname, (unsigned long)p);
-		if (rw_check_partial_read[p])
+			    f->fname, (unsigned long)p);
+		if (f->rw_check_partial_read[p])
 			fprintf(stderr,
 			    "%s: partial pread: p%lu (post-verification)\n",
-			    fname, (unsigned long)p);
-		if (rw_check_bad_part[p])
+			    f->fname, (unsigned long)p);
+		if (f->rw_check_bad_part[p])
 			fprintf(stderr,
 			    "%s: pwrite: corrupt write on p%lu\n",
-			    fname, (unsigned long)p);
+			    f->fname, (unsigned long)p);
 
-		if (rw_check_err_read[p] ||
-		    rw_check_partial_read[p]) {
+		if (f->rw_check_err_read[p] ||
+		    f->rw_check_partial_read[p]) {
 			fprintf(stderr,
 			    "%s: p%lu: skipped checksum verification "
 			    "(because read failed)\n",
-			    fname, (unsigned long)p);
+			    f->fname, (unsigned long)p);
 
 			continue;
 		}
 
-		fprintf(stderr, "%s: ", fname);
+		fprintf(stderr, "%s: ", f->fname);
 
-		if (post_rw_checksum[p])
+		if (f->post_rw_checksum[p])
 			fprintf(stderr, "GOOD");
 		else
 			fprintf(stderr, "BAD");
@@ -2100,7 +1522,7 @@ report_io_err_rw(void)
 		fprintf(stderr, " checksum in p%lu on-disk.\n",
 		    (unsigned long)p);
 
-		if (post_rw_checksum[p]) {
+		if (f->post_rw_checksum[p]) {
 			fprintf(stderr,
 			    "    This does NOT mean it's safe. it may be\n"
 			    "    salvageable if you use the cat feature.\n");
@@ -2111,6 +1533,8 @@ report_io_err_rw(void)
 int
 gbe_mv(void)
 {
+	struct xfile *f = &nv->f;
+
 	int r;
 	int saved_errno;
 	int tmp_gbe_bin_exists = 1;
@@ -2120,7 +1544,7 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	r = rename(tname, fname);
+	r = rename(f->tname, f->fname);
 
 	if (r > -1) {
 		/*
@@ -2129,7 +1553,7 @@ gbe_mv(void)
 
 		tmp_gbe_bin_exists = 0;
 
-		if (fsync_dir(fname) < 0)
+		if (fsync_dir(f->fname) < 0)
 			r = -1;
 
 		goto ret_gbe_mv;
@@ -2140,27 +1564,27 @@ gbe_mv(void)
 
 	/* cross-filesystem rename */
 
-	if ((r = tmp_fd = open(tname,
+	if ((r = f->tmp_fd = open(f->tname,
 	    O_RDONLY | O_BINARY)) == -1)
 		goto ret_gbe_mv;
 
 	/* create replacement temp in target directory */
-	dest_tmp = new_tmpfile(&dest_fd, 1, fname);
+	dest_tmp = new_tmpfile(&dest_fd, 1, f->fname);
 	if (dest_tmp == NULL)
 		goto ret_gbe_mv;
 
 	/* copy data */
 
-	r = rw_file_exact(tmp_fd, bufcmp,
-	    gbe_file_size, 0, IO_PREAD,
+	r = rw_file_exact(f->tmp_fd, f->bufcmp,
+	    f->gbe_file_size, 0, IO_PREAD,
 	    NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (r < 0)
 		goto ret_gbe_mv;
 
-	r = rw_file_exact(dest_fd, bufcmp,
-	    gbe_file_size, 0, IO_PWRITE,
+	r = rw_file_exact(dest_fd, f->bufcmp,
+	    f->gbe_file_size, 0, IO_PWRITE,
 	    NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
@@ -2173,10 +1597,10 @@ gbe_mv(void)
 	if (x_i_close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (rename(dest_tmp, fname) == -1)
+	if (rename(dest_tmp, f->fname) == -1)
 		goto ret_gbe_mv;
 
-	if (fsync_dir(fname) < 0)
+	if (fsync_dir(f->fname) < 0)
 		goto ret_gbe_mv;
 
 	free(dest_tmp);
@@ -2184,19 +1608,19 @@ gbe_mv(void)
 
 ret_gbe_mv:
 
-	if (gbe_fd > -1) {
-		if (x_i_close(gbe_fd) < 0)
+	if (f->gbe_fd > -1) {
+		if (x_i_close(f->gbe_fd) < 0)
 			r = -1;
-		if (fsync_dir(fname) < 0)
+		if (fsync_dir(f->fname) < 0)
 			r = -1;
-		gbe_fd = -1;
+		f->gbe_fd = -1;
 	}
 
-	if (tmp_fd > -1) {
-		if (x_i_close(tmp_fd) < 0)
+	if (f->tmp_fd > -1) {
+		if (x_i_close(f->tmp_fd) < 0)
 			r = -1;
 
-		tmp_fd = -1;
+		f->tmp_fd = -1;
 	}
 
 	/*
@@ -2204,7 +1628,7 @@ ret_gbe_mv:
 	 * tmp_fd may have been moved
 	 */
 	if (tmp_gbe_bin_exists) {
-		if (unlink(tname) < 0)
+		if (unlink(f->tname) < 0)
 			r = -1;
 		else
 			tmp_gbe_bin_exists = 0;
@@ -2232,6 +1656,8 @@ ret_gbe_mv:
 int
 fsync_dir(const char *path)
 {
+	struct xfile *f = &nv->f;
+
 #if defined(PATH_LEN) && \
     (PATH_LEN) >= 256
 	unsigned long maxlen = PATH_LEN;
@@ -2316,7 +1742,7 @@ err_fsync_dir:
 		errno = EIO;
 
 	if (errno != saved_errno)
-		fprintf(stderr, "%s: %s\n", fname, strerror(errno));
+		fprintf(stderr, "%s: %s\n", f->fname, strerror(errno));
 
 	if (dirbuf != NULL)
 		free(dirbuf);
@@ -2324,7 +1750,7 @@ err_fsync_dir:
 	if (dfd > -1)
 		x_i_close(dfd);
 
-	io_err_gbe_bin = 1;
+	f->io_err_gbe_bin = 1;
 	errno = saved_errno;
 
 	return -1;
@@ -2338,10 +1764,12 @@ err_fsync_dir:
 unsigned char *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
+	struct xfile *f = &nv->f;
+
 	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
-	return (unsigned char *)(buf + (unsigned long)gbe_off);
+	return (unsigned char *)(f->buf + (unsigned long)gbe_off);
 }
 
 /*
@@ -2354,16 +1782,20 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 off_t
 gbe_file_offset(unsigned long p, const char *f_op)
 {
-	off_t gbe_file_half_size = gbe_file_size >> 1;
+	struct xfile *f = &nv->f;
+
+	off_t gbe_file_half_size = f->gbe_file_size >> 1;
 
 	return gbe_x_offset(p, f_op, "file",
-	    gbe_file_half_size, gbe_file_size);
+	    gbe_file_half_size, f->gbe_file_size);
 }
 
 off_t
 gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
+	struct xfile *f = &nv->f;
+
 	off_t off;
 
 	check_bin(p, "part number");
@@ -2372,11 +1804,11 @@ gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
 
 	if (off > ncmp - GBE_PART_SIZE)
 		err(ECANCELED, "%s: GbE %s %s out of bounds",
-		    fname, d_type, f_op);
+		    f->fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
 		err(ECANCELED, "%s: GbE %s %s at bad offset",
-		    fname, d_type, f_op);
+		    f->fname, d_type, f_op);
 
 	return off;
 }
@@ -2385,23 +1817,25 @@ long
 rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
+	struct xfile *f = &nv->f;
+
 	long r;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
 
-	if (mem != (void *)pad) {
-		if (mem < buf)
+	if (mem != (void *)f->pad) {
+		if (mem < f->buf)
 			goto err_rw_gbe_file_exact;
 
-		if ((unsigned long)(mem - buf) >= GBE_WORK_SIZE)
+		if ((unsigned long)(mem - f->buf) >= GBE_WORK_SIZE)
 			goto err_rw_gbe_file_exact;
 	}
 
-	if (off < 0 || off >= gbe_file_size)
+	if (off < 0 || off >= f->gbe_file_size)
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > (unsigned long)(gbe_file_size - off))
+	if (nrw > (unsigned long)(f->gbe_file_size - off))
 		goto err_rw_gbe_file_exact;
 
 	if (nrw > (unsigned long)GBE_PART_SIZE)
@@ -2874,6 +2308,8 @@ usage(void)
 void
 err(int nvm_errval, const char *msg, ...)
 {
+	struct xfile *f = &nv->f;
+
 	va_list args;
 
 	if (errno == 0)
@@ -2893,8 +2329,8 @@ err(int nvm_errval, const char *msg, ...)
 
 	fprintf(stderr, "\n");
 
-	if (tname != NULL)
-		free(tname);
+	if (f->tname != NULL)
+		free(f->tname);
 
 	exit(EXIT_FAILURE);
 }
@@ -2902,26 +2338,28 @@ err(int nvm_errval, const char *msg, ...)
 int
 exit_cleanup(void)
 {
+	struct xfile *f = &nv->f;
+
 	int close_err = 0;
 	int saved_errno = errno;
 
-	if (gbe_fd > -1) {
-		if (x_i_close(gbe_fd) == -1)
+	if (f->gbe_fd > -1) {
+		if (x_i_close(f->gbe_fd) == -1)
 			close_err = 1;
-		gbe_fd = -1;
+		f->gbe_fd = -1;
 	}
 
-	if (tmp_fd > -1) {
-		if (x_i_close(tmp_fd) == -1)
-			close_err = 1;
-	}
-
-	if (tname != NULL) {
-		if (unlink(tname) == -1)
+	if (f->tmp_fd > -1) {
+		if (x_i_close(f->tmp_fd) == -1)
 			close_err = 1;
 	}
 
-	tmp_fd = -1;
+	if (f->tname != NULL) {
+		if (unlink(f->tname) == -1)
+			close_err = 1;
+	}
+
+	f->tmp_fd = -1;
 
 	if (saved_errno)
 		errno = saved_errno;
@@ -2937,15 +2375,15 @@ getnvmprogname(void)
 {
 	const char *p;
 
-	if (argv0 == NULL || *argv0 == '\0')
+	if (nv->argv0 == NULL || *nv->argv0 == '\0')
 		return "";
 
-	p = x_c_strrchr(argv0, '/');
+	p = x_c_strrchr(nv->argv0, '/');
 
 	if (p)
 		return p + 1;
 	else
-		return argv0;
+		return nv->argv0;
 }
 
 /*
@@ -2975,6 +2413,8 @@ getnvmprogname(void)
 char *
 new_tmpfile(int *fd, int local, const char *path)
 {
+	struct xfile *f = &nv->f;
+
 	unsigned long maxlen;
 	struct stat st;
 
@@ -3111,8 +2551,8 @@ new_tmpfile(int *fd, int local, const char *path)
 		goto err_new_tmpfile;
 
 	/* inode will be checked later on write */
-	tmp_dev = st.st_dev;
-	tmp_ino = st.st_ino;
+	f->tmp_dev = st.st_dev;
+	f->tmp_ino = st.st_ino;
 
 	/* tmpfile has >1 hardlinks */
 	if (st.st_nlink > 1)
@@ -3398,3 +2838,63 @@ x_i_fsync(int fd)
 
 	return r;
 }
+
+/* type asserts */
+typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
+typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
+typedef char static_assert_unsigned_char_is_1[
+    (sizeof(unsigned char) == 1) ? 1 : -1];
+typedef char static_assert_unsigned_short_is_2[
+    (sizeof(unsigned short) >= 2) ? 1 : -1];
+typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
+typedef char static_assert_unsigned_int_is_4[
+    (sizeof(unsigned int) >= 4) ? 1 : -1];
+typedef char static_assert_unsigned_long_is_4[
+    (sizeof(unsigned long) >= 4) ? 1 : -1];
+typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
+typedef char static_assert_twos_complement[
+    ((-1 & 3) == 3) ? 1 : -1
+];
+typedef char assert_unsigned_long_ptr[
+    (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
+];
+
+/*
+ * We set _FILE_OFFSET_BITS 64, but we only handle
+ * but we only need smaller files, so require 4-bytes.
+ * Some operating systems ignore the define, hence assert:
+ */
+typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
+
+/*
+ * asserts (variables/defines sanity check)
+ */
+typedef char assert_argc3[(ARGC_3==3)?1:-1];
+typedef char assert_argc4[(ARGC_4==4)?1:-1];
+typedef char assert_read[(IO_READ==0)?1:-1];
+typedef char assert_write[(IO_WRITE==1)?1:-1];
+typedef char assert_pread[(IO_PREAD==2)?1:-1];
+typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
+typedef char assert_pathlen[(PATH_LEN>=256)?1:-1];
+/* commands */
+typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
+typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
+typedef char assert_cmd_swap[(CMD_SWAP==2)?1:-1];
+typedef char assert_cmd_copy[(CMD_COPY==3)?1:-1];
+typedef char assert_cmd_cat[(CMD_CAT==4)?1:-1];
+typedef char assert_cmd_cat16[(CMD_CAT16==5)?1:-1];
+typedef char assert_cmd_cat128[(CMD_CAT128==6)?1:-1];
+/* bool */
+typedef char bool_arg_nopart[(ARG_NOPART==0)?1:-1];
+typedef char bool_arg_part[(ARG_PART==1)?1:-1];
+typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
+typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
+typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
+typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
+typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
+typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
+typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
+typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
+typedef char bool_off_err[(OFF_ERR==0)?1:-1];
+typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
+
