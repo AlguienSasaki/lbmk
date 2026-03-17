@@ -162,15 +162,15 @@ main(int argc, char *argv[])
 #endif
 
 	nv = new_xstate();
+
 	if (nv == NULL)
 		err(errno, NULL);
+	if (nv->f.buf == NULL)
+		err(EINVAL, "Work buffer not initialised");
 
 	nv->argv0 = argv[0];
 	if (argc < 3)
 		usage();
-
-	if (nv->f.buf == NULL)
-		err(EINVAL, "Work buffer not initialised");
 
 	f = &nv->f;
 
