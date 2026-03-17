@@ -7,21 +7,39 @@ CSTD?=-std=c90
 WERROR?=-Werror
 CWARN?=-Wall -Wextra -pedantic
 COPT?=-Os
-CFLAGS?=$(CWARN) $(CSTD)
+CFLAGS?=
 LDFLAGS?=
 DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 LDIR?=-I.
 
-OPTS=$(LDIR) $(COPT) $(WERROR) $(CFLAGS) $(LDFLAGS)
+OPTS?=$(LDIR) $(CFLAGS) $(LDFLAGS)
 
+STRICTWARN?=$(OPTS) $(CWARN) $(CSTD) $(COPT)
+
+STRICT?=$(STRICTWARN) $(WERROR)
+
+# clang static analyser
+HELLFLAGS?=$(STRICT) -Weverything
+
+# program name
 PROG=nvmutil
 
 all: $(PROG)
 
-$(PROG): nvmutil.c
-	$(CC) $(OPTS) nvmutil.c -o $(PROG)
+$(PROG): $(PROG).c
+	$(CC) $(OPTS) $(PROG).c -o $(PROG)
+
+strictwarn: $(PROG).c
+	$(CC) $(STRICTWARN) $(PROG).c -o $(PROG)
+
+strict: $(PROG).c
+	$(CC) $(STRICT) $(PROG).c -o $(PROG)
+
+#clang static analyser
+hell: $(PROG).c
+	$(CC) $(HELLFLAGS) $(PROG).c -o $(PROG)
 
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
@@ -36,4 +54,4 @@ clean:
 
 distclean: clean
 
-.PHONY: all install uninstall clean distclean
+.PHONY: all strictwarn strict hell install uninstall clean distclean

@@ -2682,6 +2682,13 @@ x_c_strrchr(const char *s, int c)
 }
 
 /*
+ * non-atomic rename
+ *
+ * commented because i can't sacrifice
+ * exactly this property. nvmutil tries
+ * to protect files against e.g. power loss
+ */
+/*
 int
 x_i_rename(const char *src, const char *dst)
 {
