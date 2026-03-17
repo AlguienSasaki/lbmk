@@ -351,7 +351,7 @@ int good_checksum(unsigned long partnum);
  * Execute user command on GbE data.
  * These are stubs that call helpers.
  */
-void run_cmd(unsigned long c);
+void run_cmd(void);
 void check_command_num(unsigned long c);
 unsigned char valid_command(unsigned long c);
 
@@ -418,7 +418,8 @@ unsigned short calculated_checksum(unsigned long p);
  * the NVM area during operation.
  */
 unsigned short nvm_word(unsigned long pos16, unsigned long part);
-void set_nvm_word(unsigned long pos16, unsigned long part, unsigned short val16);
+void set_nvm_word(unsigned long pos16,
+    unsigned long part, unsigned short val16);
 void set_part_modified(unsigned long p);
 void check_nvm_bound(unsigned long pos16, unsigned long part);
 void check_bin(unsigned long a, const char *a_name);
@@ -604,66 +605,6 @@ enum {
 	CHECKSUM_WRITE
 };
 
-struct commands {
-	unsigned long chk;
-	const char *str;
-	void (*run)(void);
-	int argc;
-	unsigned char arg_part;
-	unsigned char chksum_read;
-	unsigned char chksum_write;
-	unsigned long rw_size; /* within the 4KB GbE part */
-	int flags; /* e.g. O_RDWR or O_RDONLY */
-};
-
-/*
- * Command table, for nvmutil commands
- */
-const struct commands command[] = {
-	{ CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
-	    ARG_NOPART,
-	    SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    NVM_SIZE, O_RDONLY },
-
-	{ CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
-	    ARG_NOPART,
-	    CHECKSUM_READ, CHECKSUM_WRITE,
-	    NVM_SIZE, O_RDWR },
-
-	{ CMD_SWAP, "swap", cmd_helper_swap, ARGC_3,
-	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE, O_RDWR },
-
-	{ CMD_COPY, "copy", cmd_helper_copy, ARGC_4,
-	    ARG_PART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE, O_RDWR },
-
-	{ CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
-	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE, O_RDONLY },
-
-	{ CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
-	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE, O_RDONLY },
-
-	{ CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
-	    ARG_NOPART,
-	    CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
-	    GBE_PART_SIZE, O_RDONLY },
-};
-
-#define MAX_CMD_LEN 50
-#define N_COMMANDS items(command)
-#define CMD_NULL N_COMMANDS
-
-/*
- * Index in command[], will be set later
- */
-unsigned long cmd_index = CMD_NULL;
 
 /*
  * asserts (variables/defines sanity check)
@@ -736,9 +677,118 @@ char *tname = NULL;
 #endif
 #endif
 
+struct commands {
+	unsigned long chk;
+	const char *str;
+	void (*run)(void);
+	int argc;
+	unsigned char arg_part;
+	unsigned char chksum_read;
+	unsigned char chksum_write;
+	unsigned long rw_size; /* within the 4KB GbE part */
+	int flags; /* e.g. O_RDWR or O_RDONLY */
+};
+
+#define MAX_CMD_LEN 50
+
+/*
+ * BE CAREFUL when editing this
+ * to ensure that you also update
+ * the tables in new_xstate()
+ */
+struct xstate {
+	struct commands cmd[7];
+	unsigned long i; /* index to cmd[] for current command */
+	int no_cmd;
+
+	/* store size of a struct here.
+	   (can be used to copy old state) */
+	unsigned long xsize;
+};
+
+/*
+ * Program state/command table
+ * Default config stored here,
+ * and copied to a newly allocated
+ * buffer in memory, then the pointer
+ * is passed. The rest of the program
+ * will manipulate this data.
+ */
+struct xstate *
+new_xstate(void)
+{
+	static struct xstate us = {
+	/* .cmd (update cmd[] in the struct if adding to it) */
+	{
+	{
+		CMD_DUMP, "dump", cmd_helper_dump, ARGC_3,
+		ARG_NOPART,
+		SKIP_CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		NVM_SIZE, O_RDONLY
+	}, {
+		CMD_SETMAC, "setmac", cmd_helper_setmac, ARGC_3,
+		ARG_NOPART,
+		CHECKSUM_READ, CHECKSUM_WRITE,
+		NVM_SIZE, O_RDWR
+	}, {
+		CMD_SWAP, "swap", cmd_helper_swap, ARGC_3,
+		ARG_NOPART,
+		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		GBE_PART_SIZE, O_RDWR
+	}, {
+		CMD_COPY, "copy", cmd_helper_copy, ARGC_4,
+		ARG_PART,
+		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		GBE_PART_SIZE, O_RDWR
+	}, {
+		CMD_CAT, "cat", cmd_helper_cat, ARGC_3,
+		ARG_NOPART,
+		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		GBE_PART_SIZE, O_RDONLY
+	}, {
+		CMD_CAT16, "cat16", cmd_helper_cat, ARGC_3,
+		ARG_NOPART,
+		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		GBE_PART_SIZE, O_RDONLY
+	}, {
+		CMD_CAT128, "cat128", cmd_helper_cat, ARGC_3,
+		ARG_NOPART,
+		CHECKSUM_READ, SKIP_CHECKSUM_WRITE,
+		GBE_PART_SIZE, O_RDONLY
+	}
+	},
+	/* .cmd_index */
+	0,
+	/* .no_cmd (set 0 when a command is found) */
+	1,
+	/* .xsize (size of the stuct will be stored here later) */
+	0
+	};
+
+	struct xstate *xs_new;
+
+	us.xsize = sizeof(us);
+
+	if ((xs_new = malloc(us.xsize)) == NULL)
+		err(ECANCELED, "Could not initialise new state");
+
+	memcpy(xs_new, &us, us.xsize);
+
+	return xs_new;
+}
+
+struct xstate *nv = NULL;
+struct xstate *test = NULL;
+
 int
 main(int argc, char *argv[])
 {
+	struct commands *cmd;
+
+	nv = new_xstate();
+	if (nv == NULL)
+		err(errno, NULL);
+
 	argv0 = argv[0];
 	if (argc < 3)
 		usage();
@@ -781,6 +831,8 @@ main(int argc, char *argv[])
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
 
+	cmd = &nv->cmd[nv->i];
+
 #ifdef NVMUTIL_UNVEIL
 	if (command[cmd_index].flags == O_RDONLY) {
 		if (unveil(fname, "r") == -1)
@@ -811,9 +863,9 @@ main(int argc, char *argv[])
 
 	read_checksums();
 
-	run_cmd(cmd_index);
+	run_cmd();
 
-	if (command[cmd_index].flags == O_RDWR)
+	if (cmd->flags == O_RDWR)
 		write_to_gbe_bin();
 
 	if (exit_cleanup() == -1)
@@ -835,8 +887,9 @@ void
 sanitize_command_list(void)
 {
 	unsigned long c;
+	unsigned long num_commands = items(nv->cmd);
 
-	for (c = 0; c < N_COMMANDS; c++)
+	for (c = 0; c < num_commands; c++)
 		sanitize_command_index(c);
 }
 
@@ -848,34 +901,37 @@ sanitize_command_index(unsigned long c)
 {
 	unsigned long gbe_rw_size;
 
+	struct commands *cmd = &nv->cmd[c];
+
 	check_command_num(c);
 
-	if (command[c].argc < 3)
+	if (cmd->argc < 3)
 		err(EINVAL, "cmd index %lu: argc below 3, %d",
-		    (unsigned long)c, command[c].argc);
+		    (unsigned long)c, cmd->argc);
 
-	if (command[c].str == NULL)
+	if (cmd->str == NULL)
 		err(EINVAL, "cmd index %lu: NULL str",
 		    (unsigned long)c);
-	if (*command[c].str == '\0')
+
+	if (*cmd->str == '\0')
 		err(EINVAL, "cmd index %lu: empty str",
 		    (unsigned long)c);
 
-	if (xstrxlen(command[c].str, MAX_CMD_LEN + 1) >
+	if (xstrxlen(cmd->str, MAX_CMD_LEN + 1) >
 	    MAX_CMD_LEN) {
 		err(EINVAL, "cmd index %lu: str too long: %s",
-		    (unsigned long)c, command[c].str);
+		    (unsigned long)c, cmd->str);
 	}
 
-	if (command[c].run == NULL)
+	if (cmd->run == NULL)
 		err(EINVAL, "cmd index %lu: cmd ptr null",
 		    (unsigned long)c);
 
-	check_bin(command[c].arg_part, "cmd.arg_part");
-	check_bin(command[c].chksum_read, "cmd.chksum_read");
-	check_bin(command[c].chksum_write, "cmd.chksum_write");
+	check_bin(cmd->arg_part, "cmd.arg_part");
+	check_bin(cmd->chksum_read, "cmd.chksum_read");
+	check_bin(cmd->chksum_write, "cmd.chksum_write");
 
-	gbe_rw_size = command[c].rw_size;
+	gbe_rw_size = cmd->rw_size;
 
 	switch (gbe_rw_size) {
 	case GBE_PART_SIZE:
@@ -890,52 +946,75 @@ sanitize_command_index(unsigned long c)
 		err(EINVAL, "rw_size larger than GbE part: %lu",
 		    (unsigned long)gbe_rw_size);
 
-	if (command[c].flags != O_RDONLY &&
-	    command[c].flags != O_RDWR)
+	if (cmd->flags != O_RDONLY &&
+	    cmd->flags != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
 }
 
 void
 set_cmd(int argc, char *argv[])
 {
-	const char *cmd_str;
+	const char *cmd;
 
-	for (cmd_index = 0; valid_command(cmd_index); cmd_index++) {
-		cmd_str = command[cmd_index].str;
+	unsigned long i = 0;
 
-		if (xstrxcmp(argv[2], cmd_str, MAX_CMD_LEN) != 0)
+	for (i = 0; i < items(nv->cmd); i++) {
+
+		cmd = nv->cmd[i].str;
+
+		/* not the right command */
+		if (xstrxcmp(argv[2], cmd, MAX_CMD_LEN) != 0)
 			continue;
-		else if (argc >= command[cmd_index].argc)
-			return;
 
-		err(EINVAL, "Too few args on command '%s'", cmd_str);
+		/* valid command found */
+		if (argc >= nv->cmd[i].argc) {
+			nv->no_cmd = 0;
+			nv->i = i; /* set command */
+
+			return;
+		}
+
+		err(EINVAL,
+		    "Too few args on command '%s'", cmd);
 	}
 
-	cmd_index = CMD_NULL;
+	nv->no_cmd = 1;
 }
 
 void
 set_cmd_args(int argc, char *argv[])
 {
 	unsigned char arg_part;
+	unsigned long index;
 
-	if (!valid_command(cmd_index) || argc < 3)
+	struct commands *cmd;
+
+	if (!valid_command(nv->i) || argc < 3)
 		usage();
 
-	arg_part = command[cmd_index].arg_part;
+	index = nv->i;
+
+	cmd = &nv->cmd[index];
+
+	arg_part = cmd->arg_part;
 
 	/* Maintainer bugs */
 	if (arg_part && argc < 4)
 		err(EINVAL,
 		    "arg_part set for command that needs argc4");
-	if (arg_part && cmd_index == CMD_SETMAC)
+
+	if (arg_part && index == CMD_SETMAC)
 		err(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
-	if (cmd_index == CMD_SETMAC)
+	if (index == CMD_SETMAC) {
+
 		mac_str = argc >= 4 ? argv[3] : rmac;
-	else if (arg_part)
+
+	} else if (arg_part) {
+
 		part = conv_argv_part_num(argv[3]);
+	}
 }
 
 unsigned long
@@ -1001,8 +1080,10 @@ open_gbe_file(void)
 	struct stat gbe_st;
 	int flags;
 
+	struct commands *cmd = &nv->cmd[nv->i];
+
 	xopen(&gbe_fd, fname,
-	    command[cmd_index].flags | O_BINARY |
+	    cmd->flags | O_BINARY |
 	    O_NOFOLLOW | O_CLOEXEC, &gbe_st);
 
 	/* inode will be checked later on write */
@@ -1049,10 +1130,11 @@ int
 lock_file(int fd)
 {
 	struct flock fl;
+	struct commands *cmd = &nv->cmd[nv->i];
 
 	memset(&fl, 0, sizeof(fl));
 
-	if (command[cmd_index].flags == O_RDONLY)
+	if (cmd->flags == O_RDONLY)
 		fl.l_type = F_RDLCK;
 	else
 		fl.l_type = F_WRLCK;
@@ -1173,16 +1255,18 @@ read_checksums(void)
 	unsigned char num_invalid;
 	unsigned char max_invalid;
 
+	struct commands *cmd = &nv->cmd[nv->i];
+
 	part_valid[0] = 0;
 	part_valid[1] = 0;
 
-	if (!command[cmd_index].chksum_read)
+	if (!cmd->chksum_read)
 		return;
 
 	num_invalid = 0;
 	max_invalid = 2;
 
-	arg_part = command[cmd_index].arg_part;
+	arg_part = cmd->arg_part;
 	if (arg_part)
 		max_invalid = 1;
 
@@ -1216,24 +1300,30 @@ read_checksums(void)
 int
 good_checksum(unsigned long partnum)
 {
-	unsigned short expected_checksum = calculated_checksum(partnum);
-	unsigned short current_checksum = nvm_word(NVM_CHECKSUM_WORD, partnum);
+	unsigned short expected_checksum =
+	    calculated_checksum(partnum);
 
-	if (current_checksum == expected_checksum)
-		return 1;
+	unsigned short current_checksum =
+	    nvm_word(NVM_CHECKSUM_WORD, partnum);
 
-	return 0;
+	return current_checksum == expected_checksum;
 }
 
 void
-run_cmd(unsigned long c)
+run_cmd(void)
 {
-	check_command_num(c);
+	unsigned long cmd_num;
+	struct commands *cmd;
 
-	if (command[c].run == NULL)
-		err(EINVAL, "Command %lu: null ptr", (unsigned long)c);
+	cmd_num = nv->i;
+	cmd = &nv->cmd[cmd_num];
 
-	command[c].run();
+	check_command_num(cmd_num);
+
+	if (cmd->run == NULL)
+		err(EINVAL, "Command %lu: null ptr", cmd_num);
+
+	cmd->run();
 }
 
 void
@@ -1247,12 +1337,17 @@ check_command_num(unsigned long c)
 unsigned char
 valid_command(unsigned long c)
 {
-	if (c >= N_COMMANDS)
+	struct commands *cmd;
+
+	if (c >= items(nv->cmd))
 		return 0;
 
-	if (c != command[c].chk)
-		err(EINVAL, "Invalid cmd chk value (%lu) vs arg: %lu",
-		    (unsigned long)command[c].chk, (unsigned long)c);
+	cmd = &nv->cmd[c];
+
+	if (c != cmd->chk)
+		err(EINVAL,
+		    "Invalid cmd chk value (%lu) vs arg: %lu",
+		    cmd->chk, c);
 
 	return 1;
 }
@@ -1616,11 +1711,13 @@ cmd_helper_cat(void)
 	unsigned long ff = 0;
 	unsigned long nff = 0;
 
+	unsigned long cmd_num = nv->i;
+
 	fflush(NULL);
 
 	memset(pad, 0xff, GBE_PART_SIZE);
 
-	switch (cmd_index) {
+	switch (cmd_num) {
 	case CMD_CAT:
 		nff = 0;
 		break;
@@ -1660,7 +1757,9 @@ write_gbe_file(void)
 	unsigned long p;
 	unsigned char update_checksum;
 
-	if (command[cmd_index].flags == O_RDONLY)
+	struct commands *cmd = &nv->cmd[nv->i];
+
+	if (cmd->flags == O_RDONLY)
 		return;
 
 	if (fstat(gbe_fd, &gbe_st) == -1)
@@ -1681,7 +1780,7 @@ write_gbe_file(void)
 	if (!S_ISREG(tmp_st.st_mode))
 		err(errno, "%s: file type changed before write", tname);
 
-	update_checksum = command[cmd_index].chksum_write;
+	update_checksum = cmd->chksum_write;
 
 	for (p = 0; p < 2; p++) {
 		if (!part_modified[p])
@@ -1783,10 +1882,14 @@ rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
 	long r;
-	unsigned long gbe_rw_size = command[cmd_index].rw_size;
+	unsigned long gbe_rw_size;
+	struct commands *cmd = &nv->cmd[nv->i];
 
 	unsigned char *mem_offset;
+
 	off_t file_offset;
+
+	gbe_rw_size = cmd->rw_size;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
 		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
@@ -1813,7 +1916,9 @@ write_to_gbe_bin(void)
 	int saved_errno;
 	int mv;
 
-	if (command[cmd_index].flags != O_RDWR)
+	struct commands *cmd = &nv->cmd[nv->i];
+
+	if (cmd->flags != O_RDWR)
 		return;
 
 	write_gbe_file();
@@ -1903,10 +2008,12 @@ check_written_part(unsigned long p)
 	unsigned char *buf_restore;
 	struct stat st;
 
+	struct commands *cmd = &nv->cmd[nv->i];
+
 	if (!part_modified[p])
 		return;
 
-	gbe_rw_size = command[cmd_index].rw_size;
+	gbe_rw_size = cmd->rw_size;
 
 	/* invert not needed for pwrite */
 	mem_offset = gbe_mem_offset(p, "pwrite");
