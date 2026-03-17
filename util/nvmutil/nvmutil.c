@@ -2633,7 +2633,9 @@ x_i_mkstemp(char *template)
 	unsigned long len;
 	char *p;
 
-	char ch[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	char ch[] =
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
 	unsigned long r;
 
 	len = xstrxlen(template, PATH_LEN);
