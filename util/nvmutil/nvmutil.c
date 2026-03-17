@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	cmd = &nv->cmd[*i];
 
 #ifdef NVMUTIL_UNVEIL
-	if (cmd->flags == O_RDONLY) {
+	if ((cmd->flags & O_ACCMODE) == O_RDONLY) {
 		if (unveil(f->fname, "r") == -1)
 			err(errno, "%s: unveil r", f->fname);
 	} else {
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 
 	run_cmd();
 
-	if (cmd->flags == O_RDWR)
+	if ((cmd->flags & O_ACCMODE) == O_RDWR)
 		write_to_gbe_bin();
 
 	if (exit_cleanup() == -1)
@@ -293,6 +293,8 @@ sanitize_command_index(unsigned long c)
 	unsigned long gbe_rw_size;
 
 	struct commands *cmd = &nv->cmd[c];
+
+	int _flag;
 
 	check_command_num(c);
 
@@ -337,8 +339,10 @@ sanitize_command_index(unsigned long c)
 		err(EINVAL, "rw_size larger than GbE part: %lu",
 		    (unsigned long)gbe_rw_size);
 
-	if (cmd->flags != O_RDONLY &&
-	    cmd->flags != O_RDWR)
+	_flag = (cmd->flags & O_ACCMODE);
+
+	if (_flag != O_RDONLY &&
+	    _flag != O_RDWR)
 		err(EINVAL, "invalid cmd.flags setting");
 }
 
@@ -1206,7 +1210,7 @@ write_gbe_file(void)
 	struct commands *cmd = &nv->cmd[nv->i];
 	struct xfile *f = &nv->f;
 
-	if (cmd->flags == O_RDONLY)
+	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
 		return;
 
 	if (fstat(f->gbe_fd, &_gbe_st) == -1)
@@ -1374,7 +1378,7 @@ write_to_gbe_bin(void)
 
 	struct commands *cmd = &nv->cmd[nv->i];
 
-	if (cmd->flags != O_RDWR)
+	if ((cmd->flags & O_ACCMODE) != O_RDWR)
 		return;
 
 	write_gbe_file();
