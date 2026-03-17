@@ -3,24 +3,19 @@
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC?=cc
-CSTD?=-std=c90
-WERROR?=-Werror
-CWARN?=-Wall -Wextra -pedantic
-COPT?=-Os
 CFLAGS?=
 LDFLAGS?=
 DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
-LDIR?=-I.
 
-OPTS?=$(LDIR) $(CFLAGS) $(LDFLAGS)
+# maybe add -I. here when running make
+# e.g. make LDIR=-I.
+LDIR?=
 
-STRICTWARN?=$(OPTS) $(CWARN) $(CSTD) $(COPT)
-
-STRICT?=$(STRICTWARN) $(WERROR)
-
-# clang static analyser
+PORTABLE?=$(LDIR) $(CFLAGS)
+WARN?=$(PORTABLE) -Wall -Wextra
+STRICT?=$(WARN) -std=c90 -pedantic -Werror
 HELLFLAGS?=$(STRICT) -Weverything
 
 # program name
@@ -29,17 +24,17 @@ PROG=nvmutil
 all: $(PROG)
 
 $(PROG): $(PROG).c
-	$(CC) $(OPTS) $(PROG).c -o $(PROG)
+	$(CC) $(PORTABLE) $(PROG).c -o $(PROG) $(LDFLAGS)
 
-strictwarn: $(PROG).c
-	$(CC) $(STRICTWARN) $(PROG).c -o $(PROG)
+warn: $(PROG).c
+	$(CC) $(WARN) $(PROG).c -o $(PROG) $(LDFLAGS)
 
 strict: $(PROG).c
-	$(CC) $(STRICT) $(PROG).c -o $(PROG)
+	$(CC) $(STRICT) $(PROG).c -o $(PROG) $(LDFLAGS)
 
-#clang static analyser
+# clang strictness
 hell: $(PROG).c
-	$(CC) $(HELLFLAGS) $(PROG).c -o $(PROG)
+	$(CC) $(HELLFLAGS) $(PROG).c -o $(PROG) $(LDFLAGS)
 
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
@@ -54,4 +49,4 @@ clean:
 
 distclean: clean
 
-.PHONY: all strictwarn strict hell install uninstall clean distclean
+.PHONY: all warn strict hell install uninstall clean distclean
