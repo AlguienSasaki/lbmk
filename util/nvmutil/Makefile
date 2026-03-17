@@ -3,6 +3,8 @@
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
 CC?=cc
+HELLCC?=clang
+
 CFLAGS?=
 LDFLAGS?=
 DESTDIR?=
@@ -36,7 +38,7 @@ strict: $(PROG).c
 
 # clang-only extreme warnings (not portable)
 hell: $(PROG).c
-	$(CC) $(HELLFLAGS) $(PROG).c -o $(PROG) $(LDFLAGS)
+	$(HELLCC) $(HELLFLAGS) $(PROG).c -o $(PROG) $(LDFLAGS)
 
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
