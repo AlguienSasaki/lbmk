@@ -162,6 +162,9 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
+	if (nv->f.buf == NULL)
+		err(EINVAL, "Work buffer not initialised");
+
 	if (CHAR_BIT != 8)
 		err(EINVAL, "Unsupported char size");
 
