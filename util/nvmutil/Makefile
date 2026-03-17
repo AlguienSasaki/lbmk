@@ -9,6 +9,8 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
+.SUFFIXES:
+
 # maybe add -I. here when running make
 # e.g. make LDIR=-I.
 LDIR?=
@@ -32,7 +34,7 @@ warn: $(PROG).c
 strict: $(PROG).c
 	$(CC) $(STRICT) $(PROG).c -o $(PROG) $(LDFLAGS)
 
-# clang strictness
+# clang-only extreme warnings (not portable)
 hell: $(PROG).c
 	$(CC) $(HELLFLAGS) $(PROG).c -o $(PROG) $(LDFLAGS)
 
