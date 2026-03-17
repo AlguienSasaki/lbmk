@@ -462,4 +462,69 @@ unsigned long x_conv_fd(char *buf,
     unsigned long n);
 int x_i_fsync(int fd);
 
+
+
+
+/* asserts */
+
+/* type asserts */
+typedef char static_assert_char_is_8_bits[(CHAR_BIT == 8) ? 1 : -1];
+typedef char static_assert_char_is_1[(sizeof(char) == 1) ? 1 : -1];
+typedef char static_assert_unsigned_char_is_1[
+    (sizeof(unsigned char) == 1) ? 1 : -1];
+typedef char static_assert_unsigned_short_is_2[
+    (sizeof(unsigned short) >= 2) ? 1 : -1];
+typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
+typedef char static_assert_unsigned_int_is_4[
+    (sizeof(unsigned int) >= 4) ? 1 : -1];
+typedef char static_assert_unsigned_long_is_4[
+    (sizeof(unsigned long) >= 4) ? 1 : -1];
+typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
+typedef char static_assert_twos_complement[
+    ((-1 & 3) == 3) ? 1 : -1
+];
+typedef char assert_unsigned_long_ptr[
+    (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
+];
+
+/*
+ * We set _FILE_OFFSET_BITS 64, but we only handle
+ * but we only need smaller files, so require 4-bytes.
+ * Some operating systems ignore the define, hence assert:
+ */
+typedef char static_assert_off_t_is_32[(sizeof(off_t) >= 4) ? 1 : -1];
+
+/*
+ * asserts (variables/defines sanity check)
+ */
+typedef char assert_argc3[(ARGC_3==3)?1:-1];
+typedef char assert_argc4[(ARGC_4==4)?1:-1];
+typedef char assert_read[(IO_READ==0)?1:-1];
+typedef char assert_write[(IO_WRITE==1)?1:-1];
+typedef char assert_pread[(IO_PREAD==2)?1:-1];
+typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
+typedef char assert_pathlen[(PATH_LEN>=256)?1:-1];
+/* commands */
+typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
+typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];
+typedef char assert_cmd_swap[(CMD_SWAP==2)?1:-1];
+typedef char assert_cmd_copy[(CMD_COPY==3)?1:-1];
+typedef char assert_cmd_cat[(CMD_CAT==4)?1:-1];
+typedef char assert_cmd_cat16[(CMD_CAT16==5)?1:-1];
+typedef char assert_cmd_cat128[(CMD_CAT128==6)?1:-1];
+/* bool */
+typedef char bool_arg_nopart[(ARG_NOPART==0)?1:-1];
+typedef char bool_arg_part[(ARG_PART==1)?1:-1];
+typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
+typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
+typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
+typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
+typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
+typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
+typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
+typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
+typedef char bool_off_err[(OFF_ERR==0)?1:-1];
+typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
+
+
 #endif
