@@ -2784,12 +2784,9 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 	const unsigned char *pa = (const unsigned char *)a;
 	const unsigned char *pb = (const unsigned char *)b;
 
-	while (n--) {
+	for ( ; n--; ++pa, ++pb)
 		if (*pa != *pb)
 			return *pa - *pb;
-		pa++;
-		pb++;
-	}
 
 	return 0;
 }
