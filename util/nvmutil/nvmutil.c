@@ -778,7 +778,6 @@ new_xstate(void)
 }
 
 struct xstate *nv = NULL;
-struct xstate *test = NULL;
 
 int
 main(int argc, char *argv[])
