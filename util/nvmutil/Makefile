@@ -2,25 +2,25 @@
 # Copyright (c) 2022,2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
-CC?=cc
-HELLCC?=clang
+CC = cc
+HELLCC = clang
 
-CFLAGS?=
-LDFLAGS?=
-DESTDIR?=
-PREFIX?=/usr/local
-INSTALL?=install
+CFLAGS=
+LDFLAGS=
+DESTDIR=
+PREFIX = /usr/local
+INSTALL = install
 
 .SUFFIXES: .c .o
 
-LDIR?=
+LDIR=
 
-PORTABLE?=$(LDIR) $(CFLAGS)
-WARN?=$(PORTABLE) -Wall -Wextra
-STRICT?=$(WARN) -std=c90 -pedantic -Werror
-HELLFLAGS?=$(STRICT) -Weverything
+PORTABLE = $(LDIR) $(CFLAGS)
+WARN = $(PORTABLE) -Wall -Wextra
+STRICT = $(WARN) -std=c90 -pedantic -Werror
+HELLFLAGS = $(STRICT) -Weverything
 
-PROG=nvmutil
+PROG = nvmutil
 
 # source files
 
@@ -33,26 +33,26 @@ OBJS = $(SRCS:.c=.o)
 
 # default mode
 
-MODE?=portable
+MODE = portable
 
 # default mode, options
 
-CFLAGS_MODE=$(PORTABLE)
-CC_MODE=$(CC)
+CFLAGS_MODE = $(PORTABLE)
+CC_MODE = $(CC)
 
 # override modes (options)
 
 ifeq ($(MODE),warn)
-CFLAGS_MODE=$(WARN)
+CFLAGS_MODE = $(WARN)
 endif
 
 ifeq ($(MODE),strict)
-CFLAGS_MODE=$(STRICT)
+CFLAGS_MODE = $(STRICT)
 endif
 
 ifeq ($(MODE),hell)
-CFLAGS_MODE=$(HELLFLAGS)
-CC_MODE=$(HELLCC)
+CFLAGS_MODE = $(HELLFLAGS)
+CC_MODE = $(HELLCC)
 endif
 
 # (rebuild on .h changes)
