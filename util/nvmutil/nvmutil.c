@@ -746,18 +746,18 @@ good_checksum(unsigned long partnum)
 void
 run_cmd(void)
 {
-	unsigned long cmd_num;
-	struct commands *cmd;
+	unsigned long i = x->i;
+	void (*run)(void) = x->cmd[i].run;
 
-	cmd_num = x->i;
-	cmd = &x->cmd[cmd_num];
+	check_command_num(i);
 
-	check_command_num(cmd_num);
+	if (run == NULL)
+		err(EINVAL, "Command %lu: null ptr", i);
 
-	if (cmd->run == NULL)
-		err(EINVAL, "Command %lu: null ptr", cmd_num);
+	run();
 
-	cmd->run();
+	for (i = 0; i < items(x->cmd); i++)
+		x->cmd[i].run = cmd_helper_err;
 }
 
 void
