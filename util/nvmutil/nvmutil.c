@@ -195,10 +195,8 @@ main(int argc, char *argv[])
 #ifdef NVMUTIL_UNVEIL
 	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
 		err(errno, "pledge, unveil");
-	if (unveil("/dev/urandom", "r") == -1)
-		err(errno, "unveil: /dev/urandom");
-	if (unveil("/dev/random", "r") == -1)
-		err(errno, "unveil: /dev/random");
+	if (unveil("/dev/null", "r") == -1)
+		err(errno, "unveil: /dev/null");
 #else
 	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
 		err(errno, "pledge");
@@ -989,6 +987,14 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__APPLE__)
+
+	unsigned long rval;
+	arc4random_buf(&rval, sizeof(unsigned long);
+
+	return rval;
+#else
 	int fd;
 
 	long nr;
@@ -1021,6 +1027,7 @@ rlong(void)
 		err(errno, "Incomplete read from random device");
 
 	return rval;
+#endif
 }
 
 void
