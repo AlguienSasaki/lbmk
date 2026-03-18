@@ -2908,7 +2908,7 @@ x_i_mkstemp(char *template)
 
 		for (j = 0; j < 6; j++) {
 			r = rlong();
-			p[j] = ch[r % (sizeof(ch) - 1)];
+			p[j] = ch[(unsigned long)(r >> 1) % (sizeof(ch) - 1)];
 		}
 
 		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
