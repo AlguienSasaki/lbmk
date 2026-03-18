@@ -991,7 +991,7 @@ rlong(void)
     defined(__NetBSD__) || defined(__APPLE__)
 
 	unsigned long rval;
-	arc4random_buf(&rval, sizeof(unsigned long);
+	arc4random_buf(&rval, sizeof(unsigned long));
 
 	return rval;
 #else
@@ -3001,8 +3001,8 @@ x_c_tmpdir(void)
 
 	t = getenv("TMPDIR");
 	if (t && *t) {
-		if (stat(t, &st) == 0 && S_ISDIR(st.st_mode))
-			return t;
+		if ((st.st_mode & S_IWOTH) && !(st.st_mode & S_ISVTX))
+			return NULL;
 	}
 
 	if (stat("/tmp", &st) == 0 && S_ISDIR(st.st_mode))

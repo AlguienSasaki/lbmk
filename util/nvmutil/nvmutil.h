@@ -28,6 +28,14 @@ int fchmod(int fd, mode_t mode);
 #define OFF_RESET 1
 #endif
 
+#ifndef S_ISVTX
+#define S_ISVTX 01000
+#endif
+
+#if defined(S_IFMT) && ((S_ISVTX & S_IFMT) != 0)
+#error "Unexpected bit layout"
+#endif
+
 #ifndef MAX_ZERO_RW_RETRY
 #define MAX_ZERO_RW_RETRY 5
 #endif
