@@ -154,12 +154,14 @@ main(int argc, char *argv[])
 {
 	struct commands *cmd;
 	struct xfile *f;
-	int fd;
+	unsigned long i;
+
+	char *tmp_path;
+
 	struct stat st;
+	int fd;
 
-	char *tmp_path = NULL;
-
-	unsigned long *i;
+	tmp_path = NULL;
 
 #ifndef S_ISREG
 	err(ECANCELED, "Can't determine file types (S_ISREG undefined)");
@@ -228,8 +230,8 @@ main(int argc, char *argv[])
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
 
-	i = &x->i;
-	cmd = &x->cmd[*i];
+	i = x->i;
+	cmd = &x->cmd[i];
 
 #ifdef NVMUTIL_UNVEIL
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY) {
@@ -285,7 +287,9 @@ void
 sanitize_command_list(void)
 {
 	unsigned long c;
-	unsigned long num_commands = items(x->cmd);
+	unsigned long num_commands;
+
+	num_commands = items(x->cmd);
 
 	for (c = 0; c < num_commands; c++)
 		sanitize_command_index(c);
@@ -297,11 +301,12 @@ sanitize_command_list(void)
 void
 sanitize_command_index(unsigned long c)
 {
-	unsigned long gbe_rw_size;
-
-	struct commands *cmd = &x->cmd[c];
+	struct commands *cmd;
 
 	int _flag;
+	unsigned long gbe_rw_size;
+
+	cmd = &x->cmd[c];
 
 	check_command_num(c);
 
@@ -358,20 +363,20 @@ set_cmd(int argc, char *argv[])
 {
 	const char *cmd;
 
-	unsigned long i = 0;
+	unsigned long c;
 
-	for (i = 0; i < items(x->cmd); i++) {
+	for (c = 0; c < items(x->cmd); c++) {
 
-		cmd = x->cmd[i].str;
+		cmd = x->cmd[c].str;
 
 		/* not the right command */
 		if (xstrxcmp(argv[2], cmd, MAX_CMD_LEN) != 0)
 			continue;
 
 		/* valid command found */
-		if (argc >= x->cmd[i].argc) {
+		if (argc >= x->cmd[c].argc) {
 			x->no_cmd = 0;
-			x->i = i; /* set command */
+			x->i = c; /* set command */
 
 			return;
 		}
@@ -386,31 +391,26 @@ set_cmd(int argc, char *argv[])
 void
 set_cmd_args(int argc, char *argv[])
 {
-	unsigned char arg_part;
+	struct commands *cmd;
+	struct xfile *f;
 	unsigned long i;
 
-	struct xfile *f;
-	struct commands *cmd;
+	i = x->i;
+	cmd = &x->cmd[i];
+	f = &x->f;
 
-	if (!valid_command(x->i) || argc < 3)
+	if (!valid_command(i) || argc < 3)
 		usage();
 
 	if (x->no_cmd)
 		usage();
 
-	i = x->i;
-	f = &x->f;
-
-	cmd = &x->cmd[i];
-
-	arg_part = cmd->arg_part;
-
 	/* Maintainer bugs */
-	if (arg_part && argc < 4)
+	if (cmd->arg_part && argc < 4)
 		err(EINVAL,
 		    "arg_part set for command that needs argc4");
 
-	if (arg_part && i == CMD_SETMAC)
+	if (cmd->arg_part && i == CMD_SETMAC)
 		err(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
@@ -421,7 +421,7 @@ set_cmd_args(int argc, char *argv[])
 		else
 			x->mac.str = x->mac.rmac;
 
-	} else if (arg_part) {
+	} else if (cmd->arg_part) {
 
 		f->part = conv_argv_part_num(argv[3]);
 	}
@@ -459,6 +459,7 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 		err(EINVAL, "Empty string in xstrxcmp");
 
 	for (i = 0; i < maxlen; i++) {
+
 		unsigned char ac = (unsigned char)a[i];
 		unsigned char bc = (unsigned char)b[i];
 
@@ -487,14 +488,14 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 void
 open_gbe_file(void)
 {
+	struct commands *cmd;
+	struct xfile *f;
+
 	struct stat _st;
 	int _flags;
 
-	unsigned long *i = &x->i;
-
-	struct commands *cmd = &x->cmd[*i];
-
-	struct xfile *f = &x->f;
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	xopen(&f->gbe_fd, f->fname,
 	    cmd->flags | O_BINARY |
@@ -605,7 +606,9 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 void
 copy_gbe(void)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
+
+	f = &x->f;
 
 	read_file();
 
@@ -630,10 +633,12 @@ copy_gbe(void)
 void
 read_file(void)
 {
-	long _r;
-	struct stat _st;
+	struct xfile *f;
 
-	struct xfile *f = &x->f;
+	struct stat _st;
+	long _r;
+
+	f = &x->f;
 
 	/* read main file */
 	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
@@ -688,13 +693,17 @@ read_file(void)
 void
 read_checksums(void)
 {
+	struct commands *cmd;
+	struct xfile *f;
+
 	unsigned long _p;
 	unsigned long _skip_part;
+
 	unsigned char _num_invalid;
 	unsigned char _max_invalid;
 
-	struct xfile *f = &x->f;
-	struct commands *cmd = &x->cmd[x->i];
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	f->part_valid[0] = 0;
 	f->part_valid[1] = 0;
@@ -738,20 +747,30 @@ read_checksums(void)
 int
 good_checksum(unsigned long partnum)
 {
-	unsigned short expected_checksum =
+	unsigned short expected_checksum;
+	unsigned short actual_checksum;
+
+	expected_checksum =
 	    calculated_checksum(partnum);
 
-	unsigned short current_checksum =
+	actual_checksum =
 	    nvm_word(NVM_CHECKSUM_WORD, partnum);
 
-	return current_checksum == expected_checksum;
+	if (expected_checksum == actual_checksum) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 void
 run_cmd(void)
 {
-	unsigned long i = x->i;
-	void (*run)(void) = x->cmd[i].run;
+	unsigned long i;
+	void (*run)(void);
+
+	i = x->i;
+	run = x->cmd[i].run;
 
 	check_command_num(i);
 
@@ -794,7 +813,9 @@ void
 cmd_helper_setmac(void)
 {
 	unsigned long partnum;
-	struct macaddr *mac = &x->mac;
+	struct macaddr *mac;
+
+	mac = &x->mac;
 
 	check_cmd(cmd_helper_setmac, "setmac");
 
@@ -808,9 +829,11 @@ cmd_helper_setmac(void)
 void
 parse_mac_string(void)
 {
+	struct macaddr *mac;
+
 	unsigned long mac_byte;
 
-	struct macaddr *mac = &x->mac;
+	mac = &x->mac;
 
 	if (xstrxlen(x->mac.str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
@@ -857,11 +880,16 @@ xstrxlen(const char *scmp, unsigned long maxlen)
 void
 set_mac_byte(unsigned long mac_byte_pos)
 {
-	unsigned long mac_str_pos = mac_byte_pos * 3;
-	unsigned long mac_nib_pos;
+	struct macaddr *mac;
+
 	char separator;
 
-	struct macaddr *mac = &x->mac;
+	unsigned long mac_str_pos;
+	unsigned long mac_nib_pos;
+
+	mac = &x->mac;
+
+	mac_str_pos = mac_byte_pos * 3;
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac->str[mac_str_pos + 2]) != ':')
@@ -877,10 +905,10 @@ void
 set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
+	struct macaddr *mac = &x->mac;
+
 	char mac_ch;
 	unsigned short hex_num;
-
-	struct macaddr *mac = &x->mac;
 
 	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
@@ -908,7 +936,9 @@ set_mac_nib(unsigned long mac_str_pos,
 unsigned short
 hextonum(char ch_s)
 {
-	unsigned char ch = (unsigned char)ch_s;
+	unsigned char ch;
+
+	ch = (unsigned char)ch_s;
 
 	if ((unsigned int)(ch - '0') <= 9)
 		return ch - '0';
@@ -927,13 +957,23 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
-	struct x_st_timeval tv;
-	static unsigned long mix = 0;
-	static unsigned long counter = 0;
+	static unsigned long mix;
+	static unsigned long counter;
 
-	static int fd = -1;
-	unsigned long rval = 0;
-	long nr = -1;
+	static int fd;
+
+	struct x_st_timeval tv;
+
+	long nr;
+	unsigned long rval;
+
+	rval = 0;
+
+	fd = -1;
+	nr = -1;
+
+	mix = 0;
+	counter = 0;
 
 	x_i_gettimeofday(&tv, NULL);
 
@@ -996,14 +1036,19 @@ rlong(void)
 unsigned long
 entropy_jitter(void)
 {
+	unsigned long mix;
+
 	struct x_st_timeval a, b;
-	unsigned long mix = 0;
 	long mix_diff;
-	int i;
+
+	int c;
+
+	mix = 0;
 
 	x_i_gettimeofday(&a, NULL);
 
-	for (i = 0; i < 32; i++) {
+	for (c = 0; c < 32; c++) {
+
 		getpid();
 		x_i_gettimeofday(&b, NULL);
 
@@ -1016,7 +1061,9 @@ entropy_jitter(void)
 			mix_diff = -mix_diff;
 
 		mix ^= (unsigned long)(mix_diff);
+
 		mix ^= (unsigned long)&mix;
+
 	}
 
 	return mix;
@@ -1042,10 +1089,13 @@ x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
 void
 write_mac_part(unsigned long partnum)
 {
+	struct xfile *f;
+	struct macaddr *mac;
+
 	unsigned long w;
 
-	struct xfile *f = &x->f;
-	struct macaddr *mac = &x->mac;
+	f = &x->f;
+	mac = &x->mac;
 
 	check_bin(partnum, "part number");
 	if (!f->part_valid[partnum])
@@ -1062,27 +1112,34 @@ write_mac_part(unsigned long partnum)
 void
 cmd_helper_dump(void)
 {
-	unsigned long partnum;
+	struct xfile *f;
 
-	struct xfile *f = &x->f;
+	unsigned long p;
+
+	f = &x->f;
 
 	check_cmd(cmd_helper_dump, "dump");
 
 	f->part_valid[0] = good_checksum(0);
 	f->part_valid[1] = good_checksum(1);
 
-	for (partnum = 0; partnum < 2; partnum++) {
-		if (!f->part_valid[partnum])
+	for (p = 0; p < 2; p++) {
+
+		if (!f->part_valid[p]) {
+
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
-			    nvm_word(NVM_CHECKSUM_WORD, partnum),
-			    (unsigned long)partnum,
-			    calculated_checksum(partnum));
+			    nvm_word(NVM_CHECKSUM_WORD, p),
+			    (unsigned long)p,
+			    calculated_checksum(p));
+		}
 
 		printf("MAC (part %lu): ",
-		    (unsigned long)partnum);
-		print_mac_from_nvm(partnum);
-		hexdump(partnum);
+		    (unsigned long)p);
+
+		print_mac_from_nvm(p);
+
+		hexdump(p);
 	}
 }
 
@@ -1112,15 +1169,23 @@ hexdump(unsigned long partnum)
 	unsigned short val16;
 
 	for (row = 0; row < 8; row++) {
-		printf("%08lx ", (unsigned long)((unsigned long)row << 4));
+
+		printf("%08lx ",
+		    (unsigned long)((unsigned long)row << 4));
+
 		for (c = 0; c < 8; c++) {
+
 			val16 = nvm_word((row << 3) + c, partnum);
+
 			if (c == 4)
 				printf(" ");
+
 			printf(" %02x %02x",
 			    (unsigned int)(val16 & 0xff),
 			    (unsigned int)(val16 >> 8));
+
 		}
+
 		printf("\n");
 	}
 }
@@ -1128,9 +1193,11 @@ hexdump(unsigned long partnum)
 void
 cmd_helper_swap(void)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	check_cmd(cmd_helper_swap, "swap");
+
+	f = &x->f;
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)GBE_WORK_SIZE,
@@ -1154,9 +1221,11 @@ cmd_helper_swap(void)
 void
 cmd_helper_copy(void)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	check_cmd(cmd_helper_copy, "copy");
+
+	f = &x->f;
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
@@ -1167,7 +1236,8 @@ cmd_helper_copy(void)
 }
 
 void
-cmd_helper_cat(void) {
+cmd_helper_cat(void)
+{
 	check_cmd(cmd_helper_cat, "cat");
 
 	x->cat = 0;
@@ -1175,7 +1245,8 @@ cmd_helper_cat(void) {
 }
 
 void
-cmd_helper_cat16(void) {
+cmd_helper_cat16(void)
+{
 	check_cmd(cmd_helper_cat16, "cat16");
 
 	x->cat = 1;
@@ -1183,7 +1254,8 @@ cmd_helper_cat16(void) {
 }
 
 void
-cmd_helper_cat128(void) {
+cmd_helper_cat128(void)
+{
 	check_cmd(cmd_helper_cat128, "cat128");
 
 	x->cat = 15;
@@ -1191,7 +1263,8 @@ cmd_helper_cat128(void) {
 }
 
 void
-check_cmd(void (*fn)(void), const char *name)
+check_cmd(void (*fn)(void),
+    const char *name)
 {
 	unsigned long i;
 
@@ -1215,41 +1288,55 @@ check_cmd(void (*fn)(void), const char *name)
 void
 cmd_helper_err(void)
 {
-	err(ECANCELED, "Erroneously running command twice");
+	err(ECANCELED,
+	    "Erroneously running command twice");
 }
 
 void
 cat(unsigned long nff)
 {
-	struct xfile *f = &x->f;
-	struct commands *cmd = &x->cmd[x->i];
+	struct commands *cmd;
+	struct xfile *f;
 
-	unsigned long p = 0;
-	unsigned long ff = 0;
+	unsigned long p;
+	unsigned long ff;
+
+	cmd = &x->cmd[x->i];
+	f = &x->f;
+
+	p = 0;
+	ff = 0;
 
 	if ((unsigned long)x->cat != nff ||
 	    !((cmd->run == cmd_helper_cat && nff == 0) ||
 	    (cmd->run == cmd_helper_cat16 && nff == 1) ||
-	    (cmd->run == cmd_helper_cat128 && nff == 15)))
+	    (cmd->run == cmd_helper_cat128 && nff == 15))) {
+
 		err(ECANCELED, "erroneous call to cat");
+	}
 
 	fflush(NULL);
 
 	memset(f->pad, 0xff, GBE_PART_SIZE);
 
 	for (p = 0; p < 2; p++) {
+
 		cat_buf(f->bufcmp +
 		    (unsigned long)(p * (f->gbe_file_size >> 1)));
 
-		for (ff = 0; ff < nff; ff++)
+		for (ff = 0; ff < nff; ff++) {
+
 			cat_buf(f->pad);
+		}
 	}
 }
 
 void
 cat_buf(unsigned char *b)
 {
-	struct commands *cmd = &x->cmd[x->i];
+	struct commands *cmd;
+
+	cmd = &x->cmd[x->i];
 
 	if (!((cmd->run == cmd_helper_cat && x->cat == 0) ||
 	    (cmd->run == cmd_helper_cat16 && x->cat == 1) ||
@@ -1265,14 +1352,17 @@ cat_buf(unsigned char *b)
 void
 write_gbe_file(void)
 {
+	struct commands *cmd;
+	struct xfile *f;
+
 	struct stat _gbe_st;
 	struct stat _tmp_st;
 
 	unsigned long p;
 	unsigned char update_checksum;
 
-	struct commands *cmd = &x->cmd[x->i];
-	struct xfile *f = &x->f;
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
 		return;
@@ -1319,7 +1409,9 @@ unsigned short
 calculated_checksum(unsigned long p)
 {
 	unsigned long c;
-	unsigned int val16 = 0;
+	unsigned int val16;
+
+	val16 = 0;
 
 	for (c = 0; c < NVM_CHECKSUM_WORD; c++)
 		val16 += (unsigned int)nvm_word(c, p);
@@ -1338,9 +1430,11 @@ calculated_checksum(unsigned long p)
 unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	unsigned long pos;
+
+	f = &x->f;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -1352,8 +1446,11 @@ nvm_word(unsigned long pos16, unsigned long p)
 void
 set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
+
 	unsigned long pos;
+
+	f = &x->f;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -1367,7 +1464,9 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 void
 set_part_modified(unsigned long p)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
+
+	f = &x->f;
 
 	check_bin(p, "part number");
 	f->part_modified[p] = 1;
@@ -1401,15 +1500,18 @@ void
 rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
-	struct xfile *f = &x->f;
-	struct commands *cmd = &x->cmd[x->i];
+	struct commands *cmd;
+	struct xfile *f;
 
-	long r;
-	unsigned long gbe_rw_size;
-
-	unsigned char *mem_offset;
+	long rval;
 
 	off_t file_offset;
+
+	unsigned long gbe_rw_size;
+	unsigned char *mem_offset;
+
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	gbe_rw_size = cmd->rw_size;
 
@@ -1420,14 +1522,14 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 	mem_offset = gbe_mem_offset(p, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
 
-	r = rw_gbe_file_exact(f->tmp_fd, mem_offset,
+	rval = rw_gbe_file_exact(f->tmp_fd, mem_offset,
 	    gbe_rw_size, file_offset, rw_type);
 
-	if (r == -1)
+	if (rval == -1)
 		err(errno, "%s: %s: part %lu",
 		    f->fname, rw_type_str, (unsigned long)p);
 
-	if ((unsigned long)r != gbe_rw_size)
+	if ((unsigned long)rval != gbe_rw_size)
 		err(EIO, "%s: partial %s: part %lu",
 		    f->fname, rw_type_str, (unsigned long)p);
 }
@@ -1435,12 +1537,14 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 void
 write_to_gbe_bin(void)
 {
-	struct xfile *f = &x->f;
+	struct commands *cmd;
+	struct xfile *f;
 
 	int saved_errno;
 	int mv;
 
-	struct commands *cmd = &x->cmd[x->i];
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	if ((cmd->flags & O_ACCMODE) != O_RDWR)
 		return;
@@ -1527,16 +1631,21 @@ write_to_gbe_bin(void)
 void
 check_written_part(unsigned long p)
 {
-	struct commands *cmd = &x->cmd[x->i];
-	struct xfile *f = &x->f;
+	struct commands *cmd;
+	struct xfile *f;
+
+	long rval;
 
 	unsigned long gbe_rw_size;
-	unsigned char *mem_offset;
-	off_t file_offset;
-	unsigned char *buf_restore;
-	struct stat st;
 
-	long r;
+	off_t file_offset;
+	unsigned char *mem_offset;
+
+	struct stat st;
+	unsigned char *buf_restore;
+
+	cmd = &x->cmd[x->i];
+	f = &x->f;
 
 	if (!f->part_modified[p])
 		return;
@@ -1558,12 +1667,12 @@ check_written_part(unsigned long p)
 	if (st.st_dev != f->tmp_dev || st.st_ino != f->tmp_ino)
 		err(EIO, "%s: file changed during write", f->tname);
 
-	r = rw_gbe_file_exact(f->tmp_fd, f->pad,
+	rval = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
 
-	if (r == -1)
+	if (rval == -1)
 		f->rw_check_err_read[p] = f->io_err_gbe = 1;
-	else if ((unsigned long)r != gbe_rw_size)
+	else if ((unsigned long)rval != gbe_rw_size)
 		f->rw_check_partial_read[p] = f->io_err_gbe = 1;
 	else if (x_i_memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
 		f->rw_check_bad_part[p] = f->io_err_gbe = 1;
@@ -1578,17 +1687,27 @@ check_written_part(unsigned long p)
 	 * That's why we hardcode good_checksum(0).
 	 */
 	buf_restore = f->buf;
+
+	/*
+	 * good_checksum works on f->buf
+	 * so let's change f->buf for now
+	 */
 	f->buf = f->pad;
-	f->post_rw_checksum[p] = good_checksum(0);
+
+	if (good_checksum(0))
+		f->post_rw_checksum[p] = 1;
+
 	f->buf = buf_restore;
 }
 
 void
 report_io_err_rw(void)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	unsigned long p;
+
+	f = &x->f;
 
 	if (!f->io_err_gbe)
 		return;
@@ -1641,20 +1760,29 @@ report_io_err_rw(void)
 int
 gbe_mv(void)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
-	int r;
+	int rval;
+
 	int saved_errno;
-	int tmp_gbe_bin_exists = 1;
+	int tmp_gbe_bin_exists;
 
-	char *dest_tmp = NULL;
-	int dest_fd = -1;
+	char *dest_tmp;
+	int dest_fd;
+
+	f = &x->f;
+
+	/* will be set 0 if it doesn't */
+	tmp_gbe_bin_exists = 1;
+
+	dest_tmp = NULL;
+	dest_fd = -1;
 
 	saved_errno = errno;
 
-	r = rename(f->tname, f->fname);
+	rval = rename(f->tname, f->fname);
 
-	if (r > -1) {
+	if (rval > -1) {
 		/*
 		 * same filesystem
 		 */
@@ -1663,7 +1791,7 @@ gbe_mv(void)
 
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
-			r = -1;
+			rval = -1;
 		}
 
 		goto ret_gbe_mv;
@@ -1674,7 +1802,7 @@ gbe_mv(void)
 
 	/* cross-filesystem rename */
 
-	if ((r = f->tmp_fd = open(f->tname,
+	if ((rval = f->tmp_fd = open(f->tname,
 	    O_RDONLY | O_BINARY)) == -1)
 		goto ret_gbe_mv;
 
@@ -1685,20 +1813,20 @@ gbe_mv(void)
 
 	/* copy data */
 
-	r = rw_file_exact(f->tmp_fd, f->bufcmp,
+	rval = rw_file_exact(f->tmp_fd, f->bufcmp,
 	    f->gbe_file_size, 0, IO_PREAD,
 	    NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (r < 0)
+	if (rval < 0)
 		goto ret_gbe_mv;
 
-	r = rw_file_exact(dest_fd, f->bufcmp,
+	rval = rw_file_exact(dest_fd, f->bufcmp,
 	    f->gbe_file_size, 0, IO_PWRITE,
 	    NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (r < 0)
+	if (rval < 0)
 		goto ret_gbe_mv;
 
 	if (x_i_fsync(dest_fd) == -1)
@@ -1722,17 +1850,17 @@ ret_gbe_mv:
 
 	if (f->gbe_fd > -1) {
 		if (x_i_close(f->gbe_fd) < 0)
-			r = -1;
+			rval = -1;
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
-			r = -1;
+			rval = -1;
 		}
 		f->gbe_fd = -1;
 	}
 
 	if (f->tmp_fd > -1) {
 		if (x_i_close(f->tmp_fd) < 0)
-			r = -1;
+			rval = -1;
 
 		f->tmp_fd = -1;
 	}
@@ -1743,12 +1871,12 @@ ret_gbe_mv:
 	 */
 	if (tmp_gbe_bin_exists) {
 		if (unlink(f->tname) < 0)
-			r = -1;
+			rval = -1;
 		else
 			tmp_gbe_bin_exists = 0;
 	}
 
-	if (r < 0) {
+	if (rval < 0) {
 		/*
 		 * if nothing set errno,
 		 * we assume EIO, or we
@@ -1760,7 +1888,7 @@ ret_gbe_mv:
 		errno = saved_errno;
 	}
 
-	return r;
+	return rval;
 }
 
 /*
@@ -1770,21 +1898,27 @@ ret_gbe_mv:
 int
 fsync_dir(const char *path)
 {
-#if defined(PATH_LEN) && \
-    (PATH_LEN) >= 256
-	unsigned long maxlen = PATH_LEN;
-#else
-	unsigned long maxlen = 1024;
-#endif
+	int saved_errno = errno;
+
 	unsigned long pathlen;
-/*	char dirbuf[maxlen]; */
-	char *dirbuf = NULL;
+	unsigned long maxlen;
+
+	char *dirbuf;
+	int dirfd;
+
 	char *slash;
-	int dfd = -1;
 
 	struct stat st;
 
-	int saved_errno = errno;
+#if defined(PATH_LEN) && \
+    (PATH_LEN) >= 256
+	maxlen = PATH_LEN;
+#else
+	maxlen = 1024;
+#endif
+
+	dirbuf = NULL;
+	dirfd = -1;
 
 	pathlen = xstrxlen(path, maxlen);
 
@@ -1817,7 +1951,7 @@ fsync_dir(const char *path)
 		dirbuf[1] = '\0';
 	}
 
-	dfd = open(dirbuf, O_RDONLY
+	dirfd = open(dirbuf, O_RDONLY
 #ifdef O_DIRECTORY
 	    | O_DIRECTORY
 #endif
@@ -1825,10 +1959,10 @@ fsync_dir(const char *path)
 	    | O_NOFOLLOW
 #endif
 	);
-	if (dfd == -1)
+	if (dirfd == -1)
 		goto err_fsync_dir;
 
-	if (fstat(dfd, &st) < 0)
+	if (fstat(dirfd, &st) < 0)
 		goto err_fsync_dir;
 
 	if (!S_ISDIR(st.st_mode)) {
@@ -1837,10 +1971,10 @@ fsync_dir(const char *path)
 	}
 
 	/* sync file on disk */
-	if (x_i_fsync(dfd) == -1)
+	if (x_i_fsync(dirfd) == -1)
 		goto err_fsync_dir;
 
-	if (x_i_close(dfd) == -1)
+	if (x_i_close(dirfd) == -1)
 		goto err_fsync_dir;
 
 	if (dirbuf != NULL)
@@ -1859,8 +1993,8 @@ err_fsync_dir:
 	if (dirbuf != NULL)
 		free(dirbuf);
 
-	if (dfd > -1)
-		x_i_close(dfd);
+	if (dirfd > -1)
+		x_i_close(dirfd);
 
 	errno = saved_errno;
 
@@ -1875,12 +2009,17 @@ err_fsync_dir:
 unsigned char *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
-	off_t gbe_off = gbe_x_offset(p, f_op, "mem",
+	off_t gbe_off;
+
+	f = &x->f;
+
+	gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
-	return (unsigned char *)(f->buf + (unsigned long)gbe_off);
+	return (unsigned char *)
+	    (f->buf + (unsigned long)gbe_off);
 }
 
 /*
@@ -1893,9 +2032,13 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 off_t
 gbe_file_offset(unsigned long p, const char *f_op)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
-	off_t gbe_file_half_size = f->gbe_file_size >> 1;
+	off_t gbe_file_half_size;
+
+	f = &x->f;
+
+	gbe_file_half_size = f->gbe_file_size >> 1;
 
 	return gbe_x_offset(p, f_op, "file",
 	    gbe_file_half_size, f->gbe_file_size);
@@ -1905,9 +2048,11 @@ off_t
 gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	off_t off;
+
+	f = &x->f;
 
 	check_bin(p, "part number");
 
@@ -1928,9 +2073,11 @@ long
 rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
-	struct xfile *f = &x->f;
+	struct xfile *f;
 
 	long r;
+
+	f = &x->f;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
@@ -1999,12 +2146,20 @@ rw_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     int loop_eintr, unsigned long max_retries,
     int off_reset)
 {
-	long rv = 0;
-	long rc = 0;
-	unsigned long retries_on_zero = 0;
-	off_t off_cur;
+	long rval;
+	long rc;
+
 	unsigned long nrw_cur;
+
+	off_t off_cur;
 	void *mem_cur;
+
+	unsigned long retries_on_zero;
+
+	rval = 0;
+
+	rc = 0;
+	retries_on_zero = 0;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
@@ -2012,10 +2167,10 @@ rw_file_exact(int fd, unsigned char *mem, unsigned long nrw,
 	while (1) {
 	
 		/* Prevent theoretical overflow */
-		if (rv >= 0 && (unsigned long)rv > (nrw - rc))
+		if (rval >= 0 && (unsigned long)rval > (nrw - rc))
 			goto err_rw_file_exact;
 
-		rc += rv;
+		rc += rval;
 		if ((unsigned long)rc >= nrw)
 			break;
 
@@ -2025,14 +2180,14 @@ rw_file_exact(int fd, unsigned char *mem, unsigned long nrw,
 			goto err_rw_file_exact;
 		off_cur = off + (off_t)rc;
 
-		rv = prw(fd, mem_cur, nrw_cur, off_cur,
+		rval = prw(fd, mem_cur, nrw_cur, off_cur,
 		    rw_type, loop_eagain, loop_eintr,
 		    off_reset);
 
-		if (rv < 0)
+		if (rval < 0)
 			return -1;
 
-		if (rv == 0) {
+		if (rval == 0) {
 			if (retries_on_zero++ < max_retries)
 				continue;
 			goto err_rw_file_exact;
@@ -2110,8 +2265,10 @@ prw(int fd, void *mem, unsigned long nrw,
 	off_t off_last;
 #endif
 
-	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+	if (io_args(fd, mem, nrw, off, rw_type)
+	    == -1) {
 		return -1;
+	}
 
 	r = -1;
 
@@ -2322,7 +2479,9 @@ rw_over_nrw(long r, unsigned long nrw)
 	if (r == -1)
 		return r;
 
-	if ((unsigned long)r > X_LONG_MAX) {
+	if ((unsigned long)
+	    r > X_LONG_MAX) {
+
 		/*
 		 * Theoretical buggy libc
 		 * check. Extremely academic.
@@ -2365,7 +2524,9 @@ off_t
 lseek_loop(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
 {
-	off_t old = -1;
+	off_t old;
+
+	old = -1;
 
 	do {
 		old = lseek(fd, off, whence);
@@ -2398,7 +2559,9 @@ try_err(int loop_err, int errval)
 void
 usage(void)
 {
-	const char *util = getnvmprogname();
+	const char *util;
+
+	util = getnvmprogname();
 
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"
@@ -2444,8 +2607,11 @@ exit_cleanup(void)
 {
 	struct xfile *f;
 
-	int close_err = 0;
-	int saved_errno = errno;
+	int close_err;
+	int saved_errno;
+
+	close_err = 0;
+	saved_errno = errno;
 
 	if (x != NULL) {
 		f = &x->f;
@@ -2764,7 +2930,7 @@ x_c_strrchr(const char *s, int c)
 int
 x_i_rename(const char *src, const char *dst)
 {
-	int sfd, dfd;
+	int sfd, dirfd;
 	ssize_t r;
 	char buf[8192];
 
@@ -2772,31 +2938,31 @@ x_i_rename(const char *src, const char *dst)
 	if (sfd < 0)
 		return -1;
 
-	dfd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-	if (dfd < 0) {
+	dirfd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (dirfd < 0) {
 		x_i_close(sfd);
 		return -1;
 	}
 
 	while ((r = read(sfd, buf, sizeof(buf))) > 0) {
-		ssize_t w = write(dfd, buf, r);
+		ssize_t w = write(dirfd, buf, r);
 		if (w != r) {
 			x_i_close(sfd);
-			x_i_close(dfd);
+			x_i_close(dirfd);
 			return -1;
 		}
 	}
 
 	if (r < 0) {
 		x_i_close(sfd);
-		x_i_close(dfd);
+		x_i_close(dirfd);
 		return -1;
 	}
 
-	x_i_fsync(dfd);
+	x_i_fsync(dirfd);
 
 	x_i_close(sfd);
-	x_i_close(dfd);
+	x_i_close(dirfd);
 
 	if (unlink(src) < 0)
 		return -1;
