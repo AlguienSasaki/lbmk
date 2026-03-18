@@ -987,7 +987,8 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || \
+#if (defined(__OpenBSD__) && (OpenBSD) >= 201) || \
+    defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__)
 
 	unsigned long rval;
@@ -1003,9 +1004,7 @@ rlong(void)
 
 	fd = open("/dev/urandom", O_RDONLY | O_BINARY);
 
-#if !(defined(__OpenBSD__) && defined(OpenBSD)) || \
-    (defined(__OpenBSD__) && defined(OpenBSD) && \
-    OpenBSD < 604)
+#ifdef __OpenBSD__
 	if (fd < 0) /* old openbsd */
 		fd = open("/dev/arandom", O_RDONLY | O_BINARY);
 #endif
