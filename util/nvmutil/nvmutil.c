@@ -992,7 +992,7 @@ rlong(void)
 	static unsigned long mix = 0;
 	static unsigned long counter = 0;
 
-	static int fd = -1;
+	int fd = -1;
 
 	struct x_st_timeval tv;
 
@@ -1054,6 +1054,9 @@ rlong(void)
 	nr = rw_file_exact(fd, (unsigned char *)&rval,
 	    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
 	    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
+
+	if (x_i_close(fd) < 0)
+		err(errno, "Can't close randomness fd");
 
 	if (nr == sizeof(unsigned long))
 		return rval;
@@ -3095,10 +3098,14 @@ int
 x_i_close(int fd)
 {
 	int r;
+	int saved_errno = errno;
 
 	do {
 		r = close(fd);
 	} while (r == -1 && errno == EINTR);
+
+	if (r > -1)
+		errno = saved_errno;
 
 	return r;
 }
