@@ -2815,7 +2815,7 @@ new_tmpfile(int *fd, int local, const char *path)
 	if (fd_tmp == -1)
 		goto err_new_tmpfile;
 
-	if (x_i_fchmod(fd_tmp, 0600) == -1)
+	if (fchmod(fd_tmp, 0600) == -1)
 		goto err_new_tmpfile;
 
 	flags = fcntl(fd_tmp, F_GETFL);
@@ -3046,80 +3046,6 @@ x_i_memcmp(const void *a, const void *b, unsigned long n)
 			return *pa - *pb;
 
 	return 0;
-}
-
-/*
- * emulate fchmod() using file descriptor
- * paths, for old unix portability. should
- * work on e.g. BSD/MacOS (/dev/fd/N),
- * Linux (/proc/self/fd/N) and others 
- */
-int
-x_i_fchmod(int fd, mode_t mode)
-{
-	if (x_try_fdpath("/dev/fd/", fd, mode) == 0)
-		return 0;
-
-	if (x_try_fdpath("/proc/self/fd/", fd, mode) == 0)
-		return 0;
-
-	errno = ENOSYS;
-	return -1;
-}
-
-int
-x_try_fdpath(const char *prefix, int fd, mode_t mode)
-{
-	char path[PATH_LEN];
-
-	unsigned long i = 0;
-	unsigned long j;
-
-	struct stat st;
-
-	while (prefix[i]) {
-		if (i >= PATH_LEN - 1)
-			return -1;
-		path[i] = prefix[i];
-		i++;
-	}
-
-	j = x_conv_fd(path + i, (unsigned long)fd);
-
-	if (i + j >= PATH_LEN)
-		return -1;
-
-	i += j;
-	path[i] = '\0';
-
-	if (stat(path, &st) < 0)
-		return -1;
-
-	return chmod(path, mode);
-}
-
-unsigned long
-x_conv_fd(char *buf, unsigned long n)
-{
-	char tmp[256];
-
-	unsigned long i = 0;
-	unsigned long j = 0;
-
-	if (n == 0) {
-		buf[0] = '0';
-		return 1;
-	}
-
-	while (n > 0) {
-		tmp[i++] = (char)('0' + (n % 10));
-		n /= 10;
-	}
-
-	while (i > 0)
-		buf[j++] = tmp[--i];
-
-	return j;
 }
 
 int

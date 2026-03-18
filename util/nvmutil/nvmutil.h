@@ -9,6 +9,11 @@
    check_cmd(cmd_helper_cat);
 */
 
+/*
+ * system prototypes
+ */
+int fchmod(int fd, mode_t mode);
+
 #ifndef NVMUTIL_H
 #define NVMUTIL_H
 
@@ -465,11 +470,6 @@ void *x_v_memcpy(void *dst,
     const void *src, unsigned long n);
 int x_i_memcmp(const void *a,
     const void *b, unsigned long n);
-int x_i_fchmod(int fd, mode_t mode);
-int x_try_fdpath(const char *prefix,
-    int fd, mode_t mode);
-unsigned long x_conv_fd(char *buf,
-    unsigned long n);
 int x_i_fsync(int fd);
 
 
