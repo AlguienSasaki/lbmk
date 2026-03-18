@@ -242,8 +242,8 @@ main(int argc, char *argv[])
 			err(errno, "%s: unveil rw", f->tname);
 	}
 
-	if (unveil(tname, "rwc") == -1)
-		err(errno, "%s: unveil rwc", tname);
+	if (unveil(f->tname, "rwc") == -1)
+		err(errno, "%s: unveil rwc", f->tname);
 
 	if (unveil(NULL, NULL) == -1)
 		err(errno, "unveil block (rw)");
