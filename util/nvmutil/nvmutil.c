@@ -1051,15 +1051,18 @@ rlong(void)
 	if (fd < 0)
 		fd = open("/dev/random", O_RDONLY | O_BINARY | O_NONBLOCK);
 
-	nr = rw_file_exact(fd, (unsigned char *)&rval,
-	    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
-	    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
+	if (fd > -1) {
 
-	if (x_i_close(fd) < 0)
-		err(errno, "Can't close randomness fd");
+		nr = rw_file_exact(fd, (unsigned char *)&rval,
+		    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
+		    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (nr == sizeof(unsigned long))
-		return rval;
+		if (x_i_close(fd) < 0)
+			err(errno, "Can't close randomness fd");
+
+		if (nr == sizeof(unsigned long))
+			return rval;
+	}
 
 	return mix;
 }
