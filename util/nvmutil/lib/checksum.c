@@ -24,7 +24,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "include/common.h"
+#include "../include/common.h"
 
 void
 read_checksums(void)

@@ -31,7 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "include/common.h"
+#include "../include/common.h"
 
 /*
  * Program state/command table

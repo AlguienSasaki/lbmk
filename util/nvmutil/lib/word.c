@@ -23,7 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "include/common.h"
+#include "../include/common.h"
 
 /*
  * GbE NVM files store 16-bit (2-byte) little-endian words.

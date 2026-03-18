@@ -22,7 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "include/common.h"
+#include "../include/common.h"
 
 /*
  * Portable strcmp() but blocks NULL/empty/unterminated
