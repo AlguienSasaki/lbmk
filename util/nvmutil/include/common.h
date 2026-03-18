@@ -4,15 +4,27 @@
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  */
 
+/*
+ * TODO: split this per .c file
+ */
+
 /* Use this shorthand in cmd helpers. e.g.
    in cmd_setmac function:
    check_cmd(cmd_helper_cat);
 */
 
+#ifndef COMMON_H
+#define COMMON_H
+
 /*
  * system prototypes
  */
+
 int fchmod(int fd, mode_t mode);
+
+/*
+ * build config
+ */
 
 #ifndef NVMUTIL_H
 #define NVMUTIL_H
@@ -313,7 +325,7 @@ struct xstate {
 
 
 
-static struct xstate *xstatus(void);
+struct xstate *xstatus(void);
 
 /*
  * Sanitize command tables.
@@ -548,4 +560,5 @@ typedef char bool_off_err[(OFF_ERR==0)?1:-1];
 typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 
 
+#endif
 #endif
