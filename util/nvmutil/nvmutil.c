@@ -1001,17 +1001,17 @@ rlong(void)
 
 	unsigned long rval;
 
-	fd = open("/dev/urandom", O_RDONLY | O_BINARY | O_NONBLOCK);
+	fd = open("/dev/urandom", O_RDONLY | O_BINARY);
 
 #if !(defined(__OpenBSD__) && defined(OpenBSD)) || \
     (defined(__OpenBSD__) && defined(OpenBSD) && \
     OpenBSD < 604)
 	if (fd < 0) /* old openbsd */
-		fd = open("/dev/arandom", O_RDONLY | O_BINARY | O_NONBLOCK);
+		fd = open("/dev/arandom", O_RDONLY | O_BINARY);
 #endif
 
 	if (fd < 0)
-		fd = open("/dev/random", O_RDONLY | O_BINARY | O_NONBLOCK);
+		fd = open("/dev/random", O_RDONLY | O_BINARY);
 
 	if (fd < 0)
 		err(errno, "can't open random device");
