@@ -252,8 +252,6 @@ main(int argc, char *argv[])
 		err(errno, "pledge (kill unveil)");
 #endif
 
-	srand((unsigned int)(time(NULL) ^ getpid()));
-
 	open_gbe_file();
 
 	memset(f->buf, 0, GBE_BUF_SIZE);
