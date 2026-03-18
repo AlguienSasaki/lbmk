@@ -289,6 +289,8 @@ sanitize_command_list(void)
 	unsigned long c;
 	unsigned long num_commands;
 
+	check_null_command("sanitize_command_list");
+
 	num_commands = items(x->cmd);
 
 	for (c = 0; c < num_commands; c++)
@@ -305,6 +307,8 @@ sanitize_command_index(unsigned long c)
 
 	int _flag;
 	unsigned long gbe_rw_size;
+
+	check_null_command("sanitize_command_index");
 
 	cmd = &x->cmd[c];
 
@@ -365,6 +369,8 @@ set_cmd(int argc, char *argv[])
 
 	unsigned long c;
 
+	check_null_command("set_cmd");
+
 	for (c = 0; c < items(x->cmd); c++) {
 
 		cmd = x->cmd[c].str;
@@ -394,6 +400,8 @@ set_cmd_args(int argc, char *argv[])
 	struct commands *cmd;
 	struct xfile *f;
 	unsigned long i;
+
+	check_null_command("set_cmd_args");
 
 	i = x->i;
 	cmd = &x->cmd[i];
@@ -493,6 +501,8 @@ open_gbe_file(void)
 
 	struct stat _st;
 	int _flags;
+
+	check_null_command("open_gbe_file");
 
 	cmd = &x->cmd[x->i];
 	f = &x->f;
@@ -608,6 +618,8 @@ copy_gbe(void)
 {
 	struct xfile *f;
 
+	check_null_command("copy_gbe");
+
 	f = &x->f;
 
 	read_file();
@@ -637,6 +649,8 @@ read_file(void)
 
 	struct stat _st;
 	long _r;
+
+	check_null_command("read_file");
 
 	f = &x->f;
 
@@ -702,6 +716,8 @@ read_checksums(void)
 	unsigned char _num_invalid;
 	unsigned char _max_invalid;
 
+	check_null_command("read_checksums");
+
 	cmd = &x->cmd[x->i];
 	f = &x->f;
 
@@ -750,6 +766,8 @@ good_checksum(unsigned long partnum)
 	unsigned short expected_checksum;
 	unsigned short actual_checksum;
 
+	check_null_command("good_checksum");
+
 	expected_checksum =
 	    calculated_checksum(partnum);
 
@@ -769,6 +787,8 @@ run_cmd(void)
 	unsigned long i;
 	void (*run)(void);
 
+	check_null_command("run_cmd");
+
 	i = x->i;
 	run = x->cmd[i].run;
 
@@ -786,6 +806,8 @@ run_cmd(void)
 void
 check_command_num(unsigned long c)
 {
+	check_null_command("check_command_num");
+
 	if (!valid_command(c))
 		err(EINVAL, "Invalid run_cmd arg: %lu",
 		    (unsigned long)c);
@@ -795,6 +817,8 @@ unsigned char
 valid_command(unsigned long c)
 {
 	struct commands *cmd;
+
+	check_null_command("valid_command");
 
 	if (c >= items(x->cmd))
 		return 0;
@@ -815,6 +839,8 @@ cmd_helper_setmac(void)
 	unsigned long partnum;
 	struct macaddr *mac;
 
+	check_null_command("cmd_helper_setmac");
+
 	mac = &x->mac;
 
 	check_cmd(cmd_helper_setmac, "setmac");
@@ -832,6 +858,8 @@ parse_mac_string(void)
 	struct macaddr *mac;
 
 	unsigned long mac_byte;
+
+	check_null_command("parse_mac_string");
 
 	mac = &x->mac;
 
@@ -887,6 +915,8 @@ set_mac_byte(unsigned long mac_byte_pos)
 	unsigned long mac_str_pos;
 	unsigned long mac_nib_pos;
 
+	check_null_command("set_mac_byte");
+
 	mac = &x->mac;
 
 	mac_str_pos = mac_byte_pos * 3;
@@ -905,10 +935,14 @@ void
 set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
-	struct macaddr *mac = &x->mac;
+	struct macaddr *mac;
 
 	char mac_ch;
 	unsigned short hex_num;
+
+	check_null_command("sanitize_command_list");
+
+	mac = &x->mac;
 
 	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
@@ -1094,6 +1128,8 @@ write_mac_part(unsigned long partnum)
 
 	unsigned long w;
 
+	check_null_command("write_mac_part");
+
 	f = &x->f;
 	mac = &x->mac;
 
@@ -1115,6 +1151,8 @@ cmd_helper_dump(void)
 	struct xfile *f;
 
 	unsigned long p;
+
+	check_null_command("cmd_helper_dump");
 
 	f = &x->f;
 
@@ -1149,6 +1187,8 @@ print_mac_from_nvm(unsigned long partnum)
 	unsigned long c;
 	unsigned short val16;
 
+	check_null_command("print_mac_from_nvm");
+
 	for (c = 0; c < 3; c++) {
 		val16 = nvm_word(c, partnum);
 		printf("%02x:%02x",
@@ -1167,6 +1207,8 @@ hexdump(unsigned long partnum)
 	unsigned long c;
 	unsigned long row;
 	unsigned short val16;
+
+	check_null_command("hexdump");
 
 	for (row = 0; row < 8; row++) {
 
@@ -1194,6 +1236,8 @@ void
 cmd_helper_swap(void)
 {
 	struct xfile *f;
+
+	check_null_command("cmd_helper_swap");
 
 	check_cmd(cmd_helper_swap, "swap");
 
@@ -1223,6 +1267,8 @@ cmd_helper_copy(void)
 {
 	struct xfile *f;
 
+	check_null_command("cmd_helper_copy");
+
 	check_cmd(cmd_helper_copy, "copy");
 
 	f = &x->f;
@@ -1238,6 +1284,8 @@ cmd_helper_copy(void)
 void
 cmd_helper_cat(void)
 {
+	check_null_command("cmd_helper_cat");
+
 	check_cmd(cmd_helper_cat, "cat");
 
 	x->cat = 0;
@@ -1247,6 +1295,8 @@ cmd_helper_cat(void)
 void
 cmd_helper_cat16(void)
 {
+	check_null_command("cmd_helper_cat16");
+
 	check_cmd(cmd_helper_cat16, "cat16");
 
 	x->cat = 1;
@@ -1256,6 +1306,8 @@ cmd_helper_cat16(void)
 void
 cmd_helper_cat128(void)
 {
+	check_null_command("cmd_helper_cat128");
+
 	check_cmd(cmd_helper_cat128, "cat128");
 
 	x->cat = 15;
@@ -1267,6 +1319,8 @@ check_cmd(void (*fn)(void),
     const char *name)
 {
 	unsigned long i;
+
+	check_null_command("check_cmd");
 
 	if (x->cmd[x->i].run != fn)
 		err(ECANCELED, "Running %s, but cmd %s is set",
@@ -1300,6 +1354,8 @@ cat(unsigned long nff)
 
 	unsigned long p;
 	unsigned long ff;
+
+	check_null_command("cat");
 
 	cmd = &x->cmd[x->i];
 	f = &x->f;
@@ -1336,6 +1392,8 @@ cat_buf(unsigned char *b)
 {
 	struct commands *cmd;
 
+	check_null_command("cat_buf");
+
 	cmd = &x->cmd[x->i];
 
 	if (!((cmd->run == cmd_helper_cat && x->cat == 0) ||
@@ -1360,6 +1418,8 @@ write_gbe_file(void)
 
 	unsigned long p;
 	unsigned char update_checksum;
+
+	check_null_command("write_gbe_file");
 
 	cmd = &x->cmd[x->i];
 	f = &x->f;
@@ -1401,6 +1461,8 @@ write_gbe_file(void)
 void
 set_checksum(unsigned long p)
 {
+	check_null_command("set_checksum");
+
 	check_bin(p, "part number");
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
@@ -1410,6 +1472,8 @@ calculated_checksum(unsigned long p)
 {
 	unsigned long c;
 	unsigned int val16;
+
+	check_null_command("calculated_checksum");
 
 	val16 = 0;
 
@@ -1434,6 +1498,8 @@ nvm_word(unsigned long pos16, unsigned long p)
 
 	unsigned long pos;
 
+	check_null_command("nvm_word");
+
 	f = &x->f;
 
 	check_nvm_bound(pos16, p);
@@ -1449,6 +1515,8 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 	struct xfile *f;
 
 	unsigned long pos;
+
+	check_null_command("set_nvm_word");
 
 	f = &x->f;
 
@@ -1466,6 +1534,8 @@ set_part_modified(unsigned long p)
 {
 	struct xfile *f;
 
+	check_null_command("set_part_modified");
+
 	f = &x->f;
 
 	check_bin(p, "part number");
@@ -1480,6 +1550,8 @@ check_nvm_bound(unsigned long c, unsigned long p)
 	 * current design assumes that we will only
 	 * ever modified the NVM area.
 	 */
+
+	check_null_command("check_nvm_bound");
 
 	check_bin(p, "part number");
 
@@ -1509,6 +1581,8 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 
 	unsigned long gbe_rw_size;
 	unsigned char *mem_offset;
+
+	check_null_command("rw_gbe_file_part");
 
 	cmd = &x->cmd[x->i];
 	f = &x->f;
@@ -1542,6 +1616,8 @@ write_to_gbe_bin(void)
 
 	int saved_errno;
 	int mv;
+
+	check_null_command("write_to_gbe_bin");
 
 	cmd = &x->cmd[x->i];
 	f = &x->f;
@@ -1644,6 +1720,8 @@ check_written_part(unsigned long p)
 	struct stat st;
 	unsigned char *buf_restore;
 
+	check_null_command("check_written_part");
+
 	cmd = &x->cmd[x->i];
 	f = &x->f;
 
@@ -1707,6 +1785,8 @@ report_io_err_rw(void)
 
 	unsigned long p;
 
+	check_null_command("report_io_err_rw");
+
 	f = &x->f;
 
 	if (!f->io_err_gbe)
@@ -1769,6 +1849,8 @@ gbe_mv(void)
 
 	char *dest_tmp;
 	int dest_fd;
+
+	check_null_command("gbe_mv");
 
 	f = &x->f;
 
@@ -2013,6 +2095,8 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 
 	off_t gbe_off;
 
+	check_null_command("gbe_mem_offset");
+
 	f = &x->f;
 
 	gbe_off = gbe_x_offset(p, f_op, "mem",
@@ -2036,6 +2120,8 @@ gbe_file_offset(unsigned long p, const char *f_op)
 
 	off_t gbe_file_half_size;
 
+	check_null_command("gbe_file_offset");
+
 	f = &x->f;
 
 	gbe_file_half_size = f->gbe_file_size >> 1;
@@ -2052,9 +2138,11 @@ gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
 
 	off_t off;
 
-	f = &x->f;
+	check_null_command("gbe_x_offset");
 
 	check_bin(p, "part number");
+
+	f = &x->f;
 
 	off = ((off_t)p) * (off_t)nsize;
 
@@ -2076,6 +2164,8 @@ rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
 	struct xfile *f;
 
 	long r;
+
+	check_null_command("rw_gbe_file_exact");
 
 	f = &x->f;
 
@@ -2108,6 +2198,26 @@ rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
 err_rw_gbe_file_exact:
 	errno = EIO;
 	return -1;
+}
+
+void
+check_null_command(const char *c)
+{
+	char msg[] = "undefined function name";
+	char *func_name = msg;
+
+	if (c != NULL) {
+
+		if (*c != '\0') {
+
+			func_name = (char *)c;
+		}
+	}
+
+	if (x == NULL) {
+
+		err(ECANCELED, "%s: x ptr is null", func_name);
+	}
 }
 
 /*
@@ -2591,7 +2701,8 @@ err(int nvm_errval, const char *msg, ...)
 
 	(void)exit_cleanup();
 
-	fprintf(stderr, "%s: ", getnvmprogname());
+	if (x != NULL)
+		fprintf(stderr, "%s: ", getnvmprogname());
 
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
@@ -2648,16 +2759,23 @@ const char *
 getnvmprogname(void)
 {
 	const char *p;
+	static char fallback[] = "nvmutil";
 
-	if (x->argv0 == NULL || *x->argv0 == '\0')
-		return "";
+	char *rval = fallback;
 
-	p = x_c_strrchr(x->argv0, '/');
+	if (x != NULL) {
+		if (x->argv0 == NULL || *x->argv0 == '\0')
+			return "";
+
+		rval = x->argv0;
+	}
+
+	p = x_c_strrchr(rval, '/');
 
 	if (p)
 		return p + 1;
 	else
-		return x->argv0;
+		return rval;
 }
 
 /*

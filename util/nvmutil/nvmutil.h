@@ -430,6 +430,7 @@ off_t gbe_x_offset(unsigned long part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 long rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type);
+void check_null_command(const char *c);
 long rw_file_exact(int fd, unsigned char *mem, unsigned long len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     unsigned long max_retries, int off_reset);
