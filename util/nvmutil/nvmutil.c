@@ -2770,7 +2770,7 @@ new_tmpfile(int *fd, int local, const char *path)
 		/*
 		 * appended to filename for tmp:
 		 */
-		tmpdir_len = sizeof(default_tmpname);
+		tmpdir_len = xstrxlen(default_tmpname, maxlen);
 	} else {
 		base = x_c_tmpdir();
 
