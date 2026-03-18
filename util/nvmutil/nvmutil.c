@@ -989,10 +989,10 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
-	static unsigned long mix;
-	static unsigned long counter;
+	static unsigned long mix = 0;
+	static unsigned long counter = 0;
 
-	static int fd;
+	static int fd = -1;
 
 	struct x_st_timeval tv;
 
@@ -1001,11 +1001,7 @@ rlong(void)
 
 	rval = 0;
 
-	fd = -1;
 	nr = -1;
-
-	mix = 0;
-	counter = 0;
 
 	x_i_gettimeofday(&tv, NULL);
 
