@@ -215,14 +215,6 @@
 #define SKIP_CHECKSUM_WRITE 0
 #define CHECKSUM_WRITE 1
 
-/*
- * portable timeval
- */
-struct x_st_timeval {
-	long tv_sec;
-	long tv_usec;
-};
-
 struct commands {
 	unsigned long chk;
 	char *str;
@@ -357,8 +349,6 @@ void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
 unsigned short hextonum(char ch_s);
 unsigned long rlong(void);
-unsigned long entropy_jitter(void);
-int x_i_gettimeofday(struct x_st_timeval *tv, void *tz);
 void write_mac_part(unsigned long partnum);
 
 /*

@@ -989,57 +989,13 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
-	static unsigned long mix = 0;
-	static unsigned long counter = 0;
-
-	int fd = -1;
-
-	struct x_st_timeval tv;
+	int fd;
 
 	long nr;
+
 	unsigned long rval;
 
-	rval = 0;
-
-	nr = -1;
-
-	x_i_gettimeofday(&tv, NULL);
-
-	mix ^= (unsigned long)tv.tv_sec
-	    ^ (unsigned long)tv.tv_usec
-	    ^ (unsigned long)getpid()
-	    ^ (unsigned long)&mix
-	    ^ counter++
-	    ^ entropy_jitter();
-
-	/*
-	 * Stack addresses can vary between
-	 * calls, thus increasing entropy.
-	 */
-	mix ^= (unsigned long)&mix;
-	mix ^= (unsigned long)&tv;
-	mix ^= (unsigned long)&counter;
-
-	/*
-	 * Now, we won't use this mix
-	 * immediately. We'll try to
-	 * read urandom first, which is
-	 * likely safer, and pass that,
-	 * falling back to the mixture
-	 * if urandom fails.
-	 *
-	 * Since urandom is likely
-	 * reliable, the number of
-	 * times it will fail is
-	 * likely extremely random,
-	 * thus, building more than
-	 * sufficient entropy by the
-	 * time we do eventually use
-	 * the fallback code
-	 */
-
-	if (fd < 0)
-		fd = open("/dev/urandom", O_RDONLY | O_BINARY | O_NONBLOCK);
+	fd = open("/dev/urandom", O_RDONLY | O_BINARY | O_NONBLOCK);
 
 #if !(defined(__OpenBSD__) && defined(OpenBSD)) || \
     (defined(__OpenBSD__) && defined(OpenBSD) && \
@@ -1051,73 +1007,20 @@ rlong(void)
 	if (fd < 0)
 		fd = open("/dev/random", O_RDONLY | O_BINARY | O_NONBLOCK);
 
-	if (fd > -1) {
+	if (fd < 0)
+		err(errno, "can't open random device");
 
-		nr = rw_file_exact(fd, (unsigned char *)&rval,
-		    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
-		    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
+	nr = rw_file_exact(fd, (unsigned char *)&rval,
+	    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
+	    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
 
-		if (x_i_close(fd) < 0)
-			err(errno, "Can't close randomness fd");
+	if (x_i_close(fd) < 0)
+		err(errno, "Can't close randomness fd");
 
-		if (nr == sizeof(unsigned long))
-			return rval;
-	}
+	if (nr != sizeof(unsigned long))
+		err(errno, "Incomplete read from random device");
 
-	return mix;
-}
-
-unsigned long
-entropy_jitter(void)
-{
-	unsigned long mix;
-
-	struct x_st_timeval a, b;
-	long mix_diff;
-
-	int c;
-
-	mix = 0;
-
-	x_i_gettimeofday(&a, NULL);
-
-	for (c = 0; c < 32; c++) {
-
-		getpid();
-		x_i_gettimeofday(&b, NULL);
-
-		/*
-		 * prevent negative numbers to prevent overflow,
-		 * which would bias rand to large numbers
-		 */
-		mix_diff = (long)(b.tv_usec - a.tv_usec);
-		if (mix_diff < 0)
-			mix_diff = -mix_diff;
-
-		mix ^= (unsigned long)(mix_diff);
-
-		mix ^= (unsigned long)&mix;
-
-	}
-
-	return mix;
-}
-
-
-
-int
-x_i_gettimeofday(struct x_st_timeval *tv, void *tz)
-{
-	time_t t;
-
-	(void)tz;
-
-	t = time(NULL);
-
-	tv->tv_sec = t;
-	tv->tv_usec = (long)((unsigned long)clock() % 1000000UL);
-
-	return 0;
+	return rval;
 }
 
 void
