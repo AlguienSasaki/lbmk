@@ -51,6 +51,7 @@ $(OBJS): obj
 
 obj:
 	mkdir obj || true
+	mkdir obj/lib || true
 
 # main program object
 
