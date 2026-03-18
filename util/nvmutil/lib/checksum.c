@@ -29,18 +29,15 @@
 void
 read_checksums(void)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	unsigned long _p;
 	unsigned long _skip_part;
 
 	unsigned char _num_invalid;
 	unsigned char _max_invalid;
-
-	cmd = &x->cmd[x->i];
-	f = &x->f;
 
 	f->part_valid[0] = 0;
 	f->part_valid[1] = 0;

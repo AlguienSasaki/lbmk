@@ -24,21 +24,40 @@
 
 #include "../include/common.h"
 
-/*
- * TODO: make generic. S_ISREG: check every other
- * type, erring only if it doesn't match what was
- * passed as type requested.
- * also:
- * have variable need_seek, only err on seek if
- * need_seek is set.
- * also consider the stat check in this generic
- * context
- * make tthe return type an int, not a void.
- * return -1 with errno set to indicate error,
- * though the syscalls mostly handle that.
- * save errno before lseek, resetting it after
- * the check if return >-1
+/* check that a file changed
  */
+
+int
+same_file(int fd, struct stat *st_old,
+    int check_size)
+{
+	struct stat st;
+	int saved_errno = errno;
+
+	if (st_old == NULL || fd < 0)
+		goto err_same_file;
+
+	if (fstat(fd, &st) == -1)
+		return -1;
+
+	if (st.st_dev != st_old->st_dev ||
+	    st.st_ino != st_old->st_ino ||
+	    !S_ISREG(st.st_mode))
+		goto err_same_file;
+
+	if (check_size &&
+	    st.st_size != st_old->st_size)
+		goto err_same_file;
+
+	errno = saved_errno;
+	return 0;
+
+err_same_file:
+
+	errno = EIO;
+	return -1;
+}
+
 void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
@@ -55,10 +74,10 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 		err(errno, "%s: file not seekable", path);
 }
 
-/*
- * Ensure rename() is durable by syncing the
+/* Ensure x_i_rename() is durable by syncing the
  * directory containing the target file.
  */
+
 int
 fsync_dir(const char *path)
 {
@@ -165,8 +184,7 @@ err_fsync_dir:
 	return -1;
 }
 
-/*
- * create new tmpfile path
+/* create new tmpfile path
  *
  * ON SUCCESS:
  *
@@ -189,14 +207,14 @@ err_fsync_dir:
  * if local is zero, then 3rd arg (path)
  * is irrelevant and can be NULL
  */
+
 char *
 new_tmpfile(int *fd, int local, const char *path)
 {
 	unsigned long maxlen;
 	struct stat st;
 
-	/*
-	 * please do not modify the
+	/* please do not modify the
 	 * strings or I will get mad
 	 */
 	char tmp_none[] = "";
@@ -250,8 +268,7 @@ new_tmpfile(int *fd, int local, const char *path)
 	if (local) {
 		base = tmp_none;
 
-		/*
-		 * appended to filename for tmp:
+		/* appended to filename for tmp:
 		 */
 		tmpdir_len = xstrxlen(default_tmpname, maxlen);
 	} else {
@@ -270,8 +287,7 @@ new_tmpfile(int *fd, int local, const char *path)
 	tmppath_len = tmpdir_len + tmpname_len;
 	++tmppath_len; /* for '/' or '.' */
 
-	/*
-	 * max length -1 of maxlen
+	/* max length -1 of maxlen
 	 * for termination
 	 */
 	if (tmpdir_len > maxlen - tmpname_len - 1)
@@ -390,7 +406,6 @@ x_c_tmpdir(void)
 	struct stat st;
 
 	t = getenv("TMPDIR");
-	t = getenv("TMPDIR");
 
 	if (t && *t) {
 		if (stat(t, &st) == 0 && S_ISDIR(st.st_mode)) {
@@ -409,9 +424,9 @@ x_c_tmpdir(void)
 	return ".";
 }
 
-/*
- * portable mkstemp
+/* portable mkstemp
  */
+
 int
 x_i_mkstemp(char *template)
 {
@@ -436,7 +451,9 @@ x_i_mkstemp(char *template)
 	for (i = 0; i < 100; i++) {
 
 		for (j = 0; j < 6; j++) {
+
 			r = rlong();
+
 			p[j] = ch[(unsigned long)(r >> 1) % (sizeof(ch) - 1)];
 		}
 
@@ -466,8 +483,7 @@ x_i_mkstemp(char *template)
  * EINTR/EAGAIN looping is done indefinitely.
  */
 
-/*
- * rw_file_exact() - Read perfectly or die
+/* rw_file_exact() - Read perfectly or die
  *
  * Read/write, and absolutely insist on an
  * absolute read; e.g. if 100 bytes are
@@ -483,6 +499,7 @@ x_i_mkstemp(char *template)
  * times upon zero-return, to recover,
  * otherwise it will return an error.
  */
+
 long
 rw_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type, int loop_eagain,
@@ -549,8 +566,7 @@ err_rw_file_exact:
 	return -1;
 }
 
-/*
- * prw() - portable read-write
+/* prw() - portable read-write
  *
  * This implements a portable analog of pwrite()
  * and pread() - note that this version is not
@@ -809,19 +825,17 @@ err_is_file:
 	return -1;
 }
 
-/*
- * Check overflows caused by buggy libc.
+/* Check weirdness on buggy libc.
  *
  * POSIX can say whatever it wants.
  * specification != implementation
  */
+
 long
 rw_over_nrw(long r, unsigned long nrw)
 {
-	/*
-	 * If a byte length of zero
-	 * was requested, that is
-	 * clearly a bug. No way.
+	/* not a libc bug, but we
+	 * don't like the number zero
 	 */
 	if (!nrw)
 		goto err_rw_over_nrw;
@@ -832,8 +846,7 @@ rw_over_nrw(long r, unsigned long nrw)
 	if ((unsigned long)
 	    r > X_LONG_MAX) {
 
-		/*
-		 * Theoretical buggy libc
+		/* Theoretical buggy libc
 		 * check. Extremely academic.
 		 *
 		 * Specifications never
@@ -843,12 +856,16 @@ rw_over_nrw(long r, unsigned long nrw)
 		 *
 		 * Check this after using
 		 * [p]read() or [p]write()
+		 *
+		 * NOTE: here, we assume
+		 * long integers are the
+		 * same size as SSIZE_T
 		 */
+
 		goto err_rw_over_nrw;
 	}
 
-	/*
-	 * Theoretical buggy libc:
+	/* Theoretical buggy libc:
 	 * Should never return a number of
 	 * bytes above the requested length.
 	 */
@@ -888,35 +905,31 @@ lseek_loop(int fd, off_t off, int whence,
 }
 #endif
 
-/*
- * If a given error loop is enabled,
- * e.g. EINTR or EAGAIN, an I/O operation
- * will loop until errno isn't -1 and one
- * of these, e.g. -1 and EINTR
- */
 int
 try_err(int loop_err, int errval)
 {
 	if (loop_err)
 		return errval;
 
-	/* errno is never negative,
-	   so functions checking it
-	   can use it accordingly */
 	return -1;
 }
 
-/*
- * non-atomic rename
+/* portable rename(). WARNING:
+ * not powercut-safe. do this to
+ * use system rename:
+ * #define SYS_RENAME 1
  *
- * commented because i can't sacrifice
- * exactly this property. nvmutil tries
- * to protect files against e.g. power loss
+ * written academically, but in reality,
+ * nearly all unix systems have rename()
  */
-/*
+
 int
 x_i_rename(const char *src, const char *dst)
 {
+#if defined(SYS_RENAME) &&\
+    SYS_RENAME > 0
+	return rename(src, dst);
+#else
 	int sfd, dirfd;
 	ssize_t r;
 	char buf[8192];
@@ -955,8 +968,8 @@ x_i_rename(const char *src, const char *dst)
 		return -1;
 
 	return 0;
+#endif
 }
-*/
 
 int
 x_i_close(int fd)

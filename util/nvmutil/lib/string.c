@@ -93,67 +93,14 @@ xstrxlen(const char *scmp, unsigned long maxlen)
 	return xstr_index;
 }
 
-void
-err(int nvm_errval, const char *msg, ...)
-{
-	struct xstate *x = xstatus();
-
-	va_list args;
-
-	if (errno == 0)
-		errno = nvm_errval;
-	if (!errno)
-		errno = ECANCELED;
-
-	(void)exit_cleanup();
-
-	if (x != NULL)
-		fprintf(stderr, "%s: ", getnvmprogname());
-
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
-
-	fprintf(stderr, ": %s\n", strerror(errno));
-
-	exit(EXIT_FAILURE);
-}
-
-const char *
-getnvmprogname(void)
-{
-	struct xstate *x = xstatus();
-
-	const char *p;
-	static char fallback[] = "nvmutil";
-
-	char *rval = fallback;
-
-	if (x != NULL) {
-		if (x->argv0 == NULL || *x->argv0 == '\0')
-			return "";
-
-		rval = x->argv0;
-	}
-
-	p = x_c_strrchr(rval, '/');
-
-	if (p)
-		return p + 1;
-	else
-		return rval;
-}
-
 char *
 x_c_strrchr(const char *s, int c)
 {
 	const char *p = NULL;
 
-	while (*s) {
+	for ( ; *s; s++)
 		if (*s == (char)c)
 			p = s;
-		s++;
-	}
 
 	if (c == '\0')
 		return (char *)s;

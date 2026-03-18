@@ -24,13 +24,13 @@
 
 #include "../include/common.h"
 
-/*
- * Guard against regressions by maintainers (command table)
+/* Guard against regressions by maintainers (command table)
  */
+
 void
 sanitize_command_list(void)
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
 
 	unsigned long c;
 	unsigned long num_commands;
@@ -41,19 +41,17 @@ sanitize_command_list(void)
 		sanitize_command_index(c);
 }
 
-/*
- * TODO: specific config checks per command
+/* TODO: specific config checks per command
  */
+
 void
 sanitize_command_index(unsigned long c)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[c];
 
 	int _flag;
 	unsigned long gbe_rw_size;
-
-	cmd = &x->cmd[c];
 
 	check_command_num(c);
 
@@ -108,7 +106,7 @@ sanitize_command_index(unsigned long c)
 void
 set_cmd(int argc, char *argv[])
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
 	const char *cmd;
 
 	unsigned long c;
@@ -139,14 +137,10 @@ set_cmd(int argc, char *argv[])
 void
 set_cmd_args(int argc, char *argv[])
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
-	unsigned long i;
-
-	i = x->i;
-	cmd = &x->cmd[i];
-	f = &x->f;
+	struct xstate *x = xstatus(0, NULL);
+	unsigned long i = x->i;
+	struct commands *cmd = &x->cmd[i];
+	struct xfile *f = &x->f;
 
 	if (!valid_command(i) || argc < 3)
 		usage();
@@ -191,26 +185,6 @@ conv_argv_part_num(const char *part_str)
 
 	return (unsigned long)(ch - '0');
 }
-void
-run_cmd(void)
-{
-	struct xstate *x = xstatus();
-	unsigned long i;
-	void (*run)(void);
-
-	i = x->i;
-	run = x->cmd[i].run;
-
-	check_command_num(i);
-
-	if (run == NULL)
-		err(EINVAL, "Command %lu: null ptr", i);
-
-	run();
-
-	for (i = 0; i < items(x->cmd); i++)
-		x->cmd[i].run = cmd_helper_err;
-}
 
 void
 check_command_num(unsigned long c)
@@ -223,7 +197,7 @@ check_command_num(unsigned long c)
 unsigned char
 valid_command(unsigned long c)
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
 	struct commands *cmd;
 
 	if (c >= items(x->cmd))
@@ -242,11 +216,10 @@ valid_command(unsigned long c)
 void
 cmd_helper_setmac(void)
 {
-	struct xstate *x = xstatus();
-	unsigned long partnum;
-	struct macaddr *mac;
+	struct xstate *x = xstatus(0, NULL);
+	struct macaddr *mac = &x->mac;
 
-	mac = &x->mac;
+	unsigned long partnum;
 
 	check_cmd(cmd_helper_setmac, "setmac");
 
@@ -260,12 +233,10 @@ cmd_helper_setmac(void)
 void
 parse_mac_string(void)
 {
-	struct xstate *x = xstatus();
-	struct macaddr *mac;
+	struct xstate *x = xstatus(0, NULL);
+	struct macaddr *mac = &x->mac;
 
 	unsigned long mac_byte;
-
-	mac = &x->mac;
 
 	if (xstrxlen(x->mac.str, 18) != 17)
 		err(EINVAL, "MAC address is the wrong length");
@@ -285,15 +256,13 @@ parse_mac_string(void)
 void
 set_mac_byte(unsigned long mac_byte_pos)
 {
-	struct xstate *x = xstatus();
-	struct macaddr *mac;
+	struct xstate *x = xstatus(0, NULL);
+	struct macaddr *mac = &x->mac;
 
 	char separator;
 
 	unsigned long mac_str_pos;
 	unsigned long mac_nib_pos;
-
-	mac = &x->mac;
 
 	mac_str_pos = mac_byte_pos * 3;
 
@@ -311,13 +280,11 @@ void
 set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos)
 {
-	struct xstate *x = xstatus();
-	struct macaddr *mac;
+	struct xstate *x = xstatus(0, NULL);
+	struct macaddr *mac = &x->mac;
 
 	char mac_ch;
 	unsigned short hex_num;
-
-	mac = &x->mac;
 
 	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
@@ -345,14 +312,11 @@ set_mac_nib(unsigned long mac_str_pos,
 void
 write_mac_part(unsigned long partnum)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
-	struct macaddr *mac;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
+	struct macaddr *mac = &x->mac;
 
 	unsigned long w;
-
-	f = &x->f;
-	mac = &x->mac;
 
 	check_bin(partnum, "part number");
 	if (!f->part_valid[partnum])
@@ -369,12 +333,10 @@ write_mac_part(unsigned long partnum)
 void
 cmd_helper_dump(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	unsigned long p;
-
-	f = &x->f;
 
 	check_cmd(cmd_helper_dump, "dump");
 
@@ -408,10 +370,13 @@ print_mac_from_nvm(unsigned long partnum)
 	unsigned short val16;
 
 	for (c = 0; c < 3; c++) {
+
 		val16 = nvm_word(c, partnum);
+
 		printf("%02x:%02x",
 		    (unsigned int)(val16 & 0xff),
 		    (unsigned int)(val16 >> 8));
+
 		if (c == 2)
 			printf("\n");
 		else
@@ -451,12 +416,10 @@ hexdump(unsigned long partnum)
 void
 cmd_helper_swap(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	check_cmd(cmd_helper_swap, "swap");
-
-	f = &x->f;
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)GBE_WORK_SIZE,
@@ -480,12 +443,10 @@ cmd_helper_swap(void)
 void
 cmd_helper_copy(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	check_cmd(cmd_helper_copy, "copy");
-
-	f = &x->f;
 
 	x_v_memcpy(
 	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
@@ -498,7 +459,8 @@ cmd_helper_copy(void)
 void
 cmd_helper_cat(void)
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
+
 	check_cmd(cmd_helper_cat, "cat");
 
 	x->cat = 0;
@@ -508,7 +470,8 @@ cmd_helper_cat(void)
 void
 cmd_helper_cat16(void)
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
+
 	check_cmd(cmd_helper_cat16, "cat16");
 
 	x->cat = 1;
@@ -518,7 +481,8 @@ cmd_helper_cat16(void)
 void
 cmd_helper_cat128(void)
 {
-	struct xstate *x = xstatus();
+	struct xstate *x = xstatus(0, NULL);
+
 	check_cmd(cmd_helper_cat128, "cat128");
 
 	x->cat = 15;
@@ -528,13 +492,11 @@ cmd_helper_cat128(void)
 void
 cat(unsigned long nff)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	unsigned long p;
 	unsigned long ff;
-
-	f = &x->f;
 
 	p = 0;
 	ff = 0;
@@ -575,22 +537,15 @@ void
 check_cmd(void (*fn)(void),
     const char *name)
 {
-	struct xstate *x = xstatus();
-	unsigned long i;
+	struct xstate *x = xstatus(0, NULL);
+	unsigned long i = x->i;
 
-	if (x->cmd[x->i].run != fn)
+	if (x->cmd[i].run != fn)
 		err(ECANCELED, "Running %s, but cmd %s is set",
-		    name, x->cmd[x->i].str);
+		    name, x->cmd[i].str);
 
-	/*
-	 * In addition to making sure we ran
-	 * the right command, we now disable
-	 * all commands from running again
-	 *
-	 * the _nop function will just call
-	 * err() immediately
+	/* prevent second command
 	 */
-
 	for (i = 0; i < items(x->cmd); i++)
 		x->cmd[i].run = cmd_helper_err;
 }

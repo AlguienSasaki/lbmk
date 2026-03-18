@@ -45,9 +45,7 @@ hextonum(char ch_s)
 	return 16; /* invalid character */
 }
 
-/*
- * Portable random
- * number generator
+/* Random numbers
  */
 unsigned long
 rlong(void)

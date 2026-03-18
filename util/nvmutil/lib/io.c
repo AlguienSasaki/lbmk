@@ -3,8 +3,6 @@
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
  * I/O functions specific to nvmutil.
- *
- * Related: file.c
  */
 
 #ifdef __OpenBSD__
@@ -29,30 +27,22 @@
 void
 open_gbe_file(void)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
-	struct stat _st;
 	int _flags;
-
-	cmd = &x->cmd[x->i];
-	f = &x->f;
 
 	xopen(&f->gbe_fd, f->fname,
 	    cmd->flags | O_BINARY |
-	    O_NOFOLLOW | O_CLOEXEC, &_st);
+	    O_NOFOLLOW | O_CLOEXEC, &f->gbe_st);
 
-	/* inode will be checked later on write */
-	f->gbe_dev = _st.st_dev;
-	f->gbe_ino = _st.st_ino;
-
-	if (_st.st_nlink > 1)
+	if (f->gbe_st.st_nlink > 1)
 		err(EINVAL,
 		    "%s: warning: file has multiple (%lu) hard links\n",
-		    f->fname, (unsigned long)_st.st_nlink);
+		    f->fname, (unsigned long)f->gbe_st.st_nlink);
 
-	if (_st.st_nlink == 0)
+	if (f->gbe_st.st_nlink == 0)
 		err(EIO, "%s: file unlinked while open", f->fname);
 
 	_flags = fcntl(f->gbe_fd, F_GETFL);
@@ -68,7 +58,7 @@ open_gbe_file(void)
 	if (_flags & O_APPEND)
 		err(EIO, "%s: O_APPEND flag", f->fname);
 
-	f->gbe_file_size = _st.st_size;
+	f->gbe_file_size = f->gbe_st.st_size;
 
 	switch (f->gbe_file_size) {
 	case SIZE_8KB:
@@ -83,36 +73,13 @@ open_gbe_file(void)
 		err(errno, "%s: can't lock", f->fname);
 }
 
-/*
- * We copy the entire gbe file
- * to the tmpfile, and then we
- * work on that. We copy back
- * afterward. this is the copy.
- *
- * we copy to tmpfile even on
- * read-only commands, for the
- * double-read verification,
- * which also benefits cmd_cat.
- */
 void
 copy_gbe(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
-
-	f = &x->f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	read_file();
-
-	/*
-	 regular operations post-read operate only on the first
-	 8KB, because each GbE part is the first 4KB of each
-	 half of the file.
-
-	 we no longer care about anything past 8KB, until we get
-	 to writing, at which point we will flush the buffer
-	 again
-	 */
 
 	if (f->gbe_file_size == SIZE_8KB)
 		return;
@@ -125,15 +92,14 @@ copy_gbe(void)
 void
 read_file(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	struct stat _st;
 	long _r;
 
-	f = &x->f;
-
-	/* read main file */
+	/* read main file
+	 */
 	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
@@ -141,8 +107,8 @@ read_file(void)
 	if (_r < 0)
 		err(errno, "%s: read failed", f->fname);
 
-	/* copy to tmpfile */
-
+	/* copy to tmpfile
+	 */
 	_r = rw_file_exact(f->tmp_fd, f->buf, f->gbe_file_size,
 	    0, IO_PWRITE, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
@@ -151,10 +117,8 @@ read_file(void)
 		err(errno, "%s: %s: copy failed",
 		    f->fname, f->tname);
 
-	/*
-	 * file size comparison
+	/* file size comparison
 	 */
-
 	if (fstat(f->tmp_fd, &_st) == -1)
 		err(errno, "%s: stat", f->tname);
 
@@ -164,9 +128,7 @@ read_file(void)
 		err(EIO, "%s: %s: not the same size",
 		    f->fname, f->tname);
 
-	/*
-	 * fsync tmp gbe file, because we will compare
-	 * its contents to what was read (for safety)
+	/* needs sync, for verification
 	 */
 	if (x_i_fsync(f->tmp_fd) == -1)
 		err(errno, "%s: fsync (tmpfile copy)", f->tname);
@@ -182,42 +144,25 @@ read_file(void)
 		err(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
+
 void
 write_gbe_file(void)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
-
-	struct stat _gbe_st;
-	struct stat _tmp_st;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	unsigned long p;
 	unsigned char update_checksum;
 
-	cmd = &x->cmd[x->i];
-	f = &x->f;
-
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
 		return;
 
-	if (fstat(f->gbe_fd, &_gbe_st) == -1)
-		err(errno, "%s: re-check", f->fname);
-	if (_gbe_st.st_dev != f->gbe_dev || _gbe_st.st_ino != f->gbe_ino)
-		err(EIO, "%s: file replaced while open", f->fname);
-	if (_gbe_st.st_size != f->gbe_file_size)
-		err(errno, "%s: file size changed before write", f->fname);
-	if (!S_ISREG(_gbe_st.st_mode))
-		err(errno, "%s: file type changed before write", f->fname);
+	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
+		err(errno, "%s: file inode/device changed", f->tname);
 
-	if (fstat(f->tmp_fd, &_tmp_st) == -1)
-		err(errno, "%s: re-check", f->tname);
-	if (_tmp_st.st_dev != f->tmp_dev || _tmp_st.st_ino != f->tmp_ino)
-		err(EIO, "%s: file replaced while open", f->tname);
-	if (_tmp_st.st_size != f->gbe_file_size)
-		err(errno, "%s: file size changed before write", f->tname);
-	if (!S_ISREG(_tmp_st.st_mode))
-		err(errno, "%s: file type changed before write", f->tname);
+	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
+		err(errno, "%s: file has changed", f->fname);
 
 	update_checksum = cmd->chksum_write;
 
@@ -236,9 +181,9 @@ void
 rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	long rval;
 
@@ -246,9 +191,6 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 
 	unsigned long gbe_rw_size;
 	unsigned char *mem_offset;
-
-	cmd = &x->cmd[x->i];
-	f = &x->f;
 
 	gbe_rw_size = cmd->rw_size;
 
@@ -274,15 +216,12 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 void
 write_to_gbe_bin(void)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	int saved_errno;
 	int mv;
-
-	cmd = &x->cmd[x->i];
-	f = &x->f;
 
 	if ((cmd->flags & O_ACCMODE) != O_RDWR)
 		return;
@@ -338,23 +277,15 @@ write_to_gbe_bin(void)
 			fprintf(stderr, "%s: %s\n",
 			    f->fname, strerror(errno));
 		} else {
-			/*
-			 * tmpfile removed
-			 * by the rename
-			 */
 
+			/* removed by rename
+			 */
 			if (f->tname != NULL)
 				free(f->tname);
 
 			f->tname = NULL;
 		}
 	}
-
-	/*
-	 * finally:
-	 * must sync to disk!
-	 * very nearly done
-	 */
 
 	if (!f->io_err_gbe_bin)
 		return;
@@ -369,9 +300,9 @@ write_to_gbe_bin(void)
 void
 check_written_part(unsigned long p)
 {
-	struct xstate *x = xstatus();
-	struct commands *cmd;
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct commands *cmd = &x->cmd[x->i];
+	struct xfile *f = &x->f;
 
 	long rval;
 
@@ -380,11 +311,7 @@ check_written_part(unsigned long p)
 	off_t file_offset;
 	unsigned char *mem_offset;
 
-	struct stat st;
 	unsigned char *buf_restore;
-
-	cmd = &x->cmd[x->i];
-	f = &x->f;
 
 	if (!f->part_modified[p])
 		return;
@@ -396,15 +323,11 @@ check_written_part(unsigned long p)
 
 	memset(f->pad, 0xff, sizeof(f->pad));
 
-	if (fstat(f->gbe_fd, &st) == -1)
-		err(errno, "%s: fstat (post-write)", f->fname);
-	if (st.st_dev != f->gbe_dev || st.st_ino != f->gbe_ino)
-		err(EIO, "%s: file changed during write", f->fname);
+	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
+		err(errno, "%s: file inode/device changed", f->tname);
 
-	if (fstat(f->tmp_fd, &st) == -1)
-		err(errno, "%s: fstat (post-write)", f->tname);
-	if (st.st_dev != f->tmp_dev || st.st_ino != f->tmp_ino)
-		err(EIO, "%s: file changed during write", f->tname);
+	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
+		err(errno, "%s: file changed during write", f->fname);
 
 	rval = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
@@ -442,12 +365,10 @@ check_written_part(unsigned long p)
 void
 report_io_err_rw(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	unsigned long p;
-
-	f = &x->f;
 
 	if (!f->io_err_gbe)
 		return;
@@ -500,8 +421,8 @@ report_io_err_rw(void)
 int
 gbe_mv(void)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	int rval;
 
@@ -511,8 +432,6 @@ gbe_mv(void)
 	char *dest_tmp;
 	int dest_fd;
 
-	f = &x->f;
-
 	/* will be set 0 if it doesn't */
 	tmp_gbe_bin_exists = 1;
 
@@ -521,7 +440,7 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	rval = rename(f->tname, f->fname);
+	rval = x_i_rename(f->tname, f->fname);
 
 	if (rval > -1) {
 		/*
@@ -576,7 +495,7 @@ gbe_mv(void)
 	if (x_i_close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (rename(dest_tmp, f->fname) == -1)
+	if (x_i_rename(dest_tmp, f->fname) == -1)
 		goto ret_gbe_mv;
 
 	if (fsync_dir(f->fname) < 0) {
@@ -640,12 +559,10 @@ ret_gbe_mv:
 unsigned char *
 gbe_mem_offset(unsigned long p, const char *f_op)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	off_t gbe_off;
-
-	f = &x->f;
 
 	gbe_off = gbe_x_offset(p, f_op, "mem",
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
@@ -664,12 +581,10 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 off_t
 gbe_file_offset(unsigned long p, const char *f_op)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	off_t gbe_file_half_size;
-
-	f = &x->f;
 
 	gbe_file_half_size = f->gbe_file_size >> 1;
 
@@ -681,14 +596,12 @@ off_t
 gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	off_t off;
 
 	check_bin(p, "part number");
-
-	f = &x->f;
 
 	off = ((off_t)p) * (off_t)nsize;
 
@@ -707,12 +620,10 @@ long
 rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	long r;
-
-	f = &x->f;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;

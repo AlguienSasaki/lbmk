@@ -29,19 +29,16 @@
  * GbE NVM files store 16-bit (2-byte) little-endian words.
  * We must therefore swap the order when reading or writing.
  *
- * NOTE: The MAC address words are stored big-endian in the
- * file, but we assume otherwise and adapt accordingly.
+ * NOTE: The MAC address words are stored big-endian in-file.
  */
 
 unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	unsigned long pos;
-
-	f = &x->f;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -53,12 +50,10 @@ nvm_word(unsigned long pos16, unsigned long p)
 void
 set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	unsigned long pos;
-
-	f = &x->f;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -72,10 +67,8 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 void
 set_part_modified(unsigned long p)
 {
-	struct xstate *x = xstatus();
-	struct xfile *f;
-
-	f = &x->f;
+	struct xstate *x = xstatus(0, NULL);
+	struct xfile *f = &x->f;
 
 	check_bin(p, "part number");
 	f->part_modified[p] = 1;
@@ -84,10 +77,7 @@ set_part_modified(unsigned long p)
 void
 check_nvm_bound(unsigned long c, unsigned long p)
 {
-	/*
-	 * NVM_SIZE assumed as the limit, because this
-	 * current design assumes that we will only
-	 * ever modified the NVM area.
+	/* Block out of bound NVM access
 	 */
 
 	check_bin(p, "part number");

@@ -4,26 +4,33 @@
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  */
 
-/*
- * TODO: split this per .c file
- */
-
-/* Use this shorthand in cmd helpers. e.g.
-   in cmd_setmac function:
-   check_cmd(cmd_helper_cat);
-*/
-
 #ifndef COMMON_H
 #define COMMON_H
 
-/*
- * system prototypes
+/* keep SYS_RENAME 1 to
+ * use libc rename()
+ * recommended
+ */
+#ifndef SYS_RENAME
+#define SYS_RENAME 1
+#endif
+
+#define items(x) (sizeof((x)) / sizeof((x)[0]))
+
+/* system prototypes
  */
 
 int fchmod(int fd, mode_t mode);
 
-/*
- * build config
+/* analog of SSIZE_MAX
+ */
+
+#ifndef X_LONG_MAX
+#define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
+#endif
+
+
+/* build config
  */
 
 #ifndef NVMUTIL_H
@@ -71,27 +78,6 @@ int fchmod(int fd, mode_t mode);
 #define _FILE_OFFSET_BITS 64
 #endif
 
-/*
- * Older versions of BSD to the early 2000s
- * could compile nvmutil, but pledge was
- * added in the 2010s. Therefore, for extra
- * portability, we will only pledge/unveil
- * on OpenBSD versions that have it.
- */
-
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if OpenBSD >= 604
-#ifndef NVMUTIL_UNVEIL
-#define NVMUTIL_UNVEIL 1
-#endif
-#endif
-#if OpenBSD >= 509
-#ifndef NVMUTIL_PLEDGE
-#define NVMUTIL_PLEDGE 1
-#endif
-#endif
-#endif
-
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
 #endif
@@ -132,8 +118,7 @@ int fchmod(int fd, mode_t mode);
 #define FD_CLOEXEC 0
 #endif
 
-/*
- * Sizes in bytes:
+/* Sizes in bytes:
  */
 
 #define SIZE_1KB 1024
@@ -144,17 +129,12 @@ int fchmod(int fd, mode_t mode);
 
 #define GBE_BUF_SIZE (SIZE_128KB)
 
-/*
- * First 128 bytes of a GbE part contains
- * the regular NVM (Non-Volatile-Memory)
- * area. All of these bytes must add up,
- * truncated to 0xBABA.
+/* First 128 bytes of gbe.bin is NVM.
+ * Then extended area. All of NVM must
+ * add up to BABA, truncated (LE)
  *
- * The full GbE region is 4KB, but only
- * the first 128 bytes are used here.
- *
- * There is a second 4KB part with the same
- * rules, and it *should* be identical.
+ * First 4KB of each half of the file
+ * contains NVM+extended.
  */
 
 #define GBE_WORK_SIZE (SIZE_8KB)
@@ -164,29 +144,7 @@ int fchmod(int fd, mode_t mode);
 #define NVM_WORDS (NVM_SIZE >> 1)
 #define NVM_CHECKSUM_WORD (NVM_WORDS - 1)
 
-/*
- * Portable macro based on BSD nitems.
- * Used to count the number of commands (see below).
- */
-
-#define items(x) (sizeof((x)) / sizeof((x)[0]))
-
-/*
- * GbE files can be 8KB, 16KB or 128KB,
- * but we only need the two 4KB parts
- * from offset zero and offset 64KB in
- * a 128KB file, or zero and 8KB in a 16KB
- * file, or zero and 4KB in an 8KB file.
- *
- * The code will handle this properly.
- */
-
-#ifndef X_LONG_MAX
-#define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
-#endif
-
-/*
- * Use these for .argc in command[]:
+/* argc minimum (dispatch)
  */
 
 #define ARGC_3 3
@@ -195,16 +153,11 @@ int fchmod(int fd, mode_t mode);
 #define NO_LOOP_EAGAIN 0
 #define NO_LOOP_EINTR 0
 
-/*
- * Used for checking whether.
- * a file is a file via stat().
+/* For checking if an fd is a normal file.
+ * Portable for old Unix e.g. v7 (S_IFREG),
+ * 4.2BSD (S_IFMT), POSIX (S_ISREG).
  *
- * Portable macro for compatibility
- * with older unix e.g. v7 unix (has S_IFREG),
- * 4.2bsd (has S_IFMT) or POSIX (has S_ISREG)
- *
- * Fallback works where S_IFREG == 0100000
- * (classic unix bitmask)
+ * IFREG: assumed 0100000 (classic bitmask)
  */
 
 #ifndef S_ISREG
@@ -222,9 +175,7 @@ int fchmod(int fd, mode_t mode);
 #define IO_PREAD 2
 #define IO_PWRITE 3
 
-/*
- * Used as indices for command[]
- * MUST be in the same order as entries in command[]
+/* for nvmutil commands
  */
 
 #define CMD_DUMP 0
@@ -244,6 +195,9 @@ int fchmod(int fd, mode_t mode);
 #define SKIP_CHECKSUM_WRITE 0
 #define CHECKSUM_WRITE 1
 
+/* command table
+ */
+
 struct commands {
 	unsigned long chk;
 	char *str;
@@ -256,15 +210,24 @@ struct commands {
 	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
 
+/* mac address
+ */
+
 struct macaddr {
 	char *str; /* set to rmac, or argv string */
 	char rmac[18]; /* xx:xx:xx:xx:xx:xx */
 	unsigned short mac_buf[3];
 };
 
+/* gbe.bin and tmpfile
+ */
+
 struct xfile {
 	int gbe_fd;
+	struct stat gbe_st;
+
 	int tmp_fd;
+	struct stat tmp_st;
 
 	char *tname; /* path of tmp file */
 	char *fname; /* path of gbe file */
@@ -279,12 +242,6 @@ struct xfile {
 
 	int post_rw_checksum[2];
 
-	dev_t gbe_dev;
-	ino_t gbe_ino;
-
-	dev_t tmp_dev;
-	ino_t tmp_ino;
-
 	off_t gbe_file_size;
 	off_t gbe_tmp_size;
 
@@ -298,11 +255,13 @@ struct xfile {
 	unsigned char pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
 };
 
-/*
+/* Command table, MAC address, files
+ *
  * BE CAREFUL when editing this
  * to ensure that you also update
  * the tables in xstatus()
  */
+
 struct xstate {
 	struct commands cmd[7];
 	struct macaddr mac;
@@ -313,10 +272,6 @@ struct xstate {
 	unsigned long i; /* index to cmd[] for current command */
 	int no_cmd;
 
-	/* store size of a struct here.
-	   (can be used to copy old state) */
-	unsigned long xsize;
-
 	/* Cat commands set this.
 	   the cat cmd helpers check it */
 	int cat;
@@ -324,52 +279,47 @@ struct xstate {
 
 
 
+struct xstate *xstatus(int argc, char *argv[]);
 
-struct xstate *xstatus(void);
-
-/*
- * Sanitize command tables.
+/* Sanitize command tables.
  */
+
 void sanitize_command_list(void);
 void sanitize_command_index(unsigned long c);
 
-/*
- * Argument handling (user input)
+/* Argument handling (user input)
  */
+
 void set_cmd(int argc, char *argv[]);
 void set_cmd_args(int argc, char *argv[]);
 unsigned long conv_argv_part_num(const char *part_str);
 int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
 
-/*
- * Prep files for reading
+/* Prep files for reading
  */
+
 void open_gbe_file(void);
 int lock_file(int fd, int flags);
+int same_file(int fd, struct stat *st_old, int check_size);
 void xopen(int *fd, const char *path, int flags, struct stat *st);
 
-/*
- * Read GbE file and verify
- * checksums.
- *
- * After this, we can run commands.
+/* Read GbE file and verify checksums
  */
+
 void copy_gbe(void);
 void read_file(void);
 void read_checksums(void);
 int good_checksum(unsigned long partnum);
 
-/*
- * Execute user command on GbE data.
- * These are stubs that call helpers.
+/* validate commands
  */
-void run_cmd(void);
+
 void check_command_num(unsigned long c);
 unsigned char valid_command(unsigned long c);
 
-/*
- * Helper functions for command: setmac
+/* Helper functions for command: setmac
  */
+
 void cmd_helper_setmac(void);
 void parse_mac_string(void);
 unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
@@ -380,51 +330,49 @@ unsigned short hextonum(char ch_s);
 unsigned long rlong(void);
 void write_mac_part(unsigned long partnum);
 
-/*
- * Helper functions for command: dump
+/* Helper functions for command: dump
  */
+
 void cmd_helper_dump(void);
 void print_mac_from_nvm(unsigned long partnum);
 void hexdump(unsigned long partnum);
 
-/*
- * Helper functions for command: swap
+/* Helper functions for command: swap
  */
+
 void cmd_helper_swap(void);
 
-/*
- * Helper functions for command: copy
+/* Helper functions for command: copy
  */
+
 void cmd_helper_copy(void);
 
-/*
- * Helper functions for commands:
+/* Helper functions for commands:
  * cat, cat16 and cat128
  */
+
 void cmd_helper_cat(void);
 void cmd_helper_cat16(void);
 void cmd_helper_cat128(void);
 void cat(unsigned long nff);
 void cat_buf(unsigned char *b);
 
+/* Command verification/control
+ */
+
 void check_cmd(void (*fn)(void), const char *name);
 void cmd_helper_err(void);
 
-/*
- * After command processing, write
- * the modified GbE file back.
- *
- * These are stub functions: check
- * below for the actual functions.
+/* Write GbE files to disk
  */
+
 void write_gbe_file(void);
 void set_checksum(unsigned long part);
 unsigned short calculated_checksum(unsigned long p);
 
-/*
- * Helper functions for accessing
- * the NVM area during operation.
+/* NVM read/write
  */
+
 unsigned short nvm_word(unsigned long pos16, unsigned long part);
 void set_nvm_word(unsigned long pos16,
     unsigned long part, unsigned short val16);
@@ -432,23 +380,26 @@ void set_part_modified(unsigned long p);
 void check_nvm_bound(unsigned long pos16, unsigned long part);
 void check_bin(unsigned long a, const char *a_name);
 
-/*
- * Helper functions for stub functions
- * that handle GbE file reads/writes.
+/* GbE file read/write
  */
+
 void rw_gbe_file_part(unsigned long p, int rw_type,
     const char *rw_type_str);
 void write_to_gbe_bin(void);
 int gbe_mv(void);
 void check_written_part(unsigned long p);
 void report_io_err_rw(void);
-int fsync_dir(const char *path);
 unsigned char *gbe_mem_offset(unsigned long part, const char *f_op);
 off_t gbe_file_offset(unsigned long part, const char *f_op);
 off_t gbe_x_offset(unsigned long part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
 long rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
     off_t off, int rw_type);
+
+/* Generic read/write
+ */
+
+int fsync_dir(const char *path);
 long rw_file_exact(int fd, unsigned char *mem, unsigned long len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     unsigned long max_retries, int off_reset);
@@ -466,27 +417,21 @@ off_t lseek_loop(int fd, off_t off,
 #endif
 int try_err(int loop_err, int errval);
 
-/*
- * Error handling and cleanup
+/* Error handling and cleanup
  */
+
 void usage(void);
 void err(int nvm_errval, const char *msg, ...);
 int exit_cleanup(void);
 const char *getnvmprogname(void);
 
-/*
- * a special kind of hell
+/* Portable libc functions
  */
+
 char *new_tmpfile(int *fd, int local, const char *path);
 int x_i_mkstemp(char *template);
 char *x_c_strrchr(const char *s, int c);
-/* x_i_rename not suitable
- * for atomic writes. kept
- * commentted for use in a
- * library in the future */
-/*
 int x_i_rename(const char *src, const char *dst);
-*/
 char *x_c_tmpdir(void);
 int x_i_close(int fd);
 void *x_v_memcpy(void *dst,
@@ -494,9 +439,6 @@ void *x_v_memcpy(void *dst,
 int x_i_memcmp(const void *a,
     const void *b, unsigned long n);
 int x_i_fsync(int fd);
-
-
-
 
 /* asserts */
 
