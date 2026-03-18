@@ -1189,9 +1189,29 @@ cmd_helper_cat128(void) {
 void
 check_cmd(void (*fn)(void), const char *name)
 {
+	unsigned long i;
+
 	if (x->cmd[x->i].run != fn)
 		err(ECANCELED, "Running %s, but cmd %s is set",
 		    name, x->cmd[x->i].str);
+
+	/*
+	 * In addition to making sure we ran
+	 * the right command, we now disable
+	 * all commands from running again
+	 *
+	 * the _nop function will just call
+	 * err() immediately
+	 */
+
+	for (i = 0; i < items(x->cmd); i++)
+		x->cmd[i].run = cmd_helper_err;
+}
+
+void
+cmd_helper_err(void)
+{
+	err(ECANCELED, "Erroneously running command twice");
 }
 
 void

@@ -389,6 +389,7 @@ void cat(unsigned long nff);
 void cat_buf(unsigned char *b);
 
 void check_cmd(void (*fn)(void), const char *name);
+void cmd_helper_err(void);
 
 /*
  * After command processing, write
