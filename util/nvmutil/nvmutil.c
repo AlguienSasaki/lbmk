@@ -161,6 +161,10 @@ main(int argc, char *argv[])
 
 	unsigned long *i;
 
+#ifndef S_ISREG
+	err(ECANCELED, "Can't determine file types (S_ISREG undefined)");
+#endif
+
 #ifndef CHAR_BIT
 	err(ECANCELED, "Unknown char size");
 #else
