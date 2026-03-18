@@ -2,18 +2,21 @@
 # Copyright (c) 2022,2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
+# Makefile for nvmutil, which is an application
+# that modifies Intel GbE NVM configurations.
+
 CC = cc
 HELLCC = clang
 
-CFLAGS=
-LDFLAGS=
-DESTDIR=
+CFLAGS =
+LDFLAGS =
+DESTDIR =
 PREFIX = /usr/local
 INSTALL = install
 
 .SUFFIXES: .c .o
 
-LDIR=
+LDIR =
 
 PORTABLE = $(LDIR) $(CFLAGS)
 WARN = $(PORTABLE) -Wall -Wextra
@@ -22,71 +25,65 @@ HELLFLAGS = $(STRICT) -Weverything
 
 PROG = nvmutil
 
-# source files
-
-SRCS = nvmutil.c state.c file.c string.c usage.c command.c num.c io.c \
-    checksum.c word.c
-
-# object files
-
-OBJS = $(SRCS:.c=.o)
+OBJS = \
+	obj/nvmutil.o \
+	obj/state.o \
+	obj/file.o \
+	obj/string.o \
+	obj/usage.o \
+	obj/command.o \
+	obj/num.o \
+	obj/io.o \
+	obj/checksum.o \
+	obj/word.o
 
 # default mode
-
-MODE = portable
-
-# default mode, options
-
 CFLAGS_MODE = $(PORTABLE)
 CC_MODE = $(CC)
-
-# override modes (options)
-
-ifeq ($(MODE),warn)
-CFLAGS_MODE = $(WARN)
-endif
-
-ifeq ($(MODE),strict)
-CFLAGS_MODE = $(STRICT)
-endif
-
-ifeq ($(MODE),hell)
-CFLAGS_MODE = $(HELLFLAGS)
-CC_MODE = $(HELLCC)
-endif
-
-# (rebuild on .h changes)
-# (commented for portability)
-#
-# CFLAGS_MODE += -MMD -MP
-# -include $(OBJS:.o=.d)
-#
-# likely more compatible,
-# on its own:
-# -include $(OBJS:.o=.d)
-#
-# i want this to build on
-# old make, so i'll leave
-# this blanked by default
 
 all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(CC_MODE) $(OBJS) -o $(PROG) $(LDFLAGS)
 
-# generic rules
+# ensure obj directory exists
+$(OBJS): obj
 
-# .c.o: is the old style (portable)
-# modern equivalent:
-# %.o: %.c
-#
-.c.o:
-	$(CC_MODE) $(CFLAGS_MODE) -c $< -o $@
+obj:
+	mkdir obj || true
 
-# -m in install is not portable
-# to old/other/weird versions.
-# use chmod directly.
-#
+obj/nvmutil.o: nvmutil.c
+	$(CC_MODE) $(CFLAGS_MODE) -c nvmutil.c -o obj/nvmutil.o
+
+obj/state.o: state.c
+	$(CC_MODE) $(CFLAGS_MODE) -c state.c -o obj/state.o
+
+obj/file.o: file.c
+	$(CC_MODE) $(CFLAGS_MODE) -c file.c -o obj/file.o
+
+obj/string.o: string.c
+	$(CC_MODE) $(CFLAGS_MODE) -c string.c -o obj/string.o
+
+obj/usage.o: usage.c
+	$(CC_MODE) $(CFLAGS_MODE) -c usage.c -o obj/usage.o
+
+obj/command.o: command.c
+	$(CC_MODE) $(CFLAGS_MODE) -c command.c -o obj/command.o
+
+obj/num.o: num.c
+	$(CC_MODE) $(CFLAGS_MODE) -c num.c -o obj/num.o
+
+obj/io.o: io.c
+	$(CC_MODE) $(CFLAGS_MODE) -c io.c -o obj/io.o
+
+obj/checksum.o: checksum.c
+	$(CC_MODE) $(CFLAGS_MODE) -c checksum.c -o obj/checksum.o
+
+obj/word.o: word.c
+	$(CC_MODE) $(CFLAGS_MODE) -c word.c -o obj/word.o
+
+# install
+
 install: $(PROG)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
 	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
@@ -100,15 +97,13 @@ clean:
 
 distclean: clean
 
-# easy commands
+# mode targets (portable replacement for ifeq)
 
 warn:
-	$(MAKE) MODE=warn
+	$(MAKE) CFLAGS_MODE="$(WARN)"
 
 strict:
-	$(MAKE) MODE=strict
+	$(MAKE) CFLAGS_MODE="$(STRICT)"
 
 hell:
-	$(MAKE) MODE=hell
-
-.PHONY: all warn strict hell install uninstall clean distclean
+	$(MAKE) CFLAGS_MODE="$(HELLFLAGS)" CC_MODE="$(HELLCC)"
