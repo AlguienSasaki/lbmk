@@ -1349,7 +1349,6 @@ cmd_helper_err(void)
 void
 cat(unsigned long nff)
 {
-	struct commands *cmd;
 	struct xfile *f;
 
 	unsigned long p;
@@ -1357,16 +1356,12 @@ cat(unsigned long nff)
 
 	check_null_command("cat");
 
-	cmd = &x->cmd[x->i];
 	f = &x->f;
 
 	p = 0;
 	ff = 0;
 
-	if ((unsigned long)x->cat != nff ||
-	    !((cmd->run == cmd_helper_cat && nff == 0) ||
-	    (cmd->run == cmd_helper_cat16 && nff == 1) ||
-	    (cmd->run == cmd_helper_cat128 && nff == 15))) {
+	if ((unsigned long)x->cat != nff) {
 
 		err(ECANCELED, "erroneous call to cat");
 	}
@@ -1390,16 +1385,8 @@ cat(unsigned long nff)
 void
 cat_buf(unsigned char *b)
 {
-	struct commands *cmd;
-
-	check_null_command("cat_buf");
-
-	cmd = &x->cmd[x->i];
-
-	if (!((cmd->run == cmd_helper_cat && x->cat == 0) ||
-	    (cmd->run == cmd_helper_cat16 && x->cat == 1) ||
-	    (cmd->run == cmd_helper_cat128 && x->cat == 15)))
-		err(ECANCELED, "erroneous call to cat");
+	if (b == NULL)
+		err(errno, "null pointer in cat command");
 
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
