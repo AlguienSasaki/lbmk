@@ -3000,9 +3000,13 @@ x_c_tmpdir(void)
 	struct stat st;
 
 	t = getenv("TMPDIR");
+	t = getenv("TMPDIR");
 	if (t && *t) {
-		if ((st.st_mode & S_IWOTH) && !(st.st_mode & S_ISVTX))
-			return NULL;
+		if (stat(t, &st) == 0 && S_ISDIR(st.st_mode)) {
+			if ((st.st_mode & S_IWOTH) && !(st.st_mode & S_ISVTX))
+				return NULL;
+			return t;
+		}
 	}
 
 	if (stat("/tmp", &st) == 0 && S_ISDIR(st.st_mode))
