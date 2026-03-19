@@ -59,10 +59,6 @@ int fchmod(int fd, mode_t mode);
 #define HAVE_REAL_PREAD_PWRITE 0
 #endif
 
-#ifndef MAX_EAGAIN_RETRIES
-#define MAX_EAGAIN_RETRIES 100000
-#endif
-
 #ifndef LOOP_EAGAIN
 #define LOOP_EAGAIN 1
 #endif

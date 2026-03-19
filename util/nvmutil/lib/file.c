@@ -606,12 +606,6 @@ prw(int fd, void *mem, unsigned long nrw,
     int loop_eagain, int loop_eintr,
     int off_reset)
 {
-#ifndef MAX_EAGAIN_RETRIES
-	unsigned long retries = 100000;
-#else
-	unsigned long retries = MAX_EAGAIN_RETRIES;
-#endif
-
 	long r;
 	int positional_rw;
 	struct stat st;
@@ -740,8 +734,7 @@ real_pread_pwrite:
 
 		} while (r == -1 &&
 		    (errno == try_err(loop_eintr, EINTR) ||
-		     errno == try_err(loop_eagain, EAGAIN)) &&
-		    retries++ < MAX_EAGAIN_RETRIES);
+		     errno == try_err(loop_eagain, EAGAIN)));
 	}
 
 	saved_errno = errno;
