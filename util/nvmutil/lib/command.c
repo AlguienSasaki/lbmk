@@ -415,17 +415,17 @@ cmd_helper_swap(void)
 
 	check_cmd(cmd_helper_swap, "swap");
 
-	x_v_memcpy(
+	memcpy(
 	    f->buf + (unsigned long)GBE_WORK_SIZE,
 	    f->buf,
 	    GBE_PART_SIZE);
 
-	x_v_memcpy(
+	memcpy(
 	    f->buf,
 	    f->buf + (unsigned long)GBE_PART_SIZE,
 	    GBE_PART_SIZE);
 
-	x_v_memcpy(
+	memcpy(
 	    f->buf + (unsigned long)GBE_PART_SIZE,
 	    f->buf + (unsigned long)GBE_WORK_SIZE,
 	    GBE_PART_SIZE);
@@ -442,7 +442,7 @@ cmd_helper_copy(void)
 
 	check_cmd(cmd_helper_copy, "copy");
 
-	x_v_memcpy(
+	memcpy(
 	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
 	    f->buf + (unsigned long)(f->part * GBE_PART_SIZE),
 	    GBE_PART_SIZE);

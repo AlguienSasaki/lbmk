@@ -79,7 +79,7 @@ copy_gbe(void)
 	if (f->gbe_file_size == SIZE_8KB)
 		return;
 
-	x_v_memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
+	memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
 	    f->buf + (unsigned long)(f->gbe_file_size >> 1),
 	    (unsigned long)GBE_PART_SIZE);
 }
@@ -135,7 +135,7 @@ read_file(void)
 	if (_r < 0)
 		err(errno, "%s: read failed (cmp)", f->tname);
 
-	if (x_i_memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
+	if (memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
 		err(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
@@ -331,7 +331,7 @@ check_written_part(unsigned long p)
 		f->rw_check_err_read[p] = f->io_err_gbe = 1;
 	else if ((unsigned long)rval != gbe_rw_size)
 		f->rw_check_partial_read[p] = f->io_err_gbe = 1;
-	else if (x_i_memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
+	else if (memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
 		f->rw_check_bad_part[p] = f->io_err_gbe = 1;
 
 	if (f->rw_check_err_read[p] ||
@@ -435,7 +435,7 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	rval = x_i_rename(f->tname, f->fname);
+	rval = rename(f->tname, f->fname);
 
 	if (rval > -1) {
 		/*
@@ -490,7 +490,7 @@ gbe_mv(void)
 	if (x_i_close(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (x_i_rename(dest_tmp, f->fname) == -1)
+	if (rename(dest_tmp, f->fname) == -1)
 		goto ret_gbe_mv;
 
 	if (fsync_dir(f->fname) < 0) {

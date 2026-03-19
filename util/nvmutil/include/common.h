@@ -11,14 +11,6 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-/* keep SYS_RENAME 1 to
- * use libc rename()
- * recommended
- */
-#ifndef SYS_RENAME
-#define SYS_RENAME 1
-#endif
-
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 /* system prototypes
@@ -434,14 +426,8 @@ const char *getnvmprogname(void);
 
 char *new_tmpfile(int *fd, int local, const char *path);
 int x_i_mkstemp(char *template);
-char *x_c_strrchr(const char *s, int c);
-int x_i_rename(const char *src, const char *dst);
 char *x_c_tmpdir(void);
 int x_i_close(int fd);
-void *x_v_memcpy(void *dst,
-    const void *src, unsigned long n);
-int x_i_memcmp(const void *a,
-    const void *b, unsigned long n);
 int x_i_fsync(int fd);
 
 /* asserts */

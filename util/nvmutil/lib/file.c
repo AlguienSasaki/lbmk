@@ -5,6 +5,7 @@
  * Safe file handling.
  */
 
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -66,7 +67,7 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 		err(errno, "%s: file not seekable", path);
 }
 
-/* Ensure x_i_rename() is durable by syncing the
+/* Ensure rename() is durable by syncing the
  * directory containing the target file.
  */
 
@@ -112,8 +113,8 @@ fsync_dir(const char *path)
 	if (dirbuf == NULL)
 		goto err_fsync_dir;
 
-	x_v_memcpy(dirbuf, path, pathlen + 1);
-	slash = x_c_strrchr(dirbuf, '/');
+	memcpy(dirbuf, path, pathlen + 1);
+	slash = strrchr(dirbuf, '/');
 
 	if (slash != NULL) {
 		*slash = '\0';
@@ -294,17 +295,17 @@ new_tmpfile(int *fd, int local, const char *path)
 
 		*dest = '.'; /* hidden file */
 
-		x_v_memcpy(dest + (unsigned long)1, tmpname, tmpname_len);
+		memcpy(dest + (unsigned long)1, tmpname, tmpname_len);
 
-		x_v_memcpy(dest + (unsigned long)1 + tmpname_len,
+		memcpy(dest + (unsigned long)1 + tmpname_len,
 		    default_tmpname, tmpdir_len);
 	} else {
 
-		x_v_memcpy(dest, base, tmpdir_len);
+		memcpy(dest, base, tmpdir_len);
 
 		dest[tmpdir_len] = '/';
 
-		x_v_memcpy(dest + tmpdir_len + 1, tmpname, tmpname_len);
+		memcpy(dest + tmpdir_len + 1, tmpname, tmpname_len);
 	}
 
 	dest[tmppath_len] = '\0';
@@ -904,63 +905,6 @@ try_err(int loop_err, int errval)
 		return errval;
 
 	return -1;
-}
-
-/* portable rename(). WARNING:
- * not powercut-safe. do this to
- * use system rename:
- * #define SYS_RENAME 1
- *
- * written academically, but in reality,
- * nearly all unix systems have rename()
- */
-
-int
-x_i_rename(const char *src, const char *dst)
-{
-#if defined(SYS_RENAME) &&\
-    SYS_RENAME > 0
-	return rename(src, dst);
-#else
-	int sfd, dirfd;
-	ssize_t r;
-	char buf[8192];
-
-	sfd = open(src, O_RDONLY);
-	if (sfd < 0)
-		return -1;
-
-	dirfd = open(dst, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-	if (dirfd < 0) {
-		x_i_close(sfd);
-		return -1;
-	}
-
-	while ((r = read(sfd, buf, sizeof(buf))) > 0) {
-		ssize_t w = write(dirfd, buf, r);
-		if (w != r) {
-			x_i_close(sfd);
-			x_i_close(dirfd);
-			return -1;
-		}
-	}
-
-	if (r < 0) {
-		x_i_close(sfd);
-		x_i_close(dirfd);
-		return -1;
-	}
-
-	x_i_fsync(dirfd);
-
-	x_i_close(sfd);
-	x_i_close(dirfd);
-
-	if (unlink(src) < 0)
-		return -1;
-
-	return 0;
-#endif
 }
 
 int

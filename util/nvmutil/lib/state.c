@@ -236,7 +236,7 @@ getnvmprogname(void)
 		rval = x->argv0;
 	}
 
-	p = x_c_strrchr(rval, '/');
+	p = strrchr(rval, '/');
 
 	if (p)
 		return p + 1;
