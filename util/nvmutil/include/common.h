@@ -428,7 +428,7 @@ char *new_tmpfile(int *fd, int local, const char *path);
 int x_i_mkstemp(char *template);
 char *x_c_tmpdir(void);
 int x_i_close(int fd);
-int x_i_fsync(int fd);
+int fsync_on_eintr(int fd);
 
 /* asserts */
 

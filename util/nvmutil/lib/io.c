@@ -125,7 +125,7 @@ read_file(void)
 
 	/* needs sync, for verification
 	 */
-	if (x_i_fsync(f->tmp_fd) == -1)
+	if (fsync_on_eintr(f->tmp_fd) == -1)
 		err(errno, "%s: fsync (tmpfile copy)", f->tname);
 
 	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
@@ -227,7 +227,7 @@ write_to_gbe_bin(void)
 	 * We may otherwise read from
 	 * cache, so we must sync.
 	 */
-	if (x_i_fsync(f->tmp_fd) == -1)
+	if (fsync_on_eintr(f->tmp_fd) == -1)
 		err(errno, "%s: fsync (pre-verification)",
 		    f->tname);
 
@@ -484,7 +484,7 @@ gbe_mv(void)
 	if (rval < 0)
 		goto ret_gbe_mv;
 
-	if (x_i_fsync(dest_fd) == -1)
+	if (fsync_on_eintr(dest_fd) == -1)
 		goto ret_gbe_mv;
 
 	if (x_i_close(dest_fd) == -1)
