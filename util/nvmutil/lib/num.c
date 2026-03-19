@@ -131,17 +131,6 @@ retry_urandom_read:
 			    O_RDONLY | O_BINARY | O_NOFOLLOW |
 			    O_CLOEXEC);
 
-#ifdef __OpenBSD__
-/* TODO: dead code
-	openbsd 2.1 had arc4random.
-	arandam was introduced **later**
- */
-			if (fd < 0) /* old openbsd */
-				fd = open("/dev/arandom",
-				    O_RDONLY | O_BINARY | O_NOFOLLOW |
-				    O_CLOEXEC);
-#endif
-
 #ifdef PORTABLE_RAND_DEV
 #if (PORTABLE_RAND_DEV) > 0
 			/* WARNING:
