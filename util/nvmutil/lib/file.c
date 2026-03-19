@@ -212,7 +212,7 @@ new_tmpfile(int *fd, int local, const char *path)
 	 */
 	char tmp_none[] = "";
 	char tmp_default[] = "/tmp";
-	char default_tmpname[] = "tmpXXXXXX";
+	char default_tmpname[] = "tmpXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 	char *tmpname;
 
 	char *base = NULL;
