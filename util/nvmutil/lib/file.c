@@ -147,7 +147,7 @@ fsync_dir(const char *path)
 	}
 
 	/* sync file on disk */
-	if (x_i_fsync(dirfd) == -1)
+	if (fsync_on_eintr(dirfd) == -1)
 		goto err_fsync_dir;
 
 	if (x_i_close(dirfd) == -1)
@@ -924,7 +924,7 @@ x_i_close(int fd)
 }
 
 int
-x_i_fsync(int fd)
+fsync_on_eintr(int fd)
 {
 	int r;
 
