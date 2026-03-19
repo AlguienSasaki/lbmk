@@ -139,8 +139,8 @@ xstatus(int argc, char *argv[])
 
 #if defined(__OpenBSD__) && defined(OpenBSD) && \
     OpenBSD >= 604
-	if (unveil(f->tname, "rwc") == -1)
-		err(errno, "unveil rwc: %s", f->tname);
+	if (unveil(us.f.tname, "rwc") == -1)
+		err(errno, "unveil rwc: %s", us.f.tname);
 #endif
 	if (fstat(us.f.tmp_fd, &us.f.tmp_st) < 0)
 		err(errno, "%s: stat", us.f.tname);
@@ -158,7 +158,7 @@ xstatus(int argc, char *argv[])
 			err(errno, "%s: unveil r", us.f.fname);
 	} else {
 		if (unveil(us.f.fname, "rwc") == -1)
-			err(errno, "%s: unveil rw", us.f.tname);
+			err(errno, "%s: unveil rw", us.f.fname);
 	}
 
 	if (unveil(us.f.tname, "rwc") == -1)
