@@ -227,40 +227,44 @@ rlong_next:
 #if defined(HAVE_GETRANDOM) || \
     defined(HAVE_GETRANDOM_SYSCALL)
 int
-fallback_rand_getrandom(void *buf, size_t len)
+fallback_rand_getrandom(void *buf, unsigned long len)
 {
-	ssize_t rval = -1;
+	unsigned long off = 0;
+	long rval = -1;
 
-	/* keep strict compiler
-	 * happy if unused
-	 */
-	(void)rval;
-	(void)buf;
-	(void)len;
+	if (!len)
+		return -1;
 
-#if defined(HAVE_GETRANDOM)
-	do {
-		rval = getrandom(buf, len, 0);
-	} while (rval < 0 && errno == EINTR);
-
-#elif defined(HAVE_GETRANDOM_SYSCALL)
-	do {
-		rval = syscall(SYS_getrandom, buf, len, 0);
-	} while (rval < 0 && errno == EINTR);
-
-#else
-	return -1;
-#endif
+	if (buf == NULL)
+		return -1;
 
 #if defined(HAVE_GETRANDOM) || \
     defined(HAVE_GETRANDOM_SYSCALL)
 
-	if (rval == (ssize_t)len) {
-		return 0;
+	while (off < len) {
+
+#if defined(HAVE_GETRANDOM)
+		rval = (long)getrandom((char *)buf + off, len - off, 0);
+#elif defined(HAVE_GETRANDOM_SYSCALL)
+		rval = (long)syscall(SYS_getrandom,
+		    (char *)buf + off, len - off, 0);
+#endif
+
+		if (rval < 0) {
+			if (errno == EINTR)
+				continue;
+
+			return -1; /* unsupported by kernel */
+		}
+
+		off += (unsigned long)rval;
 	}
 
-	if (rval < 0 && errno == ENOSYS)
-		return -1; /* not supported by kernel */
+	return 0;
+
+#else
+	(void)buf;
+	(void)len;
 
 	return -1;
 #endif
