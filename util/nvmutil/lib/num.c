@@ -8,6 +8,10 @@
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
+#if defined(FALLBACK_RAND_1989) && \
+    (FALLBACK_RAND_1989) > 0
+#include <sys/time.h>
+#endif
 
 #include <errno.h>
 #if !((defined(__OpenBSD__) && (OpenBSD) >= 201) || \
@@ -18,6 +22,10 @@
 #include <limits.h>
 #include <stddef.h>
 #include <string.h>
+#if defined(FALLBACK_RAND_1989) && \
+    (FALLBACK_RAND_1989) > 0
+#include <time.h>
+#endif
 #include <unistd.h>
 
 #include "../include/common.h"
@@ -49,6 +57,8 @@ hextonum(char ch_s)
 unsigned long
 rlong(void)
 {
+#if !(defined(FALLBACK_RAND_1989) && \
+    ((FALLBACK_RAND_1989) > 0))
 #if (defined(__OpenBSD__) && (OpenBSD) >= 201) || \
     defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__)
@@ -131,8 +141,8 @@ retry_urandom_read:
 			    O_RDONLY | O_BINARY | O_NOFOLLOW |
 			    O_CLOEXEC);
 
-#ifdef PORTABLE_RAND_DEV
-#if (PORTABLE_RAND_DEV) > 0
+#ifdef USE_OLD_DEV_RANDOM
+#if (USE_OLD_DEV_RANDOM) > 0
 			/* WARNING:
 			 *   /dev/random may block
 			 *   forever and does **NOT**
@@ -190,15 +200,29 @@ rlong_next:
 	off = 0;
 	nr = -1;
 
-/* TODO: will re-add timer-based fallback here #if defined(PORTABLE) */
-
 	err(EIO, "Can't read from /dev/[ua]random");
 	return 0;
 
-	/* add portable timers here */
+#endif
+#else /* FALLBACK_RAND_1989 */
+	/* your computer is from a museum
+	 */
+	unsigned long mix = 0;
+	int nr;
+
+	/* 100 times, for entropy
+	 */
+	for (nr = 0; nr < 100; nr++)
+		mix ^= fallback_rand_1989();
+
+	/* 101 times ;)
+	 */
+	return fallback_rand_1989();
 #endif
 }
 
+#if !(defined(FALLBACK_RAND_1989) && \
+    ((FALLBACK_RAND_1989) > 0))
 #if defined(__linux__)
 #if defined(HAVE_GETRANDOM) || \
     defined(HAVE_GETRANDOM_SYSCALL)
@@ -242,6 +266,74 @@ fallback_rand_getrandom(void *buf, size_t len)
 #endif
 }
 #endif
+#endif
+#else
+/* nobody should use this
+ * (not crypto-safe)
+ */
+unsigned long
+fallback_rand_1989(void)
+{
+	static unsigned long mix = 0;
+	static unsigned long counter = 0;
+
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	mix ^= (unsigned long)tv.tv_sec
+	    ^ (unsigned long)tv.tv_usec
+	    ^ (unsigned long)getpid()
+	    ^ (unsigned long)&mix
+	    ^ counter++
+	    ^ entropy_jitter();
+
+	/*
+	 * Stack addresses can vary between
+	 * calls, thus increasing entropy.
+	 */
+	mix ^= (unsigned long)&mix;
+	mix ^= (unsigned long)&tv;
+	mix ^= (unsigned long)&counter;
+
+	return mix;
+}
+
+unsigned long
+entropy_jitter(void)
+{
+	unsigned long mix;
+
+	struct timeval a, b;
+	long mix_diff;
+
+	int c;
+
+	mix = 0;
+
+	gettimeofday(&a, NULL);
+
+	for (c = 0; c < 32; c++) {
+
+		getpid();
+		gettimeofday(&b, NULL);
+
+		/*
+		 * prevent negative numbers to prevent overflow,
+		 * which would bias rand to large numbers
+		 */
+		mix_diff = (long)(b.tv_usec - a.tv_usec);
+		if (mix_diff < 0)
+			mix_diff = -mix_diff;
+
+		mix ^= (unsigned long)(mix_diff);
+
+		mix ^= (unsigned long)&mix;
+
+	}
+
+	return mix;
+}
 #endif
 
 void

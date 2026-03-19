@@ -337,11 +337,17 @@ void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
 unsigned short hextonum(char ch_s);
 unsigned long rlong(void);
+#if !(defined(FALLBACK_RAND_1989) && \
+    ((FALLBACK_RAND_1989) > 0))
 #if defined(__linux__)
 #if defined(HAVE_GETRANDOM) || \
     defined(HAVE_GETRANDOM_SYSCALL)
 int fallback_rand_getrandom(void *buf, size_t len);
 #endif
+#endif
+#else
+unsigned long fallback_rand_1989(void);
+unsigned long entropy_jitter(void);
 #endif
 void write_mac_part(unsigned long partnum);
 
