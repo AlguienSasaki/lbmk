@@ -75,6 +75,37 @@ rlong(void)
 	unsigned long rval;
 	long new_nr;
 
+	int retries = 0;
+	int max_retries = 100;
+
+#if defined(__linux__)
+#if defined(HAVE_GETRANDOM) || \
+    defined(HAVE_GETRANDOM_SYSCALL)
+
+	/* linux getrandom()
+	 *
+	 * we *can* use arc4random on
+	 * modern linux, but not on
+	 * every libc. better use the
+	 * official linux function
+	 *
+	 * similar benefits to arc4random
+	 * e.g. works in chroot, blocks
+	 * until it has enough entropy,
+	 * and works even when /dev/urandom
+	 * is available (doesn't use it);
+	 * it's generally more reliable
+	 */
+
+	if (fallback_rand_getrandom(&rval, sizeof(rval)) == 0)
+		return rval;
+
+	/*
+	 * now fall back to urandom if getrandom failed:
+	 */
+#endif
+#endif
+
 	/* reading from urandom is inherently
 	 * unreliable on old systems, even if
 	 * newer systems make it more reliable
@@ -86,9 +117,6 @@ rlong(void)
 	 * this logic therefore applies various
 	 * tricks to mitigate possible os bugs
 	 */
-
-	int retries = 0;
-	int max_retries = 100;
 
 retry_urandom_read:
 
@@ -104,6 +132,10 @@ retry_urandom_read:
 			    O_CLOEXEC);
 
 #ifdef __OpenBSD__
+/* TODO: dead code
+	openbsd 2.1 had arc4random.
+	arandam was introduced **later**
+ */
 			if (fd < 0) /* old openbsd */
 				fd = open("/dev/arandom",
 				    O_RDONLY | O_BINARY | O_NOFOLLOW |
@@ -177,6 +209,51 @@ rlong_next:
 	/* add portable timers here */
 #endif
 }
+
+#if defined(__linux__)
+#if defined(HAVE_GETRANDOM) || \
+    defined(HAVE_GETRANDOM_SYSCALL)
+int
+fallback_rand_getrandom(void *buf, size_t len)
+{
+	ssize_t rval = -1;
+
+	/* keep strict compiler
+	 * happy if unused
+	 */
+	(void)rval;
+	(void)buf;
+	(void)len;
+
+#if defined(HAVE_GETRANDOM)
+	do {
+		rval = getrandom(buf, len, 0);
+	} while (rval < 0 && errno == EINTR);
+
+#elif defined(HAVE_GETRANDOM_SYSCALL)
+	do {
+		rval = syscall(SYS_getrandom, buf, len, 0);
+	} while (ret < 0 && errno == EINTR);
+
+#else
+	return -1;
+#endif
+
+#if defined(HAVE_GETRANDOM) || \
+    defined(HAVE_GETRANDOM_SYSCALL)
+
+	if (rval == (ssize_t)len) {
+		return 0;
+	}
+
+	if (rval < 0 && errno == ENOSYS)
+		return -1; /* not supported by kernel */
+
+	return -1;
+#endif
+}
+#endif
+#endif
 
 void
 check_bin(unsigned long a, const char *a_name)

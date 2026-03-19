@@ -9,6 +9,25 @@
 #include <sys/stat.h>
 #include <limits.h>
 
+/* for linux getrandom
+ */
+#if defined(__linux__)
+#include <errno.h>
+#if defined(__has_include)
+#if __has_include(<sys/random.h>)
+#include <sys/random.h>
+#define HAVE_GETRANDOM 1
+#endif
+#endif
+#if !defined(HAVE_GETRANDOM)
+#include <sys/syscall.h>
+#if defined(SYS_getrandom)
+#define HAVE_GETRANDOM_SYSCALL 1
+#endif
+#endif
+
+#endif
+
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 /* system prototypes
@@ -318,6 +337,12 @@ void set_mac_nib(unsigned long mac_str_pos,
     unsigned long mac_byte_pos, unsigned long mac_nib_pos);
 unsigned short hextonum(char ch_s);
 unsigned long rlong(void);
+#if defined(__linux__)
+#if defined(HAVE_GETRANDOM) || \
+    defined(HAVE_GETRANDOM_SYSCALL)
+int fallback_rand_getrandom(void *buf, size_t len);
+#endif
+#endif
 void write_mac_part(unsigned long partnum);
 
 /* Helper functions for command: dump
