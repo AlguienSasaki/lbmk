@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  *
  * This tool lets you modify Intel GbE NVM (Gigabit Ethernet
@@ -21,7 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "../include/common.h"

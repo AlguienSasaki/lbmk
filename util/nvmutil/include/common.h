@@ -7,6 +7,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <limits.h>
+
 /* keep SYS_RENAME 1 to
  * use libc rename()
  * recommended
