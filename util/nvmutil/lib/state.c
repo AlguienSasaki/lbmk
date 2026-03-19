@@ -1,9 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  *
- * This tool lets you modify Intel GbE NVM (Gigabit Ethernet
- * Non-Volatile Memory) images, e.g. change the MAC address.
- * These images configure your Intel Gigabit Ethernet adapter.
+ * State machine (singleton) for nvmutil data.
  */
 
 #ifdef __OpenBSD__
@@ -24,12 +22,6 @@
 
 #include "../include/common.h"
 
-/*
- * Initialise program state,
- * load GbE file and verify
- * data, ready for operation
- * (singleton design)
- */
 struct xstate *
 xstatus(int argc, char *argv[])
 {

@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
- *
- * Safe file handling.
  */
 
 #include <sys/types.h>
@@ -51,6 +48,9 @@ err_same_file:
 	return -1;
 }
 
+/* open() but with abort traps
+ */
+
 void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
@@ -67,8 +67,8 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 		err(errno, "%s: file not seekable", path);
 }
 
-/* Ensure rename() is durable by syncing the
- * directory containing the target file.
+/* fsync() the directory of a file,
+ * useful for atomic writes
  */
 
 int
@@ -177,28 +177,11 @@ err_fsync_dir:
 	return -1;
 }
 
-/* create new tmpfile path
+/* returns ptr to path (string). if local>0:
+ * make tmpfile in the same directory as the
+ * file. if local==0, use TMPDIR
  *
- * ON SUCCESS:
- *
- * returns ptr to path string on success
- * ALSO: the int at *fd will be set,
- *       indicating the file descriptor
- *
- * ON ERROR:
- *
- * return NULL (*fd not touched)
- *
- * malloc() may set errno, but you should
- * not rely on errno from this function
- *
- * local: if non-zero, then only a file
- * name will be given, relative to
- * the current file name. for this,
- * the 3rd argument (path) must be non-null
- *
- * if local is zero, then 3rd arg (path)
- * is irrelevant and can be NULL
+ * if local==0, the 3rd argument is ignored
  */
 
 char *
@@ -224,16 +207,6 @@ new_tmpfile(int *fd, int local, const char *path)
 
 	int fd_tmp = -1;
 	int flags;
-
-	/*
-	 * 256 is the most
-	 * conservative path
-	 * size limit (posix),
-	 * but 4096 is modern
-	 *
-	 * set PATH_LEN as you
-	 * wish, at build time
-	 */
 
 #if defined(PATH_LEN) && \
     (PATH_LEN) >= 256
@@ -265,7 +238,7 @@ new_tmpfile(int *fd, int local, const char *path)
 		 */
 		tmpdir_len = xstrxlen(default_tmpname, maxlen);
 	} else {
-		base = x_c_tmpdir();
+		base = get_tmpdir();
 
 		if (base == NULL)
 			base = tmp_default;
@@ -392,8 +365,12 @@ lock_file(int fd, int flags)
 	return 0;
 }
 
+/* return TMPDIR, or fall back
+ * to portable defaults
+ */
+
 char *
-x_c_tmpdir(void)
+get_tmpdir(void)
 {
 	char *t;
 	struct stat st;
@@ -401,9 +378,12 @@ x_c_tmpdir(void)
 	t = getenv("TMPDIR");
 
 	if (t && *t) {
+
 		if (stat(t, &st) == 0 && S_ISDIR(st.st_mode)) {
+
 			if ((st.st_mode & S_IWOTH) && !(st.st_mode & S_ISVTX))
 				return NULL;
+
 			return t;
 		}
 	}
@@ -434,11 +414,11 @@ mkstemp_n(char *template)
 	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 	unsigned long r;
-	unsigned long max_len =
-#ifndef PATH_LEN
-	    4096;
+#if defined(PATH_LEN) && \
+    (PATH_LEN) >= 256
+	unsigned long max_len = PATH_LEN;
 #else
-	    (PATH_LEN);
+	unsigned long max_len = 4096;
 #endif
 
 	len = xstrxlen(template, max_len);
@@ -579,45 +559,32 @@ err_rw_file_exact:
 	return -1;
 }
 
-/* prw() - portable read-write
+/* prw() - portable read-write with more
+ * safety checks than barebones libc
  *
- * This implements a portable analog of pwrite()
- * and pread() - note that this version is not
- * thread-safe (race conditions are possible on
- * shared file descriptors).
- *
- * This limitation is acceptable, since nvmutil is
- * single-threaded. Portability is the main goal.
+ * portable pwrite/pread on request, or real
+ * pwrite/pread libc functions can be used.
+ * the portable (non-libc) pread/pwrite is not
+ * thread-safe, because it does not prevent or
+ * mitigate race conditions on file descriptors
  *
  * If you need real pwrite/pread, just compile
  * with flag: HAVE_REAL_PREAD_PWRITE=1
  *
  * A fallback is provided for regular read/write.
- * rw_type can be IO_READ, IO_WRITE, IO_PREAD
- * or IO_PWRITE
+ * rw_type can be IO_READ (read), IO_WRITE (write),
+ * IO_PREAD (pread) or IO_PWRITE
  *
  * loop_eagain does a retry loop on EAGAIN if set
  * loop_eintr does a retry loop on EINTR if set
  *
- * Unlike the bare syscalls, prw() does security
- * checks e.g. checks NULL strings, checks bounds,
- * also mitigates a few theoretical libc bugs.
- * It is designed for extremely safe single-threaded
- * I/O on applications that need it.
+ * race conditions on non-libc pread/pwrite:
+ * if a file offset changes, abort, to mitage.
  *
- * NOTE: If you use loop_eagain (1), you enable wait
- * loop on EAGAIN. Beware if using this on a non-blocking
- * pipe (it could spin indefinitely).
- *
- * off_reset: if zero, and using fallback pwrite/pread
- *            analogs, we check if a file offset changed,
- *            which would indicate another thread changed
- *            it, and return error, without resetting the
- *            file - this would allow that thread to keep
- *            running, but we could then cause a whole
- *            program exit if we wanted to.
- *            if not zero:
- *            we reset and continue, and pray for the worst.
+ * off_reset 1: reset the file offset *once* if
+ *              a change was detected, assuming
+ *              nothing else is touching it now
+ * off_reset 0: never reset if changed
  */
 
 long
@@ -644,16 +611,15 @@ prw(int fd, void *mem, unsigned long nrw,
 
 	r = -1;
 
-	/* Programs like cat can use this,
-	   so we only check if it's a normal
-	   file if not looping EAGAIN */
+	/* do not use loop_eagain on
+	 * normal files
+	 */
+
 	if (!loop_eagain) {
-		/*
-		 * Checking on every run of prw()
-		 * is expensive if called many
-		 * times, but is defensive in
-		 * case the status changes.
+		/* check whether the file
+		 * changed
 		 */
+
 		if (check_file(fd, &st) == -1)
 			return -1;
 	}
@@ -703,39 +669,21 @@ real_pread_pwrite:
 		verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
 		    loop_eagain, loop_eintr);
 
-		/*
-		 * Partial thread-safety: detect
-		 * if the offset changed to what
-		 * we previously got. If it did,
-		 * then another thread may have
-		 * changed it. Enabled if
-		 * off_reset is OFF_RESET.
-		 *
-		 * We do this *once*, on the theory
-		 * that nothing is touching it now.
+		/* abort if the offset changed,
+		 * indicating race condition. if
+		 * off_reset enabled, reset *ONCE*
 		 */
+
 		if (off_reset && off != verified)
 			lseek_on_eintr(fd, off, SEEK_SET,
 			    loop_eagain, loop_eintr);
 
 		do {
-			/*
-			 * Verify again before I/O
-			 * (even with OFF_ERR)
-			 *
-			 * This implements the first check
-			 * even with OFF_ERR, but without
-			 * the recovery. On ERR_RESET, if
-			 * the check fails again, then we
-			 * know something else is touching
-			 * the file, so it's best that we
-			 * probably leave it alone and err.
-			 *
-			 * In other words, ERR_RESET only
-			 * tolerates one change. Any more
-			 * will cause an exit, including
-			 * per EINTR/EAGAIN re-spin.
+			/* check offset again, repeatedly.
+			 * even if off_reset is set, this
+			 * aborts if offsets change again
 			 */
+
 			verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
 			    loop_eagain, loop_eintr);
 
@@ -831,9 +779,7 @@ err_is_file:
 	return -1;
 }
 
-/* Check weirdness on buggy libc.
- *
- * POSIX can say whatever it wants.
+/* POSIX can say whatever it wants.
  * specification != implementation
  */
 
@@ -888,11 +834,6 @@ err_rw_over_nrw:
 
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
     HAVE_REAL_PREAD_PWRITE < 1
-/*
- * lseek_on_eintr() does lseek() but optionally
- * on an EINTR/EAGAIN wait loop. Used by prw()
- * for setting offsets for positional I/O.
- */
 off_t
 lseek_on_eintr(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)

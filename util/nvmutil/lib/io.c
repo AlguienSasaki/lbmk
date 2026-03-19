@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
  * I/O functions specific to nvmutil.
@@ -44,12 +43,11 @@ open_gbe_file(void)
 	if (_flags == -1)
 		err(errno, "%s: fcntl(F_GETFL)", f->fname);
 
-	/*
-	 * O_APPEND must not be used, because this
-	 * allows POSIX write() to ignore the
-	 * current write offset and write at EOF,
-	 * which would therefore break pread/pwrite
+	/* O_APPEND allows POSIX write() to ignore
+	 * the current write offset and write at EOF,
+	 * which would break positional read/write
 	 */
+
 	if (_flags & O_APPEND)
 		err(EIO, "%s: O_APPEND flag", f->fname);
 
@@ -223,10 +221,10 @@ write_to_gbe_bin(void)
 
 	write_gbe_file();
 
-	/*
-	 * We may otherwise read from
+	/* We may otherwise read from
 	 * cache, so we must sync.
 	 */
+
 	if (fsync_on_eintr(f->tmp_fd) == -1)
 		err(errno, "%s: fsync (pre-verification)",
 		    f->tname);
@@ -238,11 +236,6 @@ write_to_gbe_bin(void)
 
 	if (f->io_err_gbe)
 		err(EIO, "%s: bad write", f->fname);
-
-	/*
-	 * success!
-	 * now just rename the tmpfile
-	 */
 
 	saved_errno = errno;
 
@@ -257,6 +250,11 @@ write_to_gbe_bin(void)
 	}
 
 	errno = saved_errno;
+
+	/* tmpfile written, now we
+	 * rename it back to the main file
+	 * (we do atomic writes)
+	 */
 
 	f->tmp_fd = -1;
 	f->gbe_fd = -1;
@@ -275,6 +273,7 @@ write_to_gbe_bin(void)
 
 			/* removed by rename
 			 */
+
 			if (f->tname != NULL)
 				free(f->tname);
 
@@ -338,17 +337,17 @@ check_written_part(unsigned long p)
 	    f->rw_check_partial_read[p])
 		return;
 
-	/*
-	 * We only load one part on-file, into memory but
+	/* We only load one part on-file, into memory but
 	 * always at offset zero, for post-write checks.
-	 * That's why we hardcode good_checksum(0).
+	 * That's why we hardcode good_checksum(0)
 	 */
+
 	buf_restore = f->buf;
 
-	/*
-	 * good_checksum works on f->buf
+	/* good_checksum works on f->buf
 	 * so let's change f->buf for now
 	 */
+
 	f->buf = f->pad;
 
 	if (good_checksum(0))
@@ -427,7 +426,8 @@ gbe_mv(void)
 	char *dest_tmp;
 	int dest_fd;
 
-	/* will be set 0 if it doesn't */
+	/* will be set 0 if it doesn't
+	 */
 	tmp_gbe_bin_exists = 1;
 
 	dest_tmp = NULL;
@@ -438,8 +438,8 @@ gbe_mv(void)
 	rval = rename(f->tname, f->fname);
 
 	if (rval > -1) {
-		/*
-		 * same filesystem
+
+		/* rename on same filesystem
 		 */
 
 		tmp_gbe_bin_exists = 0;
@@ -455,19 +455,22 @@ gbe_mv(void)
 	if (errno != EXDEV)
 		goto ret_gbe_mv;
 
-	/* cross-filesystem rename */
+	/*
+	 * OR, cross-filesystem rename:
+	 */
 
 	if ((rval = f->tmp_fd = open(f->tname,
 	    O_RDONLY | O_BINARY)) == -1)
 		goto ret_gbe_mv;
 
-	/* create replacement temp in target directory */
+	/* create replacement temp in target directory
+	 */
 	dest_tmp = new_tmpfile(&dest_fd, 1, f->fname);
 	if (dest_tmp == NULL)
 		goto ret_gbe_mv;
 
-	/* copy data */
-
+	/* copy data
+	 */
 	rval = rw_file_exact(f->tmp_fd, f->bufcmp,
 	    f->gbe_file_size, 0, IO_PREAD,
 	    NO_LOOP_EAGAIN, LOOP_EINTR,
@@ -520,8 +523,7 @@ ret_gbe_mv:
 		f->tmp_fd = -1;
 	}
 
-	/*
-	 * before this function is called,
+	/* before this function is called,
 	 * tmp_fd may have been moved
 	 */
 	if (tmp_gbe_bin_exists) {
@@ -532,8 +534,7 @@ ret_gbe_mv:
 	}
 
 	if (rval < 0) {
-		/*
-		 * if nothing set errno,
+		/* if nothing set errno,
 		 * we assume EIO, or we
 		 * use what was set
 		 */
@@ -546,8 +547,7 @@ ret_gbe_mv:
 	return rval;
 }
 
-/*
- * This one is similar to gbe_file_offset,
+/* This one is similar to gbe_file_offset,
  * but used to check Gbe bounds in memory,
  * and it is *also* used during file I/O.
  */
@@ -566,12 +566,9 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 	    (f->buf + (unsigned long)gbe_off);
 }
 
-/*
- * I/O operations filtered here. These operations must
+/* I/O operations filtered here. These operations must
  * only write from the 0th position or the half position
  * within the GbE file, and write 4KB of data.
- *
- * This check is called, to ensure just that.
  */
 off_t
 gbe_file_offset(unsigned long p, const char *f_op)

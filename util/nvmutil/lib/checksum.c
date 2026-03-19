@@ -1,10 +1,7 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  *
  * Functions related to GbE NVM checksums.
- *
- * Related file: word.c
  */
 
 #include <sys/types.h>
@@ -42,15 +39,14 @@ read_checksums(void)
 	if (cmd->arg_part)
 		_max_invalid = 1;
 
-	/*
-	 * Skip verification on this part,
+	/* Skip verification on this part,
 	 * but only when arg_part is set.
 	 */
 	_skip_part = f->part ^ 1;
 
 	for (_p = 0; _p < 2; _p++) {
-		/*
-		 * Only verify a part if it was *read*
+
+		/* Only verify a part if it was *read*
 		 */
 		if (cmd->arg_part && (_p == _skip_part))
 			continue;
@@ -61,9 +57,11 @@ read_checksums(void)
 	}
 
 	if (_num_invalid >= _max_invalid) {
+
 		if (_max_invalid == 1)
 			err(ECANCELED, "%s: part %lu has a bad checksum",
 			    f->fname, (unsigned long)f->part);
+
 		err(ECANCELED, "%s: No valid checksum found in file",
 		    f->fname);
 	}

@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
  * Numerical functions.
@@ -45,6 +44,7 @@ hextonum(char ch_s)
 
 /* Random numbers
  */
+
 unsigned long
 rlong(void)
 {

@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
- *
- * Command handlers for nvmutil
  */
 
 #include <sys/types.h>
@@ -34,9 +31,6 @@ sanitize_command_list(void)
 	for (c = 0; c < num_commands; c++)
 		sanitize_command_index(c);
 }
-
-/* TODO: specific config checks per command
- */
 
 void
 sanitize_command_index(unsigned long c)
@@ -142,7 +136,8 @@ set_cmd_args(int argc, char *argv[])
 	if (x->no_cmd)
 		usage();
 
-	/* Maintainer bugs */
+	/* Maintainer bug
+	 */
 	if (cmd->arg_part && argc < 4)
 		err(EINVAL,
 		    "arg_part set for command that needs argc4");
@@ -172,7 +167,8 @@ conv_argv_part_num(const char *part_str)
 	if (part_str[0] == '\0' || part_str[1] != '\0')
 		err(EINVAL, "Partnum string '%s' wrong length", part_str);
 
-	/* char signedness is implementation-defined */
+	/* char signedness is implementation-defined
+	 */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
 		err(EINVAL, "Bad part number (%c)", ch);
@@ -286,16 +282,14 @@ set_mac_nib(unsigned long mac_str_pos,
 		err(EINVAL, "Invalid character '%c'",
 		    mac->str[mac_str_pos + mac_nib_pos]);
 
-	/*
-	 * If random, ensure that local/unicast bits are set.
+	/* If random, ensure that local/unicast bits are set.
 	 */
 	if ((mac_byte_pos == 0) && (mac_nib_pos == 1) &&
 	    ((mac_ch | 0x20) == 'x' ||
 	    (mac_ch == '?')))
 		hex_num = (hex_num & 0xE) | 2; /* local, unicast */
 
-	/*
-	 * MAC words stored big endian in-file, little-endian
+	/* MAC words stored big endian in-file, little-endian
 	 * logically, so we reverse the order.
 	 */
 	mac->mac_buf[mac_byte_pos >> 1] |= hex_num <<

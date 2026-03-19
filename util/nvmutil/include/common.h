@@ -1,6 +1,4 @@
-/*
- * SPDX-License-Identifier: MIT
- *
+/* SPDX-License-Identifier: MIT
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  */
 
@@ -422,7 +420,7 @@ const char *getnvmprogname(void);
 
 char *new_tmpfile(int *fd, int local, const char *path);
 int mkstemp_n(char *template);
-char *x_c_tmpdir(void);
+char *get_tmpdir(void);
 int close_on_eintr(int fd);
 int fsync_on_eintr(int fd);
 
@@ -486,7 +484,6 @@ typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
 typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 typedef char bool_off_err[(OFF_ERR==0)?1:-1];
 typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
-
 
 #endif
 #endif

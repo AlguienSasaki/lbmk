@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
- * String handling.
+ * String functions
  */
 
 #include <sys/types.h>
@@ -13,10 +13,10 @@
 
 #include "../include/common.h"
 
-/*
- * Portable strcmp() but blocks NULL/empty/unterminated
- * strings. Even stricter than strncmp().
+/* Portable strncmp() that blocks
+ * NULL/empty/unterminated strings
  */
+
 int
 xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 {
@@ -43,24 +43,16 @@ xstrxcmp(const char *a, const char *b, unsigned long maxlen)
 			return ac - bc;
 	}
 
-	/*
-	 * We reached maxlen, so assume unterminated string.
-	 */
 	err(EINVAL, "Unterminated string in xstrxcmp");
 
-	/*
-	 * Should never reach here. This keeps compilers happy.
-	 */
 	errno = EINVAL;
 	return -1;
 }
 
-/*
- * strnlen() but aborts on NULL input, and empty strings.
- * Our version also prohibits unterminated strings.
- * strnlen() was standardized in POSIX.1-2008 and is not
- * available on some older systems, so we provide our own.
+/* Portable strncmp() that blocks
+ * NULL/empty/unterminated strings
  */
+
 unsigned long
 xstrxlen(const char *scmp, unsigned long maxlen)
 {

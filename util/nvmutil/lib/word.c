@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: MIT
- *
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
  *
- * Manipulate sixteen-bit little-endian
- * words on Intel GbE NVM configurations.
+ * Manipulate Intel GbE NVM words, which are 16-bit little
+ * endian in the files (MAC address words are big endian).
  */
 
 #include <sys/types.h>
@@ -12,13 +11,6 @@
 #include <stddef.h>
 
 #include "../include/common.h"
-
-/*
- * GbE NVM files store 16-bit (2-byte) little-endian words.
- * We must therefore swap the order when reading or writing.
- *
- * NOTE: The MAC address words are stored big-endian in-file.
- */
 
 unsigned short
 nvm_word(unsigned long pos16, unsigned long p)
