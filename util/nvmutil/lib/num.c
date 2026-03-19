@@ -246,7 +246,7 @@ fallback_rand_getrandom(void *buf, size_t len)
 #elif defined(HAVE_GETRANDOM_SYSCALL)
 	do {
 		rval = syscall(SYS_getrandom, buf, len, 0);
-	} while (ret < 0 && errno == EINTR);
+	} while (rval < 0 && errno == EINTR);
 
 #else
 	return -1;
