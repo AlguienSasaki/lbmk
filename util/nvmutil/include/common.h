@@ -404,7 +404,7 @@ int check_file(int fd, struct stat *st);
 long rw_over_nrw(long r, unsigned long nrw);
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
     HAVE_REAL_PREAD_PWRITE < 1
-off_t lseek_loop(int fd, off_t off,
+off_t lseek_on_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 #endif
 int try_err(int loop_err, int errval);

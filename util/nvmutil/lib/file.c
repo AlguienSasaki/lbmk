@@ -673,14 +673,14 @@ real_pread_pwrite:
     HAVE_REAL_PREAD_PWRITE > 0
 	goto real_pread_pwrite;
 #else
-	if ((off_orig = lseek_loop(fd, (off_t)0, SEEK_CUR,
+	if ((off_orig = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
 	    loop_eagain, loop_eintr)) == (off_t)-1) {
 		r = -1;
-	} else if (lseek_loop(fd, off, SEEK_SET,
+	} else if (lseek_on_eintr(fd, off, SEEK_SET,
 	    loop_eagain, loop_eintr) == (off_t)-1) {
 		r = -1;
 	} else {
-		verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
+		verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
 		    loop_eagain, loop_eintr);
 
 		/*
@@ -695,7 +695,7 @@ real_pread_pwrite:
 		 * that nothing is touching it now.
 		 */
 		if (off_reset && off != verified)
-			lseek_loop(fd, off, SEEK_SET,
+			lseek_on_eintr(fd, off, SEEK_SET,
 			    loop_eagain, loop_eintr);
 
 		do {
@@ -716,7 +716,7 @@ real_pread_pwrite:
 			 * will cause an exit, including
 			 * per EINTR/EAGAIN re-spin.
 			 */
-			verified = lseek_loop(fd, (off_t)0, SEEK_CUR,
+			verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
 			    loop_eagain, loop_eintr);
 
 			if (off != verified)
@@ -739,7 +739,7 @@ real_pread_pwrite:
 
 	saved_errno = errno;
 
-	off_last = lseek_loop(fd, off_orig, SEEK_SET,
+	off_last = lseek_on_eintr(fd, off_orig, SEEK_SET,
 	    loop_eagain, loop_eintr);
 
 	if (off_last != off_orig) {
@@ -869,12 +869,12 @@ err_rw_over_nrw:
 #if !defined(HAVE_REAL_PREAD_PWRITE) || \
     HAVE_REAL_PREAD_PWRITE < 1
 /*
- * lseek_loop() does lseek() but optionally
+ * lseek_on_eintr() does lseek() but optionally
  * on an EINTR/EAGAIN wait loop. Used by prw()
  * for setting offsets for positional I/O.
  */
 off_t
-lseek_loop(int fd, off_t off, int whence,
+lseek_on_eintr(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
 {
 	off_t old;
