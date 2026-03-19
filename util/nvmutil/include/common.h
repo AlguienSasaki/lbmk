@@ -438,6 +438,8 @@ typedef char static_assert_unsigned_int_is_4[
     (sizeof(unsigned int) >= 4) ? 1 : -1];
 typedef char static_assert_unsigned_long_is_4[
     (sizeof(unsigned long) >= 4) ? 1 : -1];
+typedef char static_assert_long_ulong[
+    (sizeof(unsigned long) == sizeof(long)) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
