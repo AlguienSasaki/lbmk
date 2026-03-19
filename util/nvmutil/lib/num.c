@@ -80,7 +80,7 @@ rlong(void)
 	    sizeof(unsigned long), 0, IO_READ, LOOP_EAGAIN,
 	    LOOP_EINTR, MAX_ZERO_RW_RETRY, OFF_ERR);
 
-	if (x_i_close(fd) < 0)
+	if (close_on_eintr(fd) < 0)
 		err(errno, "Can't close randomness fd");
 
 	if (nr != sizeof(unsigned long))

@@ -246,12 +246,12 @@ write_to_gbe_bin(void)
 
 	saved_errno = errno;
 
-	if (x_i_close(f->tmp_fd) == -1) {
+	if (close_on_eintr(f->tmp_fd) == -1) {
 		fprintf(stderr, "FAIL: %s: close\n", f->tname);
 		f->io_err_gbe_bin = 1;
 	}
 
-	if (x_i_close(f->gbe_fd) == -1) {
+	if (close_on_eintr(f->gbe_fd) == -1) {
 		fprintf(stderr, "FAIL: %s: close\n", f->fname);
 		f->io_err_gbe_bin = 1;
 	}
@@ -487,7 +487,7 @@ gbe_mv(void)
 	if (fsync_on_eintr(dest_fd) == -1)
 		goto ret_gbe_mv;
 
-	if (x_i_close(dest_fd) == -1)
+	if (close_on_eintr(dest_fd) == -1)
 		goto ret_gbe_mv;
 
 	if (rename(dest_tmp, f->fname) == -1)
@@ -504,7 +504,7 @@ gbe_mv(void)
 ret_gbe_mv:
 
 	if (f->gbe_fd > -1) {
-		if (x_i_close(f->gbe_fd) < 0)
+		if (close_on_eintr(f->gbe_fd) < 0)
 			rval = -1;
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
@@ -514,7 +514,7 @@ ret_gbe_mv:
 	}
 
 	if (f->tmp_fd > -1) {
-		if (x_i_close(f->tmp_fd) < 0)
+		if (close_on_eintr(f->tmp_fd) < 0)
 			rval = -1;
 
 		f->tmp_fd = -1;

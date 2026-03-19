@@ -260,13 +260,13 @@ exit_cleanup(void)
 		f = &x->f;
 
 		if (f->gbe_fd > -1) {
-			if (x_i_close(f->gbe_fd) == -1)
+			if (close_on_eintr(f->gbe_fd) == -1)
 				close_err = 1;
 			f->gbe_fd = -1;
 		}
 
 		if (f->tmp_fd > -1) {
-			if (x_i_close(f->tmp_fd) == -1)
+			if (close_on_eintr(f->tmp_fd) == -1)
 				close_err = 1;
 		}
 

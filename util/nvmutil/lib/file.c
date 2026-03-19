@@ -150,7 +150,7 @@ fsync_dir(const char *path)
 	if (fsync_on_eintr(dirfd) == -1)
 		goto err_fsync_dir;
 
-	if (x_i_close(dirfd) == -1)
+	if (close_on_eintr(dirfd) == -1)
 		goto err_fsync_dir;
 
 	if (dirbuf != NULL)
@@ -170,7 +170,7 @@ err_fsync_dir:
 		free(dirbuf);
 
 	if (dirfd > -1)
-		x_i_close(dirfd);
+		close_on_eintr(dirfd);
 
 	errno = saved_errno;
 
@@ -367,7 +367,7 @@ err_new_tmpfile:
 		free(dest);
 
 	if (fd_tmp > -1)
-		x_i_close(fd_tmp);
+		close_on_eintr(fd_tmp);
 
 	return NULL;
 }
@@ -901,7 +901,7 @@ try_err(int loop_err, int errval)
 }
 
 int
-x_i_close(int fd)
+close_on_eintr(int fd)
 {
 	int r;
 	int saved_errno = errno;
