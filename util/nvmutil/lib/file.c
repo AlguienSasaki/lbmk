@@ -310,7 +310,7 @@ new_tmpfile(int *fd, int local, const char *path)
 
 	dest[tmppath_len] = '\0';
 
-	fd_tmp = x_i_mkstemp(dest);
+	fd_tmp = mkstemp_n(dest);
 	if (fd_tmp == -1)
 		goto err_new_tmpfile;
 
@@ -421,36 +421,56 @@ x_c_tmpdir(void)
  */
 
 int
-x_i_mkstemp(char *template)
+mkstemp_n(char *template)
 {
 	int fd;
-	int i, j;
+	unsigned long i, j;
 	unsigned long len;
 	char *p;
 
-	char ch[] =
+	unsigned long xc = 0;
+
+	static char ch[] =
 	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 	unsigned long r;
+	unsigned long max_len =
+#ifndef PATH_LEN
+	    4096;
+#else
+	    (PATH_LEN);
+#endif
 
-	len = xstrxlen(template, PATH_LEN);
+	len = xstrxlen(template, max_len);
 
-	/* find trailing XXXXXX */
-	if (len < 6)
+	if (len < 6) {
+		errno = EINVAL;
 		return -1;
+	}
 
-	p = template + len - 6;
+	p = template + len;
 
-	for (i = 0; i < 100; i++) {
+	while (p > template && p[-1] == 'X') {
+		--p;
+		++xc;
+	}
 
-		for (j = 0; j < 6; j++) {
+	if (xc < 6) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (i = 0; i < 200; i++) {
+
+		for (j = 0; j < xc; j++) {
 
 			r = rlong();
 
 			p[j] = ch[(unsigned long)(r >> 1) % (sizeof(ch) - 1)];
 		}
 
-		fd = open(template, O_RDWR | O_CREAT | O_EXCL, 0600);
+		fd = open(template,
+		    O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
 
 		if (fd >= 0)
 			return fd;

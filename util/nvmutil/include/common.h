@@ -35,7 +35,7 @@ int fchmod(int fd, mode_t mode);
 #define MAX_CMD_LEN 50
 
 #ifndef PATH_LEN
-#define PATH_LEN 1024
+#define PATH_LEN 4096
 #endif
 
 #define OFF_ERR 0
@@ -421,7 +421,7 @@ const char *getnvmprogname(void);
  */
 
 char *new_tmpfile(int *fd, int local, const char *path);
-int x_i_mkstemp(char *template);
+int mkstemp_n(char *template);
 char *x_c_tmpdir(void);
 int close_on_eintr(int fd);
 int fsync_on_eintr(int fd);
