@@ -17,12 +17,12 @@
 void
 read_checksums(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
-	unsigned long _p;
-	unsigned long _skip_part;
+	size_t _p;
+	size_t _skip_part;
 
 	unsigned char _num_invalid;
 	unsigned char _max_invalid;
@@ -59,16 +59,16 @@ read_checksums(void)
 	if (_num_invalid >= _max_invalid) {
 
 		if (_max_invalid == 1)
-			err(ECANCELED, "%s: part %lu has a bad checksum",
-			    f->fname, (unsigned long)f->part);
+			b0rk(ECANCELED, "%s: part %lu has a bad checksum",
+			    f->fname, (size_t)f->part);
 
-		err(ECANCELED, "%s: No valid checksum found in file",
+		b0rk(ECANCELED, "%s: No valid checksum found in file",
 		    f->fname);
 	}
 }
 
 int
-good_checksum(unsigned long partnum)
+good_checksum(size_t partnum)
 {
 	unsigned short expected_checksum;
 	unsigned short actual_checksum;
@@ -87,16 +87,16 @@ good_checksum(unsigned long partnum)
 }
 
 void
-set_checksum(unsigned long p)
+set_checksum(size_t p)
 {
 	check_bin(p, "part number");
 	set_nvm_word(NVM_CHECKSUM_WORD, p, calculated_checksum(p));
 }
 
 unsigned short
-calculated_checksum(unsigned long p)
+calculated_checksum(size_t p)
 {
-	unsigned long c;
+	size_t c;
 	unsigned int val16;
 
 	val16 = 0;

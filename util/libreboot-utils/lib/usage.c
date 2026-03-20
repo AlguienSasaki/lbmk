@@ -26,5 +26,5 @@ usage(void)
 	    util, util, util, util,
 	    util, util, util);
 
-	err(EINVAL, "Too few arguments");
+	b0rk(EINVAL, "Too few arguments");
 }

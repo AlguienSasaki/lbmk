@@ -1,5 +1,6 @@
 /nvm
 /nvmutil
+/mkhtemp
 *.bin
 *.o
 *.d

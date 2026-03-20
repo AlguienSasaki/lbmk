@@ -21,7 +21,7 @@
 void
 open_gbe_file(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
@@ -29,19 +29,19 @@ open_gbe_file(void)
 
 	xopen(&f->gbe_fd, f->fname,
 	    cmd->flags | O_BINARY |
-	    O_NOFOLLOW | O_CLOEXEC, &f->gbe_st);
+	    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY, &f->gbe_st);
 
 	if (f->gbe_st.st_nlink > 1)
-		err(EINVAL,
+		b0rk(EINVAL,
 		    "%s: warning: file has multiple (%lu) hard links\n",
-		    f->fname, (unsigned long)f->gbe_st.st_nlink);
+		    f->fname, (size_t)f->gbe_st.st_nlink);
 
 	if (f->gbe_st.st_nlink == 0)
-		err(EIO, "%s: file unlinked while open", f->fname);
+		b0rk(EIO, "%s: file unlinked while open", f->fname);
 
 	_flags = fcntl(f->gbe_fd, F_GETFL);
 	if (_flags == -1)
-		err(errno, "%s: fcntl(F_GETFL)", f->fname);
+		b0rk(errno, "%s: fcntl(F_GETFL)", f->fname);
 
 	/* O_APPEND allows POSIX write() to ignore
 	 * the current write offset and write at EOF,
@@ -49,7 +49,7 @@ open_gbe_file(void)
 	 */
 
 	if (_flags & O_APPEND)
-		err(EIO, "%s: O_APPEND flag", f->fname);
+		b0rk(EIO, "%s: O_APPEND flag", f->fname);
 
 	f->gbe_file_size = f->gbe_st.st_size;
 
@@ -59,17 +59,17 @@ open_gbe_file(void)
 	case SIZE_128KB:
 		break;
 	default:
-		err(EINVAL, "File size must be 8KB, 16KB or 128KB");
+		b0rk(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 
 	if (lock_file(f->gbe_fd, cmd->flags) == -1)
-		err(errno, "%s: can't lock", f->fname);
+		b0rk(errno, "%s: can't lock", f->fname);
 }
 
 void
 copy_gbe(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	read_file();
@@ -77,19 +77,19 @@ copy_gbe(void)
 	if (f->gbe_file_size == SIZE_8KB)
 		return;
 
-	memcpy(f->buf + (unsigned long)GBE_PART_SIZE,
-	    f->buf + (unsigned long)(f->gbe_file_size >> 1),
-	    (unsigned long)GBE_PART_SIZE);
+	memcpy(f->buf + (size_t)GBE_PART_SIZE,
+	    f->buf + (size_t)(f->gbe_file_size >> 1),
+	    (size_t)GBE_PART_SIZE);
 }
 
 void
 read_file(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	struct stat _st;
-	long _r;
+	ssize_t _r;
 
 	/* read main file
 	 */
@@ -98,7 +98,7 @@ read_file(void)
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		err(errno, "%s: read failed", f->fname);
+		b0rk(errno, "%s: read failed", f->fname);
 
 	/* copy to tmpfile
 	 */
@@ -107,55 +107,55 @@ read_file(void)
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		err(errno, "%s: %s: copy failed",
+		b0rk(errno, "%s: %s: copy failed",
 		    f->fname, f->tname);
 
 	/* file size comparison
 	 */
 	if (fstat(f->tmp_fd, &_st) == -1)
-		err(errno, "%s: stat", f->tname);
+		b0rk(errno, "%s: stat", f->tname);
 
 	f->gbe_tmp_size = _st.st_size;
 
 	if (f->gbe_tmp_size != f->gbe_file_size)
-		err(EIO, "%s: %s: not the same size",
+		b0rk(EIO, "%s: %s: not the same size",
 		    f->fname, f->tname);
 
 	/* needs sync, for verification
 	 */
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		err(errno, "%s: fsync (tmpfile copy)", f->tname);
+		b0rk(errno, "%s: fsync (tmpfile copy)", f->tname);
 
 	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		err(errno, "%s: read failed (cmp)", f->tname);
+		b0rk(errno, "%s: read failed (cmp)", f->tname);
 
 	if (memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
-		err(errno, "%s: %s: read contents differ (pre-test)",
+		b0rk(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
 
 void
 write_gbe_file(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
-	unsigned long p;
+	size_t p;
 	unsigned char update_checksum;
 
 	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
 		return;
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		err(errno, "%s: file inode/device changed", f->tname);
+		b0rk(errno, "%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		err(errno, "%s: file has changed", f->fname);
+		b0rk(errno, "%s: file has changed", f->fname);
 
 	update_checksum = cmd->chksum_write;
 
@@ -171,25 +171,25 @@ write_gbe_file(void)
 }
 
 void
-rw_gbe_file_part(unsigned long p, int rw_type,
+rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
-	long rval;
+	ssize_t rval;
 
 	off_t file_offset;
 
-	unsigned long gbe_rw_size;
+	size_t gbe_rw_size;
 	unsigned char *mem_offset;
 
 	gbe_rw_size = cmd->rw_size;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
-		err(errno, "%s: %s: part %lu: invalid rw_type, %d",
-		    f->fname, rw_type_str, (unsigned long)p, rw_type);
+		b0rk(errno, "%s: %s: part %lu: invalid rw_type, %d",
+		    f->fname, rw_type_str, (size_t)p, rw_type);
 
 	mem_offset = gbe_mem_offset(p, rw_type_str);
 	file_offset = (off_t)gbe_file_offset(p, rw_type_str);
@@ -198,18 +198,18 @@ rw_gbe_file_part(unsigned long p, int rw_type,
 	    gbe_rw_size, file_offset, rw_type);
 
 	if (rval == -1)
-		err(errno, "%s: %s: part %lu",
-		    f->fname, rw_type_str, (unsigned long)p);
+		b0rk(errno, "%s: %s: part %lu",
+		    f->fname, rw_type_str, (size_t)p);
 
-	if ((unsigned long)rval != gbe_rw_size)
-		err(EIO, "%s: partial %s: part %lu",
-		    f->fname, rw_type_str, (unsigned long)p);
+	if ((size_t)rval != gbe_rw_size)
+		b0rk(EIO, "%s: partial %s: part %lu",
+		    f->fname, rw_type_str, (size_t)p);
 }
 
 void
 write_to_gbe_bin(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
@@ -226,7 +226,7 @@ write_to_gbe_bin(void)
 	 */
 
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		err(errno, "%s: fsync (pre-verification)",
+		b0rk(errno, "%s: fsync (pre-verification)",
 		    f->tname);
 
 	check_written_part(0);
@@ -235,19 +235,12 @@ write_to_gbe_bin(void)
 	report_io_err_rw();
 
 	if (f->io_err_gbe)
-		err(EIO, "%s: bad write", f->fname);
+		b0rk(EIO, "%s: bad write", f->fname);
 
 	saved_errno = errno;
 
-	if (close_on_eintr(f->tmp_fd) == -1) {
-		fprintf(stderr, "FAIL: %s: close\n", f->tname);
-		f->io_err_gbe_bin = 1;
-	}
-
-	if (close_on_eintr(f->gbe_fd) == -1) {
-		fprintf(stderr, "FAIL: %s: close\n", f->fname);
-		f->io_err_gbe_bin = 1;
-	}
+	f->io_err_gbe_bin |= -close_warn(&f->tmp_fd, f->tname);
+	f->io_err_gbe_bin |= -close_warn(&f->gbe_fd, f->fname);
 
 	errno = saved_errno;
 
@@ -273,11 +266,7 @@ write_to_gbe_bin(void)
 
 			/* removed by rename
 			 */
-
-			if (f->tname != NULL)
-				free(f->tname);
-
-			f->tname = NULL;
+			free_if_null(&f->tname);
 		}
 	}
 
@@ -292,15 +281,15 @@ write_to_gbe_bin(void)
 }
 
 void
-check_written_part(unsigned long p)
+check_written_part(size_t p)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
 
-	long rval;
+	ssize_t rval;
 
-	unsigned long gbe_rw_size;
+	size_t gbe_rw_size;
 
 	off_t file_offset;
 	unsigned char *mem_offset;
@@ -318,17 +307,17 @@ check_written_part(unsigned long p)
 	memset(f->pad, 0xff, sizeof(f->pad));
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		err(errno, "%s: file inode/device changed", f->tname);
+		b0rk(errno, "%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		err(errno, "%s: file changed during write", f->fname);
+		b0rk(errno, "%s: file changed during write", f->fname);
 
 	rval = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
 
 	if (rval == -1)
 		f->rw_check_err_read[p] = f->io_err_gbe = 1;
-	else if ((unsigned long)rval != gbe_rw_size)
+	else if ((size_t)rval != gbe_rw_size)
 		f->rw_check_partial_read[p] = f->io_err_gbe = 1;
 	else if (memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
 		f->rw_check_bad_part[p] = f->io_err_gbe = 1;
@@ -359,10 +348,10 @@ check_written_part(unsigned long p)
 void
 report_io_err_rw(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	unsigned long p;
+	size_t p;
 
 	if (!f->io_err_gbe)
 		return;
@@ -374,22 +363,22 @@ report_io_err_rw(void)
 		if (f->rw_check_err_read[p])
 			fprintf(stderr,
 			    "%s: pread: p%lu (post-verification)\n",
-			    f->fname, (unsigned long)p);
+			    f->fname, (size_t)p);
 		if (f->rw_check_partial_read[p])
 			fprintf(stderr,
 			    "%s: partial pread: p%lu (post-verification)\n",
-			    f->fname, (unsigned long)p);
+			    f->fname, (size_t)p);
 		if (f->rw_check_bad_part[p])
 			fprintf(stderr,
 			    "%s: pwrite: corrupt write on p%lu\n",
-			    f->fname, (unsigned long)p);
+			    f->fname, (size_t)p);
 
 		if (f->rw_check_err_read[p] ||
 		    f->rw_check_partial_read[p]) {
 			fprintf(stderr,
 			    "%s: p%lu: skipped checksum verification "
 			    "(because read failed)\n",
-			    f->fname, (unsigned long)p);
+			    f->fname, (size_t)p);
 
 			continue;
 		}
@@ -402,7 +391,7 @@ report_io_err_rw(void)
 			fprintf(stderr, "BAD");
 
 		fprintf(stderr, " checksum in p%lu on-disk.\n",
-		    (unsigned long)p);
+		    (size_t)p);
 
 		if (f->post_rw_checksum[p]) {
 			fprintf(stderr,
@@ -415,7 +404,7 @@ report_io_err_rw(void)
 int
 gbe_mv(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	int rval;
@@ -424,7 +413,15 @@ gbe_mv(void)
 	int tmp_gbe_bin_exists;
 
 	char *dest_tmp;
-	int dest_fd;
+	int dest_fd = -1;
+
+	char *dir = NULL;
+	char *base = NULL;
+	char *dest_name = NULL;
+
+	int dirfd = -1;
+
+	struct stat st_dir;
 
 	/* will be set 0 if it doesn't
 	 */
@@ -435,91 +432,36 @@ gbe_mv(void)
 
 	saved_errno = errno;
 
-	rval = rename(f->tname, f->fname);
+	rval = fs_rename_at(f->dirfd, f->tmpbase,
+	    f->dirfd, f->base);
 
-	if (rval > -1) {
-
-		/* rename on same filesystem
-		 */
-
+	if (rval > -1)
 		tmp_gbe_bin_exists = 0;
-
-		if (fsync_dir(f->fname) < 0) {
-			f->io_err_gbe_bin = 1;
-			rval = -1;
-		}
-
-		goto ret_gbe_mv;
-	}
-
-	if (errno != EXDEV)
-		goto ret_gbe_mv;
-
-	/*
-	 * OR, cross-filesystem rename:
-	 */
-
-	if ((rval = f->tmp_fd = open(f->tname,
-	    O_RDONLY | O_BINARY)) == -1)
-		goto ret_gbe_mv;
-
-	/* create replacement temp in target directory
-	 */
-	dest_tmp = new_tmpfile(&dest_fd, 1, f->fname);
-	if (dest_tmp == NULL)
-		goto ret_gbe_mv;
-
-	/* copy data
-	 */
-	rval = rw_file_exact(f->tmp_fd, f->bufcmp,
-	    f->gbe_file_size, 0, IO_PREAD,
-	    NO_LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
-
-	if (rval < 0)
-		goto ret_gbe_mv;
-
-	rval = rw_file_exact(dest_fd, f->bufcmp,
-	    f->gbe_file_size, 0, IO_PWRITE,
-	    NO_LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
-
-	if (rval < 0)
-		goto ret_gbe_mv;
-
-	if (fsync_on_eintr(dest_fd) == -1)
-		goto ret_gbe_mv;
-
-	if (close_on_eintr(dest_fd) == -1)
-		goto ret_gbe_mv;
-
-	if (rename(dest_tmp, f->fname) == -1)
-		goto ret_gbe_mv;
-
-	if (fsync_dir(f->fname) < 0) {
-		f->io_err_gbe_bin = 1;
-		goto ret_gbe_mv;
-	}
-
-	free(dest_tmp);
-	dest_tmp = NULL;
 
 ret_gbe_mv:
 
+	/* TODO: this whole section is bloat.
+		it can be generalised
+	 */
+
 	if (f->gbe_fd > -1) {
-		if (close_on_eintr(f->gbe_fd) < 0)
+		if (close_on_eintr(f->gbe_fd) < 0) {
+			f->gbe_fd = -1;
 			rval = -1;
+		}
+		f->gbe_fd = -1;
+
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
 			rval = -1;
 		}
-		f->gbe_fd = -1;
 	}
 
 	if (f->tmp_fd > -1) {
-		if (close_on_eintr(f->tmp_fd) < 0)
+		if (close_on_eintr(f->tmp_fd) < 0) {
+			f->tmp_fd = -1;
 			rval = -1;
-
+		}
 		f->tmp_fd = -1;
 	}
 
@@ -552,9 +494,9 @@ ret_gbe_mv:
  * and it is *also* used during file I/O.
  */
 unsigned char *
-gbe_mem_offset(unsigned long p, const char *f_op)
+gbe_mem_offset(size_t p, const char *f_op)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	off_t gbe_off;
@@ -563,7 +505,7 @@ gbe_mem_offset(unsigned long p, const char *f_op)
 	    GBE_PART_SIZE, GBE_WORK_SIZE);
 
 	return (unsigned char *)
-	    (f->buf + (unsigned long)gbe_off);
+	    (f->buf + (size_t)gbe_off);
 }
 
 /* I/O operations filtered here. These operations must
@@ -571,9 +513,9 @@ gbe_mem_offset(unsigned long p, const char *f_op)
  * within the GbE file, and write 4KB of data.
  */
 off_t
-gbe_file_offset(unsigned long p, const char *f_op)
+gbe_file_offset(size_t p, const char *f_op)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	off_t gbe_file_half_size;
@@ -585,10 +527,10 @@ gbe_file_offset(unsigned long p, const char *f_op)
 }
 
 off_t
-gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
+gbe_x_offset(size_t p, const char *f_op, const char *d_type,
     off_t nsize, off_t ncmp)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	off_t off;
@@ -598,24 +540,24 @@ gbe_x_offset(unsigned long p, const char *f_op, const char *d_type,
 	off = ((off_t)p) * (off_t)nsize;
 
 	if (off > ncmp - GBE_PART_SIZE)
-		err(ECANCELED, "%s: GbE %s %s out of bounds",
+		b0rk(ECANCELED, "%s: GbE %s %s out of bounds",
 		    f->fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		err(ECANCELED, "%s: GbE %s %s at bad offset",
+		b0rk(ECANCELED, "%s: GbE %s %s at bad offset",
 		    f->fname, d_type, f_op);
 
 	return off;
 }
 
-long
-rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
+ssize_t
+rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
     off_t off, int rw_type)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	long r;
+	ssize_t r;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
 		return -1;
@@ -624,17 +566,17 @@ rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
 		if (mem < f->buf)
 			goto err_rw_gbe_file_exact;
 
-		if ((unsigned long)(mem - f->buf) >= GBE_WORK_SIZE)
+		if ((size_t)(mem - f->buf) >= GBE_WORK_SIZE)
 			goto err_rw_gbe_file_exact;
 	}
 
 	if (off < 0 || off >= f->gbe_file_size)
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > (unsigned long)(f->gbe_file_size - off))
+	if (nrw > (size_t)(f->gbe_file_size - off))
 		goto err_rw_gbe_file_exact;
 
-	if (nrw > (unsigned long)GBE_PART_SIZE)
+	if (nrw > (size_t)GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
 	r = rw_file_exact(fd, mem, nrw, off, rw_type,

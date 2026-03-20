@@ -24,8 +24,9 @@ STRICT = $(WARN) -std=c90 -pedantic -Werror
 HELLFLAGS = $(STRICT) -Weverything
 
 PROG = nvmutil
+PROGMKH = mkhtemp
 
-OBJS = \
+OBJS_NVMUTIL = \
 	obj/nvmutil.o \
 	obj/lib/state.o \
 	obj/lib/file.o \
@@ -35,19 +36,33 @@ OBJS = \
 	obj/lib/num.o \
 	obj/lib/io.o \
 	obj/lib/checksum.o \
-	obj/lib/word.o
+	obj/lib/word.o \
+	obj/lib/mkhtemp.o \
+	obj/lib/rand.o
+
+OBJS_MKHTEMP = \
+	obj/mkhtemp.o \
+	obj/lib/file.o \
+	obj/lib/string.o \
+	obj/lib/num.o \
+	obj/lib/mkhtemp.o \
+	obj/lib/rand.o
 
 # default mode
 CFLAGS_MODE = $(PORTABLE)
 CC_MODE = $(CC)
 
-all: $(PROG)
+all: $(PROG) $(PROGMKH)
 
-$(PROG): $(OBJS)
-	$(CC_MODE) $(OBJS) -o $(PROG) $(LDFLAGS)
+$(PROG): $(OBJS_NVMUTIL)
+	$(CC_MODE) $(OBJS_NVMUTIL) -o $(PROG) $(LDFLAGS)
+
+$(PROGMKH): $(OBJS_MKHTEMP)
+	$(CC_MODE) $(OBJS_MKHTEMP) -o $(PROGMKH) $(LDFLAGS)
 
 # ensure obj directory exists
-$(OBJS): obj
+$(OBJS_NVMUTIL): obj
+$(OBJS_MKHTEMP): obj
 
 obj:
 	mkdir obj || true
@@ -57,6 +72,9 @@ obj:
 
 obj/nvmutil.o: nvmutil.c
 	$(CC_MODE) $(CFLAGS_MODE) -c nvmutil.c -o obj/nvmutil.o
+
+obj/mkhtemp.o: mkhtemp.c
+	$(CC_MODE) $(CFLAGS_MODE) -c mkhtemp.c -o obj/mkhtemp.o
 
 # library/helper objects
 
@@ -87,18 +105,27 @@ obj/lib/checksum.o: lib/checksum.c
 obj/lib/word.o: lib/word.c
 	$(CC_MODE) $(CFLAGS_MODE) -c lib/word.c -o obj/lib/word.o
 
+obj/lib/mkhtemp.o: lib/mkhtemp.c
+	$(CC_MODE) $(CFLAGS_MODE) -c lib/mkhtemp.c -o obj/lib/mkhtemp.o
+
+obj/lib/rand.o: lib/rand.c
+	$(CC_MODE) $(CFLAGS_MODE) -c lib/rand.c -o obj/lib/rand.o
+
 # install
 
-install: $(PROG)
+install: $(PROG) $(PROGMKH)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
 	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	$(INSTALL) $(PROGMKH) $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
 
 clean:
-	rm -f $(PROG) $(OBJS)
+	rm -f $(PROG) $(PROGMKH) $(OBJS_NVMUTIL) $(OBJS_MKHTEMP)
 
 distclean: clean
 

@@ -13,12 +13,12 @@
 #include "../include/common.h"
 
 unsigned short
-nvm_word(unsigned long pos16, unsigned long p)
+nvm_word(size_t pos16, size_t p)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	unsigned long pos;
+	size_t pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -28,12 +28,12 @@ nvm_word(unsigned long pos16, unsigned long p)
 }
 
 void
-set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
+set_nvm_word(size_t pos16, size_t p, unsigned short val16)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	unsigned long pos;
+	size_t pos;
 
 	check_nvm_bound(pos16, p);
 	pos = (pos16 << 1) + (p * GBE_PART_SIZE);
@@ -45,9 +45,9 @@ set_nvm_word(unsigned long pos16, unsigned long p, unsigned short val16)
 }
 
 void
-set_part_modified(unsigned long p)
+set_part_modified(size_t p)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	check_bin(p, "part number");
@@ -55,7 +55,7 @@ set_part_modified(unsigned long p)
 }
 
 void
-check_nvm_bound(unsigned long c, unsigned long p)
+check_nvm_bound(size_t c, size_t p)
 {
 	/* Block out of bound NVM access
 	 */
@@ -63,6 +63,6 @@ check_nvm_bound(unsigned long c, unsigned long p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err(ECANCELED, "check_nvm_bound: out of bounds %lu",
-		    (unsigned long)c);
+		b0rk(ECANCELED, "check_nvm_bound: out of bounds %lu",
+		    (size_t)c);
 }

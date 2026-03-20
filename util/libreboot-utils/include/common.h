@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org>
+
+ TODO: this file should be split, into headers for each
+       C source file specifically. it was originally just
+       for nvmutil, until i added mkhtemp to the mix
  */
+
 
 #ifndef COMMON_H
 #define COMMON_H
@@ -8,24 +13,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <errno.h>
 
 /* for linux getrandom
  */
 #if defined(__linux__)
-#include <errno.h>
-#if defined(__has_include)
-#if __has_include(<sys/random.h>)
 #include <sys/random.h>
-#define HAVE_GETRANDOM 1
-#endif
-#endif
-#if !defined(HAVE_GETRANDOM)
 #include <sys/syscall.h>
-#if defined(SYS_getrandom)
-#define HAVE_GETRANDOM_SYSCALL 1
-#endif
-#endif
-
 #endif
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
@@ -35,11 +29,27 @@
 
 int fchmod(int fd, mode_t mode);
 
-/* analog of SSIZE_MAX
+#define MKHTEMP_RETRY_MAX 512
+#define MKHTEMP_SPIN_THRESHOLD 32
+
+#define MKHTEMP_FILE 0
+#define MKHTEMP_DIR  1
+
+
+/* if 1: on operations that
+ * check ownership, always
+ * permit root to access even
+ * if not the file/dir owner
+ */
+#ifndef ALLOW_ROOT_OVERRIDE
+#define ALLOW_ROOT_OVERRIDE 0
+#endif
+
+/*
  */
 
-#ifndef X_LONG_MAX
-#define X_LONG_MAX ((long)(~((long)1 << (sizeof(long)*CHAR_BIT-1))))
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((ssize_t)(~((ssize_t)1 << (sizeof(ssize_t)*CHAR_BIT-1))))
 #endif
 
 
@@ -72,8 +82,8 @@ int fchmod(int fd, mode_t mode);
 #define MAX_ZERO_RW_RETRY 5
 #endif
 
-#ifndef HAVE_REAL_PREAD_PWRITE
-#define HAVE_REAL_PREAD_PWRITE 0
+#ifndef REAL_POS_IO
+#define REAL_POS_IO 0
 #endif
 
 #ifndef LOOP_EAGAIN
@@ -93,6 +103,10 @@ int fchmod(int fd, mode_t mode);
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
+#endif
+
+#ifndef O_NOCTTY
+#define O_NOCTTY 0
 #endif
 
 #ifndef O_ACCMODE
@@ -208,14 +222,14 @@ int fchmod(int fd, mode_t mode);
  */
 
 struct commands {
-	unsigned long chk;
+	size_t chk;
 	char *str;
 	void (*run)(void);
 	int argc;
 	unsigned char arg_part;
 	unsigned char chksum_read;
 	unsigned char chksum_write;
-	unsigned long rw_size; /* within the 4KB GbE part */
+	size_t rw_size; /* within the 4KB GbE part */
 	int flags; /* e.g. O_RDWR or O_RDONLY */
 };
 
@@ -254,7 +268,7 @@ struct xfile {
 	off_t gbe_file_size;
 	off_t gbe_tmp_size;
 
-	unsigned long part;
+	size_t part;
 	unsigned char part_modified[2];
 	unsigned char part_valid[2];
 
@@ -262,6 +276,11 @@ struct xfile {
 	unsigned char bufcmp[GBE_BUF_SIZE]; /* compare gbe/tmp/reads */
 
 	unsigned char pad[GBE_WORK_SIZE]; /* the file that wouldn't die */
+
+	/* we later rename in-place, using old fd. renameat() */
+	int dirfd;
+	char *base;
+	char *tmpbase;
 };
 
 /* Command table, MAC address, files
@@ -278,7 +297,7 @@ struct xstate {
 
 	char *argv0;
 
-	unsigned long i; /* index to cmd[] for current command */
+	size_t i; /* index to cmd[] for current command */
 	int no_cmd;
 
 	/* Cat commands set this.
@@ -286,28 +305,39 @@ struct xstate {
 	int cat;
 };
 
+struct filesystem {
+	int rootfd;
+};
 
-
-struct xstate *xstatus(int argc, char *argv[]);
+struct xstate *xstart(int argc, char *argv[]);
+struct xstate *xstatus(void);
 
 /* Sanitize command tables.
  */
 
 void sanitize_command_list(void);
-void sanitize_command_index(unsigned long c);
+void sanitize_command_index(size_t c);
 
 /* Argument handling (user input)
  */
 
 void set_cmd(int argc, char *argv[]);
 void set_cmd_args(int argc, char *argv[]);
-unsigned long conv_argv_part_num(const char *part_str);
-int xstrxcmp(const char *a, const char *b, unsigned long maxlen);
+size_t conv_argv_part_num(const char *part_str);
 
 /* Prep files for reading
  */
 
 void open_gbe_file(void);
+int fd_verify_regular(int fd,
+    const struct stat *expected,
+    struct stat *out);
+int fd_verify_identity(int fd,
+    const struct stat *expected,
+    struct stat *out);
+int fd_verify_dir_identity(int fd,
+    const struct stat *expected);
+int is_owner(struct stat *st);
 int lock_file(int fd, int flags);
 int same_file(int fd, struct stat *st_old, int check_size);
 void xopen(int *fd, const char *path, int flags, struct stat *st);
@@ -318,45 +348,50 @@ void xopen(int *fd, const char *path, int flags, struct stat *st);
 void copy_gbe(void);
 void read_file(void);
 void read_checksums(void);
-int good_checksum(unsigned long partnum);
+int good_checksum(size_t partnum);
 
 /* validate commands
  */
 
-void check_command_num(unsigned long c);
-unsigned char valid_command(unsigned long c);
+void check_command_num(size_t c);
+unsigned char valid_command(size_t c);
 
 /* Helper functions for command: setmac
  */
 
 void cmd_helper_setmac(void);
 void parse_mac_string(void);
-unsigned long xstrxlen(const char *scmp, unsigned long maxlen);
-void set_mac_byte(unsigned long mac_byte_pos);
-void set_mac_nib(unsigned long mac_str_pos,
-    unsigned long mac_byte_pos, unsigned long mac_nib_pos);
+void set_mac_byte(size_t mac_byte_pos);
+void set_mac_nib(size_t mac_str_pos,
+    size_t mac_byte_pos, size_t mac_nib_pos);
+void write_mac_part(size_t partnum);
+
+/* string functions
+ */
+
+int slen(const char *scmp, size_t maxlen,
+    size_t *rval);
+int scmp(const char *a, const char *b,
+    size_t maxlen, int *rval);
+int sdup(const char *s,
+    size_t n, char **dest);
+int scat(const char *s1, const char *s2,
+    size_t n, char **dest);
+int dcat(const char *s, size_t n,
+    size_t off, char **dest1,
+    char **dest2);
+/* numerical functions
+ */
+
 unsigned short hextonum(char ch_s);
-unsigned long rlong(void);
-#if !(defined(FALLBACK_RAND_1989) && \
-    ((FALLBACK_RAND_1989) > 0))
-#if defined(__linux__)
-#if defined(HAVE_GETRANDOM) || \
-    defined(HAVE_GETRANDOM_SYSCALL)
-int fallback_rand_getrandom(void *buf, size_t len);
-#endif
-#endif
-#else
-unsigned long fallback_rand_1989(void);
-unsigned long entropy_jitter(void);
-#endif
-void write_mac_part(unsigned long partnum);
+size_t rlong(void);
 
 /* Helper functions for command: dump
  */
 
 void cmd_helper_dump(void);
-void print_mac_from_nvm(unsigned long partnum);
-void hexdump(unsigned long partnum);
+void print_mac_from_nvm(size_t partnum);
+void hexdump(size_t partnum);
 
 /* Helper functions for command: swap
  */
@@ -375,7 +410,7 @@ void cmd_helper_copy(void);
 void cmd_helper_cat(void);
 void cmd_helper_cat16(void);
 void cmd_helper_cat128(void);
-void cat(unsigned long nff);
+void cat(size_t nff);
 void cat_buf(unsigned char *b);
 
 /* Command verification/control
@@ -388,51 +423,51 @@ void cmd_helper_err(void);
  */
 
 void write_gbe_file(void);
-void set_checksum(unsigned long part);
-unsigned short calculated_checksum(unsigned long p);
+void set_checksum(size_t part);
+unsigned short calculated_checksum(size_t p);
 
 /* NVM read/write
  */
 
-unsigned short nvm_word(unsigned long pos16, unsigned long part);
-void set_nvm_word(unsigned long pos16,
-    unsigned long part, unsigned short val16);
-void set_part_modified(unsigned long p);
-void check_nvm_bound(unsigned long pos16, unsigned long part);
-void check_bin(unsigned long a, const char *a_name);
+unsigned short nvm_word(size_t pos16, size_t part);
+void set_nvm_word(size_t pos16,
+    size_t part, unsigned short val16);
+void set_part_modified(size_t p);
+void check_nvm_bound(size_t pos16, size_t part);
+void check_bin(size_t a, const char *a_name);
 
 /* GbE file read/write
  */
 
-void rw_gbe_file_part(unsigned long p, int rw_type,
+void rw_gbe_file_part(size_t p, int rw_type,
     const char *rw_type_str);
 void write_to_gbe_bin(void);
 int gbe_mv(void);
-void check_written_part(unsigned long p);
+void check_written_part(size_t p);
 void report_io_err_rw(void);
-unsigned char *gbe_mem_offset(unsigned long part, const char *f_op);
-off_t gbe_file_offset(unsigned long part, const char *f_op);
-off_t gbe_x_offset(unsigned long part, const char *f_op,
+unsigned char *gbe_mem_offset(size_t part, const char *f_op);
+off_t gbe_file_offset(size_t part, const char *f_op);
+off_t gbe_x_offset(size_t part, const char *f_op,
     const char *d_type, off_t nsize, off_t ncmp);
-long rw_gbe_file_exact(int fd, unsigned char *mem, unsigned long nrw,
+ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
     off_t off, int rw_type);
 
 /* Generic read/write
  */
 
 int fsync_dir(const char *path);
-long rw_file_exact(int fd, unsigned char *mem, unsigned long len,
+ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    unsigned long max_retries, int off_reset);
-long prw(int fd, void *mem, unsigned long nrw,
+    size_t max_retries, int off_reset);
+ssize_t prw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type, int loop_eagain, int loop_eintr,
     int off_reset);
-int io_args(int fd, void *mem, unsigned long nrw,
+int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int check_file(int fd, struct stat *st);
-long rw_over_nrw(long r, unsigned long nrw);
-#if !defined(HAVE_REAL_PREAD_PWRITE) || \
-    HAVE_REAL_PREAD_PWRITE < 1
+ssize_t rw_over_nrw(ssize_t r, size_t nrw);
+#if !defined(REAL_POS_IO) || \
+    REAL_POS_IO < 1
 off_t lseek_on_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 #endif
@@ -442,18 +477,79 @@ int try_err(int loop_err, int errval);
  */
 
 void usage(void);
-void err(int nvm_errval, const char *msg, ...);
+void err_no_cleanup(int stfu, int nvm_errval, const char *msg, ...);
+void b0rk(int nvm_errval, const char *msg, ...);
 int exit_cleanup(void);
 const char *getnvmprogname(void);
 
-/* Portable libc functions
+void err_mkhtemp(int stfu, int errval, const char *msg, ...);
+
+/* libc hardening
  */
 
-char *new_tmpfile(int *fd, int local, const char *path);
-int mkstemp_n(char *template);
-char *get_tmpdir(void);
+int new_tmpfile(int *fd, char **path, char *tmpdir,
+    const char *template);
+int new_tmpdir(int *fd, char **path, char *tmpdir,
+    const char *template);
+int new_tmp_common(int *fd, char **path, int type,
+    char *tmpdir, const char *template);
+int mkhtemp_try_create(int dirfd,
+    struct stat *st_dir_initial,
+    char *fname_copy,
+    char *p,
+    size_t xc,
+    int *fd,
+    struct stat *st,
+    int type);
+int
+mkhtemp_tmpfile_linux(int dirfd,
+    struct stat *st_dir_initial,
+    char *fname_copy,
+    char *p,
+    size_t xc,
+    int *fd,
+    struct stat *st);
+int mkhtemp(int *fd, struct stat *st,
+    char *template, int dirfd, const char *fname,
+    struct stat *st_dir_initial, int type);
+int mkhtemp_fill_random(char *p, size_t xc);
+int world_writeable_and_sticky(const char *s,
+    int sticky_allowed, int always_sticky);
+int same_dir(const char *a, const char *b);
+int tmpdir_policy(const char *path,
+    int *allow_noworld_unsticky);
+char *env_tmpdir(int always_sticky, char **tmpdir,
+    char *override_tmpdir);
+int secure_file(int *fd,
+    struct stat *st,
+    struct stat *expected,
+    int bad_flags,
+    int check_seek,
+    int do_lock,
+    mode_t mode);
 int close_on_eintr(int fd);
 int fsync_on_eintr(int fd);
+int fs_rename_at(int olddirfd, const char *old,
+             int newdirfd, const char *new);
+int fs_open(const char *path, int flags);
+void close_no_err(int *fd);
+void free_if_null(char **buf);
+int close_warn(int *fd, char *s);
+struct filesystem *rootfs(void);
+int fs_resolve_at(int dirfd, const char *path, int flags);
+int fs_next_component(const char **p,
+    char *name, size_t namesz);
+int fs_open_component(int dirfd, const char *name,
+    int flags, int is_last);
+int fs_dirname_basename(const char *path,
+    char **dir, char **base, int allow_relative);
+int openat2p(int dirfd, const char *path,
+    int flags, mode_t mode);
+int mkdirat_on_eintr(int dirfd, 
+    const char *pathname, mode_t mode);
+int if_err(int condition, int errval);
+int if_err_sys(int condition);
+char *lbgetprogname(char *argv0);
 
 /* asserts */
 
@@ -467,16 +563,16 @@ typedef char static_assert_unsigned_short_is_2[
 typedef char static_assert_short_is_2[(sizeof(short) >= 2) ? 1 : -1];
 typedef char static_assert_unsigned_int_is_4[
     (sizeof(unsigned int) >= 4) ? 1 : -1];
-typedef char static_assert_unsigned_long_is_4[
-    (sizeof(unsigned long) >= 4) ? 1 : -1];
-typedef char static_assert_long_ulong[
-    (sizeof(unsigned long) == sizeof(long)) ? 1 : -1];
+typedef char static_assert_unsigned_ssize_t_is_4[
+    (sizeof(size_t) >= 4) ? 1 : -1];
+typedef char static_assert_ssize_t_ussize_t[
+    (sizeof(size_t) == sizeof(ssize_t)) ? 1 : -1];
 typedef char static_assert_int_ge_32[(sizeof(int) >= 4) ? 1 : -1];
 typedef char static_assert_twos_complement[
     ((-1 & 3) == 3) ? 1 : -1
 ];
-typedef char assert_unsigned_long_ptr[
-    (sizeof(unsigned long) >= sizeof(void *)) ? 1 : -1
+typedef char assert_unsigned_ssize_t_ptr[
+    (sizeof(size_t) >= sizeof(void *)) ? 1 : -1
 ];
 
 /*

@@ -21,10 +21,10 @@
 void
 sanitize_command_list(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 
-	unsigned long c;
-	unsigned long num_commands;
+	size_t c;
+	size_t num_commands;
 
 	num_commands = items(x->cmd);
 
@@ -33,37 +33,41 @@ sanitize_command_list(void)
 }
 
 void
-sanitize_command_index(unsigned long c)
+sanitize_command_index(size_t c)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[c];
 
 	int _flag;
-	unsigned long gbe_rw_size;
+	size_t gbe_rw_size;
+
+	size_t rval;
 
 	check_command_num(c);
 
 	if (cmd->argc < 3)
-		err(EINVAL, "cmd index %lu: argc below 3, %d",
-		    (unsigned long)c, cmd->argc);
+		b0rk(EINVAL, "cmd index %lu: argc below 3, %d",
+		    (size_t)c, cmd->argc);
 
 	if (cmd->str == NULL)
-		err(EINVAL, "cmd index %lu: NULL str",
-		    (unsigned long)c);
+		b0rk(EINVAL, "cmd index %lu: NULL str",
+		    (size_t)c);
 
 	if (*cmd->str == '\0')
-		err(EINVAL, "cmd index %lu: empty str",
-		    (unsigned long)c);
+		b0rk(EINVAL, "cmd index %lu: empty str",
+		    (size_t)c);
 
-	if (xstrxlen(cmd->str, MAX_CMD_LEN + 1) >
-	    MAX_CMD_LEN) {
-		err(EINVAL, "cmd index %lu: str too long: %s",
-		    (unsigned long)c, cmd->str);
+	if (slen(cmd->str, MAX_CMD_LEN +1, &rval) < 0)
+		b0rk(errno, "Could not get command length");
+
+	if (rval > MAX_CMD_LEN) {
+		b0rk(EINVAL, "cmd index %lu: str too long: %s",
+		    (size_t)c, cmd->str);
 	}
 
 	if (cmd->run == NULL)
-		err(EINVAL, "cmd index %lu: cmd ptr null",
-		    (unsigned long)c);
+		b0rk(EINVAL, "cmd index %lu: cmd ptr null",
+		    (size_t)c);
 
 	check_bin(cmd->arg_part, "cmd.arg_part");
 	check_bin(cmd->chksum_read, "cmd.chksum_read");
@@ -76,36 +80,40 @@ sanitize_command_index(unsigned long c)
 	case NVM_SIZE:
 		break;
 	default:
-		err(EINVAL, "Unsupported rw_size: %lu",
-		    (unsigned long)gbe_rw_size);
+		b0rk(EINVAL, "Unsupported rw_size: %lu",
+		    (size_t)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		err(EINVAL, "rw_size larger than GbE part: %lu",
-		    (unsigned long)gbe_rw_size);
+		b0rk(EINVAL, "rw_size larger than GbE part: %lu",
+		    (size_t)gbe_rw_size);
 
 	_flag = (cmd->flags & O_ACCMODE);
 
 	if (_flag != O_RDONLY &&
 	    _flag != O_RDWR)
-		err(EINVAL, "invalid cmd.flags setting");
+		b0rk(EINVAL, "invalid cmd.flags setting");
 }
 
 void
 set_cmd(int argc, char *argv[])
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	const char *cmd;
 
-	unsigned long c;
+	int rval;
+
+	size_t c;
 
 	for (c = 0; c < items(x->cmd); c++) {
 
 		cmd = x->cmd[c].str;
 
-		/* not the right command */
-		if (xstrxcmp(argv[2], cmd, MAX_CMD_LEN) != 0)
-			continue;
+		if (scmp(argv[2], cmd, MAX_CMD_LEN, &rval) < 0)
+			err_no_cleanup(0, EINVAL,
+			    "could not compare command strings");
+		if (rval != 0)
+			continue; /* not the right command */
 
 		/* valid command found */
 		if (argc >= x->cmd[c].argc) {
@@ -115,9 +123,10 @@ set_cmd(int argc, char *argv[])
 			return;
 		}
 
-		err(EINVAL,
+		err_no_cleanup(0, EINVAL,
 		    "Too few args on command '%s'", cmd);
 	}
+
 
 	x->no_cmd = 1;
 }
@@ -125,8 +134,8 @@ set_cmd(int argc, char *argv[])
 void
 set_cmd_args(int argc, char *argv[])
 {
-	struct xstate *x = xstatus(0, NULL);
-	unsigned long i = x->i;
+	struct xstate *x = xstatus();
+	size_t i = x->i;
 	struct commands *cmd = &x->cmd[i];
 	struct xfile *f = &x->f;
 
@@ -139,11 +148,11 @@ set_cmd_args(int argc, char *argv[])
 	/* Maintainer bug
 	 */
 	if (cmd->arg_part && argc < 4)
-		err(EINVAL,
+		b0rk(EINVAL,
 		    "arg_part set for command that needs argc4");
 
 	if (cmd->arg_part && i == CMD_SETMAC)
-		err(EINVAL,
+		b0rk(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
 	if (i == CMD_SETMAC) {
@@ -159,35 +168,35 @@ set_cmd_args(int argc, char *argv[])
 	}
 }
 
-unsigned long
+size_t
 conv_argv_part_num(const char *part_str)
 {
 	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		err(EINVAL, "Partnum string '%s' wrong length", part_str);
+		b0rk(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined
 	 */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
-		err(EINVAL, "Bad part number (%c)", ch);
+		b0rk(EINVAL, "Bad part number (%c)", ch);
 
-	return (unsigned long)(ch - '0');
+	return (size_t)(ch - '0');
 }
 
 void
-check_command_num(unsigned long c)
+check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err(EINVAL, "Invalid run_cmd arg: %lu",
-		    (unsigned long)c);
+		b0rk(EINVAL, "Invalid run_cmd arg: %lu",
+		    (size_t)c);
 }
 
 unsigned char
-valid_command(unsigned long c)
+valid_command(size_t c)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct commands *cmd;
 
 	if (c >= items(x->cmd))
@@ -196,7 +205,7 @@ valid_command(unsigned long c)
 	cmd = &x->cmd[c];
 
 	if (c != cmd->chk)
-		err(EINVAL,
+		b0rk(EINVAL,
 		    "Invalid cmd chk value (%lu) vs arg: %lu",
 		    cmd->chk, c);
 
@@ -206,10 +215,10 @@ valid_command(unsigned long c)
 void
 cmd_helper_setmac(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct macaddr *mac = &x->mac;
 
-	unsigned long partnum;
+	size_t partnum;
 
 	check_cmd(cmd_helper_setmac, "setmac");
 
@@ -223,13 +232,18 @@ cmd_helper_setmac(void)
 void
 parse_mac_string(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct macaddr *mac = &x->mac;
 
-	unsigned long mac_byte;
+	size_t mac_byte;
 
-	if (xstrxlen(x->mac.str, 18) != 17)
-		err(EINVAL, "MAC address is the wrong length");
+	size_t rval;
+
+	if (slen(x->mac.str, 18, &rval) < 0)
+		b0rk(EINVAL, "Could not determine MAC length");
+
+	if (rval != 17)
+		b0rk(EINVAL, "MAC address is the wrong length");
 
 	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
 
@@ -237,28 +251,28 @@ parse_mac_string(void)
 		set_mac_byte(mac_byte);
 
 	if ((mac->mac_buf[0] | mac->mac_buf[1] | mac->mac_buf[2]) == 0)
-		err(EINVAL, "Must not specify all-zeroes MAC address");
+		b0rk(EINVAL, "Must not specify all-zeroes MAC address");
 
 	if (mac->mac_buf[0] & 1)
-		err(EINVAL, "Must not specify multicast MAC address");
+		b0rk(EINVAL, "Must not specify multicast MAC address");
 }
 
 void
-set_mac_byte(unsigned long mac_byte_pos)
+set_mac_byte(size_t mac_byte_pos)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct macaddr *mac = &x->mac;
 
 	char separator;
 
-	unsigned long mac_str_pos;
-	unsigned long mac_nib_pos;
+	size_t mac_str_pos;
+	size_t mac_nib_pos;
 
 	mac_str_pos = mac_byte_pos * 3;
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac->str[mac_str_pos + 2]) != ':')
-			err(EINVAL, "Invalid MAC address separator '%c'",
+			b0rk(EINVAL, "Invalid MAC address separator '%c'",
 			    separator);
 	}
 
@@ -267,10 +281,10 @@ set_mac_byte(unsigned long mac_byte_pos)
 }
 
 void
-set_mac_nib(unsigned long mac_str_pos,
-    unsigned long mac_byte_pos, unsigned long mac_nib_pos)
+set_mac_nib(size_t mac_str_pos,
+    size_t mac_byte_pos, size_t mac_nib_pos)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct macaddr *mac = &x->mac;
 
 	char mac_ch;
@@ -278,9 +292,13 @@ set_mac_nib(unsigned long mac_str_pos,
 
 	mac_ch = mac->str[mac_str_pos + mac_nib_pos];
 
-	if ((hex_num = hextonum(mac_ch)) > 15)
-		err(EINVAL, "Invalid character '%c'",
-		    mac->str[mac_str_pos + mac_nib_pos]);
+	if ((hex_num = hextonum(mac_ch)) > 15) {
+		if (hex_num >= 17)
+			b0rk(EIO, "Randomisation failure");
+		else
+			b0rk(EINVAL, "Invalid character '%c'",
+			    mac->str[mac_str_pos + mac_nib_pos]);
+	}
 
 	/* If random, ensure that local/unicast bits are set.
 	 */
@@ -298,13 +316,13 @@ set_mac_nib(unsigned long mac_str_pos,
 }
 
 void
-write_mac_part(unsigned long partnum)
+write_mac_part(size_t partnum)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 	struct macaddr *mac = &x->mac;
 
-	unsigned long w;
+	size_t w;
 
 	check_bin(partnum, "part number");
 	if (!f->part_valid[partnum])
@@ -314,17 +332,17 @@ write_mac_part(unsigned long partnum)
 		set_nvm_word(w, partnum, mac->mac_buf[w]);
 
 	printf("Wrote MAC address to part %lu: ",
-	    (unsigned long)partnum);
+	    (size_t)partnum);
 	print_mac_from_nvm(partnum);
 }
 
 void
 cmd_helper_dump(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	unsigned long p;
+	size_t p;
 
 	check_cmd(cmd_helper_dump, "dump");
 
@@ -338,12 +356,12 @@ cmd_helper_dump(void)
 			fprintf(stderr,
 			    "BAD checksum %04x in part %lu (expected %04x)\n",
 			    nvm_word(NVM_CHECKSUM_WORD, p),
-			    (unsigned long)p,
+			    (size_t)p,
 			    calculated_checksum(p));
 		}
 
 		printf("MAC (part %lu): ",
-		    (unsigned long)p);
+		    (size_t)p);
 
 		print_mac_from_nvm(p);
 
@@ -352,9 +370,9 @@ cmd_helper_dump(void)
 }
 
 void
-print_mac_from_nvm(unsigned long partnum)
+print_mac_from_nvm(size_t partnum)
 {
-	unsigned long c;
+	size_t c;
 	unsigned short val16;
 
 	for (c = 0; c < 3; c++) {
@@ -373,16 +391,16 @@ print_mac_from_nvm(unsigned long partnum)
 }
 
 void
-hexdump(unsigned long partnum)
+hexdump(size_t partnum)
 {
-	unsigned long c;
-	unsigned long row;
+	size_t c;
+	size_t row;
 	unsigned short val16;
 
 	for (row = 0; row < 8; row++) {
 
 		printf("%08lx ",
-		    (unsigned long)((unsigned long)row << 4));
+		    (size_t)((size_t)row << 4));
 
 		for (c = 0; c < 8; c++) {
 
@@ -404,24 +422,24 @@ hexdump(unsigned long partnum)
 void
 cmd_helper_swap(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	check_cmd(cmd_helper_swap, "swap");
 
 	memcpy(
-	    f->buf + (unsigned long)GBE_WORK_SIZE,
+	    f->buf + (size_t)GBE_WORK_SIZE,
 	    f->buf,
 	    GBE_PART_SIZE);
 
 	memcpy(
 	    f->buf,
-	    f->buf + (unsigned long)GBE_PART_SIZE,
+	    f->buf + (size_t)GBE_PART_SIZE,
 	    GBE_PART_SIZE);
 
 	memcpy(
-	    f->buf + (unsigned long)GBE_PART_SIZE,
-	    f->buf + (unsigned long)GBE_WORK_SIZE,
+	    f->buf + (size_t)GBE_PART_SIZE,
+	    f->buf + (size_t)GBE_WORK_SIZE,
 	    GBE_PART_SIZE);
 
 	set_part_modified(0);
@@ -431,14 +449,14 @@ cmd_helper_swap(void)
 void
 cmd_helper_copy(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
 	check_cmd(cmd_helper_copy, "copy");
 
 	memcpy(
-	    f->buf + (unsigned long)((f->part ^ 1) * GBE_PART_SIZE),
-	    f->buf + (unsigned long)(f->part * GBE_PART_SIZE),
+	    f->buf + (size_t)((f->part ^ 1) * GBE_PART_SIZE),
+	    f->buf + (size_t)(f->part * GBE_PART_SIZE),
 	    GBE_PART_SIZE);
 
 	set_part_modified(f->part ^ 1);
@@ -447,7 +465,7 @@ cmd_helper_copy(void)
 void
 cmd_helper_cat(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 
 	check_cmd(cmd_helper_cat, "cat");
 
@@ -458,7 +476,7 @@ cmd_helper_cat(void)
 void
 cmd_helper_cat16(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 
 	check_cmd(cmd_helper_cat16, "cat16");
 
@@ -469,7 +487,7 @@ cmd_helper_cat16(void)
 void
 cmd_helper_cat128(void)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 
 	check_cmd(cmd_helper_cat128, "cat128");
 
@@ -478,20 +496,20 @@ cmd_helper_cat128(void)
 }
 
 void
-cat(unsigned long nff)
+cat(size_t nff)
 {
-	struct xstate *x = xstatus(0, NULL);
+	struct xstate *x = xstatus();
 	struct xfile *f = &x->f;
 
-	unsigned long p;
-	unsigned long ff;
+	size_t p;
+	size_t ff;
 
 	p = 0;
 	ff = 0;
 
-	if ((unsigned long)x->cat != nff) {
+	if ((size_t)x->cat != nff) {
 
-		err(ECANCELED, "erroneous call to cat");
+		b0rk(ECANCELED, "erroneous call to cat");
 	}
 
 	fflush(NULL);
@@ -501,7 +519,7 @@ cat(unsigned long nff)
 	for (p = 0; p < 2; p++) {
 
 		cat_buf(f->bufcmp +
-		    (unsigned long)(p * (f->gbe_file_size >> 1)));
+		    (size_t)(p * (f->gbe_file_size >> 1)));
 
 		for (ff = 0; ff < nff; ff++) {
 
@@ -514,22 +532,22 @@ void
 cat_buf(unsigned char *b)
 {
 	if (b == NULL)
-		err(errno, "null pointer in cat command");
+		b0rk(errno, "null pointer in cat command");
 
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
-		err(errno, "stdout: cat");
+		b0rk(errno, "stdout: cat");
 }
 void
 check_cmd(void (*fn)(void),
     const char *name)
 {
-	struct xstate *x = xstatus(0, NULL);
-	unsigned long i = x->i;
+	struct xstate *x = xstatus();
+	size_t i = x->i;
 
 	if (x->cmd[i].run != fn)
-		err(ECANCELED, "Running %s, but cmd %s is set",
+		b0rk(ECANCELED, "Running %s, but cmd %s is set",
 		    name, x->cmd[i].str);
 
 	/* prevent second command
@@ -541,6 +559,6 @@ check_cmd(void (*fn)(void),
 void
 cmd_helper_err(void)
 {
-	err(ECANCELED,
+	b0rk(ECANCELED,
 	    "Erroneously running command twice");
 }
