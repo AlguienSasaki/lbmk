@@ -55,7 +55,7 @@ rset(void *buf, size_t n)
 	if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
 		goto err;
 retry_rand:
-	if ((rc = read(fd, buf + off, n - off)) < 0) {
+	if ((rc = read(fd, (unsigned char *)buf + off, n - off)) < 0) {
 #elif defined(__linux__)
 retry_rand:
 	if ((rc = (ssize_t)syscall(SYS_getrandom,
