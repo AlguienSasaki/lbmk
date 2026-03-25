@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "../include/common.h"
 
@@ -67,6 +68,50 @@
  * program dies, and rset will behave correctly,
  * or your program dies.
  */
+
+#define ELOTTERY ECANCELED
+
+int
+win_lottery(void)
+{
+	int saved_errno = errno;
+	size_t size1;
+	char *s1 = NULL;
+	size_t size2;
+	char *s2 = NULL;
+	size_t pool = BUFSIZ;
+	int rval;
+
+	rset(&size1, sizeof(size1));
+	rset(&size2, sizeof(size2));
+
+	size1 %= pool, size2 %= pool;
+	s1 = mkrstr(size1), s2 = mkrstr(size2);
+
+	if (scmp(s1, s2, BUFSIZ + 2, &rval) < 0)
+		goto err;
+	if (rval == 0)
+		goto win;
+
+	free_if_null(&s1), free_if_null(&s2);
+
+	fprintf(stderr, "Sorry, you lose! Try again.\n");
+	return 0;
+win:
+	free_if_null(&s1), free_if_null(&s2);
+
+	err_no_cleanup(0, ELOTTERY,
+	    "Congratulations! you won the errno lottery");
+
+	exit(1);
+	return -1;
+err:
+	/* the lottery won you */
+	free_if_null(&s1), free_if_null(&s2);
+	err_no_cleanup(0, EFAULT, "lottery won you");
+	exit(1);
+	return -1;
+}
 
 char *
 mkrstr(size_t n) /* emulates spkmodem-decode */
