@@ -44,8 +44,14 @@ main(int argc, char *argv[])
 #if (OpenBSD) >= 604
 	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
 		err_no_cleanup(0, errno, "pledge plus unveil, main");
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
 	if (unveil("/dev/null", "r") == -1)
 		err_no_cleanup(0, errno, "unveil r: /dev/null");
+#else
+	if (unveil("/dev/urandom", "r") == -1)
+		err_no_cleanup(0, errno, "unveil r: /dev/urandom");
+#endif
 #elif (OpenBSD) >= 509
 	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
 		err_no_cleanup(0, errno, "pledge, main");

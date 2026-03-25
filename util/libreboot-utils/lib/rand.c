@@ -12,10 +12,13 @@
 #endif
 #include <sys/types.h>
 
+#ifndef USE_URANDOM
+#define USE_URANDOM 0
+#endif
+
 #include <errno.h>
-#if !((defined(__OpenBSD__) && (OpenBSD) >= 201) || \
-    defined(__FreeBSD__) || \
-    defined(__NetBSD__) || defined(__APPLE__))
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
 #endif
 #include <limits.h>
@@ -26,86 +29,42 @@
 
 #include "../include/common.h"
 
-/* Random numbers
- */
-
-/* when calling this: save errno
- * first, then set errno to zero.
- * on error, this function will
- * set errno and possibly return
- *
- * rlong also preserves errno
- * and leaves it unchanged on
- * success, so if you do it
- * right, you can detect error.
- * this is because it uses
- * /dev/urandom which can err.
- * ditto getrandom (EINTR),
- * theoretically.
- */
-
-/* for the linux version: we use only the
- * syscall, because we cannot trust /dev/urandom
- * to be as robust, and some libc implementations
- * may default to /dev/urandom under fault conditions.
- *
- * for general high reliability, we must abort on
- * failure. in practise, it will likely never fail.
- * the arc4random call on bsd never returns error.
- */
-
 size_t
 rlong(void)
 {
-	size_t rval;
 	int saved_errno = errno;
+	size_t len = sizeof(size_t);
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
-    defined(__DragonFly__))
+    defined(__DragonFly__)) && !(defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0))
 
-	arc4random_buf(&rval, sizeof(size_t));
+	arc4random_buf(&rval, len);
 	goto out;
-
-#elif defined(USE_URANDOM) && \
-    ((USE_URANDOM) > 0)
-
-	/* Use of /dev/urandom is ill advised, due
-	   to FD exhaustion */
-
-	int fd = -1;
+#else
+	size_t off = errno = 0;
 	ssize_t rc = 0;
+	size_t rval;
 
-	errno = 0;
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
+	int fd = -1;
 
 	if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
 		goto err;
-
 retry_rand:
-
-	if ((rc = read(fd, &rval, sizeof(rval))) < 0) {
-		if (errno == EINTR || errno == EAGAIN)
-			goto retry_rand;
-		goto err;
-	}
-
-	if ((rval += (size_t)rc) < sizeof(rval))
-		goto retry_rand;
-
+	if ((rc = read(fd, &rval, len)) < 0) {
 #elif defined(__linux__)
-
-	size_t off = 0;
-	size_t len = sizeof(rval);
-	ssize_t rc;
-
-	errno = 0;
-
 retry_rand:
-	rc = (ssize_t)syscall(SYS_getrandom,
-	    (char *)&rval + off, len - off, 0);
+	if ((rc = (ssize_t)syscall(SYS_getrandom,
+	    (char *)&rval + off, len - off, 0)) < 0) {
+#else
+#error Unsupported operating system (possibly unsecure randomisation)
+#endif
+		if (errno == EINTR ||
+		    errno == EAGAIN) {
 
-	if (rc < 0) {
-		if (errno == EINTR || errno == EAGAIN) {
 			usleep(100);
 			goto retry_rand;
 		}
@@ -117,25 +76,17 @@ retry_rand:
 		goto retry_rand;
 
 	goto out;
-#else
-#error Unsupported operating system (possibly unsecure randomisation)
-#endif
 
-out:
-	errno = saved_errno;
-	return rval;
 err:
-	/*
-	 * getrandom can return with error, but arc4random
-	 * doesn't. generally, getrandom will be reliable,
-	 * but we of course have to maintain parity with
-	 * BSD. So a rand failure is to be interpreted as
-	 * a major systems failure, and we act accordingly.
-	 */
 	err_no_cleanup(1, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
 
 	return 0;
+#endif
+
+out:
+	errno = saved_errno;
+	return rval;
 }
 #endif

@@ -903,11 +903,12 @@ mkhtemp_fill_random(char *p, size_t xc)
 	for (chx = 0; chx < xc; chx++) {
 
 retry_rand:
-		/* on bsd: uses arc4random
-		   on linux: uses getrandom
-		   *never returns error*
+		/* /dev/urandom if enabled, OR:
+		   * on bsd: uses arc4random
+		   * on linux: uses getrandom
+		   NOTE: *aborts* on error, regardless of method
 		 */
-		r = rlong(); /* always returns successful */
+		r = rlong(); /* always *returns* successfully */
 		if (r >= limit)
 			goto retry_rand;
 
