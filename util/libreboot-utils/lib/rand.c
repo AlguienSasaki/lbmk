@@ -59,7 +59,7 @@ retry_rand:
 #elif defined(__linux__)
 retry_rand:
 	if ((rc = (ssize_t)syscall(SYS_getrandom,
-	    buf + off, n - off, 0)) < 0) {
+	    (unsigned char *)buf + off, n - off, 0)) < 0) {
 #else
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
@@ -80,6 +80,10 @@ retry_rand:
 
 	goto out;
 err:
+	/* since arc4random always returns
+	 * successful, we treat urandom/getrandom
+	 * failures as fatal and abort accordingly
+	 */
 	err_no_cleanup(1, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
