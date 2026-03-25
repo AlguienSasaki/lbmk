@@ -64,6 +64,10 @@ rset(void *buf, size_t n)
 	if (if_err(buf == NULL, EFAULT))
 		goto err;
 
+	if (n == 0)
+		err_no_cleanup(0, EPERM,
+		  "rset: zero-byte length request");
+
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)) && !(defined(USE_URANDOM) && \
@@ -113,7 +117,7 @@ out:
 	errno = saved_errno;
 	return;
 err:
-	err_no_cleanup(1, ECANCELED,
+	err_no_cleanup(0, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel");
 	exit(EXIT_FAILURE);
 }
