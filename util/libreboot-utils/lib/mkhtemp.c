@@ -634,9 +634,8 @@ mkhtemp(int *fd,
 		    st_dir_initial, fname_copy,
 		    p, xc, fd, st, type);
 
-		if (r == 0) {
+		if (r == 0)
 			continue;
-		}
 		if (r < 0)
 			goto err;
 
