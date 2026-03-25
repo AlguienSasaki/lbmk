@@ -70,6 +70,9 @@ retry_rand:
 		goto err; /* possibly unsupported by kernel */
 	}
 
+	if (rc == 0)
+		goto err; /* prevent infinite loop on fatal err */
+
 	if ((off += (size_t)rc) < n)
 		goto retry_rand;
 
