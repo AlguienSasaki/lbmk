@@ -128,6 +128,10 @@ out:
 	errno = saved_errno;
 	return;
 err:
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
+	close_no_err(&fd);
+#endif
 	err_no_cleanup(0, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel");
 	exit(EXIT_FAILURE);
