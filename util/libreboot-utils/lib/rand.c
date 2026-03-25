@@ -21,11 +21,14 @@
     ((USE_URANDOM) > 0)
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
 #endif
+
+#include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../include/common.h"
 
@@ -42,7 +45,7 @@ rset(void *buf, size_t n)
 	arc4random_buf(buf, n);
 	goto out;
 #else
-	size_t off = errno = 0;
+	size_t off = 0;
 	ssize_t rc = 0;
 
 #if defined(USE_URANDOM) && \
@@ -61,17 +64,19 @@ retry_rand:
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
 		if (errno == EINTR ||
-		    errno == EAGAIN) {
-
-			usleep(100);
+		    errno == EAGAIN)
 			goto retry_rand;
-		}
 
 		goto err; /* possibly unsupported by kernel */
 	}
 
 	if ((off += (size_t)rc) < n)
 		goto retry_rand;
+
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
+	close_no_err(&fd);
+#endif
 
 	goto out;
 err:
