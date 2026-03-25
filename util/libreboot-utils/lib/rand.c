@@ -54,6 +54,17 @@
  * for example must not rely on weak randomness.
  * We must therefore treat broken randomness as
  * though the world is broken, and burn accordingly.
+ *
+ * Similarly, any invalid input (NULL, zero bytes
+ * requested) are treated as fatal errors; again,
+ * cryptographic code must be reliable. If your
+ * code erroneously requested zero bytes, you might
+ * then end up with a non-randomised buffer, where
+ * you likely intended otherwise.
+ *
+ * In other words: call rset() correctly, or your
+ * program dies, and rset will behave correctly,
+ * or your program dies.
  */
 
 void
