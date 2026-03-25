@@ -32,6 +32,30 @@
 
 #include "../include/common.h"
 
+/* Regarding Linux getrandom/urandom:
+ *
+ * For maximum security guarantee, we *only*
+ * use getrandom via syscall, or /dev/urandom;
+ * use of urandom is ill advised. This is why
+ * we use the syscall, in case the libc version
+ * of getrandom() might defer to /dev/urandom
+ *
+ * We *abort* on error, for both /dev/urandom
+ * and getrandom(), because the BSD arc4random
+ * never returns with error; therefore, for the
+ * most parity in terms of behaviour, we abort,
+ * because otherwise the function would have two
+ * return modes: always successful (BSD), or only
+ * sometimes (Linux). The BSD arc4random could
+ * theoretically abort; it is extremely unlikely
+ * there, and just so on Linux, hence this design.
+ *
+ * This is important, because cryptographic code
+ * for example must not rely on weak randomness.
+ * We must therefore treat broken randomness as
+ * though the world is broken, and burn accordingly.
+ */
+
 void
 rset(void *buf, size_t n)
 {
@@ -83,10 +107,6 @@ retry_rand:
 
 	goto out;
 err:
-	/* since arc4random always returns
-	 * successful, we treat urandom/getrandom
-	 * failures as fatal and abort accordingly
-	 */
 	err_no_cleanup(1, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
