@@ -61,6 +61,9 @@ rset(void *buf, size_t n)
 {
 	int saved_errno = errno;
 
+	if (if_err(buf == NULL, EFAULT))
+		goto err;
+
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)) && !(defined(USE_URANDOM) && \
@@ -104,15 +107,14 @@ retry_rand:
     ((USE_URANDOM) > 0)
 	close_no_err(&fd);
 #endif
-
 	goto out;
+#endif
+out:
+	errno = saved_errno;
+	return;
 err:
 	err_no_cleanup(1, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
-#endif
-
-out:
-	errno = saved_errno;
 }
 #endif
