@@ -114,7 +114,7 @@ out:
 	return;
 err:
 	err_no_cleanup(1, ECANCELED,
-	    "Randomisation failure, possibly unsupported in your kernel.");
+	    "Randomisation failure, possibly unsupported in your kernel");
 	exit(EXIT_FAILURE);
 }
 #endif
