@@ -67,6 +67,21 @@
  * or your program dies.
  */
 
+void *
+mkrbuf(size_t n)
+{
+	void *buf;
+
+	if (n == 0)
+		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
+
+	if ((buf = malloc(n)) == NULL)
+		err_no_cleanup(0, ENOMEM, "mkrbuf: malloc");
+
+	rset(buf, n);
+	return buf; /* basically malloc() but with rand */
+}
+
 void
 rset(void *buf, size_t n)
 {
@@ -76,8 +91,7 @@ rset(void *buf, size_t n)
 		goto err;
 
 	if (n == 0)
-		err_no_cleanup(0, EPERM,
-		  "rset: zero-byte length request");
+		err_no_cleanup(0, EPERM, "rset: zero-byte request");
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
