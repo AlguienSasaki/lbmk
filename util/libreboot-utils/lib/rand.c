@@ -59,7 +59,6 @@ rlong(void)
 {
 	size_t rval;
 	int saved_errno = errno;
-	errno = 0;
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
@@ -68,11 +67,38 @@ rlong(void)
 	arc4random_buf(&rval, sizeof(size_t));
 	goto out;
 
+#elif defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
+
+	/* Use of /dev/urandom is ill advised, due
+	   to FD exhaustion */
+
+	int fd = -1;
+	ssize_t rc = 0;
+
+	errno = 0;
+
+	if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
+		goto err;
+
+retry_rand:
+
+	if ((rc = read(fd, &rval, sizeof(rval))) < 0) {
+		if (errno == EINTR || errno == EAGAIN)
+			goto retry_rand;
+		goto err;
+	}
+
+	if ((rval += (size_t)rc) < sizeof(rval))
+		goto retry_rand;
+
 #elif defined(__linux__)
 
 	size_t off = 0;
 	size_t len = sizeof(rval);
 	ssize_t rc;
+
+	errno = 0;
 
 retry_rand:
 	rc = (ssize_t)syscall(SYS_getrandom,
@@ -91,6 +117,13 @@ retry_rand:
 		goto retry_rand;
 
 	goto out;
+#else
+#error Unsupported operating system (possibly unsecure randomisation)
+#endif
+
+out:
+	errno = saved_errno;
+	return rval;
 err:
 	/*
 	 * getrandom can return with error, but arc4random
@@ -103,12 +136,6 @@ err:
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
 
-#else
-#error Unsupported operating system (possibly unsecure randomisation)
-#endif
-
-out:
-	errno = saved_errno;
-	return rval;
+	return 0;
 }
 #endif
