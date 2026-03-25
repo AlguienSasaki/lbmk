@@ -71,6 +71,16 @@
 
 #define ELOTTERY ECANCELED
 
+void *
+rmalloc(size_t *rval)
+{
+	if (if_err(rval == NULL, EFAULT))
+		return NULL;
+
+	rset(rval, sizeof(*rval));
+	return mkrstr(*rval %= BUFSIZ);
+}
+
 int
 win_lottery(void)
 {

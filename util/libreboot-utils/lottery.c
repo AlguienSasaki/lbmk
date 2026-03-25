@@ -7,11 +7,15 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "include/common.h"
 
 int
 main(int argc, char *argv[])
 {
+	size_t s;
+	char *s1;
+
 #if defined(__OpenBSD__) && defined(OpenBSD)
 #if (OpenBSD) >= 509
 	if (pledge("stdio", NULL) == -1)
@@ -19,9 +23,18 @@ main(int argc, char *argv[])
 #endif
 #endif
 
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	if (win_lottery()) {
 		printf("You won!");
 		return 0;
+	}
+
+	s1 = rmalloc(&s);
+
+	if (s1 != NULL) {
+		printf("%s\n\nYou lose. Sorry!\n", s1);
+		free(s1);
 	}
 
 	return 1;
