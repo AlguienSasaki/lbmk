@@ -84,7 +84,7 @@ hextonum(char ch_s)
 
 	if (ch == '?' || ch == 'x') {
 
-		rval = rlong();
+		rset(&rval, sizeof(rval));
 		if (errno > 0)
 			goto err_hextonum;
 

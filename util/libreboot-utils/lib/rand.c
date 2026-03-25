@@ -29,23 +29,21 @@
 
 #include "../include/common.h"
 
-size_t
-rlong(void)
+void
+rset(void *buf, size_t n)
 {
 	int saved_errno = errno;
-	size_t len = sizeof(size_t);
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)) && !(defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0))
 
-	arc4random_buf(&rval, len);
+	arc4random_buf(buf, n);
 	goto out;
 #else
 	size_t off = errno = 0;
 	ssize_t rc = 0;
-	size_t rval;
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
@@ -54,11 +52,11 @@ rlong(void)
 	if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
 		goto err;
 retry_rand:
-	if ((rc = read(fd, &rval, len)) < 0) {
+	if ((rc = read(fd, buf, n)) < 0) {
 #elif defined(__linux__)
 retry_rand:
 	if ((rc = (ssize_t)syscall(SYS_getrandom,
-	    (char *)&rval + off, len - off, 0)) < 0) {
+	    buf + off, n - off, 0)) < 0) {
 #else
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
@@ -72,21 +70,17 @@ retry_rand:
 		goto err; /* possibly unsupported by kernel */
 	}
 
-	if ((off += (size_t)rc) < len)
+	if ((off += (size_t)rc) < n)
 		goto retry_rand;
 
 	goto out;
-
 err:
 	err_no_cleanup(1, ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel.");
 	exit(EXIT_FAILURE);
-
-	return 0;
 #endif
 
 out:
 	errno = saved_errno;
-	return rval;
 }
 #endif

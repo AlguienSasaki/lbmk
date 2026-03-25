@@ -635,12 +635,6 @@ mkhtemp(int *fd,
 		    p, xc, fd, st, type);
 
 		if (r == 0) {
-			if (retries >= MKHTEMP_SPIN_THRESHOLD) {
-				/* usleep can return EINTR */
-				close_errno = errno;
-				usleep((useconds_t)rlong() & 0x3FF);
-				errno = close_errno;
-			}
 			continue;
 		}
 		if (r < 0)
@@ -903,12 +897,7 @@ mkhtemp_fill_random(char *p, size_t xc)
 	for (chx = 0; chx < xc; chx++) {
 
 retry_rand:
-		/* /dev/urandom if enabled, OR:
-		   * on bsd: uses arc4random
-		   * on linux: uses getrandom
-		   NOTE: *aborts* on error, regardless of method
-		 */
-		r = rlong(); /* always *returns* successfully */
+		rset(&r, sizeof(r));
 		if (r >= limit)
 			goto retry_rand;
 
