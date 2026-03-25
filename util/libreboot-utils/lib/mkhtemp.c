@@ -879,33 +879,32 @@ err:
 int
 mkhtemp_fill_random(char *p, size_t xc)
 {
-	static char ch[] =
+	static const char ch[] =
 	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-	size_t chx = 0;
-	size_t r;
+	unsigned char scratch[64];
 
-	/* clamp rand to prevent modulo bias
-	 */
-	size_t limit = ((size_t)-1) - (((size_t)-1) % (sizeof(ch) - 1));
-	int saved_errno = errno;
+	size_t off = 0;
+	size_t i;
+
+	/* clamp rand to prevent modulo bias */
+	size_t limit = 256 - (256 % (sizeof(ch) - 1));
 
 	if (if_err(p == NULL, EFAULT))
 		return -1;
 
-	for (chx = 0; chx < xc; chx++) {
-
 retry_rand:
-		rset(&r, sizeof(r));
-		if (r >= limit)
-			goto retry_rand;
+	rset(scratch, sizeof(scratch));
 
-		p[chx] = ch[r % (sizeof(ch) - 1)];
+	for (i = 0; i < sizeof(scratch) && off < xc; i++) {
+		if (scratch[i] < limit)
+			p[off++] = ch[scratch[i] % (sizeof(ch) - 1)];
 	}
 
-	errno = saved_errno;
-	return 0;
+	if (off < xc)
+		goto retry_rand;
 
+	return 0;
 }
 
 /* WARNING: **ONCE** per file.
