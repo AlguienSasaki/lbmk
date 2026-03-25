@@ -100,17 +100,13 @@ win_lottery(void)
 win:
 	free_if_null(&s1), free_if_null(&s2);
 
-	err_no_cleanup(0, ELOTTERY,
-	    "Congratulations! you won the errno lottery");
-
-	exit(1);
-	return -1;
+	printf("Congratulations! you won the errno lottery!\n");
+	return 1;
 err:
 	/* the lottery won you */
 	free_if_null(&s1), free_if_null(&s2);
 	err_no_cleanup(0, EFAULT, "lottery won you");
-	exit(1);
-	return -1;
+	return 0;
 }
 
 char *

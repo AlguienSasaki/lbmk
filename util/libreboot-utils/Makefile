@@ -25,6 +25,7 @@ HELLFLAGS = $(STRICT) -Weverything
 
 PROG = nvmutil
 PROGMKH = mkhtemp
+PROGLOT = lottery
 
 OBJS_NVMUTIL = \
 	obj/nvmutil.o \
@@ -48,11 +49,19 @@ OBJS_MKHTEMP = \
 	obj/lib/mkhtemp.o \
 	obj/lib/rand.o
 
+OBJS_LOTTERY = \
+	obj/lottery.o \
+	obj/lib/file.o \
+	obj/lib/string.o \
+	obj/lib/num.o \
+	obj/lib/mkhtemp.o \
+	obj/lib/rand.o
+
 # default mode
 CFLAGS_MODE = $(PORTABLE)
 CC_MODE = $(CC)
 
-all: $(PROG) $(PROGMKH)
+all: $(PROG) $(PROGMKH) $(PROGLOT)
 
 $(PROG): $(OBJS_NVMUTIL)
 	$(CC_MODE) $(OBJS_NVMUTIL) -o $(PROG) $(LDFLAGS)
@@ -60,9 +69,13 @@ $(PROG): $(OBJS_NVMUTIL)
 $(PROGMKH): $(OBJS_MKHTEMP)
 	$(CC_MODE) $(OBJS_MKHTEMP) -o $(PROGMKH) $(LDFLAGS)
 
+$(PROGLOT): $(OBJS_LOTTERY)
+	$(CC_MODE) $(OBJS_LOTTERY) -o $(PROGLOT) $(LDFLAGS)
+
 # ensure obj directory exists
 $(OBJS_NVMUTIL): obj
 $(OBJS_MKHTEMP): obj
+$(OBJS_LOTTERY): obj
 
 obj:
 	mkdir obj || true
@@ -75,6 +88,9 @@ obj/nvmutil.o: nvmutil.c
 
 obj/mkhtemp.o: mkhtemp.c
 	$(CC_MODE) $(CFLAGS_MODE) -c mkhtemp.c -o obj/mkhtemp.o
+
+obj/lottery.o: lottery.c
+	$(CC_MODE) $(CFLAGS_MODE) -c lottery.c -o obj/lottery.o
 
 # library/helper objects
 
@@ -113,19 +129,23 @@ obj/lib/rand.o: lib/rand.c
 
 # install
 
-install: $(PROG) $(PROGMKH)
+install: $(PROG) $(PROGMKH) $(PROGLOT)
 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
 	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	$(INSTALL) $(PROGMKH) $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
+	$(INSTALL) $(PROGLOT) $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
 
 clean:
-	rm -f $(PROG) $(PROGMKH) $(OBJS_NVMUTIL) $(OBJS_MKHTEMP)
+	rm -f $(PROG) $(PROGMKH) $(OBJS_NVMUTIL) $(OBJS_MKHTEMP) \
+	    $(OBJS_LOTTERY)
 
 distclean: clean
 

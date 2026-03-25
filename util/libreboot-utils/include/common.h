@@ -388,6 +388,7 @@ void *mkrbuf(size_t n);
 void rset(void *buf, size_t n);
 void *mkrbuf(size_t n);
 char *mkrstr(size_t n);
+int win_lottery(void);
 
 /* Helper functions for command: dump
  */
