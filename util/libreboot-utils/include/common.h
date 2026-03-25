@@ -386,6 +386,8 @@ int dcat(const char *s, size_t n,
 unsigned short hextonum(char ch_s);
 void *mkrbuf(size_t n);
 void rset(void *buf, size_t n);
+void *mkrbuf(size_t n);
+char *mkrstr(size_t n);
 
 /* Helper functions for command: dump
  */

@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "../include/common.h"
 
@@ -66,6 +67,30 @@
  * program dies, and rset will behave correctly,
  * or your program dies.
  */
+
+char *
+mkrstr(size_t n) /* emulates spkmodem-decode */
+{
+	char *s;
+	size_t i;
+
+	if (n == 0)
+		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
+
+	if (n == SIZE_MAX)
+		err_no_cleanup(0, EOVERFLOW, "mkrbuf: overflow");
+
+	if (if_err((s = mkrbuf(n + 1)) == NULL, EFAULT))
+		err_no_cleanup(0, EFAULT, "mkrstr: null");
+
+	for (i = 0; i < n; i++)
+		while(*(s + i) == '\0')
+			rset(s + i, 1);
+
+	*(s + n) = '\0';
+
+	return s;
+}
 
 void *
 mkrbuf(size_t n)
