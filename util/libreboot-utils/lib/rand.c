@@ -71,6 +71,27 @@
 
 #define ELOTTERY ECANCELED
 
+int
+win_lottery(void) /* are u lucky? */
+{
+	size_t size = 0;
+	int rval;
+
+	char *s1 = rmalloc(&size);
+	char *s2 = rmalloc(&size);
+
+	if (scmp(s1, s2, BUFSIZ + 2, &rval) >= 0 &&
+	    rval == 0)
+		rval = 1; /* winner */
+	else
+		rval = 0;
+
+	free_if_null(&s1);
+	free_if_null(&s2);
+
+	return rval;
+}
+
 void *
 rmalloc(size_t *rval)
 {
@@ -79,44 +100,6 @@ rmalloc(size_t *rval)
 
 	rset(rval, sizeof(*rval));
 	return mkrstr(*rval %= BUFSIZ);
-}
-
-int
-win_lottery(void)
-{
-	int saved_errno = errno;
-	size_t size1;
-	char *s1 = NULL;
-	size_t size2;
-	char *s2 = NULL;
-	size_t pool = BUFSIZ;
-	int rval;
-
-	rset(&size1, sizeof(size1));
-	rset(&size2, sizeof(size2));
-
-	size1 %= pool, size2 %= pool;
-	s1 = mkrstr(size1), s2 = mkrstr(size2);
-
-	if (scmp(s1, s2, BUFSIZ + 2, &rval) < 0)
-		goto err;
-	if (rval == 0)
-		goto win;
-
-	free_if_null(&s1), free_if_null(&s2);
-
-	fprintf(stderr, "Sorry, you lose! Try again.\n");
-	return 0;
-win:
-	free_if_null(&s1), free_if_null(&s2);
-
-	printf("Congratulations! you won the errno lottery!\n");
-	return 1;
-err:
-	/* the lottery won you */
-	free_if_null(&s1), free_if_null(&s2);
-	err_no_cleanup(0, EFAULT, "lottery won you");
-	return 0;
 }
 
 char *
