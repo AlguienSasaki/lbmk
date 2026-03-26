@@ -1,47 +1,17 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
+ * Hardened mktemp (mkhtemp!)
+ *
  * WORK IN PROGRESS (proof of concept), or, v0.0000001
+ * DO NOT PUT THIS IN YOUR LINUX DISTRO YET.
  *
- * Mkhtemp - Hardened mktemp. Create files and directories
- * randomly as determined by user's TMPDIR, or fallback. It
- * attemps to provide mitigation against several TOCTOU-based
- * attacks e.g. directory rename / symlink attacks, and it
- * generally provides much higher strictness than previous
- * implementations such as mktemp, mkstemp or even mkdtemp.
+ * I will remove this notice when the code is mature, and
+ * probably contact several of your projects myself.
  *
- * It uses several modern features by default, e.g. openat2
- * and O_TMPFILE on Linux, with additional hardening; BSD
- * projects only have openat so the code uses that there.
- *
- * Many programs rely on mktemp, and they use TMPDIR in a way
- * that is quite insecure. Mkhtemp intends to change that,
- * quite dramatically, with: userspace sandbox (and use OS
- * level options e.g. OBSD pledge where available), constant
- * identity/ownership checks on files, MUCH stricter ownership
- * restrictions (e.g. enforce sticky bit policy on world-
- * writeable tmpdirs), preventing operation on other people's
- * files (only your own files) - even root is restricted,
- * depending on how the code is compiled. Please read the code.
- *
- * This is the utility version, which makes use of the also-
- * included library. No docs yet - source code are the docs,
- * and the (ever evolving, and hardening) specification.
- *
- * This was written from scratch, for use in nvmutil, and
- * it is designed to be portable (BSD, Linux). Patches
- * very much welcome.
- *
- * WARNING: This is MUCH stricter than every other mktemp
- *          implementation, even more so than mkdtemp or
- *          the OpenBSD version of mkstemp. It *will* break,
- *	    or more specifically, reveal the flaws in, almost
- *	    every major critical infrastructure, because most
- *	    people already use mktemp extremely insecurely.
- *
- * This tool is written by me, for me, and also Libreboot, but
- * it will be summitted for review to various Linux distros
- * and BSD projects once it has reached maturity.
+ * See README. This is an ongoing project; no proper docs
+ * yet, and no manpage (yet!) - the code is documentation,
+ * while the specification that it implements evolves.
  */
 
 #if defined(__linux__) && !defined(_GNU_SOURCE)
@@ -187,25 +157,6 @@ err_usage:
 	    "usage: %s [-d] [-p dir] [template]\n", getnvmprogname());
 }/* 
 
-
   ( >:3 )    
    /| |\
-    / \
-
-
-
-
-
-                                                                             */
-
-
-
-
-
-
-
-
-
-
-
-
+    / \                                                                      */
