@@ -321,15 +321,28 @@ lbgetprogname(char *argv0)
 	return progname;
 }
 
+int
+xpledgex(const char *promises, const char *execpromises)
+{
+	int saved_errno = errno;
+	(void) promises, (void) execpromises, (void) saved_errno;
+#ifdef __OpenBSD__
+	if (pledge(promises, execpromises) == -1)
+		err_no_cleanup(0, errno, "pledge");
+#endif
+	errno = saved_errno;
+	return 0;
+}
 
-
-
-
-
-
-
-
-
-
-
-
+int
+xunveilx(const char *path, const char *permissions)
+{
+	int saved_errno = errno;
+	(void) path, (void) permissions, (void) saved_errno;
+#ifdef __OpenBSD__
+	if (pledge(promises, execpromises) == -1)
+		err_no_cleanup(0, errno, "pledge");
+#endif
+	errno = saved_errno;
+	return 0;
+}

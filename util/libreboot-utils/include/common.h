@@ -22,6 +22,10 @@
 #include <sys/syscall.h>
 #endif
 
+#ifdef __OpenBSD__ /* for pledge */
+#include <unistd.h>
+#endif
+
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 /* system prototypes
@@ -369,6 +373,8 @@ void write_mac_part(size_t partnum);
 /* string functions
  */
 
+int xunveilx(const char *path, const char *permissions);
+int xpledgex(const char *promises, const char *execpromises);
 int slen(const char *scmp, size_t maxlen,
     size_t *rval);
 int scmp(const char *a, const char *b,
