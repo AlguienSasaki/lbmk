@@ -51,6 +51,25 @@ development. A stable release will be announced when ready.
 
 ### What does mkhtemp do differently?
 
+#### Short version:
+
+Detect and mitigate symlink attacks, directory access
+race conditions, unsecure TMPDIR (e.g. bad enforce sticky
+bit policy on world writeable dirs), implement in user
+space a virtual sandbox (block directory escape and resolve
+paths by walking from `/` manually instead of relying on
+the kernel/system), voluntarily error out (halt all
+operation) if accessing files you don't own - that's why
+sticky bits are checked for example, even when you're root.
+
+Mkhtemp is designed to be the most secure implementation
+possible, of mktemp, offering a heavy amount of hardening
+over traditional mktemp.
+
+i.e. please read the source code
+
+#### Long version:
+
 This software attempts to provide mitigation against
 several TOCTOU-based
 attacks e.g. directory rename / symlink / re-mount, and
@@ -210,7 +229,7 @@ a drop-in replacement on Linux distros (and BSDs if they
 want it), while providing a more hardened version and
 recommending that where possible.
 
-~~Rewrite it in rust~~ /jk
+~~Rewrite it in rust~~ (nothing against it though, I just like C89 for some reason)
 
 Also, generally document the history of mktemp, and how
 mkhtemp works in comparison.
