@@ -72,6 +72,12 @@
  * or your program dies.
  */
 
+#ifndef BUFSIZ
+#define BUFSIZ 8192 /* reasonably on modern 64-bit systems */
+#elif (BUFSIZ <= 0)
+#error defined buffer size BUFSIZ below or equal to zero
+#endif
+
 int
 win_lottery(char **buf) /* are u lucky? */
 {
