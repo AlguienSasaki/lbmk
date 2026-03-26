@@ -69,8 +69,6 @@
  * or your program dies.
  */
 
-#define ELOTTERY ECANCELED
-
 int
 win_lottery(void) /* are u lucky? */
 {
@@ -82,7 +80,7 @@ win_lottery(void) /* are u lucky? */
 
 	if (scmp(s1, s2, BUFSIZ + 2, &rval) >= 0 &&
 	    rval == 0)
-		rval = 1; /* winner */
+		rval = 1; /* winner! */
 	else
 		rval = 0;
 
