@@ -177,7 +177,7 @@ Another example: although usually reliable, comparing the
 inode and device of a file/directory isn't by itself sufficient.
 There are other checks that mkhtemp does; for example I could
 implement it so that directories are more aggressively re-
-mounted by mkhtemp itself, mid-operation. This re-mounting
+opened by mkhtemp itself, mid-operation. This re-opening
 would be quite expensive computationally, but it would then
 allow us to re-check everything, since we store state from
 when the program starts.
