@@ -83,7 +83,7 @@ int fchmod(int fd, mode_t mode);
 #endif
 
 #ifndef REAL_POS_IO
-#define REAL_POS_IO 0
+#define REAL_POS_IO 1
 #endif
 
 #ifndef LOOP_EAGAIN
