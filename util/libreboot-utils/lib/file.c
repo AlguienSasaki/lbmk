@@ -203,6 +203,7 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 	size_t retries_on_zero;
 
 	int saved_errno = errno;
+	errno = 0;
 
 	rval = 0;
 
@@ -294,6 +295,11 @@ err_rw_file_exact:
  *              a change was detected, assuming
  *              nothing else is touching it now
  * off_reset 0: never reset if changed
+ *
+ * REAL_POS_IO is enabled by default in common.h
+ * and the fallback version was written for fun.
+ * You should just use the real one (REAL_POS_IO 1),
+ * since it is generally more reliable.
  */
 
 ssize_t
@@ -313,6 +319,7 @@ prw(int fd, void *mem, size_t nrw,
 	off_t off_last;
 #endif
 	int saved_errno = errno;
+	errno = 0;
 
 	if (io_args(fd, mem, nrw, off, rw_type)
 	    == -1)
@@ -542,7 +549,7 @@ lseek_on_eintr(int fd, off_t off, int whence,
 }
 
 /* two functions that reduce sloccount by
- * two hundred lines... no, now three. */
+ * two hundred lines */
 int
 if_err(int condition, int errval)
 {
@@ -554,13 +561,6 @@ if_err(int condition, int errval)
 
 	return 1;
 }
-/* technically pointless, but stylistically
- * pleasing alongside if_err chains.
- * use this one for syscalls that are
- * expected to set errno
- * also use it for non-system calls
- * that act like them, e.g. prw() or
- * rw_write_exact() */
 int
 if_err_sys(int condition)
 {
@@ -616,10 +616,8 @@ close_warn(int *fd, char *s)
 	return 0;
 }
 
-/* TODO: remove this. giant liability.
-   make close calls always err instead,
-   when they fail. otherwise we hide bugs!
- */
+/* TODO: remove this, and just check
+ * err on every close. */
 void
 close_no_err(int *fd)
 {
@@ -636,7 +634,6 @@ close_no_err(int *fd)
 
 /* TODO: make fd a pointer insttead
 	and automatically reset -1 here */
-/* BUT DO NOT reset -1 on error */
 int
 close_on_eintr(int fd)
 {
@@ -683,11 +680,10 @@ fs_rename_at(int olddirfd, const char *old,
 	return renameat(olddirfd, old, newdirfd, new);
 }
 
-/* secure open, based on
- * relative path to root
+/* secure open, based on relative path to root
  *
- * always a fixed fd for /
- * see: rootfs()
+ * always a fixed fd for / see: rootfs()
+ * and fs_resolve_at()
  */
 int
 fs_open(const char *path, int flags)
@@ -702,12 +698,8 @@ fs_open(const char *path, int flags)
 	return fs_resolve_at(fs->rootfd, path + 1, flags);
 }
 
-/* singleton function
- * that returns a fixed
- * descriptor of /
- *
- * used throughout, for
- * repeated integrity checks
+/* singleton function that returns a fixed descriptor of /
+ * used throughout, for repeated integrity checks
  */
 struct filesystem *
 rootfs(void)
@@ -729,8 +721,7 @@ rootfs(void)
 	return &global_fs;
 }
 
-/* filesystem sandboxing.
- * (in userspace)
+/* filesystem sandboxing in userspace
  */
 int
 fs_resolve_at(int dirfd, const char *path, int flags)
@@ -769,10 +760,9 @@ fs_resolve_at(int dirfd, const char *path, int flags)
 		if (nextfd < 0)
 			goto err;
 
-		/* close previous fd IF it is not the original input */
-		if (curfd != dirfd) {
+		/* close previous fd if not the original input */
+		if (curfd != dirfd)
 			(void) close_on_eintr(curfd);
-		}
 
 		curfd = nextfd;
 		nextfd = -1;
@@ -921,9 +911,6 @@ fs_dirname_basename(const char *path,
 
 /* portable wrapper for use of openat2 on linux,
  * with fallback for others e.g. openbsd
- *
- * BONUS: arg checks
- * TODO: consider EINTR/EAGAIN retry loop
  */
 int
 openat2p(int dirfd, const char *path,
@@ -974,8 +961,7 @@ retry:
 }
 
 int
-mkdirat_on_eintr( /* <-- say that 10 times to please the demon */
-    int dirfd, 
+mkdirat_on_eintr(int dirfd, 
     const char *path, mode_t mode)
 {
 	int saved_errno = errno;

@@ -51,22 +51,6 @@ new_tmpdir(int *fd, char **path, char *tmpdir,
 	    tmpdir, template);
 }
 
-/* note: tmpdir is an override of TMPDIR or /tmp or /var/tmp */
-/* WARNING:
- * on error, *path (at **path) may be
-   NULL, or if the error pertains to
-   an actual TMPDIR, set. if set, it
-   will be using *static* memory and
-   must not be freed. on success,
-   a pointer to heap memory is set
-   instead.
- * see:
- * env_tmpdir()
- * this is for error reports if e.g.
- * TMPDIR isn't found (but is set)
- * if TMPDIR isn't set, it will
- * default to /tmp or /var/tmp
- */
 int
 new_tmp_common(int *fd, char **path, int type,
     char *tmpdir, const char *template)
@@ -443,20 +427,8 @@ world_writeable_and_sticky(
 		goto sticky_hell;
 	}
 
-	/* must be fully executable
-	 * by everyone, or openat2
-	 * becomes unreliable**
-	 *
-	 * TODO: loosen these, as a toggle.
-	 * execution rights isn't
-	 * really a requirement for
-	 * TMPDIR, except maybe search,
-	 * but this function will be
-	 * generalised at some point
-	 * for use in other tools
-	 * besides just mkhtemp.
-	 */
-	/*
+	/* all of these checks are probably
+	 * redundant (execution rights)
 	if (!(st.st_mode & S_IXUSR) ||
 	    !(st.st_mode & S_IXGRP) ||
 	    !(st.st_mode & S_IXOTH)) {
@@ -473,7 +445,7 @@ world_writeable_and_sticky(
 	if (bypass_all_sticky_checks)
 		goto sticky_heaven; /* normal == no security */
 
-	/* unhinged leah mode:
+	/* extremely not-libc mode:
 	 */
 
 	if (st.st_mode & S_IWOTH) { /* world writeable */
@@ -488,9 +460,7 @@ world_writeable_and_sticky(
 		goto sticky_hell; /* not sticky */
 	}
 
-	/* if anyone even looks at you funny, drop
-	 * everything on the floor and refuse to function
-	 */
+	/* for good measure */
 	if (faccessat(dirfd, 	".", X_OK, AT_EACCESS) < 0)
 		goto sticky_hell;
 
@@ -503,7 +473,6 @@ world_writeable_and_sticky(
 	goto sticky_hell; /* heaven visa denied */
 
 sticky_heaven:
-/* i like the one in hamburg better */
 
 	close_no_err(&dirfd);
 	errno = saved_errno;
@@ -515,10 +484,7 @@ sticky_hell:
 	if (errno == saved_errno)
 		errno = EPERM;
 
-	saved_errno = errno;
-
 	close_no_err(&dirfd);
-
 	errno = saved_errno;
 
 	return 0;
@@ -909,11 +875,9 @@ retry_rand:
 
 /* WARNING: **ONCE** per file.
  *
- *	!!! DO NOT RUN TWICE PER FILE. BEWARE OF THE DEMON !!!
- *	               watch out for spikes!
- */
-/* TODO: bad_flags can be negative, and is
- *       ignored if it is. should we err instead?
+ * some of these checks will trip up
+ * if you do them twice; all of them
+ * only need to be done once anyway.
  */
 int secure_file(int *fd,
     struct stat *st,
@@ -945,7 +909,7 @@ int secure_file(int *fd,
 	if (check_seek) {        /***********/
 		if (lseek(*fd, 0, SEEK_CUR) == (off_t)-1)
 			goto err_demons;
-	} /* don't release the demon */
+	} /* don't release the demon! */
 
 	if (if_err(st->st_nlink != 1, ELOOP) ||
 	    if_err(st->st_uid != geteuid() && geteuid() != 0, EPERM) ||

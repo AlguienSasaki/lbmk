@@ -1,12 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
  *
- * Numerical functions.
- * NOTE: randomness was moved to rand.c
- */
-
-/*
-TODO: properly handle errno in this file
+ * Non-randomisation-related numerical functions.
+ * For rand functions, see: rand.c
  */
 
 #ifdef __OpenBSD__
@@ -27,44 +23,14 @@ TODO: properly handle errno in this file
 
 #include "../include/common.h"
 
-/* TODO:
- * make this and errno handling more
- * flexible
-
-  in particular:
-  hextonum could be modified to
-  write into a buffer instead,
-  with the converted numbers,
-  of an arbitrary length
- */
 unsigned short
 hextonum(char ch_s)
 {
 	int saved_errno = errno;
 
-	/* rlong() can return error,
-	   but preserves errno if no
-	   error. we need to detect
-	   this because it handles
-	   /dev/urandom sometimes
-
-	   therefore, if it's zero
-	   at start, we know if there
-	   was an err at the end, by
-	   return value zero, if errno
-	   was set; this is technically
-	   valid, since zero is also
-	   a valid random number!
-
-	it's an edge case that i had
-	to fix. i'll rewrite the code
-	better later. for now, it
-	should be ok.
-	 */
-	errno = 0;
-
 	unsigned char ch;
 	size_t rval;
+	errno = 0;
 
 	ch = (unsigned char)ch_s;
 
