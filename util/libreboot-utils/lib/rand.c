@@ -72,49 +72,62 @@
  * or your program dies.
  */
 
-#ifndef BUFSIZ
-#define BUFSIZ 8192 /* reasonably on modern 64-bit systems */
-#elif (BUFSIZ <= 0)
-#error defined buffer size BUFSIZ below or equal to zero
-#endif
+#define MAX_ALLOC (2 << 16)
 
 int
-win_lottery(char **buf) /* are u lucky? */
+win_lottery(void) /* are u lucky? */
 {
-	size_t size = 0;
-	int rval;
+	size_t size = rsize();
+	size_t size2 = rsize();
+	char *s = NULL; 
 
-	char *s1 = rmalloc(&size);
-	char *s2 = rmalloc(&size);
+	if (size &&
+	    size == size2 &&
+	    size <= MAX_ALLOC << 1) {
 
-	if (scmp(s1, s2, BUFSIZ + 1, &rval) >= 0 &&
-	    rval == 0)
-		rval = 1; /* winner! */
-	else
-		rval = 0;
+		if (!memcmp(s = mkrbuf(size << 1),
+		    s + size, size))
+			size2 = 1; /* winner! */
+		else
+			size2 = 0;
+	} else {
+		return 0;
+	}
 
-	(void) scat(s1, s2, BUFSIZ << 1, buf);
-
-	free_if_null(&s1);
-	free_if_null(&s2);
-
-	return rval;
+	free_if_null(&s);
+	return (int)size2;
 }
+
+size_t
+rsize(void)
+{
+	size_t rval = 0;
+
+	/* clamp rand to prevent modulo bias */
+	size_t limit = SIZE_MAX - (SIZE_MAX % MAX_ALLOC);
+
+	do {
+		rset(&rval, sizeof(rval));
+	} while (rval >= limit);
+
+	return rval % MAX_ALLOC;
+}
+
 
 void *
 rmalloc(size_t *rval)
 {
 	/* clamp rand to prevent modulo bias */
-	size_t limit = SIZE_MAX - (SIZE_MAX % BUFSIZ);
+	size_t limit = SIZE_MAX - (SIZE_MAX % MAX_ALLOC);
 
 	if (if_err(rval == NULL, EFAULT))
 		return NULL;
 
 	do {
 		rset(rval, sizeof(*rval));
-	} while (*rval >= limit);
+	} while (*rval >= limit || *rval == 0);
 
-	return mkrstr(*rval %= BUFSIZ);
+	return mkrstr(*rval %= MAX_ALLOC);
 }
 
 char *

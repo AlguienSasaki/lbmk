@@ -7,15 +7,12 @@
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "include/common.h"
 
 int
 main(int argc, char *argv[])
 {
-	char *s1 = NULL;
-	int rval = 0;
-
+	int lucky;
 #if defined(__OpenBSD__) && defined(OpenBSD)
 #if (OpenBSD) >= 509
 	if (pledge("stdio", NULL) == -1)
@@ -24,16 +21,10 @@ main(int argc, char *argv[])
 #endif
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-	if (win_lottery(&s1))
-		rval = 1;
+	lucky = win_lottery();
 
-	if (s1 != NULL) {
-		printf("%s\n\n", s1);
-		free(s1);
-	}
-
-	printf("%s\n", rval ? "You won!" : "You lose! Sorry!");
-	return rval? EXIT_SUCCESS : EXIT_FAILURE;
+	printf("%s\n", lucky ? "You won!" : "You lose! Sorry!");
+	return lucky ? EXIT_SUCCESS : EXIT_FAILURE;
 }/*
 
   ( >:3 )    
