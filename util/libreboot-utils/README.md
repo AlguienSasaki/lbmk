@@ -24,9 +24,16 @@ the kernel/system), voluntarily error out (halt all
 operation) if accessing files you don't own - that's why
 sticky bits are checked for example, even when you're root.
 
+It... blocks symlinks, relative paths, attempts to prevent
+directory escape (outside of the directory that the file
+you're creating is in), basically implementing an analog
+of something like e.g. unveil, but in userspace!
+
 Mkhtemp is designed to be the most secure implementation
 possible, of mktemp, offering a heavy amount of hardening
-over traditional mktemp.
+over traditional mktemp. Written in C89, and the plan is
+very much to keep this code portable over time - patches
+very much welcome.
 
 i.e. please read the source code
 
