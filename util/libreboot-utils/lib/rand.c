@@ -72,62 +72,20 @@
  * or your program dies.
  */
 
-#define MAX_ALLOC (2 << 16)
-
-int
-win_lottery(void) /* are u lucky? */
-{
-	size_t size = rsize();
-	size_t size2 = rsize();
-	char *s = NULL; 
-
-	if (size &&
-	    size == size2 &&
-	    size <= MAX_ALLOC << 1) {
-
-		if (!memcmp(s = mkrbuf(size << 1),
-		    s + size, size))
-			size2 = 1; /* winner! */
-		else
-			size2 = 0;
-	} else {
-		return 0;
-	}
-
-	free_if_null(&s);
-	return (int)size2;
-}
-
-size_t
-rsize(void)
-{
-	size_t rval = 0;
-
-	/* clamp rand to prevent modulo bias */
-	size_t limit = SIZE_MAX - (SIZE_MAX % MAX_ALLOC);
-
-	do {
-		rset(&rval, sizeof(rval));
-	} while (rval >= limit);
-
-	return rval % MAX_ALLOC;
-}
-
-
 void *
 rmalloc(size_t *rval)
 {
-	/* clamp rand to prevent modulo bias */
-	size_t limit = SIZE_MAX - (SIZE_MAX % MAX_ALLOC);
+	return if_err(rval == NULL, EFAULT) ?
+	    NULL : mkrstr(*rval = rsize(BUFSIZ));
+}
 
-	if (if_err(rval == NULL, EFAULT))
-		return NULL;
+size_t
+rsize(size_t n)
+{
+	size_t rval = SIZE_MAX;
+	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
 
-	do {
-		rset(rval, sizeof(*rval));
-	} while (*rval >= limit || *rval == 0);
-
-	return mkrstr(*rval %= MAX_ALLOC);
+	return rval % n;
 }
 
 char *
@@ -157,7 +115,7 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 void *
 mkrbuf(size_t n)
 {
-	void *buf;
+	void *buf = "";
 
 	if (n == 0)
 		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");

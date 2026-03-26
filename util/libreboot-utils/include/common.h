@@ -391,8 +391,7 @@ void *rmalloc(size_t *size); /* don't ever use this */
 void rset(void *buf, size_t n);
 void *mkrbuf(size_t n);
 char *mkrstr(size_t n);
-int win_lottery(void);
-size_t rsize(void);
+size_t rsize(size_t n);
 
 /* Helper functions for command: dump
  */
