@@ -117,6 +117,57 @@ sdup(const char *s,
 	return 0;
 }
 
+/* concatenate N number of strings */
+/* slen already checks null/termination */
+int
+scatn(ssize_t sc, const char **sv,
+    size_t max, char **rval)
+{
+	ssize_t i = 0;
+
+	size_t ts = 0;
+	size_t *size = NULL;
+
+	char *ct = NULL;
+	int saved_errno = errno;
+
+	if (if_err(sc <= 0, EINVAL) ||
+	    if_err(sc > SIZE_MAX / sizeof(size_t), EOVERFLOW) ||
+	    if_err(sv == NULL, EINVAL) ||
+	    if_err((size = malloc(sizeof(size_t) * sc)) == NULL, ENOMEM))
+		goto err;
+
+	for (i = 0; i < sc; i++, ts += size[i])
+		if (if_err(sv[i] == NULL, EINVAL) ||
+		    slen(sv[i], max, &size[i]) < 0 ||
+		    if_err(size[i] > max - 1, EOVERFLOW) ||
+		    if_err((size[i] + ts) < ts, EOVERFLOW))
+			goto err;
+
+	if (if_err(ts > SIZE_MAX - 1, EOVERFLOW) ||
+	    if_err(ts > max - 1, EOVERFLOW) ||
+	    if_err((ct = malloc(ts + 1)) == NULL, ENOMEM))
+		goto err;
+
+	for (ts = i = 0; i < sc; i++, ts += size[i])
+		memcpy(ct + ts, sv[i], size[i]);
+
+	*(ct + ts) = '\0';
+	*rval = ct;
+
+	errno = saved_errno;
+	return 0;
+err:
+	if (ct != NULL)
+		free(ct);
+	if (size != NULL)
+		free(size);
+	if (errno == saved_errno)
+		errno = EFAULT;
+
+	return -1;
+}
+
 /* strict strcat */
 int
 scat(const char *s1, const char *s2,

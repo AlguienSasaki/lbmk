@@ -375,6 +375,8 @@ int scmp(const char *a, const char *b,
     size_t maxlen, int *rval);
 int sdup(const char *s,
     size_t n, char **dest);
+int scatn(ssize_t sc, const char **sv,
+    size_t max, char **rval);
 int scat(const char *s1, const char *s2,
     size_t n, char **dest);
 int dcat(const char *s, size_t n,
