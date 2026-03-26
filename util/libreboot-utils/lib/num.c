@@ -30,7 +30,6 @@ hextonum(char ch_s)
 
 	unsigned char ch;
 	size_t rval;
-	errno = 0;
 
 	ch = (unsigned char)ch_s;
 
@@ -51,8 +50,6 @@ hextonum(char ch_s)
 	if (ch == '?' || ch == 'x') {
 
 		rset(&rval, sizeof(rval));
-		if (errno > 0)
-			goto err_hextonum;
 
 		goto hextonum_success;
 	}
