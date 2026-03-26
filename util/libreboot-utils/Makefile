@@ -145,7 +145,7 @@ uninstall:
 
 clean:
 	rm -f $(PROG) $(PROGMKH) $(OBJS_NVMUTIL) $(OBJS_MKHTEMP) \
-	    $(OBJS_LOTTERY)
+	    $(OBJS_LOTTERY) $(PROGLOT)
 
 distclean: clean
 
