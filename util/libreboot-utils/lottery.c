@@ -13,8 +13,8 @@
 int
 main(int argc, char *argv[])
 {
-	size_t s;
-	char *s1;
+	char *s1 = NULL;
+	int rval = 0;
 
 #if defined(__OpenBSD__) && defined(OpenBSD)
 #if (OpenBSD) >= 509
@@ -22,36 +22,20 @@ main(int argc, char *argv[])
 		err_no_cleanup(0, errno, "openbsd won it");
 #endif
 #endif
-
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-	if (win_lottery()) {
-		printf("You won!");
-		return 0;
-	}
-
-	s1 = rmalloc(&s);
+	if (win_lottery(&s1))
+		rval = 1;
 
 	if (s1 != NULL) {
-		printf("%s\n\nYou lose. Sorry!\n", s1);
+		printf("%s\n\n", s1);
 		free(s1);
 	}
 
-	return 1;
+	printf("%s\n", rval ? "You won!" : "You lose! Sorry!");
+	return rval? EXIT_SUCCESS : EXIT_FAILURE;
 }/*
 
   ( >:3 )    
    /| |\
     / \                                                                      */
-
-
-
-
-
-
-
-
-
-
-
-

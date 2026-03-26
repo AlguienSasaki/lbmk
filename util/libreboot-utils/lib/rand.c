@@ -20,6 +20,9 @@
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
+#elif defined(__linux__)
+#include <sys/random.h>
+#include <sys/syscall.h>
 #endif
 
 #include <fcntl.h>
@@ -70,7 +73,7 @@
  */
 
 int
-win_lottery(void) /* are u lucky? */
+win_lottery(char **buf) /* are u lucky? */
 {
 	size_t size = 0;
 	int rval;
@@ -83,6 +86,8 @@ win_lottery(void) /* are u lucky? */
 		rval = 1; /* winner! */
 	else
 		rval = 0;
+
+	(void) scat(s1, s2, BUFSIZ << 1, buf);
 
 	free_if_null(&s1);
 	free_if_null(&s2);
