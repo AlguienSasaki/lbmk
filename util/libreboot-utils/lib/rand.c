@@ -126,7 +126,7 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 	if (n == 0)
 		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
 
-	if (n == SIZE_MAX)
+	if (n >= SIZE_MAX - 1)
 		err_no_cleanup(0, EOVERFLOW, "mkrbuf: overflow");
 
 	if (if_err((s = mkrbuf(n + 1)) == NULL, EFAULT))
@@ -148,6 +148,9 @@ mkrbuf(size_t n)
 
 	if (n == 0)
 		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
+
+	if (n >= SIZE_MAX - 1)
+		err_no_cleanup(0, EOVERFLOW, "integer overflow in mkrbuf");
 
 	if ((buf = malloc(n)) == NULL)
 		err_no_cleanup(0, ENOMEM, "mkrbuf: malloc");
