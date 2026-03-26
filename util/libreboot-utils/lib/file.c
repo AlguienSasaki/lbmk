@@ -69,29 +69,6 @@ err_same_file:
 	return -1;
 }
 
-/* open() but with abort traps
- */
-/* TODO: also support other things here than files.
-	and then use, throughout the program.
-	in particular, use of openat might help
-	(split the path)
-	(see: link attack mitigations throughout nvmutil)
-
-	make it return, and handle the return value/errno
-
-	(this could return e.g. EINTR)
-
-  TODO: this function is not used by mkhtemp, nor will
-       it probably be, it's currently used by nvmutil,
-	for opening intel gbe nvm config files. i can
-      probably remove it though and unify witth some
-      of the verification code now used for mkhtemp
-
-TODO: and don't abort. return -1. and handle in the caller.
-
-minor obstacle: the mkhtemp code always requires absolute
-paths, whereas the gbe editor takes relative paths.
- */
 void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
@@ -107,10 +84,6 @@ xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 	if (lseek_on_eintr(*fd_ptr, 0, SEEK_CUR, 1, 1) == (off_t)-1)
 		err_no_cleanup(0, errno, "%s: file not seekable", path);
 }
-
-/* fsync() the directory of a file,
- * useful for atomic writes
- */
 
 int
 fsync_dir(const char *path)
@@ -195,19 +168,6 @@ err_fsync_dir:
 
 	return -1;
 }
-
-/*
- * Safe I/O functions wrapping around
- * read(), write() and providing a portable
- * analog of both pread() and pwrite().
- * These functions are designed for maximum
- * robustness, checking NULL inputs, overflowed
- * outputs, and all kinds of errors that the
- * standard libc functions don't.
- *
- * Looping on EINTR and EAGAIN is supported.
- * EINTR/EAGAIN looping is done indefinitely.
- */
 
 /* rw_file_exact() - Read perfectly or die
  *
@@ -316,12 +276,6 @@ err_rw_file_exact:
 
 /* prw() - portable read-write with more
  * safety checks than barebones libc
- *
- * portable pwrite/pread on request, or real
- * pwrite/pread libc functions can be used.
- * the portable (non-libc) pread/pwrite is not
- * thread-safe, because it does not prevent or
- * mitigate race conditions on file descriptors
  *
  * If you need real pwrite/pread, just compile
  * with flag: REAL_POS_IO=1
@@ -568,8 +522,6 @@ err_rw_over_nrw:
 	return -1;
 }
 
-#if !defined(REAL_POS_IO) || \
-    REAL_POS_IO < 1
 off_t
 lseek_on_eintr(int fd, off_t off, int whence,
     int loop_eagain, int loop_eintr)
@@ -588,7 +540,6 @@ lseek_on_eintr(int fd, off_t off, int whence,
 
 	return old;
 }
-#endif
 
 /* two functions that reduce sloccount by
  * two hundred lines... no, now three. */
@@ -899,8 +850,6 @@ fs_open_component(int dirfd, const char *name,
 	    (is_last ? flags : (O_RDONLY | O_DIRECTORY)) |
 	    O_NOFOLLOW | O_CLOEXEC, (flags & O_CREAT) ? 0600 : 0);
 
-	/* the patient always lies
-	 */
 	if (!is_last) {
 
 		if (if_err(fd < 0, EBADF) ||

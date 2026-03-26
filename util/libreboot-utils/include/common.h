@@ -83,7 +83,7 @@ int fchmod(int fd, mode_t mode);
 #endif
 
 #ifndef REAL_POS_IO
-#define REAL_POS_IO 0
+#define REAL_POS_IO 1
 #endif
 
 #ifndef LOOP_EAGAIN
@@ -473,11 +473,8 @@ int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int check_file(int fd, struct stat *st);
 ssize_t rw_over_nrw(ssize_t r, size_t nrw);
-#if !defined(REAL_POS_IO) || \
-    REAL_POS_IO < 1
 off_t lseek_on_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
-#endif
 int try_err(int loop_err, int errval);
 
 /* Error handling and cleanup
