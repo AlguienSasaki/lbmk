@@ -1,14 +1,34 @@
 Mkhtemp - Hardened mktemp
 -------------------------
 
-Create new files and directories randomly as determined by
-the user's TMPDIR, or fallback. Portable to Linux and BSD.
+Just like normal mktemp, but hardened.
 
-NOTE: on Linux, it uses openat2 for i/o, which is more
-secure. BSDs only have the older openat for now, so
-mkhtemp uses that there. However, even there, there are
-several ways in which mkhtemp is better than every
-previous mktemp.
+Create new files and directories randomly as determined by
+the user's TMPDIR, or fallback. These temporary files and
+directories can be generated from e.g. shell scripts, running
+mkhtemp. There is also a library that you could use in your
+program. Portable to Linux and BSD. **WORK IN PROGRESS.
+This is a very new project. Expect bugs - a stable release
+will be announced, when the code has matured.**
+
+A brief summary of *why* mkhtemp is more secure (more
+details provided later in this readme - please also
+read the source code):
+
+Detect and mitigate symlink attacks, directory access
+race conditions, unsecure TMPDIR (e.g. bad enforce sticky
+bit policy on world writeable dirs), implement in user
+space a virtual sandbox (block directory escape and resolve
+paths by walking from `/` manually instead of relying on
+the kernel/system), voluntarily error out (halt all
+operation) if accessing files you don't own - that's why
+sticky bits are checked for example, even when you're root.
+
+Mkhtemp is designed to be the most secure implementation
+possible, of mktemp, offering a heavy amount of hardening
+over traditional mktemp.
+
+i.e. please read the source code
 
 ```
 /*
@@ -18,6 +38,10 @@ previous mktemp.
  * when it's ready. Read the src.
  *
  * What you see is an early beta.
+ *
+ * Please do not merge this in
+ * your Linux distro package repo
+ * yet (unless maybe you're AUR).
  */
 ```
 
@@ -50,25 +74,6 @@ time of writing, mkhtemp is very new, and under
 development. A stable release will be announced when ready.
 
 ### What does mkhtemp do differently?
-
-#### Short version:
-
-Detect and mitigate symlink attacks, directory access
-race conditions, unsecure TMPDIR (e.g. bad enforce sticky
-bit policy on world writeable dirs), implement in user
-space a virtual sandbox (block directory escape and resolve
-paths by walking from `/` manually instead of relying on
-the kernel/system), voluntarily error out (halt all
-operation) if accessing files you don't own - that's why
-sticky bits are checked for example, even when you're root.
-
-Mkhtemp is designed to be the most secure implementation
-possible, of mktemp, offering a heavy amount of hardening
-over traditional mktemp.
-
-i.e. please read the source code
-
-#### Long version:
 
 This software attempts to provide mitigation against
 several TOCTOU-based
