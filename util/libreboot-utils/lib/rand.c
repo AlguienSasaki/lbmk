@@ -81,7 +81,7 @@ win_lottery(char **buf) /* are u lucky? */
 	char *s1 = rmalloc(&size);
 	char *s2 = rmalloc(&size);
 
-	if (scmp(s1, s2, BUFSIZ + 2, &rval) >= 0 &&
+	if (scmp(s1, s2, BUFSIZ + 1, &rval) >= 0 &&
 	    rval == 0)
 		rval = 1; /* winner! */
 	else
@@ -98,10 +98,16 @@ win_lottery(char **buf) /* are u lucky? */
 void *
 rmalloc(size_t *rval)
 {
+	/* clamp rand to prevent modulo bias */
+	size_t limit = SIZE_MAX - (SIZE_MAX % BUFSIZ);
+
 	if (if_err(rval == NULL, EFAULT))
 		return NULL;
 
-	rset(rval, sizeof(*rval));
+	do {
+		rset(rval, sizeof(*rval));
+	} while (*rval >= limit);
+
 	return mkrstr(*rval %= BUFSIZ);
 }
 
