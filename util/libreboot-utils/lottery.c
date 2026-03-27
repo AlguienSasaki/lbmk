@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT                                        ( >:3 )
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>                    /| |\
-                                                                         / \ */
+   Presenting: a love song about non-determinism.                        / \ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h> /*                           (^.>)  - are u lucky?       */
