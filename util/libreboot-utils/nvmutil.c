@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	if (f->io_err_gbe_bin)
 		b0rk(EIO, "%s: error writing final file");
 
-	free_if_null(&f->tname);
+	free_and_set_null(&f->tname);
 
 	return EXIT_SUCCESS;
 }

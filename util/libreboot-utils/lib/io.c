@@ -266,7 +266,7 @@ write_to_gbe_bin(void)
 
 			/* removed by rename
 			 */
-			free_if_null(&f->tname);
+			free_and_set_null(&f->tname);
 		}
 	}
 

@@ -139,7 +139,7 @@ xstart(int argc, char *argv[])
 	if (us.f.tmpbase == NULL)
 		err_no_cleanup(0, errno, "strdup tmpbase");
 
-	free_if_null(&tmpdir);
+	free_and_set_null(&tmpdir);
 
 	if (us.f.tname == NULL)
 		err_no_cleanup(0, errno, "x->f.tname null");
@@ -219,8 +219,8 @@ exit_cleanup(void)
 				close_err = 1;
 
 		close_no_err(&f->dirfd);
-		free_if_null(&f->base);
-		free_if_null(&f->tmpbase);
+		free_and_set_null(&f->base);
+		free_and_set_null(&f->tmpbase);
 	}
 
 	if (saved_errno)

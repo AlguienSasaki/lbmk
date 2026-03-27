@@ -184,7 +184,7 @@ err:
 	else
 		saved_errno = errno = EIO;
 
-	free_if_null(&dest);
+	free_and_set_null(&dest);
 
 	close_no_err(&dirfd);
 	close_no_err(fd);
@@ -619,7 +619,7 @@ err:
 	close_no_err(fd);
 
 success:
-	free_if_null(&fname_copy);
+	free_and_set_null(&fname_copy);
 
 	return (*fd >= 0) ? *fd : -1;
 }

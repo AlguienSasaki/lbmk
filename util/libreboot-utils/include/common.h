@@ -543,7 +543,7 @@ int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);
 int fs_open(const char *path, int flags);
 void close_no_err(int *fd);
-void free_if_null(char **buf);
+void free_and_set_null(char **buf);
 int close_warn(int *fd, char *s);
 struct filesystem *rootfs(void);
 int fs_resolve_at(int dirfd, const char *path, int flags);

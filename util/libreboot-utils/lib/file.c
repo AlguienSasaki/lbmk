@@ -153,7 +153,7 @@ fsync_dir(const char *path)
 		goto err_fsync_dir;
 	}
 
-	free_if_null(&dirbuf);
+	free_and_set_null(&dirbuf);
 
 	errno = saved_errno;
 	return 0;
@@ -163,7 +163,7 @@ err_fsync_dir:
 	if (errno == saved_errno)
 		errno = EIO;
 
-	free_if_null(&dirbuf);
+	free_and_set_null(&dirbuf);
 	close_no_err(&dirfd);
 
 	return -1;
@@ -581,7 +581,7 @@ try_err(int loop_err, int errval)
 }
 
 void
-free_if_null(char **buf)
+free_and_set_null(char **buf)
 {
 	if (buf == NULL || *buf == NULL)
 		return;
@@ -902,7 +902,7 @@ fs_dirname_basename(const char *path,
 		*base = buf;
 	} else {
 		errno = EINVAL;
-		free_if_null(&buf);
+		free_and_set_null(&buf);
 		return -1;
 	}
 
