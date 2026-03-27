@@ -83,6 +83,9 @@ size_t
 rsize(size_t n)
 {
 	size_t rval = SIZE_MAX;
+	if (!n)
+		err_no_cleanup(0, EFAULT, "rsize: division by zero");
+
 	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
 
 	return rval % n;
