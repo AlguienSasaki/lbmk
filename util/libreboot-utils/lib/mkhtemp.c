@@ -206,8 +206,8 @@ env_tmpdir(int bypass_all_sticky_checks, char **tmpdir,
 	int allow_noworld_unsticky;
 	int saved_errno = errno;
 
-	char tmp[] = "/tmp";
-	char vartmp[] = "/var/tmp";
+	static const char tmp[] = "/tmp";
+	static const char vartmp[] = "/var/tmp";
 
 	/* tmpdir is a user override, if set */
 	if (override_tmpdir == NULL)
@@ -238,26 +238,26 @@ env_tmpdir(int bypass_all_sticky_checks, char **tmpdir,
 
 	allow_noworld_unsticky = 0;
 
-	if (world_writeable_and_sticky("/tmp",
+	if (world_writeable_and_sticky(tmp,
 	    allow_noworld_unsticky,
 	    bypass_all_sticky_checks)) {
 
 		if (tmpdir != NULL)
-			*tmpdir = tmp;
+			*tmpdir = (char *)tmp;
 
 		errno = saved_errno;
-		return "/tmp";
+		return (char *)tmp;
 	}
 
-	if (world_writeable_and_sticky("/var/tmp",
+	if (world_writeable_and_sticky(vartmp,
 	    allow_noworld_unsticky,
 	    bypass_all_sticky_checks)) {
 
 		if (tmpdir != NULL)
-			*tmpdir = vartmp;
+			*tmpdir = (char *)vartmp;
 
 		errno = saved_errno;
-		return "/var/tmp";
+		return (char *)vartmp;
 	}
 
 	return NULL;
