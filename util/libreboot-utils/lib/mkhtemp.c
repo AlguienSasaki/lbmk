@@ -821,6 +821,12 @@ err:
 }
 #endif
 
+/* TODO: potential infinite loop under entropy failure.
+ * e.g. keeps returning low quality RNG, or atacker
+ * has control (DoS attack potential).
+ * possible solution: add a timeout (and abort if
+ * the timeout is reached)
+ */
 int
 mkhtemp_fill_random(char *p, size_t xc)
 {

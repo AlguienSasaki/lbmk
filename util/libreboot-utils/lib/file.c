@@ -691,6 +691,10 @@ rootfs(void)
 }
 
 /* filesystem sandboxing in userspace
+ * TODO:
+	missing length bound check.
+	potential CPU DoS on very long paths, spammed repeatedly.
+	perhaps cap at PATH_LEN?
  */
 int
 fs_resolve_at(int dirfd, const char *path, int flags)
@@ -754,6 +758,15 @@ err:
 	return -1;
 }
 
+/* NOTE:
+	rejects . and .. but not empty strings
+	after normalisation. edge case:
+	//////
+
+	normalised implicitly, but might be good
+	to add a defensive check regardless. code
+	probably not exploitable in current state.
+ */
 int
 fs_next_component(const char **p,
     char *name, size_t namesz)
