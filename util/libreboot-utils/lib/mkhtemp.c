@@ -479,7 +479,6 @@ sticky_hell:
 		errno = EPERM;
 
 	close_no_err(&dirfd);
-	errno = saved_errno;
 
 	return 0;
 }
