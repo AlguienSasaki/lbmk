@@ -225,10 +225,12 @@ int fchmod(int fd, mode_t mode);
 /* command table
  */
 
+typedef void (*func_t)(void);
+
 struct commands {
 	size_t chk;
 	char *str;
-	void (*run)(void);
+	func_t run;
 	int argc;
 	unsigned char arg_part;
 	unsigned char chksum_read;
@@ -488,12 +490,11 @@ int try_err(int loop_err, int errval);
  */
 
 void usage(void);
-void err_no_cleanup(int stfu, int nvm_errval, const char *msg, ...);
-void b0rk(int nvm_errval, const char *msg, ...);
-int exit_cleanup(void);
+void err_exit(int nvm_errval, const char *msg, ...);
+func_t errhook(func_t ptr); /* hook function for cleanup on err */
 const char *getnvmprogname(void);
-
-void err_mkhtemp(int stfu, int errval, const char *msg, ...);
+void no_op(void);
+void err_mkhtemp(int errval, const char *msg, ...);
 
 /* libc hardening
  */

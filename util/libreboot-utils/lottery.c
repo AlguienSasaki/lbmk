@@ -11,6 +11,9 @@
 #include "include/common.h"
 
 static void
+exit_cleanup(void);
+
+static void
 spew_buf(const void *data, size_t len);
 
 int
@@ -21,6 +24,8 @@ main(int argc, char **argv)
 
 	(void) argc, (void) argv;
 	xpledgex("stdio", NULL);
+
+	(void) errhook(exit_cleanup);
 
 	buf = mkrbuf(BUFSIZ + 1);
 	if (!memcmp(buf, buf + (BUFSIZ >> 1), BUFSIZ >> 1))
@@ -72,4 +77,10 @@ spew_buf(const void *data, size_t len)
 	}
 
 	printf("%08zx\n", len);
+}
+
+static void
+exit_cleanup(void)
+{
+	return;
 }

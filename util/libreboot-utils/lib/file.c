@@ -73,16 +73,16 @@ void
 xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
 {
 	if ((*fd_ptr = open(path, flags)) < 0)
-		err_no_cleanup(0, errno, "%s", path);
+		err_exit(errno, "%s", path);
 
 	if (fstat(*fd_ptr, st) < 0)
-		err_no_cleanup(0, errno, "%s: stat", path);
+		err_exit(errno, "%s: stat", path);
 
 	if (!S_ISREG(st->st_mode))
-		err_no_cleanup(0, errno, "%s: not a regular file", path);
+		err_exit(errno, "%s: not a regular file", path);
 
 	if (lseek_on_eintr(*fd_ptr, 0, SEEK_CUR, 1, 1) == (off_t)-1)
-		err_no_cleanup(0, errno, "%s: file not seekable", path);
+		err_exit(errno, "%s: file not seekable", path);
 }
 
 int

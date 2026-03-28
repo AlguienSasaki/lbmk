@@ -59,10 +59,10 @@ read_checksums(void)
 	if (_num_invalid >= _max_invalid) {
 
 		if (_max_invalid == 1)
-			b0rk(ECANCELED, "%s: part %lu has a bad checksum",
+			err_exit(ECANCELED, "%s: part %lu has a bad checksum",
 			    f->fname, (size_t)f->part);
 
-		b0rk(ECANCELED, "%s: No valid checksum found in file",
+		err_exit(ECANCELED, "%s: No valid checksum found in file",
 		    f->fname);
 	}
 }

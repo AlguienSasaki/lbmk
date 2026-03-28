@@ -46,27 +46,27 @@ sanitize_command_index(size_t c)
 	check_command_num(c);
 
 	if (cmd->argc < 3)
-		b0rk(EINVAL, "cmd index %lu: argc below 3, %d",
+		err_exit(EINVAL, "cmd index %lu: argc below 3, %d",
 		    (size_t)c, cmd->argc);
 
 	if (cmd->str == NULL)
-		b0rk(EINVAL, "cmd index %lu: NULL str",
+		err_exit(EINVAL, "cmd index %lu: NULL str",
 		    (size_t)c);
 
 	if (*cmd->str == '\0')
-		b0rk(EINVAL, "cmd index %lu: empty str",
+		err_exit(EINVAL, "cmd index %lu: empty str",
 		    (size_t)c);
 
 	if (slen(cmd->str, MAX_CMD_LEN +1, &rval) < 0)
-		b0rk(errno, "Could not get command length");
+		err_exit(errno, "Could not get command length");
 
 	if (rval > MAX_CMD_LEN) {
-		b0rk(EINVAL, "cmd index %lu: str too long: %s",
+		err_exit(EINVAL, "cmd index %lu: str too long: %s",
 		    (size_t)c, cmd->str);
 	}
 
 	if (cmd->run == NULL)
-		b0rk(EINVAL, "cmd index %lu: cmd ptr null",
+		err_exit(EINVAL, "cmd index %lu: cmd ptr null",
 		    (size_t)c);
 
 	check_bin(cmd->arg_part, "cmd.arg_part");
@@ -80,19 +80,19 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		b0rk(EINVAL, "Unsupported rw_size: %lu",
+		err_exit(EINVAL, "Unsupported rw_size: %lu",
 		    (size_t)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		b0rk(EINVAL, "rw_size larger than GbE part: %lu",
+		err_exit(EINVAL, "rw_size larger than GbE part: %lu",
 		    (size_t)gbe_rw_size);
 
 	_flag = (cmd->flags & O_ACCMODE);
 
 	if (_flag != O_RDONLY &&
 	    _flag != O_RDWR)
-		b0rk(EINVAL, "invalid cmd.flags setting");
+		err_exit(EINVAL, "invalid cmd.flags setting");
 }
 
 void
@@ -110,7 +110,7 @@ set_cmd(int argc, char *argv[])
 		cmd = x->cmd[c].str;
 
 		if (scmp(argv[2], cmd, MAX_CMD_LEN, &rval) < 0)
-			err_no_cleanup(0, EINVAL,
+			err_exit(EINVAL,
 			    "could not compare command strings");
 		if (rval != 0)
 			continue; /* not the right command */
@@ -123,7 +123,7 @@ set_cmd(int argc, char *argv[])
 			return;
 		}
 
-		err_no_cleanup(0, EINVAL,
+		err_exit(EINVAL,
 		    "Too few args on command '%s'", cmd);
 	}
 
@@ -148,11 +148,11 @@ set_cmd_args(int argc, char *argv[])
 	/* Maintainer bug
 	 */
 	if (cmd->arg_part && argc < 4)
-		b0rk(EINVAL,
+		err_exit(EINVAL,
 		    "arg_part set for command that needs argc4");
 
 	if (cmd->arg_part && i == CMD_SETMAC)
-		b0rk(EINVAL,
+		err_exit(EINVAL,
 		    "arg_part set on CMD_SETMAC");
 
 	if (i == CMD_SETMAC) {
@@ -174,13 +174,13 @@ conv_argv_part_num(const char *part_str)
 	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		b0rk(EINVAL, "Partnum string '%s' wrong length", part_str);
+		err_exit(EINVAL, "Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined
 	 */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
-		b0rk(EINVAL, "Bad part number (%c)", ch);
+		err_exit(EINVAL, "Bad part number (%c)", ch);
 
 	return (size_t)(ch - '0');
 }
@@ -189,7 +189,7 @@ void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		b0rk(EINVAL, "Invalid run_cmd arg: %lu",
+		err_exit(EINVAL, "Invalid run_cmd arg: %lu",
 		    (size_t)c);
 }
 
@@ -205,7 +205,7 @@ valid_command(size_t c)
 	cmd = &x->cmd[c];
 
 	if (c != cmd->chk)
-		b0rk(EINVAL,
+		err_exit(EINVAL,
 		    "Invalid cmd chk value (%lu) vs arg: %lu",
 		    cmd->chk, c);
 
@@ -240,10 +240,10 @@ parse_mac_string(void)
 	size_t rval;
 
 	if (slen(x->mac.str, 18, &rval) < 0)
-		b0rk(EINVAL, "Could not determine MAC length");
+		err_exit(EINVAL, "Could not determine MAC length");
 
 	if (rval != 17)
-		b0rk(EINVAL, "MAC address is the wrong length");
+		err_exit(EINVAL, "MAC address is the wrong length");
 
 	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
 
@@ -251,10 +251,10 @@ parse_mac_string(void)
 		set_mac_byte(mac_byte);
 
 	if ((mac->mac_buf[0] | mac->mac_buf[1] | mac->mac_buf[2]) == 0)
-		b0rk(EINVAL, "Must not specify all-zeroes MAC address");
+		err_exit(EINVAL, "Must not specify all-zeroes MAC address");
 
 	if (mac->mac_buf[0] & 1)
-		b0rk(EINVAL, "Must not specify multicast MAC address");
+		err_exit(EINVAL, "Must not specify multicast MAC address");
 }
 
 void
@@ -272,7 +272,7 @@ set_mac_byte(size_t mac_byte_pos)
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac->str[mac_str_pos + 2]) != ':')
-			b0rk(EINVAL, "Invalid MAC address separator '%c'",
+			err_exit(EINVAL, "Invalid MAC address separator '%c'",
 			    separator);
 	}
 
@@ -294,9 +294,9 @@ set_mac_nib(size_t mac_str_pos,
 
 	if ((hex_num = hextonum(mac_ch)) > 15) {
 		if (hex_num >= 17)
-			b0rk(EIO, "Randomisation failure");
+			err_exit(EIO, "Randomisation failure");
 		else
-			b0rk(EINVAL, "Invalid character '%c'",
+			err_exit(EINVAL, "Invalid character '%c'",
 			    mac->str[mac_str_pos + mac_nib_pos]);
 	}
 
@@ -509,7 +509,7 @@ cat(size_t nff)
 
 	if ((size_t)x->cat != nff) {
 
-		b0rk(ECANCELED, "erroneous call to cat");
+		err_exit(ECANCELED, "erroneous call to cat");
 	}
 
 	fflush(NULL);
@@ -532,12 +532,12 @@ void
 cat_buf(unsigned char *b)
 {
 	if (b == NULL)
-		b0rk(errno, "null pointer in cat command");
+		err_exit(errno, "null pointer in cat command");
 
 	if (rw_file_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
-		b0rk(errno, "stdout: cat");
+		err_exit(errno, "stdout: cat");
 }
 void
 check_cmd(void (*fn)(void),
@@ -547,7 +547,7 @@ check_cmd(void (*fn)(void),
 	size_t i = x->i;
 
 	if (x->cmd[i].run != fn)
-		b0rk(ECANCELED, "Running %s, but cmd %s is set",
+		err_exit(ECANCELED, "Running %s, but cmd %s is set",
 		    name, x->cmd[i].str);
 
 	/* prevent second command
@@ -559,6 +559,6 @@ check_cmd(void (*fn)(void),
 void
 cmd_helper_err(void)
 {
-	b0rk(ECANCELED,
+	err_exit(ECANCELED,
 	    "Erroneously running command twice");
 }

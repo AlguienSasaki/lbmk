@@ -26,5 +26,5 @@ usage(void)
 	    util, util, util, util,
 	    util, util, util);
 
-	b0rk(EINVAL, "Too few arguments");
+	err_exit(EINVAL, "Too few arguments");
 }

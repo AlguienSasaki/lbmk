@@ -34,6 +34,9 @@
 
 #include "include/common.h"
 
+static void
+exit_cleanup(void);
+
 int
 main(int argc, char *argv[])
 {
@@ -57,10 +60,11 @@ main(int argc, char *argv[])
 
 	int fd = -1;
 	int type = MKHTEMP_FILE;
-	int stfu = 0; /* -q option */
+
+	(void) errhook(exit_cleanup);
 
 	if (lbgetprogname(argv[0]) == NULL)
-		err_no_cleanup(stfu, errno, "could not set progname");
+		err_exit(errno, "could not set progname");
 
 	/* https://man.openbsd.org/pledge.2 */
 	xpledgex("stdio flock rpath wpath cpath", NULL);
@@ -79,7 +83,6 @@ main(int argc, char *argv[])
 
 		case 'q': /* don't print errors */
 			  /* (exit status unchanged) */
-			stfu = 1;
 			break;
 
 		default:
@@ -95,14 +98,14 @@ main(int argc, char *argv[])
 	/* custom template e.g. foo.XXXXXXXXXXXXXXXXXXXXX */
 	if (template != NULL) {	
 		if (slen(template, maxlen, &tlen) < 0)
-			err_no_cleanup(stfu, EINVAL,
+			err_exit(EINVAL,
 			    "invalid template");
 
 		for (p = template + tlen;
 		    p > template && *--p == 'X'; xc++);
 
 		if (xc < 3) /* the gnu mktemp errs on less than 3 */
-			err_no_cleanup(stfu, EINVAL,
+			err_exit(EINVAL,
 			"template must have 3 X or more on end (12+ advised");
 	}
 
@@ -116,31 +119,37 @@ main(int argc, char *argv[])
 	if (tmpdir != NULL) {
 		rp = realpath(tmpdir, resolved);
 		if (rp == NULL)
-			err_no_cleanup(stfu, errno, "%s", tmpdir);
+			err_exit(errno, "%s", tmpdir);
 
 		tmpdir = resolved;
 	}
 
 	if (new_tmp_common(&fd, &s, type,
 	    tmpdir, template) < 0)
-		err_no_cleanup(stfu, errno, "%s", s);
+		err_exit(errno, "%s", s);
 
 	xpledgex("stdio", NULL);
 
 	if (s == NULL)
-		err_no_cleanup(stfu, EFAULT, "bad string initialisation");
+		err_exit(EFAULT, "bad string initialisation");
 	if (*s == '\0')
-		err_no_cleanup(stfu, EFAULT, "empty string initialisation");
+		err_exit(EFAULT, "empty string initialisation");
 	if (slen(s, maxlen, &len) < 0)
-		err_no_cleanup(stfu, EFAULT, "unterminated string initialisiert");
+		err_exit(EFAULT, "unterminated string initialisiert");
 
 	printf("%s\n", s);
 
 	return EXIT_SUCCESS;
 
 err_usage:
-	err_no_cleanup(stfu, EINVAL,
+	err_exit(EINVAL,
 	    "usage: %s [-d] [-p dir] [template]\n", getnvmprogname());
+}
+
+static void
+exit_cleanup(void)
+{
+	return;
 }/* 
 
   ( >:3 )    

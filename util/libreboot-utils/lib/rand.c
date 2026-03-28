@@ -77,7 +77,7 @@ rsize(size_t n)
 {
 	size_t rval = SIZE_MAX;
 	if (!n)
-		err_no_cleanup(0, EFAULT, "rsize: division by zero");
+		err_exit(EFAULT, "rsize: division by zero");
 
 	/* rejection sampling (clamp rand to eliminate modulo bias) */
 	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
@@ -92,13 +92,13 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 	size_t i;
 
 	if (n == 0)
-		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
+		err_exit(EPERM, "mkrbuf: zero-byte request");
 
 	if (n >= SIZE_MAX - 1)
-		err_no_cleanup(0, EOVERFLOW, "mkrbuf: overflow");
+		err_exit(EOVERFLOW, "mkrbuf: overflow");
 
 	if (if_err((s = mkrbuf(n + 1)) == NULL, EFAULT))
-		err_no_cleanup(0, EFAULT, "mkrstr: null");
+		err_exit(EFAULT, "mkrstr: null");
 
 	for (i = 0; i < n; i++)
 		while(*(s + i) == '\0')
@@ -126,7 +126,7 @@ rset(void *buf, size_t n)
 		goto err;
 
 	if (n == 0)
-		err_no_cleanup(0, EPERM, "rset: zero-byte request");
+		err_exit(EPERM, "rset: zero-byte request");
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
@@ -181,7 +181,7 @@ err:
     ((USE_URANDOM) > 0)
 	close_no_err(&fd);
 #endif
-	err_no_cleanup(0, ECANCELED,
+	err_exit(ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel");
 	exit(EXIT_FAILURE);
 }

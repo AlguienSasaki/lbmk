@@ -32,16 +32,16 @@ open_gbe_file(void)
 	    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY, &f->gbe_st);
 
 	if (f->gbe_st.st_nlink > 1)
-		b0rk(EINVAL,
+		err_exit(EINVAL,
 		    "%s: warning: file has multiple (%lu) hard links\n",
 		    f->fname, (size_t)f->gbe_st.st_nlink);
 
 	if (f->gbe_st.st_nlink == 0)
-		b0rk(EIO, "%s: file unlinked while open", f->fname);
+		err_exit(EIO, "%s: file unlinked while open", f->fname);
 
 	_flags = fcntl(f->gbe_fd, F_GETFL);
 	if (_flags == -1)
-		b0rk(errno, "%s: fcntl(F_GETFL)", f->fname);
+		err_exit(errno, "%s: fcntl(F_GETFL)", f->fname);
 
 	/* O_APPEND allows POSIX write() to ignore
 	 * the current write offset and write at EOF,
@@ -49,7 +49,7 @@ open_gbe_file(void)
 	 */
 
 	if (_flags & O_APPEND)
-		b0rk(EIO, "%s: O_APPEND flag", f->fname);
+		err_exit(EIO, "%s: O_APPEND flag", f->fname);
 
 	f->gbe_file_size = f->gbe_st.st_size;
 
@@ -59,11 +59,11 @@ open_gbe_file(void)
 	case SIZE_128KB:
 		break;
 	default:
-		b0rk(EINVAL, "File size must be 8KB, 16KB or 128KB");
+		err_exit(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 
 	if (lock_file(f->gbe_fd, cmd->flags) == -1)
-		b0rk(errno, "%s: can't lock", f->fname);
+		err_exit(errno, "%s: can't lock", f->fname);
 }
 
 void
@@ -98,7 +98,7 @@ read_file(void)
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		b0rk(errno, "%s: read failed", f->fname);
+		err_exit(errno, "%s: read failed", f->fname);
 
 	/* copy to tmpfile
 	 */
@@ -107,34 +107,34 @@ read_file(void)
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		b0rk(errno, "%s: %s: copy failed",
+		err_exit(errno, "%s: %s: copy failed",
 		    f->fname, f->tname);
 
 	/* file size comparison
 	 */
 	if (fstat(f->tmp_fd, &_st) == -1)
-		b0rk(errno, "%s: stat", f->tname);
+		err_exit(errno, "%s: stat", f->tname);
 
 	f->gbe_tmp_size = _st.st_size;
 
 	if (f->gbe_tmp_size != f->gbe_file_size)
-		b0rk(EIO, "%s: %s: not the same size",
+		err_exit(EIO, "%s: %s: not the same size",
 		    f->fname, f->tname);
 
 	/* needs sync, for verification
 	 */
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		b0rk(errno, "%s: fsync (tmpfile copy)", f->tname);
+		err_exit(errno, "%s: fsync (tmpfile copy)", f->tname);
 
 	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
 	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
 	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
-		b0rk(errno, "%s: read failed (cmp)", f->tname);
+		err_exit(errno, "%s: read failed (cmp)", f->tname);
 
 	if (memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
-		b0rk(errno, "%s: %s: read contents differ (pre-test)",
+		err_exit(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
 
@@ -152,10 +152,10 @@ write_gbe_file(void)
 		return;
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		b0rk(errno, "%s: file inode/device changed", f->tname);
+		err_exit(errno, "%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		b0rk(errno, "%s: file has changed", f->fname);
+		err_exit(errno, "%s: file has changed", f->fname);
 
 	update_checksum = cmd->chksum_write;
 
@@ -188,7 +188,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 	gbe_rw_size = cmd->rw_size;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
-		b0rk(errno, "%s: %s: part %lu: invalid rw_type, %d",
+		err_exit(errno, "%s: %s: part %lu: invalid rw_type, %d",
 		    f->fname, rw_type_str, (size_t)p, rw_type);
 
 	mem_offset = gbe_mem_offset(p, rw_type_str);
@@ -198,11 +198,11 @@ rw_gbe_file_part(size_t p, int rw_type,
 	    gbe_rw_size, file_offset, rw_type);
 
 	if (rval == -1)
-		b0rk(errno, "%s: %s: part %lu",
+		err_exit(errno, "%s: %s: part %lu",
 		    f->fname, rw_type_str, (size_t)p);
 
 	if ((size_t)rval != gbe_rw_size)
-		b0rk(EIO, "%s: partial %s: part %lu",
+		err_exit(EIO, "%s: partial %s: part %lu",
 		    f->fname, rw_type_str, (size_t)p);
 }
 
@@ -226,7 +226,7 @@ write_to_gbe_bin(void)
 	 */
 
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		b0rk(errno, "%s: fsync (pre-verification)",
+		err_exit(errno, "%s: fsync (pre-verification)",
 		    f->tname);
 
 	check_written_part(0);
@@ -235,7 +235,7 @@ write_to_gbe_bin(void)
 	report_io_err_rw();
 
 	if (f->io_err_gbe)
-		b0rk(EIO, "%s: bad write", f->fname);
+		err_exit(EIO, "%s: bad write", f->fname);
 
 	saved_errno = errno;
 
@@ -307,10 +307,10 @@ check_written_part(size_t p)
 	memset(f->pad, 0xff, sizeof(f->pad));
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		b0rk(errno, "%s: file inode/device changed", f->tname);
+		err_exit(errno, "%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		b0rk(errno, "%s: file changed during write", f->fname);
+		err_exit(errno, "%s: file changed during write", f->fname);
 
 	rval = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
@@ -540,11 +540,11 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	off = ((off_t)p) * (off_t)nsize;
 
 	if (off > ncmp - GBE_PART_SIZE)
-		b0rk(ECANCELED, "%s: GbE %s %s out of bounds",
+		err_exit(ECANCELED, "%s: GbE %s %s out of bounds",
 		    f->fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		b0rk(ECANCELED, "%s: GbE %s %s at bad offset",
+		err_exit(ECANCELED, "%s: GbE %s %s at bad offset",
 		    f->fname, d_type, f_op);
 
 	return off;

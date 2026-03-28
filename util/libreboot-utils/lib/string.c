@@ -40,9 +40,9 @@ vmalloc(void **buf, size_t size)
 	void *rval = NULL;
 
 	if (size >= SIZE_MAX - 1)
-		err_no_cleanup(0, EOVERFLOW, "integer overflow in vmalloc");
+		err_exit(EOVERFLOW, "integer overflow in vmalloc");
 	if (buf == NULL)
-		err_no_cleanup(0, EFAULT, "Bad pointer passed to vmalloc");
+		err_exit(EFAULT, "Bad pointer passed to vmalloc");
 
 	/* lots of programs will
 	 * re-initialise a buffer
@@ -52,14 +52,14 @@ vmalloc(void **buf, size_t size)
 	 * force the programmer to behave
 	 */
 	if (*buf != NULL)
-		err_no_cleanup(0, EFAULT, "Non-null pointer given to vmalloc");
+		err_exit(EFAULT, "Non-null pointer given to vmalloc");
 
 	if (!size)
-		err_no_cleanup(0, EFAULT,
+		err_exit(EFAULT,
 		   "Tried to vmalloc(0) and that is very bad. Fix it now");
 
 	if ((rval = malloc(size)) == NULL)
-		err_no_cleanup(0, errno, "malloc fail in vmalloc");
+		err_exit(errno, "malloc fail in vmalloc");
 
 	return *buf = rval;
 }
@@ -288,11 +288,15 @@ err:
 /* the one for nvmutil state is in state.c */
 /* this one just exits */
 void
-err_no_cleanup(int stfu, int nvm_errval, const char *msg, ...)
+err_exit(int nvm_errval, const char *msg, ...)
 {
 	va_list args;
 	int saved_errno = errno;
 	const char *p;
+
+	func_t err_cleanup = errhook(NULL);
+	err_cleanup();
+	errno = saved_errno;
 
 	if (!errno)
 		saved_errno = errno = ECANCELED;
@@ -310,6 +314,37 @@ err_no_cleanup(int stfu, int nvm_errval, const char *msg, ...)
 		fprintf(stderr, "%s\n", strerror(errno));
 
 	exit(EXIT_FAILURE);
+}
+
+/* the err function will
+ * call this upon exit, and
+ * cleanup will be performed
+ * e.g. you might want to
+ * close some files, depending
+ * on your program.
+ * see: err_exit()
+ */
+func_t errhook(func_t ptr)
+{
+	static int set = 0;
+	static func_t hook = NULL;
+
+	if (!set) {
+		set = 1;
+
+		if (ptr == NULL)
+			hook = no_op;
+		else
+			hook = ptr;
+	}
+
+	return hook;
+}
+
+void
+no_op(void)
+{
+	return;
 }
 
 const char *
@@ -366,7 +401,7 @@ xpledgex(const char *promises, const char *execpromises)
 	(void) promises, (void) execpromises, (void) saved_errno;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err_no_cleanup(0, errno, "pledge");
+		err_exit(errno, "pledge");
 #endif
 	errno = saved_errno;
 	return 0;
@@ -378,7 +413,7 @@ xunveilx(const char *path, const char *permissions)
 	(void) path, (void) permissions, (void) saved_errno;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err_no_cleanup(0, errno, "pledge");
+		err_exit(errno, "pledge");
 #endif
 	errno = saved_errno;
 	return 0;

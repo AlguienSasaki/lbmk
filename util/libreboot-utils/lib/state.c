@@ -4,9 +4,6 @@
  * State machine (singleton) for nvmutil data.
  */
 
-#ifdef __OpenBSD__
-#include <sys/param.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -98,9 +95,9 @@ xstart(int argc, char *argv[])
 		return &us;
 
 	if (argc < 3)
-		err_no_cleanup(0, EINVAL, "xstart: Too few arguments");
+		err_exit(EINVAL, "xstart: Too few arguments");
 	if (argv == NULL)
-		err_no_cleanup(0, EINVAL, "xstart: NULL argv");
+		err_exit(EINVAL, "xstart: NULL argv");
 	
 	first_run = 0;
 
@@ -113,41 +110,41 @@ xstart(int argc, char *argv[])
 	us.f.tname = NULL;
 
 	if ((realdir = realpath(us.f.fname, NULL)) == NULL)
-		err_no_cleanup(0, errno, "xstart: can't get realpath of %s",
+		err_exit(errno, "xstart: can't get realpath of %s",
 		    us.f.fname);
 
 	if (fs_dirname_basename(realdir, &dir, &base, 0) < 0)
-		err_no_cleanup(0, errno, "xstart: don't know CWD of %s",
+		err_exit(errno, "xstart: don't know CWD of %s",
 		    us.f.fname);
 
 	if ((us.f.base = strdup(base)) == NULL)
-		err_no_cleanup(0, errno, "strdup base");
+		err_exit(errno, "strdup base");
 
 	us.f.dirfd = fs_open(dir,
 	    O_RDONLY | O_DIRECTORY);
 	if (us.f.dirfd < 0)
-		err_no_cleanup(0, errno, "%s: open dir", dir);
+		err_exit(errno, "%s: open dir", dir);
 
 	if (new_tmpfile(&us.f.tmp_fd, &us.f.tname, dir, ".gbe.XXXXXXXXXX") < 0)
-		err_no_cleanup(0, errno, "%s", us.f.tname);
+		err_exit(errno, "%s", us.f.tname);
 
 	if (fs_dirname_basename(us.f.tname,
 	    &tmpdir, &tmpbase_local, 0) < 0)
-		err_no_cleanup(0, errno, "tmp basename");
+		err_exit(errno, "tmp basename");
 
 	us.f.tmpbase = strdup(tmpbase_local);
 	if (us.f.tmpbase == NULL)
-		err_no_cleanup(0, errno, "strdup tmpbase");
+		err_exit(errno, "strdup tmpbase");
 
 	free_and_set_null(&tmpdir);
 
 	if (us.f.tname == NULL)
-		err_no_cleanup(0, errno, "x->f.tname null");
+		err_exit(errno, "x->f.tname null");
 	if (*us.f.tname == '\0')
-		err_no_cleanup(0, errno, "x->f.tname empty");
+		err_exit(errno, "x->f.tname empty");
 
 	if (fstat(us.f.tmp_fd, &us.f.tmp_st) < 0)
-		err_no_cleanup(0, errno, "%s: stat", us.f.tname);
+		err_exit(errno, "%s: stat", us.f.tname);
 
 	memset(us.f.real_buf, 0, sizeof(us.f.real_buf));
 	memset(us.f.bufcmp, 0, sizeof(us.f.bufcmp));
@@ -164,70 +161,7 @@ xstatus(void)
 	struct xstate *x = xstart(0, NULL);
 
 	if (x == NULL)
-		err_no_cleanup(0, EACCES, "NULL pointer to xstate");
+		err_exit(EACCES, "NULL pointer to xstate");
 
 	return x;
-}
-
-void
-b0rk(int nvm_errval, const char *msg, ...)
-{
-	struct xstate *x = xstatus();
-
-	va_list args;
-
-	if (errno == 0)
-		errno = nvm_errval;
-	if (!errno)
-		errno = ECANCELED;
-
-	(void)exit_cleanup();
-
-	if (x != NULL)
-		fprintf(stderr, "%s: ", getnvmprogname());
-
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
-
-	fprintf(stderr, ": %s\n", strerror(errno));
-
-	exit(EXIT_FAILURE);
-}
-
-int
-exit_cleanup(void)
-{
-	struct xstate *x = xstatus();
-	struct xfile *f;
-
-	int close_err;
-	int saved_errno;
-
-	close_err = 0;
-	saved_errno = errno;
-
-	if (x != NULL) {
-		f = &x->f;
-
-		close_no_err(&f->gbe_fd);
-		close_no_err(&f->tmp_fd);
-		close_no_err(&f->tmp_fd);
-
-		if (f->tname != NULL)
-			if (unlink(f->tname) == -1)
-				close_err = 1;
-
-		close_no_err(&f->dirfd);
-		free_and_set_null(&f->base);
-		free_and_set_null(&f->tmpbase);
-	}
-
-	if (saved_errno)
-		errno = saved_errno;
-
-	if (close_err)
-		return -1;
-
-	return 0;
 }

@@ -51,6 +51,6 @@ void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err_no_cleanup(0, EINVAL, "%s must be 0 or 1, but is %lu",
+		err_exit(EINVAL, "%s must be 0 or 1, but is %lu",
 		    a_name, (size_t)a);
 }
