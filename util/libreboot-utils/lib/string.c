@@ -201,14 +201,10 @@ scatn(ssize_t sc, const char **sv,
 	errno = saved_errno;
 	return 0;
 err:
-	if (ct != NULL)
-		free(ct);
-	if (size != NULL)
-		free(size);
-	if (errno == saved_errno)
-		errno = EFAULT;
+	free_and_set_null(&ct);
+	free_and_set_null((char **)&size);
 
-	return -1;
+	return set_errno(saved_errno, EFAULT);
 }
 
 /* strict strcat */
@@ -282,6 +278,19 @@ err:
 	if (dest2 != NULL)
 		*dest2 = NULL;
 
+	return -1;
+}
+
+/* on functions that return with errno,
+ * i sometimes have a default fallback,
+ * which is set if errno wasn't changed,
+ * under error condition.
+ */
+int
+set_errno(int saved_errno, int fallback)
+{
+	if (errno == saved_errno)
+		errno = fallback;
 	return -1;
 }
 

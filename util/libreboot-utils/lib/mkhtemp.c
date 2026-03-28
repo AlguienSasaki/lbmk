@@ -295,11 +295,7 @@ tmpdir_policy(const char *path,
 	return 0;
 
 err_tmpdir_policy:
-
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 int
@@ -377,10 +373,7 @@ err_same_dir:
 	close_on_eintr(&fd_a);
 	close_on_eintr(&fd_b);
 
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 /* bypass_all_sticky_checks: if set,
@@ -467,19 +460,15 @@ world_writeable_and_sticky(
 	goto sticky_hell; /* heaven visa denied */
 
 sticky_heaven:
-
 	close_on_eintr(&dirfd);
 	errno = saved_errno;
 
 	return 1;
 
 sticky_hell:
-
-	if (errno == saved_errno)
-		errno = EPERM;
-
 	close_on_eintr(&dirfd);
 
+	(void) set_errno(saved_errno, EPERM);
 	return 0;
 }
 
@@ -923,11 +912,7 @@ int secure_file(int *fd,
 	return 0;
 
 err_demons:
-
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 int
@@ -1037,9 +1022,5 @@ lock_file(int fd, int flags)
 	return 0;
 
 err_lock_file:
-
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }

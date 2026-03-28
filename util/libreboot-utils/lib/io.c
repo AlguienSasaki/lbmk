@@ -439,10 +439,8 @@ gbe_mv(void)
 		tmp_gbe_bin_exists = 0;
 
 ret_gbe_mv:
-
 	if (f->gbe_fd > -1) {
 		close_on_eintr(&f->gbe_fd);
-		f->gbe_fd = -1;
 
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
@@ -462,17 +460,12 @@ ret_gbe_mv:
 			tmp_gbe_bin_exists = 0;
 	}
 
-	if (rval < 0) {
-		/* if nothing set errno,
-		 * we assume EIO, or we
-		 * use what was set
-		 */
-		if (errno == saved_errno)
-			errno = EIO;
-	} else {
-		errno = saved_errno;
-	}
+	if (rval >= 0) 
+		goto out;
 
+	return set_errno(saved_errno, EIO);
+out:
+	errno = saved_errno;
 	return rval;
 }
 

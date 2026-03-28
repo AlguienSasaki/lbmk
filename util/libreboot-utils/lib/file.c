@@ -62,11 +62,7 @@ same_file(int fd, struct stat *st_old,
 	return 0;
 
 err_same_file:
-
-	if (errno == saved_errno)
-		errno = ESTALE;
-
-	return -1;
+	return set_errno(saved_errno, ESTALE);
 }
 
 void
@@ -155,13 +151,11 @@ fsync_dir(const char *path)
 
 err_fsync_dir:
 
-	if (errno == saved_errno)
-		errno = EIO;
 
 	free_and_set_null(&dirbuf);
 	close_on_eintr(&dirfd);
 
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 /* rw_file_exact() - Read perfectly or die
@@ -264,10 +258,7 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 
 err_rw_file_exact:
 
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 /* prw() - portable read-write with more
@@ -446,11 +437,7 @@ real_pread_pwrite:
 #endif
 
 err_prw:
-
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 int
@@ -472,10 +459,7 @@ io_args(int fd, void *mem, size_t nrw,
 	return 0;
 
 err_io_args:
-	if (errno == saved_errno)
-		errno = EINVAL;
-
-	return -1;
+	return set_errno(saved_errno, EINVAL);
 }
 
 int
@@ -493,10 +477,7 @@ check_file(int fd, struct stat *st)
 	return 0;
 
 err_is_file:
-	if (errno == saved_errno)
-		errno = EINVAL;
-
-	return -1;
+	return set_errno(saved_errno, EINVAL);
 }
 
 /* POSIX can say whatever it wants.
@@ -518,10 +499,7 @@ rw_over_nrw(ssize_t r, size_t nrw)
 	return r;
 
 err_rw_over_nrw:
-	if (errno == saved_errno)
-		errno = EIO;
-
-	return -1;
+	return set_errno(saved_errno, EIO);
 }
 
 off_t

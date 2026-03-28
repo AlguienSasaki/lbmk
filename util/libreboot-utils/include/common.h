@@ -490,6 +490,7 @@ int try_err(int loop_err, int errval);
  */
 
 void usage(void);
+int set_errno(int saved_errno, int fallback);
 void err_exit(int nvm_errval, const char *msg, ...);
 func_t errhook(func_t ptr); /* hook function for cleanup on err */
 const char *getnvmprogname(void);
