@@ -513,6 +513,17 @@ sticky_hell:
  * file ownership under hardened mode
  * (only lets you touch your own files/dirs)
  */
+/*
+ TODO:
+	some variables e.g. template vs suffix,
+	assumes they match.
+	we should test this explicitly,
+	but the way this is called is
+	currently safe - this would however
+	be nice for future library use
+	by outside projects.
+	this whole code needs to be reorganised
+*/
 int
 mkhtemp(int *fd,
     struct stat *st,
