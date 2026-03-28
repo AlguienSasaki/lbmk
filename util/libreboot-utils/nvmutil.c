@@ -6,12 +6,6 @@
  * These images configure your Intel Gigabit Ethernet adapter.
  */
 
-#ifdef __OpenBSD__
-/* for pledge/unveil test:
- */
-#include <sys/param.h>
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -38,25 +32,8 @@ main(int argc, char *argv[])
 	if (lbgetprogname(argv[0]) == NULL)
 		err_no_cleanup(0, errno, "could not set progname");
 
-/* https://man.openbsd.org/pledge.2
-   https://man.openbsd.org/unveil.2     */
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 604
-	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
-		err_no_cleanup(0, errno, "pledge plus unveil, main");
-#if defined(USE_URANDOM) && \
-    ((USE_URANDOM) > 0)
-	if (unveil("/dev/null", "r") == -1)
-		err_no_cleanup(0, errno, "unveil r: /dev/null");
-#else
-	if (unveil("/dev/urandom", "r") == -1)
-		err_no_cleanup(0, errno, "unveil r: /dev/urandom");
-#endif
-#elif (OpenBSD) >= 509
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		err_no_cleanup(0, errno, "pledge, main");
-#endif
-#endif
+	xpledgex("stdio flock rpath wpath cpath unveil", NULL);
+	xunveilx("/dev/urandom", "r");
 
 #ifndef S_ISREG
 	err_no_cleanup(0, ECANCELED,
@@ -66,9 +43,7 @@ main(int argc, char *argv[])
 	err_no_cleanup(0, ECANCELED, "Unsupported char size");
 #endif
 
-	x = xstart(argc, argv);
-
-	if (x == NULL)
+	if ((x = xstart(argc, argv)) == NULL)
 		err_no_cleanup(0, ECANCELED, "NULL state on init");
 
 	/* parse user command */
@@ -79,37 +54,17 @@ main(int argc, char *argv[])
 	cmd = &x->cmd[x->i];
 	f = &x->f;
 
-/* https://man.openbsd.org/pledge.2
-   https://man.openbsd.org/unveil.2     */
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 604
+	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
+		xunveilx(f->fname, "r");
+	else
+		xunveilx(f->fname, "rwc");
 
-	if ((us.cmd[i].flags & O_ACCMODE) == O_RDONLY) {
-		if (unveil(us.f.fname, "r") == -1)
-			b0rk(errno, "%s: unveil r", us.f.fname);
-	} else {
-		if (unveil(us.f.fname, "rwc") == -1)
-			b0rk(errno, "%s: unveil rw", us.f.fname);
-	}
-
-	if (unveil(us.f.tname, "rwc") == -1)
-		b0rk(errno, "unveil rwc: %s", us.f.tname);
-
-	if (unveil(NULL, NULL) == -1)
-		b0rk(errno, "unveil block (rw)");
-
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		b0rk(errno, "pledge (kill unveil)");
-
-#elif (OpenBSD) >= 509
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		b0rk(errno, "pledge");
-#endif
-#endif
+	xunveilx(f->tname, "rwc");
+	xunveilx(NULL, NULL);
+	xpledgex("stdio flock rpath wpath cpath", NULL);
 
 	if (cmd->run == NULL)
 		b0rk(errno, "Command not set");
-
 
 	sanitize_command_list();
 

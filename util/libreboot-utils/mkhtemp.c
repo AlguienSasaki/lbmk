@@ -19,10 +19,6 @@
 #define _GNU_SOURCE 1
 #endif
 
-#ifdef __OpenBSD__
-#include <sys/param.h> /* pledge(2) */
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -66,13 +62,8 @@ main(int argc, char *argv[])
 	if (lbgetprogname(argv[0]) == NULL)
 		err_no_cleanup(stfu, errno, "could not set progname");
 
-/* https://man.openbsd.org/pledge.2 */
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 509
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		goto err_usage;
-#endif
-#endif
+	/* https://man.openbsd.org/pledge.2 */
+	xpledgex("stdio flock rpath wpath cpath", NULL);
 
 	while ((c =
 	    getopt(argc, argv, "qdp:")) != -1) {
@@ -134,12 +125,7 @@ main(int argc, char *argv[])
 	    tmpdir, template) < 0)
 		err_no_cleanup(stfu, errno, "%s", s);
 
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 509
-	if (pledge("stdio", NULL) == -1)
-		err_no_cleanup(stfu, errno, "pledge, exit");
-#endif
-#endif
+	xpledgex("stdio", NULL);
 
 	if (s == NULL)
 		err_no_cleanup(stfu, EFAULT, "bad string initialisation");

@@ -294,12 +294,6 @@ err_no_cleanup(int stfu, int nvm_errval, const char *msg, ...)
 	int saved_errno = errno;
 	const char *p;
 
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 509
-	if (pledge("stdio", NULL) == -1)
-		fprintf(stderr, "pledge failure during exit");
-#endif
-#endif
 	if (!errno)
 		saved_errno = errno = ECANCELED;
 
@@ -363,6 +357,8 @@ lbgetprogname(char *argv0)
 	return progname;
 }
 
+/* https://man.openbsd.org/pledge.2
+   https://man.openbsd.org/unveil.2     */
 int
 xpledgex(const char *promises, const char *execpromises)
 {
@@ -375,7 +371,6 @@ xpledgex(const char *promises, const char *execpromises)
 	errno = saved_errno;
 	return 0;
 }
-
 int
 xunveilx(const char *path, const char *permissions)
 {
