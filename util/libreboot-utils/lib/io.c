@@ -4,6 +4,10 @@
  * I/O functions specific to nvmutil.
  */
 
+/* TODO: local tmpfiles not being deleted
+	when flags==O_RDONLY e.g. dump command
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
