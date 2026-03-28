@@ -65,22 +65,6 @@ err_same_file:
 	return set_errno(saved_errno, ESTALE);
 }
 
-void
-xopen(int *fd_ptr, const char *path, int flags, struct stat *st)
-{
-	if ((*fd_ptr = open(path, flags)) < 0)
-		err_exit(errno, "%s", path);
-
-	if (fstat(*fd_ptr, st) < 0)
-		err_exit(errno, "%s: stat", path);
-
-	if (!S_ISREG(st->st_mode))
-		err_exit(errno, "%s: not a regular file", path);
-
-	if (lseek_on_eintr(*fd_ptr, 0, SEEK_CUR, 1, 1) == (off_t)-1)
-		err_exit(errno, "%s: file not seekable", path);
-}
-
 int
 fsync_dir(const char *path)
 {
@@ -568,8 +552,9 @@ free_and_set_null(char **buf)
 }
 
 void
-open_on_eintr(char *path,
-    int *fd, int flags, mode_t mode)
+open_on_eintr(const char *path,
+    int *fd, int flags, mode_t mode,
+    struct stat *st)
 {
 	int r = -1;
 	int saved_errno = errno;
@@ -593,6 +578,17 @@ open_on_eintr(char *path,
 		err_exit(errno, "%s: open_on_eintr: could not close", path);
 
 	*fd = r;
+
+	if (st != NULL) {
+		if (fstat(*fd, st) < 0)
+			err_exit(errno, "%s: stat", path);
+
+		if (!S_ISREG(st->st_mode))
+			err_exit(errno, "%s: not a regular file", path);
+	}
+
+	if (lseek_on_eintr(*fd, 0, SEEK_CUR, 1, 1) == (off_t)-1)
+		err_exit(errno, "%s: file not seekable", path);
 
 	errno = saved_errno;
 }
@@ -683,7 +679,7 @@ rootfs(void)
 		global_fs.rootfd = -1;
 
 		open_on_eintr("/", &global_fs.rootfd,
-		    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0400);
+		    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0400, NULL);
 
 		if (global_fs.rootfd < 0)
 			return NULL;

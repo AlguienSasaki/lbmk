@@ -346,7 +346,6 @@ int fd_verify_dir_identity(int fd,
 int is_owner(struct stat *st);
 int lock_file(int fd, int flags);
 int same_file(int fd, struct stat *st_old, int check_size);
-void xopen(int *fd, const char *path, int flags, struct stat *st);
 
 /* Read GbE file and verify checksums
  */
@@ -546,7 +545,8 @@ int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);
 int fs_open(const char *path, int flags);
 void free_and_set_null(char **buf);
-void open_on_eintr(char *path, int *fd, int flags, mode_t mode);
+void open_on_eintr(const char *path, int *fd, int flags, mode_t mode,
+    struct stat *st);
 struct filesystem *rootfs(void);
 int fs_resolve_at(int dirfd, const char *path, int flags);
 int fs_next_component(const char **p,

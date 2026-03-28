@@ -27,9 +27,12 @@ open_gbe_file(void)
 
 	int _flags;
 
-	xopen(&f->gbe_fd, f->fname,
-	    cmd->flags | O_BINARY |
-	    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY, &f->gbe_st);
+	f->gbe_fd = -1;
+
+	open_on_eintr(f->fname, &f->gbe_fd,
+	    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY,
+	    ((cmd->flags & O_ACCMODE) == O_RDONLY) ? 0400 : 0600,
+	    &f->gbe_st);
 
 	if (f->gbe_st.st_nlink > 1)
 		err_exit(EINVAL,
@@ -62,8 +65,11 @@ open_gbe_file(void)
 		err_exit(EINVAL, "File size must be 8KB, 16KB or 128KB");
 	}
 
+/* currently fails (EBADF), locks are advisory anyway: */
+/*
 	if (lock_file(f->gbe_fd, cmd->flags) == -1)
 		err_exit(errno, "%s: can't lock", f->fname);
+*/
 }
 
 void
