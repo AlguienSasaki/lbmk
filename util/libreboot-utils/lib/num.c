@@ -33,44 +33,20 @@ hextonum(char ch_s)
 
 	ch = (unsigned char)ch_s;
 
-	if ((unsigned int)(ch - '0') <= 9) {
-
-		rval = ch - '0';
-		goto hextonum_success;
-	}
+	if ((unsigned int)(ch - '0') <= 9)
+		return ch - '0';
 
 	ch |= 0x20;
 
-	if ((unsigned int)(ch - 'a') <= 5) {
-
-		rval = ch - 'a' + 10;
-		goto hextonum_success;
-	}
+	if ((unsigned int)(ch - 'a') <= 5)
+		return ch - 'a' + 10;
 
 	if (ch == '?' || ch == 'x') {
-
 		rset(&rval, sizeof(rval));
-
-		goto hextonum_success;
+		return rval & 0xf;
 	}
 
-	goto err_hextonum;
-
-hextonum_success:
-
-	errno = saved_errno;
-	return (unsigned short)rval & 0xf;
-
-err_hextonum:
-
-	if (errno == saved_errno)
-		errno = EINVAL;
-	else
-		return 17; /* 17 indicates getrandom/urandom fail */
-
-	return 16; /* invalid character */
-
-	/* caller just checks >15. */
+	return 16;
 }
 
 void
