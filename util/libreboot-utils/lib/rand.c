@@ -72,13 +72,6 @@
  * or your program dies.
  */
 
-void *
-rmalloc(size_t *rval)
-{
-	return if_err(rval == NULL, EFAULT) ?
-	    NULL : mkrstr(*rval = rsize(BUFSIZ));
-}
-
 size_t
 rsize(size_t n)
 {
@@ -120,17 +113,7 @@ void *
 mkrbuf(size_t n)
 {
 	void *buf = NULL;
-
-	if (n == 0)
-		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
-
-	if (n >= SIZE_MAX - 1)
-		err_no_cleanup(0, EOVERFLOW, "integer overflow in mkrbuf");
-
-	if ((buf = malloc(n)) == NULL)
-		err_no_cleanup(0, ENOMEM, "mkrbuf: malloc");
-
-	rset(buf, n);
+	rset(vmalloc(&buf, n), n);
 	return buf; /* basically malloc() but with rand */
 }
 

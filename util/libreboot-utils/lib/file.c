@@ -111,12 +111,11 @@ fsync_dir(const char *path)
 	if (if_err(path == NULL, EFAULT) ||
 	    if_err_sys(slen(path, maxlen, &pathlen) < 0) ||
 	    if_err(pathlen >= maxlen || pathlen < 0, EMSGSIZE) ||
-	    if_err(pathlen == 0, EINVAL)
-	    ||
-	    if_err_sys((dirbuf = malloc(pathlen + 1)) == NULL))
+	    if_err(pathlen == 0, EINVAL))
 		goto err_fsync_dir;
 
-	memcpy(dirbuf, path, pathlen + 1);
+	memcpy(smalloc(&dirbuf, pathlen + 1),
+	    path, pathlen + 1);
 	slash = strrchr(dirbuf, '/');
 
 	if (slash != NULL) {
@@ -862,7 +861,7 @@ fs_dirname_basename(const char *path,
     char **dir, char **base,
     int allow_relative)
 {
-	char *buf;
+	char *buf = NULL;
 	char *slash;
 	size_t len;
 	int rval;
@@ -874,11 +873,10 @@ fs_dirname_basename(const char *path,
 #endif
 
 	if (path == NULL || dir == NULL || base == NULL ||
-	    if_err_sys(slen(path, maxlen, &len) < 0) ||
-	    if_err_sys((buf = malloc(len + 1)) == NULL))
+	    if_err_sys(slen(path, maxlen, &len) < 0))
 		return -1;
 
-	memcpy(buf, path, len + 1);
+	memcpy(smalloc(&buf, len + 1), path, len + 1);
 
 	/* strip trailing slashes */
 	while (len > 1 && buf[len - 1] == '/')

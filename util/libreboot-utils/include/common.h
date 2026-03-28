@@ -375,6 +375,8 @@ void write_mac_part(size_t partnum);
 
 int xunveilx(const char *path, const char *permissions);
 int xpledgex(const char *promises, const char *execpromises);
+char *smalloc(char **buf, size_t size);
+void *vmalloc(void **buf, size_t size);
 int slen(const char *scmp, size_t maxlen,
     size_t *rval);
 int scmp(const char *a, const char *b,
@@ -393,7 +395,6 @@ int dcat(const char *s, size_t n,
 
 unsigned short hextonum(char ch_s);
 void *mkrbuf(size_t n);
-void *rmalloc(size_t *size); /* don't ever use this */
 void rset(void *buf, size_t n);
 void *mkrbuf(size_t n);
 char *mkrstr(size_t n);

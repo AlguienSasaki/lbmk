@@ -19,6 +19,51 @@
 
 #include "../include/common.h"
 
+/* safe(ish) malloc.
+
+   use this and free_and_set_null()
+   in your program, to reduce the
+   chance of use after frees!
+
+   if you use these functions in the
+   intended way, you will greatly reduce
+   the number of bugs in your code
+ */
+char *
+smalloc(char **buf, size_t size)
+{
+	return (char *)vmalloc((void **)buf, size);
+}
+void *
+vmalloc(void **buf, size_t size)
+{
+	void *rval = NULL;
+
+	if (size >= SIZE_MAX - 1)
+		err_no_cleanup(0, EOVERFLOW, "integer overflow in vmalloc");
+	if (buf == NULL)
+		err_no_cleanup(0, EFAULT, "Bad pointer passed to vmalloc");
+
+	/* lots of programs will
+	 * re-initialise a buffer
+	 * that was allocated, without
+	 * freeing or NULLing it. this
+	 * is here intentionally, to
+	 * force the programmer to behave
+	 */
+	if (*buf != NULL)
+		err_no_cleanup(0, EFAULT, "Non-null pointer given to vmalloc");
+
+	if (!size)
+		err_no_cleanup(0, EFAULT,
+		   "Tried to vmalloc(0) and that is very bad. Fix it now");
+
+	if ((rval = malloc(size)) == NULL)
+		err_no_cleanup(0, errno, "malloc fail in vmalloc");
+
+	return *buf = rval;
+}
+
 /* strict strcmp */
 int
 scmp(const char *a,
@@ -98,19 +143,16 @@ sdup(const char *s,
     size_t n, char **dest)
 {
 	size_t size;
-	char *rval;
+	char *rval = NULL;
 
 	if (dest == NULL ||
-	    slen(s, n, &size) < 0 ||
-	    if_err(size == SIZE_MAX, EOVERFLOW) ||
-	    (rval = malloc(size + 1)) == NULL) {
-
+	    slen(s, n, &size) < 0) {
 		if (dest != NULL)
 			*dest = NULL;
 		return -1;
 	}
 
-	memcpy(rval, s, size);
+	memcpy(smalloc(&rval, size + 1), s, size);
 	*(rval + size) = '\0';
 
 	*dest = rval;
@@ -133,9 +175,10 @@ scatn(ssize_t sc, const char **sv,
 
 	if (if_err(sc <= 0, EINVAL) ||
 	    if_err(sc > SIZE_MAX / sizeof(size_t), EOVERFLOW) ||
-	    if_err(sv == NULL, EINVAL) ||
-	    if_err((size = malloc(sizeof(size_t) * sc)) == NULL, ENOMEM))
+	    if_err(sv == NULL, EINVAL))
 		goto err;
+
+	vmalloc((void **)&size, sizeof(size_t) * sc);
 
 	for (i = 0; i < sc; i++, ts += size[i])
 		if (if_err(sv[i] == NULL, EINVAL) ||
@@ -145,10 +188,10 @@ scatn(ssize_t sc, const char **sv,
 			goto err;
 
 	if (if_err(ts > SIZE_MAX - 1, EOVERFLOW) ||
-	    if_err(ts > max - 1, EOVERFLOW) ||
-	    if_err((ct = malloc(ts + 1)) == NULL, ENOMEM))
+	    if_err(ts > max - 1, EOVERFLOW))
 		goto err;
 
+	smalloc(&ct, ts + 1);
 	for (ts = i = 0; i < sc; i++, ts += size[i])
 		memcpy(ct + ts, sv[i], size[i]);
 
@@ -175,20 +218,20 @@ scat(const char *s1, const char *s2,
 {
 	size_t size1;
 	size_t size2;
-	char *rval;
+	char *rval = NULL;
 
 	if (dest == NULL ||
 	    slen(s1, n, &size1) < 0 ||
 	    slen(s2, n, &size2) < 0 ||
-	    if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW) ||
-	    (rval = malloc(size1 + size2 + 1)) == NULL) {
+	    if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW)) {
 
 		if (dest != NULL)
 			*dest = NULL;
 		return -1;
 	}
 
-	memcpy(rval, s1, size1);
+	memcpy(smalloc(&rval, size1 + size2 + 1),
+	    s1, size1);
 	memcpy(rval + size1, s2, size2);
 	*(rval + size1 + size2) = '\0';
 
@@ -210,17 +253,17 @@ dcat(const char *s, size_t n,
 	if (dest1 == NULL || dest2 == NULL ||
 	    slen(s, n, &size) < 0 ||
 	    if_err(size == SIZE_MAX, EOVERFLOW) ||
-	    if_err(off >= size, EOVERFLOW) ||
-	    (rval1 = malloc(off + 1)) == NULL ||
-	    (rval2 = malloc(size - off + 1)) == NULL) {
+	    if_err(off >= size, EOVERFLOW)) {
 
 		goto err;
 	}
 
-	memcpy(rval1, s, off);
+	memcpy(smalloc(&rval1, off + 1),
+	    s, off);
 	*(rval1 + off) = '\0';
 
-	memcpy(rval2, s + off, size - off);
+	memcpy(smalloc(&rval2, size - off +1),
+	    s + off, size - off);
 	*(rval2 + size - off) = '\0';
 
 	*dest1 = rval1;
@@ -310,11 +353,10 @@ lbgetprogname(char *argv0)
 
 	if (!setname) {
 		if (if_err(argv0 == NULL || *argv0 == '\0', EFAULT) ||
-		    slen(argv0, 4096, &len) < 0 ||
-		    (progname = malloc(len + 1)) == NULL)
+		    slen(argv0, 4096, &len) < 0)
 			return NULL;
 
-		memcpy(progname, argv0, len + 1);
+		memcpy(smalloc(&progname, len + 1), argv0, len + 1);
 		setname = 1;
 	}
 

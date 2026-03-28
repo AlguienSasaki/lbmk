@@ -144,13 +144,7 @@ new_tmp_common(int *fd, char **path, int type,
 		goto err;
 	}
 
-	dest = malloc(destlen + 1);
-	if (dest == NULL) {
-		errno = ENOMEM;
-		goto err;
-	}
-
-	memcpy(dest, tmpdir, dirlen);
+	memcpy(smalloc(&dest, destlen + 1), tmpdir, dirlen);
 	*(dest + dirlen) = '/';
 	memcpy(dest + dirlen + 1, templatestr, templatestr_len);
 	*(dest + destlen) = '\0';
@@ -585,11 +579,8 @@ mkhtemp(int *fd,
 	      fname_len) != 0, EINVAL))
 		return -1;
 
-	if((fname_copy = malloc(fname_len + 1)) == NULL)
-		goto err;
-
 	/* fname_copy = templatestr region only; p points to trailing XXXXXX */
-	memcpy(fname_copy,
+	memcpy(smalloc(&fname_copy, fname_len + 1),
 	    template + len - fname_len,
 	    fname_len + 1);
 	p = fname_copy + fname_len - xc;
