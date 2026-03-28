@@ -41,10 +41,8 @@ hextonum(char ch_s)
 	if ((unsigned int)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
 
-	if (ch == '?' || ch == 'x') {
-		rset(&rval, sizeof(rval));
-		return rval & 0xf;
-	}
+	if (ch == '?' || ch == 'x')
+		return rsize(16); /* <-- with rejection sampling! */
 
 	return 16;
 }

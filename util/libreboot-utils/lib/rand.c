@@ -86,6 +86,7 @@ rsize(size_t n)
 	if (!n)
 		err_no_cleanup(0, EFAULT, "rsize: division by zero");
 
+	/* rejection sampling (clamp rand to eliminate modulo bias) */
 	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
 
 	return rval % n;
