@@ -118,7 +118,7 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 void *
 mkrbuf(size_t n)
 {
-	void *buf = "";
+	void *buf = NULL;
 
 	if (n == 0)
 		err_no_cleanup(0, EPERM, "mkrbuf: zero-byte request");
