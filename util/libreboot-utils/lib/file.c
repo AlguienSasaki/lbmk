@@ -146,11 +146,7 @@ fsync_dir(const char *path)
 	    if_err_sys(fsync_on_eintr(dirfd) == -1))
 		goto err_fsync_dir;
 
-	if (close_on_eintr(dirfd) == -1) {
-
-		dirfd = -1;
-		goto err_fsync_dir;
-	}
+	close_on_eintr(&dirfd);
 
 	free_and_set_null(&dirbuf);
 
@@ -163,7 +159,7 @@ err_fsync_dir:
 		errno = EIO;
 
 	free_and_set_null(&dirbuf);
-	close_no_err(&dirfd);
+	close_on_eintr(&dirfd);
 
 	return -1;
 }
@@ -589,66 +585,30 @@ free_and_set_null(char **buf)
 	*buf = NULL;
 }
 
-/* also returns error code */
-int
-close_warn(int *fd, char *s)
-{
-	int saved_errno = errno;
-
-	if (fd == NULL) {
-		if (s != NULL)
-			fprintf(stderr, "FAIL: %s: bad fd ptr\n", s);
-		return -1;
-	}
-
-	if (*fd < 0 && s != NULL) {
-		fprintf(stderr, "WARN: %s: already closed\n", s);
-	} else if (close(*fd) < 0) {
-		if (s != NULL)
-			fprintf(stderr, "FAIL: %s: close\n", s);
-		return -1;
-	}
-
-	*fd = -1;
-	errno = saved_errno;
-
-	return 0;
-}
-
-/* TODO: remove this, and just check
- * err on every close. */
 void
-close_no_err(int *fd)
-{
-	int saved_errno = errno;
-
-	if (fd == NULL || *fd < 0)
-		return;
-
-	(void) close_on_eintr(*fd);
-	*fd = -1;
-
-	errno = saved_errno;
-}
-
-/* TODO: make fd a pointer insttead
-	and automatically reset -1 here */
-int
-close_on_eintr(int fd)
+close_on_eintr(int *fd)
 {
 	int r;
 	int saved_errno = errno;
 
+	if (fd == NULL)
+		err_exit(EINVAL, "close_on_eintr: null pointer");
+
+	if (*fd < 0)
+		return;
+
 	do {
-		r = close(fd);
+		r = close(*fd);
 	} while (r == -1 && (
 	    errno == EINTR || errno == EAGAIN ||
 	    errno == EWOULDBLOCK || errno == ETXTBSY));
 
-	if (r >= 0)
-		errno = saved_errno;
+	if (r < 0)
+		err_exit(errno, "close_on_eintr: could not close");
 
-	return r;
+	*fd = -1;
+
+	errno = saved_errno;
 }
 
 int
@@ -761,7 +721,7 @@ fs_resolve_at(int dirfd, const char *path, int flags)
 
 		/* close previous fd if not the original input */
 		if (curfd != dirfd)
-			(void) close_on_eintr(curfd);
+			close_on_eintr(&curfd);
 
 		curfd = nextfd;
 		nextfd = -1;
@@ -774,11 +734,11 @@ err:
 	saved_errno = errno;
 
 	if (nextfd >= 0)
-		(void) close_on_eintr(nextfd);
+		close_on_eintr(&nextfd);
 
 	/* close curfd only if it's not the original */
 	if (curfd != dirfd && curfd >= 0)
-		(void) close_on_eintr(curfd);
+		close_on_eintr(&curfd);
 
 	errno = saved_errno;
 	return -1;
@@ -847,7 +807,7 @@ fs_open_component(int dirfd, const char *name,
 
 		if (!S_ISDIR(st.st_mode)) {
 
-			(void) close_on_eintr(fd);
+			close_on_eintr(&fd);
 			errno = ENOTDIR;
 			return -1;
 		}

@@ -164,7 +164,7 @@ new_tmp_common(int *fd, char **path, int type,
 	if (*fd < 0)
 		goto err;
 
-	close_no_err(&dirfd);
+	close_on_eintr(&dirfd);
 
 	errno = saved_errno;
 	*path = dest;
@@ -180,8 +180,8 @@ err:
 
 	free_and_set_null(&dest);
 
-	close_no_err(&dirfd);
-	close_no_err(fd);
+	close_on_eintr(&dirfd);
+	close_on_eintr(fd);
 
 	/* where a TMPDIR isn't found, and we err,
 	 * we pass this back through for the
@@ -348,8 +348,8 @@ same_dir(const char *a, const char *b)
 	if (st_a.st_dev == st_b.st_dev &&
 	    st_a.st_ino == st_b.st_ino) {
 
-		close_no_err(&fd_a);
-		close_no_err(&fd_b);
+		close_on_eintr(&fd_a);
+		close_on_eintr(&fd_b);
 
 success_same_dir:
 
@@ -360,8 +360,8 @@ success_same_dir:
 		return 1;
 	}
 
-	close_no_err(&fd_a);
-	close_no_err(&fd_b);
+	close_on_eintr(&fd_a);
+	close_on_eintr(&fd_b);
 
 	/* FAILURE (logical)
 	 */
@@ -374,8 +374,8 @@ err_same_dir:
 	/* FAILURE (probably syscall)
 	 */
 
-	close_no_err(&fd_a);
-	close_no_err(&fd_b);
+	close_on_eintr(&fd_a);
+	close_on_eintr(&fd_b);
 
 	if (errno == saved_errno)
 		errno = EIO;
@@ -468,7 +468,7 @@ world_writeable_and_sticky(
 
 sticky_heaven:
 
-	close_no_err(&dirfd);
+	close_on_eintr(&dirfd);
 	errno = saved_errno;
 
 	return 1;
@@ -478,7 +478,7 @@ sticky_hell:
 	if (errno == saved_errno)
 		errno = EPERM;
 
-	close_no_err(&dirfd);
+	close_on_eintr(&dirfd);
 
 	return 0;
 }
@@ -606,7 +606,7 @@ mkhtemp(int *fd,
 	errno = EEXIST;
 
 err:
-	close_no_err(fd);
+	close_on_eintr(fd);
 
 success:
 	free_and_set_null(&fname_copy);
@@ -732,7 +732,7 @@ mkhtemp_try_create(int dirfd,
 	goto out;
 
 err:
-	close_no_err(fd);
+	close_on_eintr(fd);
 
 	if (file_created)
 		(void) unlinkat(dirfd, fname_copy, 0);
@@ -827,7 +827,7 @@ err:
 	if (linked)
 		(void) unlinkat(dirfd, fname_copy, 0);
 
-	close_no_err(&tmpfd);
+	close_on_eintr(&tmpfd);
 	return -1;
 }
 #endif

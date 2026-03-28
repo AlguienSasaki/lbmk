@@ -539,14 +539,12 @@ int secure_file(int *fd,
     int check_seek,
     int do_lock,
     mode_t mode);
-int close_on_eintr(int fd);
+void close_on_eintr(int *fd);
 int fsync_on_eintr(int fd);
 int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);
 int fs_open(const char *path, int flags);
-void close_no_err(int *fd);
 void free_and_set_null(char **buf);
-int close_warn(int *fd, char *s);
 struct filesystem *rootfs(void);
 int fs_resolve_at(int dirfd, const char *path, int flags);
 int fs_next_component(const char **p,

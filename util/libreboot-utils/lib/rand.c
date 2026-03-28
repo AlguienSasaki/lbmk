@@ -169,7 +169,7 @@ retry_rand:
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
-	close_no_err(&fd);
+	close_on_eintr(&fd);
 #endif
 	goto out;
 #endif
@@ -179,7 +179,7 @@ out:
 err:
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
-	close_no_err(&fd);
+	close_on_eintr(&fd);
 #endif
 	err_exit(ECANCELED,
 	    "Randomisation failure, possibly unsupported in your kernel");

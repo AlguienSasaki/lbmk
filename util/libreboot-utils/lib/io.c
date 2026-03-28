@@ -239,8 +239,8 @@ write_to_gbe_bin(void)
 
 	saved_errno = errno;
 
-	f->io_err_gbe_bin |= -close_warn(&f->tmp_fd, f->tname);
-	f->io_err_gbe_bin |= -close_warn(&f->gbe_fd, f->fname);
+	close_on_eintr(&f->tmp_fd);
+	close_on_eintr(&f->gbe_fd);
 
 	errno = saved_errno;
 
@@ -440,15 +440,8 @@ gbe_mv(void)
 
 ret_gbe_mv:
 
-	/* TODO: this whole section is bloat.
-		it can be generalised
-	 */
-
 	if (f->gbe_fd > -1) {
-		if (close_on_eintr(f->gbe_fd) < 0) {
-			f->gbe_fd = -1;
-			rval = -1;
-		}
+		close_on_eintr(&f->gbe_fd);
 		f->gbe_fd = -1;
 
 		if (fsync_dir(f->fname) < 0) {
@@ -457,13 +450,7 @@ ret_gbe_mv:
 		}
 	}
 
-	if (f->tmp_fd > -1) {
-		if (close_on_eintr(f->tmp_fd) < 0) {
-			f->tmp_fd = -1;
-			rval = -1;
-		}
-		f->tmp_fd = -1;
-	}
+	close_on_eintr(&f->tmp_fd);
 
 	/* before this function is called,
 	 * tmp_fd may have been moved
