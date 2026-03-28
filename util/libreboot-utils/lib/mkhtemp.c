@@ -327,11 +327,11 @@ same_dir(const char *a, const char *b)
 	if (rval_scmp == 0)
 		goto success_same_dir;
 
-	fd_a = fs_open(a, O_RDONLY | O_DIRECTORY);
+	fd_a = fs_open(a, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
 	if (fd_a < 0)
 		goto err_same_dir;
 
-	fd_b = fs_open(b, O_RDONLY | O_DIRECTORY);
+	fd_b = fs_open(b, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
 	if (fd_b < 0)
 		goto err_same_dir;
 
@@ -906,6 +906,8 @@ int secure_file(int *fd,
 		if (lock_file(*fd, flags) == -1)
 			goto err_demons;
 
+		/* TODO: why would this be NULL? audit
+		 * to find out. we should always verify! */
 		if (expected != NULL)
 			if (fd_verify_identity(*fd, expected, &st_now) < 0)
 				goto err_demons;
