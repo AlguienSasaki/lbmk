@@ -545,6 +545,7 @@ int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);
 int fs_open(const char *path, int flags);
 void free_and_set_null(char **buf);
+void open_on_eintr(char *path, int *fd, int flags, mode_t mode);
 struct filesystem *rootfs(void);
 int fs_resolve_at(int dirfd, const char *path, int flags);
 int fs_next_component(const char **p,

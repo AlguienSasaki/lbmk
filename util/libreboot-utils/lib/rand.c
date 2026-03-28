@@ -142,9 +142,7 @@ rset(void *buf, size_t n)
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 	int fd = -1;
-
-	if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
-		goto err;
+	open_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400);
 retry_rand:
 	if ((rc = read(fd, (unsigned char *)buf + off, n - off)) < 0) {
 #elif defined(__linux__)

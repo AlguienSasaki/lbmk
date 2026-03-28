@@ -590,6 +590,36 @@ free_and_set_null(char **buf)
 }
 
 void
+open_on_eintr(char *path,
+    int *fd, int flags, mode_t mode)
+{
+	int r = -1;
+	int saved_errno = errno;
+
+	if (path == NULL)
+		err_exit(EINVAL, "open_on_eintr: null path");
+
+	if (fd == NULL)
+		err_exit(EFAULT, "%s: open_on_eintr: null fd ptr", path);
+
+	if (*fd >= 0)
+		err_exit(EBADF, "%s: open_on_eintr: file already open", path);
+
+	do {
+		r = open(path, flags, mode);
+	} while (r == -1 && (
+	    errno == EINTR || errno == EAGAIN ||
+	    errno == EWOULDBLOCK || errno == ETXTBSY));
+
+	if (r < 0)
+		err_exit(errno, "%s: open_on_eintr: could not close", path);
+
+	*fd = r;
+
+	errno = saved_errno;
+}
+
+void
 close_on_eintr(int *fd)
 {
 	int r;
@@ -672,8 +702,10 @@ rootfs(void)
 
 	if (!fs_initialised) {
 
-		global_fs.rootfd =
-		    open("/", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+		global_fs.rootfd = -1;
+
+		open_on_eintr("/", &global_fs.rootfd,
+		    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0400);
 
 		if (global_fs.rootfd < 0)
 			return NULL;
