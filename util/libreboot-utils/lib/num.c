@@ -80,7 +80,10 @@ spew_hex(const void *data, size_t len)
 
 	for (i = 0; i < len; i += 16) {
 
-		printf("%0*zx  ", sizeof(size_t) * 2, i);
+		if (len <= 4294967296) /* below 4GB */
+			printf("%08zx  ", i);
+		else
+			printf("%0*zx  ", sizeof(size_t) * 2, i);
 
 		for (j = 0; j < 16; j++) {
 
