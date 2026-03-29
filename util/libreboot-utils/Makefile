@@ -20,7 +20,7 @@ LDIR =
 
 PORTABLE = $(LDIR) $(CFLAGS)
 WARN = $(PORTABLE) -Wall -Wextra
-STRICT = $(WARN) -std=c90 -pedantic -Werror
+STRICT = $(WARN) -std=c99 -pedantic -Werror
 HELLFLAGS = $(STRICT) -Weverything
 
 PROG = nvmutil
