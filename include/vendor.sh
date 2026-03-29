@@ -633,7 +633,7 @@ prep()
 
 mksha512()
 {
-	bootstrap_utils
+	build_sbase
 
 	if [ "${1%/*}" != "$1" ]; then
 		x_ cd "${1%/*}"
@@ -746,7 +746,7 @@ vfile()
 # must be called from a subshell
 check_vendor_hashes()
 {
-	bootstrap_utils
+	build_sbase
 
 	x_ cd "$tmpromdir"
 

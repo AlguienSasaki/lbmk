@@ -35,7 +35,7 @@ prep_mr_import()
 		err "Project import disabled on releases" "prep_mr_import" "$@"
 	fi
 
-	mr_tmpdir="`"$mkhtemp" -d || err "can't make mrtmpdir"`" || \
+	mr_tmpdir="`mktemp -d || err "can't make mrtmpdir"`" || \
 	    err "can't make mrtmpdir" "prep_mr_coreboot" "$@"
 	x_ remkdir "$mr_tmpdir"
 

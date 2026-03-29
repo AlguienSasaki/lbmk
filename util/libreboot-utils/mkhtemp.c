@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 	xpledgex("stdio flock rpath wpath cpath", NULL);
 
 	while ((c =
-	    getopt(argc, argv, "qdp:t")) != -1) {
+	    getopt(argc, argv, "qdp:")) != -1) {
 
 		switch (c) {
 		case 'd':
@@ -82,12 +82,6 @@ main(int argc, char *argv[])
 		case 'q': /* don't print errors */
 			  /* (exit status unchanged) */
 			break;
-
-		case 't':
-			break; /* not supported yet. TODO */
-			/* configured above without optarg,
-			 * so that it is treated as a normal
-			 * template string */
 
 		default:
 			goto err_usage;

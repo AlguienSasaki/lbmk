@@ -17,7 +17,6 @@ if [ -z "${PATH+x}" ]; then
 fi
 
 sha512sum="util/sbase/sha512sum"
-mkhtemp="util/libreboot-utils/mkhtemp"
 
 aur_notice=""
 basetmp=""
@@ -232,9 +231,7 @@ xbmk_parent_check_tmp()
 {
 	export TMPDIR="$basetmp"
 
-	bootstrap_mkhtemp
-
-	xbmklist="`"$mkhtemp" || err "can't make tmplist"`" || \
+	xbmklist="`mktemp || err "can't make tmplist"`" || \
 	    err "can't make tmplist" xbmk_parent_check_tmp "$@"
 
 	x_ rm -f "$xbmklist"
@@ -249,7 +246,7 @@ xbmk_parent_check_tmp()
 	done
 
 	# set up a unified temporary directory, for common deletion later:
-	export TMPDIR="`x_ "$mkhtemp" -d -t xbmk_XXXXXXXX`" || \
+	export TMPDIR="`x_ mktemp -d -t xbmk_XXXXXXXX`" || \
 	    err "can't export TMPDIR" "xbmk_parent_check_tmp" "$@"
 	xbtmp="$TMPDIR"
 
@@ -272,7 +269,7 @@ xbmk_parent_set_export()
 		    "xbmk_parent_set_export" "$@"
 	fi
 
-	export PATH="$xbmkpwd/util/libreboot-utils:$xbtmp/xbmkpath:$xbtmp/gnupath:$PATH"
+	export PATH="$xbtmp/xbmkpath:$xbtmp/gnupath:$PATH"
 	xbmkpath="$PATH"
 
 	# if "y": a coreboot target won't be built if target.cfg says release=n

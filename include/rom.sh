@@ -463,7 +463,7 @@ cprom()
 	irom="$tmprom"
 
 	if [ $# -gt 0 ]; then
-		irom="$("$mkhtemp" || err "!mk irom, $(echo "$@")")" || \
+		irom="$(mktemp || err "!mk irom, $(echo "$@")")" || \
 		    err "can't copy rom" "cprom" "$@"
 
 		x_ cp "$tmprom" "$irom" && cpcmd="mv"

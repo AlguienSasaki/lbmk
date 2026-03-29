@@ -334,7 +334,7 @@ bad_checksum()
 		return 0
 	fi
 
-	bootstrap_utils
+	build_sbase
 	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \
 	    err "!sha512 '$2' $1" bad_checksum "$@"
 
@@ -355,7 +355,7 @@ tmpclone()
 		return 0
 	fi
 
-	tmpclone_patchlist="`"$mkhtemp" || err "Can't create tmp patch list"`" || \
+	tmpclone_patchlist="`mktemp || err "Can't create tmp patch list"`" || \
 	    err "Can't create tmp patch list" "tmpclone" "$@"
 
 	x_ find "$4" -type f | sort > "$tmpclone_patchlist" || \
