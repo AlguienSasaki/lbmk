@@ -19,6 +19,20 @@
 
 #include "../include/common.h"
 
+void
+free_and_set_null(char **buf)
+{
+	if (buf == NULL)
+		err_exit(EFAULT,
+		    "null ptr (to ptr for freeing) in free_and_set_null");
+
+	if (*buf == NULL)
+		return;
+
+	free(*buf);
+	*buf = NULL;
+}
+
 /* safe(ish) malloc.
 
    use this and free_and_set_null()

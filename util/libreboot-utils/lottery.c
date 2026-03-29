@@ -33,7 +33,7 @@ main(int argc, char **argv)
 
 	if (argc < 2) /* no spew */
 		spew_hex(buf, BUFSIZ);
-	free(buf);
+	free_and_set_null(&buf);
 
 	fprintf(stderr, "\n%s\n", same ? "You win!" : "You lose!");
 	return same ^ 1;

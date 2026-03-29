@@ -627,6 +627,7 @@ mkhtemp_try_create(int dirfd,
 	struct stat st_open;
 	int saved_errno = errno;
 	int rval = -1;
+	char *rstr = NULL;
 
 	int file_created = 0;
 	int dir_created = 0;
@@ -636,8 +637,13 @@ mkhtemp_try_create(int dirfd,
 	    if_err(*fd >= 0, EEXIST))
 		goto err;
 
-	if (if_err_sys(mkhtemp_fill_random(p, xc) < 0) ||
-	    if_err_sys(fd_verify_dir_identity(dirfd, st_dir_initial) < 0))
+	/* TODO: potential infinite loop under entropy failure.
+	 * if attacker has control of rand - TODO: maybe add timeout
+	 */
+	memcpy(p, rstr = rchars(xc), xc);
+	free_and_set_null(&rstr);
+
+	if (if_err_sys(fd_verify_dir_identity(dirfd, st_dir_initial) < 0))
 		goto err;
 
 	if (type == MKHTEMP_FILE) {
@@ -765,6 +771,7 @@ mkhtemp_tmpfile_linux(int dirfd,
 	int tmpfd = -1;
 	size_t retries;
 	int linked = 0;
+	char *rstr = NULL;
 
 	if (fd == NULL || st == NULL ||
 	    fname_copy == NULL || p == NULL ||
@@ -785,8 +792,8 @@ mkhtemp_tmpfile_linux(int dirfd,
 
 	for (retries = 0; retries < MKHTEMP_RETRY_MAX; retries++) {
 
-		if (mkhtemp_fill_random(p, xc) < 0)
-			goto err;
+		memcpy(p, rstr = rchars(xc), xc);
+		free_and_set_null(&rstr);
 
 		if (fd_verify_dir_identity(dirfd,
 		    st_dir_initial) < 0)
@@ -831,43 +838,6 @@ err:
 	return -1;
 }
 #endif
-
-/* TODO: potential infinite loop under entropy failure.
- * e.g. keeps returning low quality RNG, or atacker
- * has control (DoS attack potential).
- * possible solution: add a timeout (and abort if
- * the timeout is reached)
- */
-int
-mkhtemp_fill_random(char *p, size_t xc)
-{
-	static const char ch[] =
-	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-	unsigned char scratch[64];
-
-	size_t off = 0;
-	size_t i;
-
-	/* clamp rand to prevent modulo bias */
-	size_t limit = 256 - (256 % (sizeof(ch) - 1));
-
-	if (if_err(p == NULL, EFAULT))
-		return -1;
-
-retry_rand:
-	rset(scratch, sizeof(scratch));
-
-	for (i = 0; i < sizeof(scratch) && off < xc; i++) {
-		if (scratch[i] < limit)
-			p[off++] = ch[scratch[i] % (sizeof(ch) - 1)];
-	}
-
-	if (off < xc)
-		goto retry_rand;
-
-	return 0;
-}
 
 /* WARNING: **ONCE** per file.
  *

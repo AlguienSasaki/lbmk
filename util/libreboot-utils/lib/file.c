@@ -538,20 +538,6 @@ try_err(int loop_err, int errval)
 }
 
 void
-free_and_set_null(char **buf)
-{
-	if (buf == NULL)
-		err_exit(EFAULT,
-		    "null ptr (to ptr for freeing) in free_and_set_null");
-
-	if (*buf == NULL)
-		return;
-
-	free(*buf);
-	*buf = NULL;
-}
-
-void
 open_on_eintr(const char *path,
     int *fd, int flags, mode_t mode,
     struct stat *st)

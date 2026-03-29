@@ -399,7 +399,7 @@ void spew_hex(const void *data, size_t len);
 void *rmalloc(size_t n);
 void rset(void *buf, size_t n);
 void *rmalloc(size_t n);
-char *mkrstr(size_t n);
+char *rchars(size_t n);
 size_t rsize(size_t n);
 
 /* Helper functions for command: dump
@@ -524,7 +524,6 @@ mkhtemp_tmpfile_linux(int dirfd,
 int mkhtemp(int *fd, struct stat *st,
     char *template, int dirfd, const char *fname,
     struct stat *st_dir_initial, int type);
-int mkhtemp_fill_random(char *p, size_t xc);
 int world_writeable_and_sticky(const char *s,
     int sticky_allowed, int always_sticky);
 int same_dir(const char *a, const char *b);

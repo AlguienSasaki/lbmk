@@ -72,6 +72,36 @@
  * or your program dies.
  */
 
+/* random string generator, with
+ * rejection sampling. NOTE: only
+ * uses ASCII-safe characters, for
+ * printing on a unix terminal
+ *
+ * you still shouldn't use this for
+ * password generation; open diceware
+ * passphrases are better for that
+ *
+ * NOTE: the generated strings must
+ * ALSO be safe for file/directory names
+ * on unix-like os e.g. linux/bsd
+ */
+char *
+rchars(size_t n) /* emulates spkmodem-decode */
+{
+	static char ch[] =
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+	char *s = NULL;
+	size_t i;
+
+	smalloc(&s, n + 1);
+	for (i = 0; i < n; i++)
+		s[i] = ch[rsize(sizeof(ch) - 1)];
+
+	*(s + n) = '\0';
+	return s;
+}
+
 size_t
 rsize(size_t n)
 {
@@ -83,30 +113,6 @@ rsize(size_t n)
 	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
 
 	return rval % n;
-}
-
-char *
-mkrstr(size_t n) /* emulates spkmodem-decode */
-{
-	char *s;
-	size_t i;
-
-	if (n == 0)
-		err_exit(EPERM, "rmalloc: zero-byte request");
-
-	if (n >= SIZE_MAX - 1)
-		err_exit(EOVERFLOW, "rmalloc: overflow");
-
-	if (if_err((s = rmalloc(n + 1)) == NULL, EFAULT))
-		err_exit(EFAULT, "mkrstr: null");
-
-	for (i = 0; i < n; i++)
-		while(*(s + i) == '\0')
-			rset(s + i, 1);
-
-	*(s + n) = '\0';
-
-	return s;
 }
 
 void *
