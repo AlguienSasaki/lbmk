@@ -150,7 +150,8 @@ rset(void *buf, size_t n)
 	int fd = -1;
 	open_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400, NULL);
 retry_rand:
-	if ((rc = read(fd, (unsigned char *)buf + off, n - off)) < 0) {
+	if ((rc = read_on_eintr(fd,
+	    (unsigned char *)buf + off, n - off)) < 0) {
 #elif defined(__linux__)
 retry_rand:
 	if ((rc = (ssize_t)syscall(SYS_getrandom,

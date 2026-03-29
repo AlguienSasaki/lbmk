@@ -323,15 +323,15 @@ try_rw_again:
 real_pread_pwrite:
 #endif
 		if (rw_type == IO_WRITE)
-			r = write(fd, mem, nrw);
+			r = write_on_eintr(fd, mem, nrw);
 		else if (rw_type == IO_READ)
-			r = read(fd, mem, nrw);
+			r = read_on_eintr(fd, mem, nrw);
 #if defined(REAL_POS_IO) && \
     REAL_POS_IO > 0
 		else if (rw_type == IO_PWRITE)
-			r = pwrite(fd, mem, nrw, off);
+			r = pwrite_on_eintr(fd, mem, nrw, off);
 		else if (rw_type == IO_PREAD)
-			r = pread(fd, mem, nrw, off);
+			r = pread_on_eintr(fd, mem, nrw, off);
 #endif
 
 		if (r == -1 && (errno == try_err(loop_eintr, EINTR)
@@ -386,9 +386,9 @@ real_pread_pwrite:
 			}
 
 			if (rw_type == IO_PREAD)
-				r = read(fd, mem, nrw);
+				r = read_on_eintr(fd, mem, nrw);
 			else if (rw_type == IO_PWRITE)
-				r = write(fd, mem, nrw);
+				r = write_on_eintr(fd, mem, nrw);
 
 			if (rw_over_nrw(r, nrw) == -1)
 				break;
@@ -955,13 +955,118 @@ retry:
 	return rval;
 }
 
+ssize_t
+read_on_eintr(int fd,
+    void *buf, size_t count)
+{
+	int saved_errno = errno;
+	int rval;
 
+	if (if_err(buf == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(count == 0, EINVAL))
+		goto err;
 
+retry:
+	errno = 0;
 
+	if ((rval = read(fd, buf, count)) == -1 && (
+	    errno == EINTR ||
+	    errno == EAGAIN ||
+	    errno == EWOULDBLOCK ||
+	    errno == ETXTBSY))
+		goto retry;
 
+	errno = saved_errno;
+	return rval;
+err:
+	return set_errno(saved_errno, EIO);
+}
 
+ssize_t
+pread_on_eintr(int fd,
+    void *buf, size_t count,
+    off_t off)
+{
+	int saved_errno = errno;
+	int rval;
 
+	if (if_err(buf == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(off < 0, EFAULT) ||
+	    if_err(count == 0, EINVAL))
+		goto err;
 
+retry:
+	errno = 0;
 
+	if ((rval = pread(fd, buf, count, off)) == -1 && (
+	    errno == EINTR ||
+	    errno == EAGAIN ||
+	    errno == EWOULDBLOCK ||
+	    errno == ETXTBSY))
+		goto retry;
 
+	errno = saved_errno;
+	return rval;
+err:
+	return set_errno(saved_errno, EIO);
+}
 
+ssize_t
+write_on_eintr(int fd,
+    void *buf, size_t count)
+{
+	int saved_errno = errno;
+	int rval;
+
+	if (if_err(buf == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(count == 0, EINVAL))
+		goto err;
+
+retry:
+	errno = 0;
+
+	if ((rval = write(fd, buf, count)) == -1 && (
+	    errno == EINTR ||
+	    errno == EAGAIN ||
+	    errno == EWOULDBLOCK ||
+	    errno == ETXTBSY))
+		goto retry;
+
+	errno = saved_errno;
+	return rval;
+err:
+	return set_errno(saved_errno, EIO);
+}
+
+ssize_t
+pwrite_on_eintr(int fd,
+    void *buf, size_t count,
+    off_t off)
+{
+	int saved_errno = errno;
+	int rval;
+
+	if (if_err(buf == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(off < 0, EFAULT) ||
+	    if_err(count == 0, EINVAL))
+		goto err;
+
+retry:
+	errno = 0;
+
+	if ((rval = pwrite(fd, buf, count, off)) == -1 && (
+	    errno == EINTR ||
+	    errno == EAGAIN ||
+	    errno == EWOULDBLOCK ||
+	    errno == ETXTBSY))
+		goto retry;
+
+	errno = saved_errno;
+	return rval;
+err:
+	return set_errno(saved_errno, EIO);
+}

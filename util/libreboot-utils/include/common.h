@@ -482,6 +482,14 @@ ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 off_t lseek_on_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
 int try_err(int loop_err, int errval);
+ssize_t read_on_eintr(int fd,
+    void *buf, size_t count);
+ssize_t write_on_eintr(int fd,
+    void *buf, size_t count);
+ssize_t pread_on_eintr(int fd,
+    void *buf, size_t count, off_t off);
+ssize_t pwrite_on_eintr(int fd,
+    void *buf, size_t count, off_t off);
 
 /* Error handling and cleanup
  */
