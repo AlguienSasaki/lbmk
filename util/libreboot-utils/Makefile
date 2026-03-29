@@ -68,6 +68,8 @@ $(PROG): $(OBJS_NVMUTIL)
 
 $(PROGMKH): $(OBJS_MKHTEMP)
 	$(CC_MODE) $(OBJS_MKHTEMP) -o $(PROGMKH) $(LDFLAGS)
+	cp -r mkhtemp mktemp
+	chmod 755 mktemp
 
 $(PROGLOT): $(OBJS_LOTTERY)
 	$(CC_MODE) $(OBJS_LOTTERY) -o $(PROGLOT) $(LDFLAGS)

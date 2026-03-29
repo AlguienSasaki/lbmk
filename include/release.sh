@@ -35,7 +35,7 @@ release()
 		err "already exists: \"$reldest\"" "release" "$@"
 	fi
 
-	vdir="`mktemp -d || err "can't make vdir"`" || \
+	vdir="`"$mkhtemp" -d || err "can't make vdir"`" || \
 	    err "can't make tmp vdir" "release" "$@"
 	vdir="$vdir/$version"
 

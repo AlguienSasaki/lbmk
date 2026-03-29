@@ -128,7 +128,7 @@ findpath()
 
 pad_one_byte()
 {
-	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
+	paddedfile="`"$mkhtemp" || err ""$mkhtemp" pad_one_byte"`" || \
 	    err "can't make tmp file" "pad_one_byte" "$@"
 
 	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || \
@@ -146,17 +146,39 @@ unpad_one_byte()
 		err "too small, $xromsize: $1" "unpad_one_byte" "$@"
 	fi
 
-	unpaddedfile="`mktemp || err "mktemp unpad_one_byte"`" || \
+	unpaddedfile="`"$mkhtemp" || err ""$mkhtemp" unpad_one_byte"`" || \
 	    err "can't make tmp file" "unpad_one_byte" "$@"
 
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
 }
 
-build_sbase()
+# certain utils in lbmk are needed
+# BEFORE sha512sum-based verification
+# can be done, and before TMPDIR
+# generation can be done. these are:
+# sha512sum and "$mkhtemp". we will use:
+# libreboot's own mkhtemp and:
+# suckless sbase's sha512sum
+#
+bootstrap_utils()
+{
+	bootstrap_sbase
+	bootstrap_mkhtemp
+}
+bootstrap_sbase()
 {
 	if [ ! -f "$sha512sum" ]; then
-		x_ make -C "$xbmkpwd/util/sbase"
+		( x_ make -C "$xbmkpwd/util/sbase" 1>/dev/null 2>/dev/null ) || \
+		    err "can't build sbase"
+	fi
+}
+bootstrap_mkhtemp()
+{
+	if [ ! -f "$mkhtemp" ]; then
+		( x_ make -C "$xbmkpwd/util/libreboot-utils" 1>/dev/null \
+		    2>/dev/null) || \
+		    err "could not build mkhtemp"
 	fi
 }
 
@@ -183,7 +205,7 @@ fx_()
 	xchk fx_ "$@"
 	xcmd="$1"
 
-	xfile="`mktemp || err "can't create tmpfile"`" || \
+	xfile="`"$mkhtemp" || err "can't create tmpfile"`" || \
 	    err "can't make tmpfile" "fx_" "$@"
 
 	x_ rm -f "$xfile"

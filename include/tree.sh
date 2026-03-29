@@ -444,7 +444,7 @@ project_up_to_date()
 		    "$@"
 	fi
 
-	build_sbase
+	bootstrap_utils
 	fx_ "x_ util/sbase/sha512sum" find "$@" -type f -not -path \
 	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
 	    err "!h $project $hashdir" \
