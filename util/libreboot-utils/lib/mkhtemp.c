@@ -526,7 +526,7 @@ mkhtemp(int *fd,
     struct stat *st_dir_initial,
     int type)
 {
-	size_t len = 0;
+	size_t template_len = 0;
 	size_t xc = 0;
 	size_t fname_len = 0;
 
@@ -552,28 +552,28 @@ mkhtemp(int *fd,
 	    if_err(*fd >= 0, EEXIST) ||
 	    if_err(dirfd < 0, EBADF)
 	      ||
-	    if_err_sys(slen(template, max_len, &len) < 0) ||
-	    if_err(len >= max_len, EMSGSIZE)
+	    if_err_sys(slen(template, max_len, &template_len) < 0) ||
+	    if_err(template_len >= max_len, EMSGSIZE)
 	      ||
 	    if_err_sys(slen(fname, max_len, &fname_len) < 0) ||
 	    if_err(fname == NULL, EINVAL) ||
 	    if_err(strrchr(fname, '/') != NULL, EINVAL))
 		return -1;
 
-	for (end = template + len; /* count X */
+	for (end = template + template_len; /* count X */
 	    end > template && *--end == 'X'; xc++);
 
-	if (if_err(xc < 3 || xc > len, EINVAL) ||
-	    if_err(fname_len > len, EOVERFLOW))
+	if (if_err(xc < 3 || xc > template_len, EINVAL) ||
+	    if_err(fname_len > template_len, EOVERFLOW))
 		return -1;
 
-	if (if_err(memcmp(fname, template + len - fname_len,
+	if (if_err(memcmp(fname, template + template_len - fname_len,
 	      fname_len) != 0, EINVAL))
 		return -1;
 
 	/* fname_copy = templatestr region only; p points to trailing XXXXXX */
 	memcpy(smalloc(&fname_copy, fname_len + 1),
-	    template + len - fname_len,
+	    template + template_len - fname_len,
 	    fname_len + 1);
 	p = fname_copy + fname_len - xc;
 
@@ -589,7 +589,7 @@ mkhtemp(int *fd,
 			goto err;
 
 		/* success: copy final name back */
-		memcpy(template + len - fname_len,
+		memcpy(template + template_len - fname_len,
 		    fname_copy, fname_len);
 
 		errno = saved_errno;
