@@ -27,7 +27,7 @@ main(int argc, char **argv)
 	/* https://man.openbsd.org/pledge.2 */
 	xpledgex("stdio", NULL);
 
-	buf = mkrbuf(BUFSIZ);
+	buf = rmalloc(BUFSIZ);
 	if (!memcmp(buf, buf + (BUFSIZ >> 1), BUFSIZ >> 1))
 		same = 1;
 

@@ -92,12 +92,12 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 	size_t i;
 
 	if (n == 0)
-		err_exit(EPERM, "mkrbuf: zero-byte request");
+		err_exit(EPERM, "rmalloc: zero-byte request");
 
 	if (n >= SIZE_MAX - 1)
-		err_exit(EOVERFLOW, "mkrbuf: overflow");
+		err_exit(EOVERFLOW, "rmalloc: overflow");
 
-	if (if_err((s = mkrbuf(n + 1)) == NULL, EFAULT))
+	if (if_err((s = rmalloc(n + 1)) == NULL, EFAULT))
 		err_exit(EFAULT, "mkrstr: null");
 
 	for (i = 0; i < n; i++)
@@ -110,7 +110,7 @@ mkrstr(size_t n) /* emulates spkmodem-decode */
 }
 
 void *
-mkrbuf(size_t n)
+rmalloc(size_t n)
 {
 	void *buf = NULL;
 	rset(vmalloc(&buf, n), n);

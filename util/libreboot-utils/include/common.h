@@ -396,9 +396,9 @@ int dcat(const char *s, size_t n,
 
 unsigned short hextonum(char ch_s);
 void spew_hex(const void *data, size_t len);
-void *mkrbuf(size_t n);
+void *rmalloc(size_t n);
 void rset(void *buf, size_t n);
-void *mkrbuf(size_t n);
+void *rmalloc(size_t n);
 char *mkrstr(size_t n);
 size_t rsize(size_t n);
 
