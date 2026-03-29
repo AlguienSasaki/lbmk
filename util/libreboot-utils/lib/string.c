@@ -179,7 +179,6 @@ scatn(ssize_t sc, const char **sv,
     size_t max, char **rval)
 {
 	int saved_errno = errno;
-
 	char *final = NULL;
 	char *rcur = NULL;
 	char *rtmp = NULL;
@@ -192,7 +191,9 @@ scatn(ssize_t sc, const char **sv,
 
 	for (i = 0; i < sc; i++) {
 
-		if (i == 0) {
+		if (if_err(sv[i] == NULL, EFAULT))
+			goto err;
+		else if (i == 0) {
 			if (sdup(sv[0], max, &final) < 0)
 				goto err;
 			continue;

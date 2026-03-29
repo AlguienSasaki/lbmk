@@ -50,6 +50,22 @@ hextonum(char ch_s)
 }
 
 /* basically hexdump -C */
+/*
+	TODO: optimise this
+	write a full util for hexdump
+	how to optimise:
+	don't call print tens of thousands of times!
+	convert the numbers manually, and cache everything
+	in a BUFSIZ sized buffer, with everything properly
+	aligned. i worked out that i could fit 79 rows
+	in a 8KB buffer (1264 bytes of numbers represented
+	as strings in hex)
+	this depends on the OS, and would be calculated at
+	runtime.
+	then:
+	don't use printf. just write it to stdout (basically
+	a simple cat implementation)
+*/
 void
 spew_hex(const void *data, size_t len)
 {
@@ -64,7 +80,7 @@ spew_hex(const void *data, size_t len)
 
 	for (i = 0; i < len; i += 16) {
 
-		printf("%08zx  ", i);
+		printf("%0*zx  ", sizeof(size_t) * 2, i);
 
 		for (j = 0; j < 16; j++) {
 

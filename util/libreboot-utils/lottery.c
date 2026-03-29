@@ -18,6 +18,7 @@ main(int argc, char **argv)
 {
 	int same = 0;
 	char *buf;
+	size_t size = 8589934592;
 	(void) argc, (void) argv;
 
 	(void) errhook(exit_cleanup);
@@ -26,12 +27,12 @@ main(int argc, char **argv)
 	/* https://man.openbsd.org/pledge.2 */
 	xpledgex("stdio", NULL);
 
-	buf = rmalloc(BUFSIZ);
-	if (!memcmp(buf, buf + (BUFSIZ >> 1), BUFSIZ >> 1))
+	buf = rmalloc(size);
+	if (!memcmp(buf, buf + (size >> 1), size >> 1))
 		same = 1;
 
 	if (argc < 2) /* no spew */
-		spew_hex(buf, BUFSIZ);
+		spew_hex(buf, size);
 	free_and_set_null(&buf);
 
 	fprintf(stderr, "\n%s\n", same ? "You win!" : "You lose!");
