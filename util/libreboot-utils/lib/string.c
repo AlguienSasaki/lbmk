@@ -174,49 +174,45 @@ sdup(const char *s,
 }
 
 /* concatenate N number of strings */
-/* slen already checks null/termination */
 int
 scatn(ssize_t sc, const char **sv,
     size_t max, char **rval)
 {
-	ssize_t i = 0;
-
-	size_t ts = 0;
-	size_t *size = NULL;
-
-	char *ct = NULL;
 	int saved_errno = errno;
 
-	if (if_err(sc <= 0, EINVAL) ||
-	    if_err(sc > SIZE_MAX / sizeof(size_t), EOVERFLOW) ||
-	    if_err(sv == NULL, EINVAL))
+	char *final = NULL;
+	char *rcur = NULL;
+	char *rtmp = NULL;
+	size_t i;
+
+	if (if_err(sc < 2, EINVAL) ||
+	    if_err(sv == NULL, EFAULT) ||
+	    if_err(rval == NULL || *rval != NULL, EFAULT))
 		goto err;
 
-	vmalloc((void **)&size, sizeof(size_t) * sc);
+	for (i = 0; i < sc; i++) {
 
-	for (i = 0; i < sc; i++, ts += size[i])
-		if (if_err(sv[i] == NULL, EINVAL) ||
-		    slen(sv[i], max, &size[i]) < 0 ||
-		    if_err(size[i] > max - 1, EOVERFLOW) ||
-		    if_err((size[i] + ts) < ts, EOVERFLOW))
+		if (i == 0) {
+			if (sdup(sv[0], max, &final) < 0)
+				goto err;
+			continue;
+		}
+
+		rtmp = NULL;
+		if (scat(final, sv[i], max, &rtmp) < 0)
 			goto err;
 
-	if (if_err(ts > SIZE_MAX - 1, EOVERFLOW) ||
-	    if_err(ts > max - 1, EOVERFLOW))
-		goto err;
+		free_and_set_null(&final);
+		final = rtmp;
+		rtmp = NULL;
+	}
 
-	smalloc(&ct, ts + 1);
-	for (ts = i = 0; i < sc; i++, ts += size[i])
-		memcpy(ct + ts, sv[i], size[i]);
-
-	*(ct + ts) = '\0';
-	*rval = ct;
-
-	errno = saved_errno;
+	*rval = final;
 	return 0;
 err:
-	free_and_set_null(&ct);
-	free_and_set_null((char **)&size);
+	free_and_set_null(&rcur);
+	free_and_set_null(&rtmp);
+	free_and_set_null(&final);
 
 	return set_errno(saved_errno, EFAULT);
 }
@@ -230,7 +226,7 @@ scat(const char *s1, const char *s2,
 	size_t size2;
 	char *rval = NULL;
 
-	if (dest == NULL ||
+	if (if_err(dest == NULL || *dest != NULL, EFAULT) ||
 	    slen(s1, n, &size1) < 0 ||
 	    slen(s2, n, &size2) < 0 ||
 	    if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW)) {

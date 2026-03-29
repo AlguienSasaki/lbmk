@@ -135,19 +135,12 @@ new_tmp_common(int *fd, char **path, int type,
 	if (slen(templatestr, maxlen, &templatestr_len) < 0)
 		goto err;
 
-	/* sizeof adds an extra byte, useful
-	 * because we also want '.' or '/'
-	 */
+	/* may as well calculate in advance */
 	destlen = dirlen + 1 + templatestr_len;
-	if (destlen > maxlen - 1) {
-		errno = EOVERFLOW;
+	/* full path: */
+	if (scatn(3, (const char *[]) { tmpdir, "/", templatestr },
+	    maxlen, &dest) < 0)
 		goto err;
-	}
-
-	memcpy(smalloc(&dest, destlen + 1), tmpdir, dirlen);
-	*(dest + dirlen) = '/';
-	memcpy(dest + dirlen + 1, templatestr, templatestr_len);
-	*(dest + destlen) = '\0';
 
 	fname = dest + dirlen + 1;
 
