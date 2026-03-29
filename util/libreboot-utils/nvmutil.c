@@ -33,8 +33,7 @@ main(int argc, char *argv[])
 	size_t c;
 
 	(void) errhook(exit_cleanup);
-	if (lbsetprogname(argv[0]) == NULL)
-		err_exit(errno, "could not set progname");
+	(void) lbsetprogname(argv[0]);
 
 	/* https://man.openbsd.org/pledge.2 */
 	/* https://man.openbsd.org/unveil.2 */

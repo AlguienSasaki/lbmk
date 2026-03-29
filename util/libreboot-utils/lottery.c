@@ -21,8 +21,7 @@ main(int argc, char **argv)
 	(void) argc, (void) argv;
 
 	(void) errhook(exit_cleanup);
-	if (lbsetprogname(argv[0]) == NULL)
-		err_exit(errno, "could not set progname");
+	(void) lbsetprogname(argv[0]);
 
 	/* https://man.openbsd.org/pledge.2 */
 	xpledgex("stdio", NULL);

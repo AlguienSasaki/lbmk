@@ -301,8 +301,6 @@ struct xstate {
 	struct macaddr mac;
 	struct xfile f;
 
-	char *argv0;
-
 	size_t i; /* index to cmd[] for current command */
 	int no_cmd;
 

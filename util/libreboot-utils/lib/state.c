@@ -77,9 +77,6 @@ xstart(int argc, char *argv[])
 	/* .f */
 	{0},
 
-	/* .argv0 (for our getprogname implementation) */
-	NULL,
-
 	/* ->i   (index to cmd[]) */
 	0,
 
@@ -103,7 +100,6 @@ xstart(int argc, char *argv[])
 
 	us.f.buf = us.f.real_buf;
 
-	us.argv0 = argv[0];
 	us.f.fname = argv[1];
 
 	us.f.tmp_fd = -1;

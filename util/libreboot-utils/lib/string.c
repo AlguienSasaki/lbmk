@@ -324,17 +324,13 @@ err_exit(int nvm_errval, const char *msg, ...)
 	if (!errno)
 		saved_errno = errno = ECANCELED;
 
-	if ((p = lbgetprogname()) != NULL)
-		fprintf(stderr, "%s: ", p);
+	fprintf(stderr, "%s: ", lbgetprogname());
 
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
-	if (p != NULL)
-		fprintf(stderr, ": %s\n", strerror(errno));
-	else
-		fprintf(stderr, "%s\n", strerror(errno));
+	fprintf(stderr, ": %s\n", strerror(errno));
 
 	exit(EXIT_FAILURE);
 }
