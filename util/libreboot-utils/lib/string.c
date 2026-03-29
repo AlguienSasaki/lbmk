@@ -19,6 +19,39 @@
 
 #include "../include/common.h"
 
+/* for null detection inside
+ * word-optimised string functions
+ */
+#define ff ((size_t)-1 / 0xFF)
+#define high ((ff) * 0x80)
+#define zeroes(x) (((x) - (ff)) & ~(x) & (high))
+
+size_t
+page_remain(const void *p)
+{
+	static size_t pagesz = 0;
+	if (!pagesz)
+		pagesz = pagesize(),
+		pagesz -= ((uintptr_t)p & (pagesz - 1));
+
+	return pagesz;
+}
+
+long
+pagesize(void)
+{
+	static long rval = 0;
+	static int set = 0;
+
+	if (!set) {
+		if ((rval = sysconf(_SC_PAGESIZE)) < 0)
+			err_exit(errno, "could not determine page size");
+		set = 1;
+	}
+
+	return rval;
+}
+
 void
 free_and_set_null(char **buf)
 {
@@ -78,16 +111,17 @@ vmalloc(void **buf, size_t size)
 	return *buf = rval;
 }
 
-/* strict strcmp */
+/* strict word-based strcmp */
 int
 scmp(const char *a,
     const char *b,
     size_t maxlen,
     int *rval)
 {
-	size_t ch;
-	unsigned char ac;
-	unsigned char bc;
+	size_t i = 0;
+	size_t j;
+	size_t wa;
+	size_t wb;
 
 	if (a == NULL ||
 	    b == NULL ||
@@ -96,21 +130,35 @@ scmp(const char *a,
 		goto err;
 	}
 
-	for (ch = 0; ch < maxlen; ch++) {
+	for ( ; ((uintptr_t)(a + i) % sizeof(size_t)) != 0; i++) {
 
-		ac = (unsigned char)a[ch];
-		bc = (unsigned char)b[ch];
-
-		if (ac != bc) {
-			*rval = ac - bc;
+		if (i >= maxlen)
+			goto err;
+		else if (!ccmp(a, b, i, rval))
 			return 0;
-		}
-
-		if (ac == '\0') {
-			*rval = 0;
-			return 0;
-		}
 	}
+
+	for ( ; i + sizeof(size_t) <= maxlen;
+	    i += sizeof(size_t)) {
+
+		memcpy(&wa, a + i, sizeof(size_t));
+		memcpy(&wb, b + i, sizeof(size_t));
+
+		if (wa != wb)
+			for (j = 0; j < sizeof(size_t); j++)
+				if (!ccmp(a, b, i + j, rval))
+					return 0;
+
+		if (!zeroes(wa))
+			continue;
+
+		*rval = 0;
+		return 0;
+	}
+
+	for ( ; i < maxlen; i++)
+		if (!ccmp(a, b, i, rval))
+			return 0;
 
 err:
 	errno = EFAULT;
@@ -119,13 +167,39 @@ err:
 	return -1;
 }
 
-/* strict strlen */
+int ccmp(const char *a, const char *b,
+    size_t i, int *rval)
+{
+	unsigned char ac;
+	unsigned char bc;
+
+	if (if_err(a == NULL || b == NULL, EFAULT) ||
+	    rval == NULL)
+		return -1;
+
+	ac = (unsigned char)a[i];
+	bc = (unsigned char)b[i];
+
+	if (ac != bc) {
+		*rval = ac - bc;
+		return 0;
+	} else if (ac == '\0') {
+		*rval = 0;
+		return 0;
+	}
+
+	return 1;
+}
+
+/* strict word-based strlen */
 int
 slen(const char *s,
     size_t maxlen,
     size_t *rval)
 {
-	size_t ch;
+	size_t i = 0;
+	size_t w;
+	size_t j;
 
 	if (s == NULL ||
 	    rval == NULL) {
@@ -133,44 +207,109 @@ slen(const char *s,
 		goto err;
 	}
 
-	for (ch = 0;
-	    ch < maxlen && s[ch] != '\0';
-	    ch++);
+	for ( ; ((uintptr_t)(s + i) % sizeof(size_t)) != 0; i++) {
 
-	if (ch == maxlen) {
-		/* unterminated */
-		errno = EFAULT;
-		goto err;
+		if (i >= maxlen)
+			goto err;
+		if (s[i] == '\0') {
+			*rval = i;
+			return 0;
+		}
 	}
 
-	*rval = ch;
-	return 0;
+	for ( ; i + sizeof(size_t) <= maxlen;
+	    i += sizeof(size_t)) {
+
+		memcpy(&w, s + i, sizeof(size_t));
+
+		if (!zeroes(w))
+			continue;
+
+		for (j = 0; j < sizeof(size_t); j++) {
+			if (s[i + j] == '\0') {
+				*rval = i + j;
+				return 0;
+			}
+		}
+	}
+
+	for ( ; i < maxlen; i++) {
+		if (s[i] == '\0') {
+			*rval = i;
+			return 0;
+		}
+	}
+
 err:
+	errno = EFAULT;
 	if (rval != NULL)
 		*rval = 0;
 	return -1;
 }
 
-/* strict strdup */
+/* strict word-based strdup */
 int
 sdup(const char *s,
-    size_t n, char **dest)
+    size_t max, char **dest)
 {
-	size_t size;
-	char *rval = NULL;
+	size_t j;
+	size_t w;
+	size_t i = 0;
+	char *out = NULL;
 
-	if (dest == NULL ||
-	    slen(s, n, &size) < 0) {
-		if (dest != NULL)
-			*dest = NULL;
-		return -1;
+	if (dest == NULL || *dest != NULL || s == NULL)
+		goto err;
+
+	out = smalloc(dest, max);
+
+	for ( ; ((uintptr_t)(s + i) % sizeof(size_t)) != 0; i++) {
+
+		if (i >= max)
+			goto err;
+
+		out[i] = s[i];
+		if (s[i] == '\0') {
+			*dest = out;
+			return 0;
+		}
 	}
 
-	memcpy(smalloc(&rval, size + 1), s, size);
-	*(rval + size) = '\0';
+	for ( ; i + sizeof(size_t) <= max; i += sizeof(size_t)) {
 
-	*dest = rval;
-	return 0;
+		if (page_remain(s + i) < sizeof(size_t))
+			break;
+
+		memcpy(&w, s + i, sizeof(size_t));
+		if (!zeroes(w)) {
+			memcpy(out + i, &w, sizeof(size_t));
+			continue;
+		}
+
+		for (j = 0; j < sizeof(size_t); j++) {
+
+			out[i + j] = s[i + j];
+			if (s[i + j] == '\0') {
+				*dest = out;
+				return 0;
+			}
+		}
+	}
+
+	for ( ; i < max; i++) {
+
+		out[i] = s[i];
+		if (s[i] == '\0') {
+			*dest = out;
+			return 0;
+		}
+	}
+
+err:
+	free_and_set_null(&out);
+	if (dest != NULL)
+		*dest = NULL;
+	errno = EFAULT;
+	return -1;
 }
 
 /* concatenate N number of strings */
@@ -279,15 +418,10 @@ dcat(const char *s, size_t n,
 	return 0;
 
 err:
-	if (rval1 != NULL)
-		free(rval1);
-	if (rval2 != NULL)
-		free(rval2);
+	*dest1 = *dest2 = NULL;
 
-	if (dest1 != NULL)
-		*dest1 = NULL;
-	if (dest2 != NULL)
-		*dest2 = NULL;
+	free_and_set_null(&rval1);
+	free_and_set_null(&rval2);
 
 	return -1;
 }
@@ -303,11 +437,14 @@ vcmp(const void *s1, const void *s2, size_t n)
 	size_t a;
 	size_t b;
 
+	const unsigned char *x;
+	const unsigned char *y;
+
 	if (if_err(s1 == NULL || s2 == NULL, EFAULT))
 		err_exit(EFAULT, "vcmp: null input");
 
-	const unsigned char *x = s1;
-	const unsigned char *y = s2;
+	x = s1;
+	y = s2;
 
 	for ( ; i + sizeof(size_t) <= n; i += sizeof(size_t)) {
 

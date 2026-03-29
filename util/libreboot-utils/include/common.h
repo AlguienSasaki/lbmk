@@ -372,6 +372,8 @@ void write_mac_part(size_t partnum);
 /* string functions
  */
 
+size_t page_remain(const void *p);
+long pagesize(void);
 int xunveilx(const char *path, const char *permissions);
 int xpledgex(const char *promises, const char *execpromises);
 char *smalloc(char **buf, size_t size);
@@ -381,6 +383,8 @@ int slen(const char *scmp, size_t maxlen,
 int vcmp(const void *s1, const void *s2, size_t n);
 int scmp(const char *a, const char *b,
     size_t maxlen, int *rval);
+int ccmp(const char *a, const char *b, size_t i,
+    int *rval);
 int sdup(const char *s,
     size_t n, char **dest);
 int scatn(ssize_t sc, const char **sv,
