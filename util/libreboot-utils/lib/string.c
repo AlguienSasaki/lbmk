@@ -359,22 +359,16 @@ no_op(void)
 const char *
 lbgetprogname(void)
 {
-	static char *rval = NULL;
-	static char *p;	
-	static int setname = 0;
-
-	if (!setname) {
-		if ((rval = lbsetprogname(NULL)) == NULL)
-			return NULL;
-
-		p = strrchr(rval, '/');
-		if (p)
-			rval = p + 1;
-
-		setname = 1;
-	}
-
-	return rval;
+	char *name = lbsetprogname(NULL);
+	char *p = NULL;
+	if (name)
+		p = strrchr(name, '/');
+	if (p)
+		return p + 1;
+	else if (name)
+		return name;
+	else
+		return "libreboot-utils";
 }
 
 /* singleton. if string not null,
@@ -385,17 +379,13 @@ lbgetprogname(void)
 char *
 lbsetprogname(char *argv0)
 {
-	static int setname = 0;
 	static char *progname = NULL;
-	size_t len;
+	static int set = 0;
 
-	if (!setname) {
-		if (if_err(argv0 == NULL || *argv0 == '\0', EFAULT) ||
-		    slen(argv0, 4096, &len) < 0)
-			return NULL;
-
-		memcpy(smalloc(&progname, len + 1), argv0, len + 1);
-		setname = 1;
+	if (!set) {
+		if (argv0 == NULL || sdup(argv0, 4096, &progname) < 0)
+			return "libreboot-utils";
+		set = 1;
 	}
 
 	return progname;

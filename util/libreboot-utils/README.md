@@ -31,7 +31,7 @@ of something like e.g. unveil, but in userspace!
 
 Mkhtemp is designed to be the most secure implementation
 possible, of mktemp, offering a heavy amount of hardening
-over traditional mktemp. Written in C89, and the plan is
+over traditional mktemp. Written in C99, and the plan is
 very much to keep this code portable over time - patches
 very much welcome.
 
@@ -241,7 +241,7 @@ a drop-in replacement on Linux distros (and BSDs if they
 want it), while providing a more hardened version and
 recommending that where possible.
 
-~~Rewrite it in rust~~ (nothing against it though, I just like C89 for some reason)
+~~Rewrite it in rust~~ (nothing against it though, I just like C99 for some reason)
 
 Also, generally document the history of mktemp, and how
 mkhtemp works in comparison.
