@@ -62,8 +62,7 @@ main(int argc, char *argv[])
 	int type = MKHTEMP_FILE;
 
 	(void) errhook(exit_cleanup);
-
-	if (lbgetprogname(argv[0]) == NULL)
+	if (lbsetprogname(argv[0]) == NULL)
 		err_exit(errno, "could not set progname");
 
 	/* https://man.openbsd.org/pledge.2 */
@@ -143,7 +142,7 @@ main(int argc, char *argv[])
 
 err_usage:
 	err_exit(EINVAL,
-	    "usage: %s [-d] [-p dir] [template]\n", getnvmprogname());
+	    "usage: %s [-d] [-p dir] [template]\n", lbgetprogname());
 }
 
 static void

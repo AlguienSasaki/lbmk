@@ -11,7 +11,7 @@
 void
 usage(void)
 {
-	const char *util = getnvmprogname();
+	const char *util = lbgetprogname();
 
 	fprintf(stderr,
 	    "Modify Intel GbE NVM images e.g. set MAC\n"

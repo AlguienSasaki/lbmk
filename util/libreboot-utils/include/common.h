@@ -492,7 +492,7 @@ void usage(void);
 int set_errno(int saved_errno, int fallback);
 void err_exit(int nvm_errval, const char *msg, ...);
 func_t errhook(func_t ptr); /* hook function for cleanup on err */
-const char *getnvmprogname(void);
+const char *lbgetprogname(void);
 void no_op(void);
 void err_mkhtemp(int errval, const char *msg, ...);
 
@@ -561,7 +561,7 @@ int mkdirat_on_eintr(int dirfd,
     const char *pathname, mode_t mode);
 int if_err(int condition, int errval);
 int if_err_sys(int condition);
-char *lbgetprogname(char *argv0);
+char *lbsetprogname(char *argv0);
 
 /* asserts */
 

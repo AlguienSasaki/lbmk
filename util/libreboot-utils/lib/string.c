@@ -310,7 +310,7 @@ err_exit(int nvm_errval, const char *msg, ...)
 	if (!errno)
 		saved_errno = errno = ECANCELED;
 
-	if ((p = getnvmprogname()) != NULL)
+	if ((p = lbgetprogname()) != NULL)
 		fprintf(stderr, "%s: ", p);
 
 	va_start(args, msg);
@@ -357,14 +357,14 @@ no_op(void)
 }
 
 const char *
-getnvmprogname(void)
+lbgetprogname(void)
 {
 	static char *rval = NULL;
 	static char *p;	
 	static int setname = 0;
 
 	if (!setname) {
-		if ((rval = lbgetprogname(NULL)) == NULL)
+		if ((rval = lbsetprogname(NULL)) == NULL)
 			return NULL;
 
 		p = strrchr(rval, '/');
@@ -383,7 +383,7 @@ getnvmprogname(void)
    way, returns the string
  */
 char *
-lbgetprogname(char *argv0)
+lbsetprogname(char *argv0)
 {
 	static int setname = 0;
 	static char *progname = NULL;

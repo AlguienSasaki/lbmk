@@ -33,10 +33,11 @@ main(int argc, char *argv[])
 	size_t c;
 
 	(void) errhook(exit_cleanup);
-
-	if (lbgetprogname(argv[0]) == NULL)
+	if (lbsetprogname(argv[0]) == NULL)
 		err_exit(errno, "could not set progname");
 
+	/* https://man.openbsd.org/pledge.2 */
+	/* https://man.openbsd.org/unveil.2 */
 	xpledgex("stdio flock rpath wpath cpath unveil", NULL);
 	xunveilx("/dev/urandom", "r");
 
