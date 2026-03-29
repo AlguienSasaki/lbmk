@@ -95,5 +95,22 @@ main(int argc, char *argv[])
 static void
 exit_cleanup(void)
 {
-	return;
+	struct xstate *x;
+	struct xfile *f;
+
+	x = xstatus();
+	if (x == NULL)
+		return;
+
+	f = &x->f;
+
+	/* close fds if still open */
+	close_on_eintr(&f->tmp_fd);
+	close_on_eintr(&f->gbe_fd);
+
+	/* unlink tmpfile if it exists */
+	if (f->tname != NULL) {
+		(void) unlink(f->tname);
+		free_and_set_null(&f->tname);
+	}
 }
