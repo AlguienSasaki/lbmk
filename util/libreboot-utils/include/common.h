@@ -395,6 +395,7 @@ int dcat(const char *s, size_t n,
  */
 
 unsigned short hextonum(char ch_s);
+void spew_hex(const void *data, size_t len);
 void *mkrbuf(size_t n);
 void rset(void *buf, size_t n);
 void *mkrbuf(size_t n);
@@ -406,7 +407,6 @@ size_t rsize(size_t n);
 
 void cmd_helper_dump(void);
 void print_mac_from_nvm(size_t partnum);
-void hexdump(size_t partnum);
 
 /* Helper functions for command: swap
  */

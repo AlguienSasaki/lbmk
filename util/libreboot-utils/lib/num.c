@@ -16,8 +16,10 @@
     defined(__NetBSD__) || defined(__APPLE__))
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
 #endif
+#include <ctype.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -45,6 +47,48 @@ hextonum(char ch_s)
 		return rsize(16); /* <-- with rejection sampling! */
 
 	return 16;
+}
+
+/* basically hexdump -C */
+void
+spew_hex(const void *data, size_t len)
+{
+	const unsigned char *buf = (const unsigned char *)data;
+	unsigned char c;
+	size_t i;
+	size_t j;
+
+	if (buf == NULL ||
+	    len == 0)
+		return;
+
+	for (i = 0; i < len; i += 16) {
+
+		printf("%08zx  ", i);
+
+		for (j = 0; j < 16; j++) {
+
+			if (i + j < len)
+				printf("%02x ", buf[i + j]);
+			else
+				printf("   ");
+
+			if (j == 7)
+				printf(" ");
+		}
+
+		printf(" |");
+
+		for (j = 0; j < 16 && i + j < len; j++) {
+
+			c = buf[i + j];
+			printf("%c", isprint(c) ? c : '.');
+		}
+
+		printf("|\n");
+	}
+
+	printf("%08zx\n", len);
 }
 
 void

@@ -364,8 +364,7 @@ cmd_helper_dump(void)
 		    (size_t)p);
 
 		print_mac_from_nvm(p);
-
-		hexdump(p);
+		spew_hex(f->buf + (p * GBE_PART_SIZE), NVM_SIZE);
 	}
 }
 
@@ -387,35 +386,6 @@ print_mac_from_nvm(size_t partnum)
 			printf("\n");
 		else
 			printf(":");
-	}
-}
-
-void
-hexdump(size_t partnum)
-{
-	size_t c;
-	size_t row;
-	unsigned short val16;
-
-	for (row = 0; row < 8; row++) {
-
-		printf("%08lx ",
-		    (size_t)((size_t)row << 4));
-
-		for (c = 0; c < 8; c++) {
-
-			val16 = nvm_word((row << 3) + c, partnum);
-
-			if (c == 4)
-				printf(" ");
-
-			printf(" %02x %02x",
-			    (unsigned int)(val16 & 0xff),
-			    (unsigned int)(val16 >> 8));
-
-		}
-
-		printf("\n");
 	}
 }
 
