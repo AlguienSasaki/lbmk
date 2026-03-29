@@ -378,6 +378,7 @@ char *smalloc(char **buf, size_t size);
 void *vmalloc(void **buf, size_t size);
 int slen(const char *scmp, size_t maxlen,
     size_t *rval);
+int vcmp(const void *s1, const void *s2, size_t n);
 int scmp(const char *a, const char *b,
     size_t maxlen, int *rval);
 int sdup(const char *s,

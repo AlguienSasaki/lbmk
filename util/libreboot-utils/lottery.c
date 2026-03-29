@@ -28,7 +28,7 @@ main(int argc, char **argv)
 	xpledgex("stdio", NULL);
 
 	buf = rmalloc(size);
-	if (!memcmp(buf, buf + (size >> 1), size >> 1))
+	if (!vcmp(buf, buf + (size >> 1), size >> 1))
 		same = 1;
 
 	if (argc < 2) /* no spew */

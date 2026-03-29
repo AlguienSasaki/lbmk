@@ -143,7 +143,7 @@ read_file(void)
 	if (_r < 0)
 		err_exit(errno, "%s: read failed (cmp)", f->tname);
 
-	if (memcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
+	if (vcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
 		err_exit(errno, "%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
@@ -329,7 +329,7 @@ check_written_part(size_t p)
 		f->rw_check_err_read[p] = f->io_err_gbe = 1;
 	else if ((size_t)rval != gbe_rw_size)
 		f->rw_check_partial_read[p] = f->io_err_gbe = 1;
-	else if (memcmp(mem_offset, f->pad, gbe_rw_size) != 0)
+	else if (vcmp(mem_offset, f->pad, gbe_rw_size) != 0)
 		f->rw_check_bad_part[p] = f->io_err_gbe = 1;
 
 	if (f->rw_check_err_read[p] ||

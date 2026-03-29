@@ -292,6 +292,39 @@ err:
 	return -1;
 }
 
+/* because no libc reimagination is complete
+ * without a reimplementation of memcmp. and
+ * no safe one is complete without null checks.
+ */
+int
+vcmp(const void *s1, const void *s2, size_t n)
+{
+	size_t i = 0;
+	size_t a;
+	size_t b;
+
+	if (if_err(s1 == NULL || s2 == NULL, EFAULT))
+		err_exit(EFAULT, "vcmp: null input");
+
+	const unsigned char *x = s1;
+	const unsigned char *y = s2;
+
+	for ( ; i + sizeof(size_t) <= n; i += sizeof(size_t)) {
+
+		memcpy(&a, x + i, sizeof(size_t));
+		memcpy(&b, y + i, sizeof(size_t));
+
+		if (a != b)
+			break;
+	}
+
+	for ( ; i < n; i++)
+		if (x[i] != y[i])
+			return (int)x[i] - (int)y[i];
+
+	return 0;
+}
+
 /* on functions that return with errno,
  * i sometimes have a default fallback,
  * which is set if errno wasn't changed,

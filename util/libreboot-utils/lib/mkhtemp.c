@@ -567,7 +567,7 @@ mkhtemp(int *fd,
 	    if_err(fname_len > template_len, EOVERFLOW))
 		return -1;
 
-	if (if_err(memcmp(fname, template + template_len - fname_len,
+	if (if_err(vcmp(fname, template + template_len - fname_len,
 	      fname_len) != 0, EINVAL))
 		return -1;
 
