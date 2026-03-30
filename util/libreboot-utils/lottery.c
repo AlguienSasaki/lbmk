@@ -18,7 +18,7 @@ main(int argc, char **argv)
 {
 	int same = 0;
 	char *buf;
-	size_t size = 8589934592;
+	size_t size = BUFSIZ;
 	(void) argc, (void) argv;
 
 	(void) errhook(exit_cleanup);
