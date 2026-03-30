@@ -24,17 +24,25 @@
  */
 #define ff ((size_t)-1 / 0xFF)
 #define high ((ff) * 0x80)
+/* NOTE:
+ * do not assume that a match means
+ * both words have null at the same
+ * location. see how this is handled
+ * e.g. in scmp.
+ */
 #define zeroes(x) (((x) - (ff)) & ~(x) & (high))
 
 size_t
 page_remain(const void *p)
 {
+	/* calling sysconf repeatedly
+	 * is folly. cache it (static)
+	 */
 	static size_t pagesz = 0;
 	if (!pagesz)
-		pagesz = pagesize(),
-		pagesz -= ((uintptr_t)p & (pagesz - 1));
+		pagesz = (size_t)pagesize();
 
-	return pagesz;
+	return pagesz - ((uintptr_t)p & (pagesz - 1));
 }
 
 long
@@ -122,24 +130,26 @@ scmp(const char *a,
 	size_t j;
 	size_t wa;
 	size_t wb;
+	int saved_errno = errno;
 
-	if (a == NULL ||
-	    b == NULL ||
-	    rval == NULL) {
-		errno = EFAULT;
+	if (if_err(a == NULL || b == NULL || rval == NULL, EFAULT))
 		goto err;
-	}
 
 	for ( ; ((uintptr_t)(a + i) % sizeof(size_t)) != 0; i++) {
 
-		if (i >= maxlen)
+		if (if_err(i >= maxlen, EOVERFLOW))
 			goto err;
 		else if (!ccmp(a, b, i, rval))
-			return 0;
+			goto out;
 	}
 
 	for ( ; i + sizeof(size_t) <= maxlen;
 	    i += sizeof(size_t)) {
+
+		/* prevent crossing page boundary on word check */
+		if (page_remain(a + i) < sizeof(size_t) ||
+		    page_remain(b + i) < sizeof(size_t))
+			break;
 
 		memcpy(&wa, a + i, sizeof(size_t));
 		memcpy(&wb, b + i, sizeof(size_t));
@@ -147,24 +157,29 @@ scmp(const char *a,
 		if (wa != wb)
 			for (j = 0; j < sizeof(size_t); j++)
 				if (!ccmp(a, b, i + j, rval))
-					return 0;
+					goto out;
 
 		if (!zeroes(wa))
 			continue;
 
 		*rval = 0;
-		return 0;
+		goto out;
 	}
 
 	for ( ; i < maxlen; i++)
 		if (!ccmp(a, b, i, rval))
-			return 0;
+			goto out;
 
 err:
-	errno = EFAULT;
+	(void) set_errno(saved_errno, EFAULT);
 	if (rval != NULL)
 		*rval = -1;
+
+	err_exit(errno, "scmp");
 	return -1;
+out:
+	errno = saved_errno;
+	return 0;
 }
 
 int ccmp(const char *a, const char *b,
@@ -173,9 +188,8 @@ int ccmp(const char *a, const char *b,
 	unsigned char ac;
 	unsigned char bc;
 
-	if (if_err(a == NULL || b == NULL, EFAULT) ||
-	    rval == NULL)
-		return -1;
+	if (if_err(a == NULL || b == NULL || rval == NULL, EFAULT))
+		err_exit(errno, "ccmp");
 
 	ac = (unsigned char)a[i];
 	bc = (unsigned char)b[i];
@@ -197,15 +211,13 @@ slen(const char *s,
     size_t maxlen,
     size_t *rval)
 {
+	int saved_errno = errno;
 	size_t i = 0;
 	size_t w;
 	size_t j;
 
-	if (s == NULL ||
-	    rval == NULL) {
-		errno = EFAULT;
+	if (if_err(s == NULL || rval == NULL, EFAULT))
 		goto err;
-	}
 
 	for ( ; ((uintptr_t)(s + i) % sizeof(size_t)) != 0; i++) {
 
@@ -213,7 +225,7 @@ slen(const char *s,
 			goto err;
 		if (s[i] == '\0') {
 			*rval = i;
-			return 0;
+			goto out;
 		}
 	}
 
@@ -221,14 +233,13 @@ slen(const char *s,
 	    i += sizeof(size_t)) {
 
 		memcpy(&w, s + i, sizeof(size_t));
-
 		if (!zeroes(w))
 			continue;
 
 		for (j = 0; j < sizeof(size_t); j++) {
 			if (s[i + j] == '\0') {
 				*rval = i + j;
-				return 0;
+				goto out;
 			}
 		}
 	}
@@ -236,15 +247,20 @@ slen(const char *s,
 	for ( ; i < maxlen; i++) {
 		if (s[i] == '\0') {
 			*rval = i;
-			return 0;
+			goto out;
 		}
 	}
 
 err:
-	errno = EFAULT;
+	(void) set_errno(saved_errno, EFAULT);
 	if (rval != NULL)
 		*rval = 0;
+
+	err_exit(errno, "slen");
 	return -1;
+out:
+	errno = saved_errno;
+	return 0;
 }
 
 /* strict word-based strdup */
@@ -256,21 +272,22 @@ sdup(const char *s,
 	size_t w;
 	size_t i = 0;
 	char *out = NULL;
+	int saved_errno = errno;
 
-	if (dest == NULL || *dest != NULL || s == NULL)
+	if (if_err(dest == NULL || *dest != NULL || s == NULL, EFAULT))
 		goto err;
 
 	out = smalloc(dest, max);
 
 	for ( ; ((uintptr_t)(s + i) % sizeof(size_t)) != 0; i++) {
 
-		if (i >= max)
+		if (if_err(i >= max, EOVERFLOW))
 			goto err;
 
 		out[i] = s[i];
 		if (s[i] == '\0') {
 			*dest = out;
-			return 0;
+			goto out;
 		}
 	}
 
@@ -290,7 +307,7 @@ sdup(const char *s,
 			out[i + j] = s[i + j];
 			if (s[i + j] == '\0') {
 				*dest = out;
-				return 0;
+				goto out;
 			}
 		}
 	}
@@ -300,7 +317,7 @@ sdup(const char *s,
 		out[i] = s[i];
 		if (s[i] == '\0') {
 			*dest = out;
-			return 0;
+			goto out;
 		}
 	}
 
@@ -308,8 +325,14 @@ err:
 	free_and_set_null(&out);
 	if (dest != NULL)
 		*dest = NULL;
-	errno = EFAULT;
+
+	(void) set_errno(saved_errno, EFAULT);
+	err_exit(errno, "sdup");
+
 	return -1;
+out:
+	errno = saved_errno;
+	return 0;
 }
 
 /* concatenate N number of strings */
@@ -347,6 +370,7 @@ scatn(ssize_t sc, const char **sv,
 		rtmp = NULL;
 	}
 
+	errno = saved_errno;
 	*rval = final;
 	return 0;
 err:
@@ -354,7 +378,10 @@ err:
 	free_and_set_null(&rtmp);
 	free_and_set_null(&final);
 
-	return set_errno(saved_errno, EFAULT);
+	(void) set_errno(saved_errno, EFAULT);
+
+	err_exit(errno, "scatn");
+	return -1;
 }
 
 /* strict strcat */
@@ -365,16 +392,16 @@ scat(const char *s1, const char *s2,
 	size_t size1;
 	size_t size2;
 	char *rval = NULL;
+	int saved_errno = errno;
 
-	if (if_err(dest == NULL || *dest != NULL, EFAULT) ||
-	    slen(s1, n, &size1) < 0 ||
-	    slen(s2, n, &size2) < 0 ||
-	    if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW)) {
+	if (if_err(dest == NULL || *dest != NULL, EFAULT))
+		goto err;
 
-		if (dest != NULL)
-			*dest = NULL;
-		return -1;
-	}
+	slen(s1, n, &size1);
+	slen(s2, n, &size2);
+
+	if (if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW))
+		goto err;
 
 	memcpy(smalloc(&rval, size1 + size2 + 1),
 	    s1, size1);
@@ -382,7 +409,15 @@ scat(const char *s1, const char *s2,
 	*(rval + size1 + size2) = '\0';
 
 	*dest = rval;
+	errno = saved_errno;
 	return 0;
+err:
+	(void) set_errno(saved_errno, EINVAL);
+	if (dest != NULL)
+		*dest = NULL;
+	err_exit(errno, "scat");
+
+	return -1;
 }
 
 /* strict split/de-cat - off is where
@@ -395,14 +430,16 @@ dcat(const char *s, size_t n,
 	size_t size;
 	char *rval1 = NULL;
 	char *rval2 = NULL;
+	int saved_errno = errno;
 
-	if (dest1 == NULL || dest2 == NULL ||
-	    slen(s, n, &size) < 0 ||
-	    if_err(size == SIZE_MAX, EOVERFLOW) ||
-	    if_err(off >= size, EOVERFLOW)) {
-
+	if (if_err(dest1 == NULL || dest2 == NULL, EFAULT))
 		goto err;
-	}
+
+	slen(s, n, &size);
+
+	if (if_err(size >= SIZE_MAX - 1, EOVERFLOW) ||
+	    if_err(off >= size, EOVERFLOW))
+		goto err;
 
 	memcpy(smalloc(&rval1, off + 1),
 	    s, off);
@@ -415,6 +452,7 @@ dcat(const char *s, size_t n,
 	*dest1 = rval1;
 	*dest2 = rval2;
 
+	errno = saved_errno;
 	return 0;
 
 err:
@@ -422,6 +460,9 @@ err:
 
 	free_and_set_null(&rval1);
 	free_and_set_null(&rval2);
+
+	(void) set_errno(saved_errno, EINVAL);
+	err_exit(errno, "dcat");
 
 	return -1;
 }
@@ -433,6 +474,7 @@ err:
 int
 vcmp(const void *s1, const void *s2, size_t n)
 {
+	int saved_errno = errno;
 	size_t i = 0;
 	size_t a;
 	size_t b;
@@ -459,6 +501,7 @@ vcmp(const void *s1, const void *s2, size_t n)
 		if (x[i] != y[i])
 			return (int)x[i] - (int)y[i];
 
+	errno = saved_errno;
 	return 0;
 }
 
