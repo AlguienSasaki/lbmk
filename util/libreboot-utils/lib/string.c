@@ -179,7 +179,7 @@ err:
 	return -1;
 out:
 	errno = saved_errno;
-	return 0;
+	return *rval;
 }
 
 int ccmp(const char *a, const char *b,
@@ -206,7 +206,7 @@ int ccmp(const char *a, const char *b,
 }
 
 /* strict word-based strlen */
-int
+size_t
 slen(const char *s,
     size_t maxlen,
     size_t *rval)
@@ -256,15 +256,15 @@ err:
 	if (rval != NULL)
 		*rval = 0;
 
-	err_exit(errno, "slen");
-	return -1;
+	err_exit(errno, "slen"); /* abort */
+	return 0; /* gcc15 is happy */
 out:
 	errno = saved_errno;
-	return 0;
+	return *rval;
 }
 
 /* strict word-based strdup */
-int
+char *
 sdup(const char *s,
     size_t max, char **dest)
 {
@@ -329,14 +329,14 @@ err:
 	(void) set_errno(saved_errno, EFAULT);
 	err_exit(errno, "sdup");
 
-	return -1;
+	return NULL;
 out:
 	errno = saved_errno;
-	return 0;
+	return *dest;
 }
 
 /* concatenate N number of strings */
-int
+char *
 scatn(ssize_t sc, const char **sv,
     size_t max, char **rval)
 {
@@ -356,14 +356,12 @@ scatn(ssize_t sc, const char **sv,
 		if (if_err(sv[i] == NULL, EFAULT))
 			goto err;
 		else if (i == 0) {
-			if (sdup(sv[0], max, &final) < 0)
-				goto err;
+			(void) sdup(sv[0], max, &final);
 			continue;
 		}
 
 		rtmp = NULL;
-		if (scat(final, sv[i], max, &rtmp) < 0)
-			goto err;
+		scat(final, sv[i], max, &rtmp);
 
 		free_and_set_null(&final);
 		final = rtmp;
@@ -372,7 +370,7 @@ scatn(ssize_t sc, const char **sv,
 
 	errno = saved_errno;
 	*rval = final;
-	return 0;
+	return *rval;
 err:
 	free_and_set_null(&rcur);
 	free_and_set_null(&rtmp);
@@ -381,11 +379,11 @@ err:
 	(void) set_errno(saved_errno, EFAULT);
 
 	err_exit(errno, "scatn");
-	return -1;
+	return NULL;
 }
 
 /* strict strcat */
-int
+char *
 scat(const char *s1, const char *s2,
     size_t n, char **dest)
 {
@@ -400,29 +398,31 @@ scat(const char *s1, const char *s2,
 	slen(s1, n, &size1);
 	slen(s2, n, &size2);
 
-	if (if_err(size1 > SIZE_MAX - size2 - 1, EOVERFLOW))
+	if (if_err(size1
+	    > SIZE_MAX - size2 - 1, EOVERFLOW))
 		goto err;
 
-	memcpy(smalloc(&rval, size1 + size2 + 1),
-	    s1, size1);
+	smalloc(&rval, size1 + size2 + 1);
+
+	memcpy(rval, s1, size1);
 	memcpy(rval + size1, s2, size2);
 	*(rval + size1 + size2) = '\0';
 
 	*dest = rval;
 	errno = saved_errno;
-	return 0;
+	return *dest;
 err:
 	(void) set_errno(saved_errno, EINVAL);
 	if (dest != NULL)
 		*dest = NULL;
 	err_exit(errno, "scat");
 
-	return -1;
+	return NULL;
 }
 
 /* strict split/de-cat - off is where
    2nd buffer will start from */
-int
+void
 dcat(const char *s, size_t n,
     size_t off, char **dest1,
     char **dest2)
@@ -435,9 +435,7 @@ dcat(const char *s, size_t n,
 	if (if_err(dest1 == NULL || dest2 == NULL, EFAULT))
 		goto err;
 
-	slen(s, n, &size);
-
-	if (if_err(size >= SIZE_MAX - 1, EOVERFLOW) ||
+	if (if_err(slen(s, n, &size) >= SIZE_MAX - 1, EOVERFLOW) ||
 	    if_err(off >= size, EOVERFLOW))
 		goto err;
 
@@ -453,7 +451,7 @@ dcat(const char *s, size_t n,
 	*dest2 = rval2;
 
 	errno = saved_errno;
-	return 0;
+	return;
 
 err:
 	*dest1 = *dest2 = NULL;
@@ -463,8 +461,6 @@ err:
 
 	(void) set_errno(saved_errno, EINVAL);
 	err_exit(errno, "dcat");
-
-	return -1;
 }
 
 /* because no libc reimagination is complete
@@ -603,8 +599,9 @@ lbsetprogname(char *argv0)
 	static int set = 0;
 
 	if (!set) {
-		if (argv0 == NULL || sdup(argv0, 4096, &progname) < 0)
+		if (argv0 == NULL)
 			return "libreboot-utils";
+		(void) sdup(argv0, 4096, &progname);
 		set = 1;
 	}
 

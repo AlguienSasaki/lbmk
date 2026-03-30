@@ -22,6 +22,12 @@
 struct xstate *
 xstart(int argc, char *argv[])
 {
+#if defined(PATH_LEN) && \
+    ((PATH_LEN) >= 256)
+	static size_t maxlen = PATH_LEN;
+#else
+	static size_t maxlen = 4096;
+#endif
 	static int first_run = 1;
 	static char *dir = NULL;
 	static char *base = NULL;
@@ -113,8 +119,7 @@ xstart(int argc, char *argv[])
 		err_exit(errno, "xstart: don't know CWD of %s",
 		    us.f.fname);
 
-	if ((us.f.base = strdup(base)) == NULL)
-		err_exit(errno, "strdup base");
+	sdup(base, maxlen, &us.f.base);
 
 	us.f.dirfd = fs_open(dir,
 	    O_RDONLY | O_DIRECTORY);
@@ -128,9 +133,7 @@ xstart(int argc, char *argv[])
 	    &tmpdir, &tmpbase_local, 0) < 0)
 		err_exit(errno, "tmp basename");
 
-	us.f.tmpbase = strdup(tmpbase_local);
-	if (us.f.tmpbase == NULL)
-		err_exit(errno, "strdup tmpbase");
+	sdup(tmpbase_local, maxlen, &us.f.tmpbase);
 
 	free_and_set_null(&tmpdir);
 

@@ -120,8 +120,6 @@ new_tmp_common(int *fd, char **path, int type,
 	if (tmpdir == NULL)
 		goto err;
 
-	if (slen(tmpdir, maxlen, &dirlen) < 0)
-		goto err;
 	if (*tmpdir == '\0')
 		goto err;
 	if (*tmpdir != '/')
@@ -132,15 +130,12 @@ new_tmp_common(int *fd, char **path, int type,
 	else
 		templatestr = "tmp.XXXXXXXXXX";
 
-	if (slen(templatestr, maxlen, &templatestr_len) < 0)
-		goto err;
-
 	/* may as well calculate in advance */
-	destlen = dirlen + 1 + templatestr_len;
+	destlen = slen(tmpdir, maxlen, &dirlen) + 1
+	    + slen(templatestr, maxlen, &templatestr_len);
 	/* full path: */
-	if (scatn(3, (const char *[]) { tmpdir, "/", templatestr },
-	    maxlen, &dest) < 0)
-		goto err;
+	dest = scatn(3, (const char *[]) { tmpdir, "/", templatestr },
+	    maxlen, &dest);
 
 	fname = dest + dirlen + 1;
 
@@ -312,12 +307,10 @@ same_dir(const char *a, const char *b)
 
 	/* optimisation: if both dirs
 	   are the same, we don't need
-	   to check anything. sehr schnell:
+	   to check anything. sehr schnell!
 	 */
-	if (scmp(a, b, maxlen, &rval_scmp) < 0)
-		goto err_same_dir;
 	/* bonus: scmp checks null for us */
-	if (rval_scmp == 0)
+	if (!scmp(a, b, maxlen, &rval_scmp))
 		goto success_same_dir;
 
 	fd_a = fs_open(a, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
@@ -550,18 +543,16 @@ mkhtemp(int *fd,
 	if (if_err(fd == NULL || template == NULL || fname == NULL ||
 	          st_dir_initial == NULL, EFAULT) ||
 	    if_err(*fd >= 0, EEXIST) ||
-	    if_err(dirfd < 0, EBADF)
-	      ||
-	    if_err_sys(slen(template, max_len, &template_len) < 0) ||
-	    if_err(template_len >= max_len, EMSGSIZE)
-	      ||
-	    if_err_sys(slen(fname, max_len, &fname_len) < 0) ||
-	    if_err(fname == NULL, EINVAL) ||
-	    if_err(strrchr(fname, '/') != NULL, EINVAL))
+	    if_err(dirfd < 0, EBADF))
 		return -1;
 
-	for (end = template + template_len; /* count X */
+	/* count X */
+	for (end = template + slen(template, max_len, &template_len);
 	    end > template && *--end == 'X'; xc++);
+
+	fname_len = slen(fname, max_len, &fname_len);
+	if (if_err(strrchr(fname, '/') != NULL, EINVAL))
+		return -1;
 
 	if (if_err(xc < 3 || xc > template_len, EINVAL) ||
 	    if_err(fname_len > template_len, EOVERFLOW))

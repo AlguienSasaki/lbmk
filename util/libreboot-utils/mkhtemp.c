@@ -95,11 +95,7 @@ main(int argc, char *argv[])
 
 	/* custom template e.g. foo.XXXXXXXXXXXXXXXXXXXXX */
 	if (template != NULL) {	
-		if (slen(template, maxlen, &tlen) < 0)
-			err_exit(EINVAL,
-			    "invalid template");
-
-		for (p = template + tlen;
+		for (p = template + slen(template, maxlen, &tlen);
 		    p > template && *--p == 'X'; xc++);
 
 		if (xc < 3) /* the gnu mktemp errs on less than 3 */
@@ -132,8 +128,9 @@ main(int argc, char *argv[])
 		err_exit(EFAULT, "bad string initialisation");
 	if (*s == '\0')
 		err_exit(EFAULT, "empty string initialisation");
-	if (slen(s, maxlen, &len) < 0)
-		err_exit(EFAULT, "unterminated string initialisiert");
+
+	slen(s, maxlen, &len); /* Nullterminierung prüfen */
+	/* for good measure */
 
 	printf("%s\n", s);
 

@@ -378,20 +378,20 @@ int xunveilx(const char *path, const char *permissions);
 int xpledgex(const char *promises, const char *execpromises);
 char *smalloc(char **buf, size_t size);
 void *vmalloc(void **buf, size_t size);
-int slen(const char *scmp, size_t maxlen,
+size_t slen(const char *scmp, size_t maxlen,
     size_t *rval);
 int vcmp(const void *s1, const void *s2, size_t n);
 int scmp(const char *a, const char *b,
     size_t maxlen, int *rval);
 int ccmp(const char *a, const char *b, size_t i,
     int *rval);
-int sdup(const char *s,
+char *sdup(const char *s,
     size_t n, char **dest);
-int scatn(ssize_t sc, const char **sv,
+char *scatn(ssize_t sc, const char **sv,
     size_t max, char **rval);
-int scat(const char *s1, const char *s2,
+char *scat(const char *s1, const char *s2,
     size_t n, char **dest);
-int dcat(const char *s, size_t n,
+void dcat(const char *s, size_t n,
     size_t off, char **dest1,
     char **dest2);
 /* numerical functions

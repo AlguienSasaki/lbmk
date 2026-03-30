@@ -88,10 +88,7 @@ fsync_dir(const char *path)
 	maxlen = 4096;
 #endif
 
-	if (if_err(path == NULL, EFAULT) ||
-	    if_err_sys(slen(path, maxlen, &pathlen) < 0) ||
-	    if_err(pathlen >= maxlen || pathlen < 0, EMSGSIZE) ||
-	    if_err(pathlen == 0, EINVAL))
+	if (if_err(slen(path, maxlen, &pathlen) == 0, EINVAL))
 		goto err_fsync_dir;
 
 	memcpy(smalloc(&dirbuf, pathlen + 1),
@@ -841,11 +838,12 @@ fs_dirname_basename(const char *path,
 	size_t maxlen = 4096;
 #endif
 
-	if (path == NULL || dir == NULL || base == NULL ||
-	    if_err_sys(slen(path, maxlen, &len) < 0))
+	if (if_err(path == NULL || dir == NULL || base == NULL, EFAULT))
 		return -1;
 
-	memcpy(smalloc(&buf, len + 1), path, len + 1);
+	slen(path, maxlen, &len);
+	memcpy(smalloc(&buf, len + 1),
+	    path, len + 1);
 
 	/* strip trailing slashes */
 	while (len > 1 && buf[len - 1] == '/')
@@ -865,7 +863,7 @@ fs_dirname_basename(const char *path,
 		}
 	} else if (allow_relative) {
 
-		*dir = strdup(".");
+		sdup(".", maxlen, dir);
 		*base = buf;
 	} else {
 		errno = EINVAL;

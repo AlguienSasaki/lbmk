@@ -57,10 +57,7 @@ sanitize_command_index(size_t c)
 		err_exit(EINVAL, "cmd index %lu: empty str",
 		    (size_t)c);
 
-	if (slen(cmd->str, MAX_CMD_LEN +1, &rval) < 0)
-		err_exit(errno, "Could not get command length");
-
-	if (rval > MAX_CMD_LEN) {
+	if (slen(cmd->str, MAX_CMD_LEN +1, &rval) > MAX_CMD_LEN) {
 		err_exit(EINVAL, "cmd index %lu: str too long: %s",
 		    (size_t)c, cmd->str);
 	}
@@ -109,10 +106,7 @@ set_cmd(int argc, char *argv[])
 
 		cmd = x->cmd[c].str;
 
-		if (scmp(argv[2], cmd, MAX_CMD_LEN, &rval) < 0)
-			err_exit(EINVAL,
-			    "could not compare command strings");
-		if (rval != 0)
+		if (scmp(argv[2], cmd, MAX_CMD_LEN, &rval))
 			continue; /* not the right command */
 
 		/* valid command found */
@@ -239,10 +233,7 @@ parse_mac_string(void)
 
 	size_t rval;
 
-	if (slen(x->mac.str, 18, &rval) < 0)
-		err_exit(EINVAL, "Could not determine MAC length");
-
-	if (rval != 17)
+	if (slen(x->mac.str, 18, &rval) != 17)
 		err_exit(EINVAL, "MAC address is the wrong length");
 
 	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
