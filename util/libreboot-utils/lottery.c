@@ -36,7 +36,7 @@ main(int argc, char **argv)
 	free_and_set_null(&buf);
 
 	fprintf(stderr, "\n%s\n", same ? "You win!" : "You lose!");
-	return same ^ 1;
+	return same ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 static void
