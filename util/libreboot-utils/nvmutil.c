@@ -32,8 +32,11 @@ main(int argc, char *argv[])
 	struct xfile *f;
 	size_t c;
 
-	(void) errhook(exit_cleanup);
 	(void) lbsetprogname(argv[0]);
+	if (argc < 3)
+		usage();
+
+	(void) errhook(exit_cleanup);
 
 	/* https://man.openbsd.org/pledge.2 */
 	/* https://man.openbsd.org/unveil.2 */
