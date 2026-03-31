@@ -165,6 +165,9 @@ retry_rand:
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
 
+	if (rc < 0)
+		goto err;
+
 	if (rc == 0)
 		goto err; /* prevent infinite loop on fatal err */
 
