@@ -1001,9 +1001,7 @@ close_on_eintr(int *fd)
  */
 #define fs_err_retry() \
 	if ((rval == -1) && \
-	    (errno == EINTR || \
-	     errno == EAGAIN || \
-	     errno == EWOULDBLOCK)) \
+	    (errno == EINTR)) \
 		return 1; \
 	if (rval >= 0 && !errno) \
 		errno = saved_errno; \
