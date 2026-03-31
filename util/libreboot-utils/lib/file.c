@@ -7,6 +7,16 @@
  * Be nice to the demon.
  */
 
+/*
+TODO: putting it here just so it's somewhere:
+PATH_MAX is not reliable as a limit for paths,
+because the real length depends on mount point,
+and specific file systems.
+more correct usage example:
+long max = pathconf("/", _PC_PATH_MAX);
+ */
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
