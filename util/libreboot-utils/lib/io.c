@@ -104,8 +104,7 @@ read_file(void)
 	/* read main file
 	 */
 	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
-	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PREAD, MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
 		err_exit(errno, "%s: read failed", f->fname);
@@ -113,8 +112,7 @@ read_file(void)
 	/* copy to tmpfile
 	 */
 	_r = rw_file_exact(f->tmp_fd, f->buf, f->gbe_file_size,
-	    0, IO_PWRITE, NO_LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PWRITE, MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
 		err_exit(errno, "%s: %s: copy failed",
@@ -137,8 +135,7 @@ read_file(void)
 		err_exit(errno, "%s: fsync (tmpfile copy)", f->tname);
 
 	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
-	    0, IO_PREAD, NO_LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PREAD, MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	if (_r < 0)
 		err_exit(errno, "%s: read failed (cmp)", f->tname);
@@ -570,8 +567,7 @@ rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 		goto err_rw_gbe_file_exact;
 
 	r = rw_file_exact(fd, mem, nrw, off, rw_type,
-	    NO_LOOP_EAGAIN, LOOP_EINTR, MAX_ZERO_RW_RETRY,
-	    OFF_ERR);
+	    MAX_ZERO_RW_RETRY, OFF_ERR);
 
 	return rw_over_nrw(r, nrw);
 

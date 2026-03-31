@@ -88,17 +88,6 @@ int fchmod(int fd, mode_t mode);
 #define MAX_ZERO_RW_RETRY 5
 #endif
 
-#ifndef REAL_POS_IO
-#define REAL_POS_IO 1
-#endif
-
-#ifndef LOOP_EAGAIN
-#define LOOP_EAGAIN 1
-#endif
-#ifndef LOOP_EINTR
-#define LOOP_EINTR 1
-#endif
-
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
@@ -178,9 +167,6 @@ int fchmod(int fd, mode_t mode);
 
 #define ARGC_3 3
 #define ARGC_4 4
-
-#define NO_LOOP_EAGAIN 0
-#define NO_LOOP_EINTR 0
 
 /* For checking if an fd is a normal file.
  * Portable for old Unix e.g. v7 (S_IFREG),
@@ -477,18 +463,15 @@ ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 
 int fsync_dir(const char *path);
 ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    size_t max_retries, int off_reset);
+    off_t off, int rw_type, size_t max_retries, int off_reset);
 ssize_t prw(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type, int loop_eagain, int loop_eintr,
-    int off_reset);
+    off_t off, int rw_type);
 int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int check_file(int fd, struct stat *st);
 ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 off_t lseek_on_eintr(int fd, off_t off,
     int whence, int loop_eagain, int loop_eintr);
-int try_err(int loop_err, int errval);
 ssize_t read_on_eintr(int fd,
     void *buf, size_t count);
 ssize_t write_on_eintr(int fd,
@@ -635,10 +618,6 @@ typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
 typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
 typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
 typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
-typedef char bool_loop_eintr[(LOOP_EINTR==1||LOOP_EINTR==0)?1:-1];
-typedef char bool_loop_eagain[(LOOP_EAGAIN==1||LOOP_EAGAIN==0)?1:-1];
-typedef char bool_no_loop_eintr[(NO_LOOP_EINTR==0)?1:-1];
-typedef char bool_no_loop_eagain[(NO_LOOP_EAGAIN==0)?1:-1];
 typedef char bool_off_err[(OFF_ERR==0)?1:-1];
 typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 

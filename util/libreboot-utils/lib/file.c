@@ -160,9 +160,7 @@ err_fsync_dir:
 
 ssize_t
 rw_file_exact(int fd, unsigned char *mem, size_t nrw,
-    off_t off, int rw_type, int loop_eagain,
-    int loop_eintr, size_t max_retries,
-    int off_reset)
+    off_t off, int rw_type, size_t max_retries, int off_reset)
 {
 	ssize_t rval;
 	ssize_t rc;
@@ -208,8 +206,7 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 		off_cur = off + (off_t)rc;
 
 		rval = prw(fd, mem_cur, nrw_cur, off_cur,
-		    rw_type, loop_eagain, loop_eintr,
-		    off_reset);
+		    rw_type);
 
 		if (rval < 0)
 			goto err_rw_file_exact;
@@ -247,180 +244,42 @@ err_rw_file_exact:
 /* prw() - portable read-write with more
  * safety checks than barebones libc
  *
- * If you need real pwrite/pread, just compile
- * with flag: REAL_POS_IO=1
- *
  * A fallback is provided for regular read/write.
  * rw_type can be IO_READ (read), IO_WRITE (write),
  * IO_PREAD (pread) or IO_PWRITE
- *
- * loop_eagain does a retry loop on EAGAIN if set
- * loop_eintr does a retry loop on EINTR if set
- *
- * race conditions on non-libc pread/pwrite:
- * if a file offset changes, abort, to mitage.
- *
- * off_reset 1: reset the file offset *once* if
- *              a change was detected, assuming
- *              nothing else is touching it now
- * off_reset 0: never reset if changed
- *
- * REAL_POS_IO is enabled by default in common.h
- * and the fallback version was written for fun.
- * You should just use the real one (REAL_POS_IO 1),
- * since it is generally more reliable.
  */
 
 ssize_t
 prw(int fd, void *mem, size_t nrw,
-    off_t off, int rw_type,
-    int loop_eagain, int loop_eintr,
-    int off_reset)
+    off_t off, int rw_type)
 {
 	ssize_t rval;
 	ssize_t r;
-	int positional_rw;
 	struct stat st;
-#if !defined(REAL_POS_IO) || \
-    REAL_POS_IO < 1
-	off_t verified;
-	off_t off_orig;
-	off_t off_last;
-#endif
 	int saved_errno = errno;
 	errno = 0;
 
-	if (io_args(fd, mem, nrw, off, rw_type)
-	    == -1)
-		goto err_prw;
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		return set_errno(saved_errno, EIO);
 
 	r = -1;
 
-	/* do not use loop_eagain on
-	 * normal files
-	 */
+	if (rw_type == IO_WRITE)
+		r = write_on_eintr(fd, mem, nrw);
+	else if (rw_type == IO_READ)
+		r = read_on_eintr(fd, mem, nrw);
+	else if (rw_type == IO_PWRITE)
+		r = pwrite_on_eintr(fd, mem, nrw, off);
+	else if (rw_type == IO_PREAD)
+		r = pread_on_eintr(fd, mem, nrw, off);
 
-	if (!loop_eagain) {
-		/* check whether the file
-		 * changed
-		 */
+	if ((rval = rw_over_nrw(r, nrw)) < 0)
+		return set_errno(saved_errno, EIO);
 
-		if (check_file(fd, &st) == -1)
-			goto err_prw;
-	}
-
-	if (rw_type >= IO_PREAD)
-		positional_rw = 1; /* pread/pwrite */
-	else
-		positional_rw = 0; /* read/write */
-
-try_rw_again:
-
-	if (!positional_rw) {
-#if defined(REAL_POS_IO) && \
-    REAL_POS_IO > 0
-real_pread_pwrite:
-#endif
-		if (rw_type == IO_WRITE)
-			r = write_on_eintr(fd, mem, nrw);
-		else if (rw_type == IO_READ)
-			r = read_on_eintr(fd, mem, nrw);
-#if defined(REAL_POS_IO) && \
-    REAL_POS_IO > 0
-		else if (rw_type == IO_PWRITE)
-			r = pwrite_on_eintr(fd, mem, nrw, off);
-		else if (rw_type == IO_PREAD)
-			r = pread_on_eintr(fd, mem, nrw, off);
-#endif
-
-		if (r == -1 && (errno == try_err(loop_eintr, EINTR)
-		    || errno == try_err(loop_eagain, EAGAIN)))
-			goto try_rw_again;
-
-		rval = rw_over_nrw(r, nrw);
-		if (rval < 0)
-			goto err_prw;
-
+	if (rval >= 0 && !errno)
 		errno = saved_errno;
-
-		return rval;
-	}
-
-#if defined(REAL_POS_IO) && \
-    REAL_POS_IO > 0
-	goto real_pread_pwrite;
-#else
-	if ((off_orig = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
-	    loop_eagain, loop_eintr)) == (off_t)-1) {
-		r = -1;
-	} else if (lseek_on_eintr(fd, off, SEEK_SET,
-	    loop_eagain, loop_eintr) == (off_t)-1) {
-		r = -1;
-	} else {
-		verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
-		    loop_eagain, loop_eintr);
-
-		/* abort if the offset changed,
-		 * indicating race condition. if
-		 * off_reset enabled, reset *ONCE*
-		 */
-
-		if (off_reset && off != verified)
-			lseek_on_eintr(fd, off, SEEK_SET,
-			    loop_eagain, loop_eintr);
-
-		do {
-			/* check offset again, repeatedly.
-			 * even if off_reset is set, this
-			 * aborts if offsets change again
-			 */
-
-			verified = lseek_on_eintr(fd, (off_t)0, SEEK_CUR,
-			    loop_eagain, loop_eintr);
-
-			if (off != verified) {
-
-				errno = EBUSY;
-				goto err_prw;
-			}
-
-			if (rw_type == IO_PREAD)
-				r = read_on_eintr(fd, mem, nrw);
-			else if (rw_type == IO_PWRITE)
-				r = write_on_eintr(fd, mem, nrw);
-
-			if (rw_over_nrw(r, nrw) == -1)
-				break;
-
-		} while (r == -1 &&
-		    (errno == try_err(loop_eintr, EINTR) ||
-		     errno == try_err(loop_eagain, EAGAIN)));
-	}
-
-	saved_errno = errno;
-
-	off_last = lseek_on_eintr(fd, off_orig, SEEK_SET,
-	    loop_eagain, loop_eintr);
-
-	if (off_last != off_orig) {
-		errno = saved_errno;
-		goto err_prw;
-	}
-
-	errno = saved_errno;
-
-	rval = rw_over_nrw(r, nrw);
-	if (rval < 0)
-		goto err_prw;
-
-	errno = saved_errno;
 
 	return rval;
-
-#endif
-
-err_prw:
-	return set_errno(saved_errno, EIO);
 }
 
 int
@@ -500,17 +359,6 @@ if_err_sys(int condition)
 	if (!condition)
 		return 0;
 	return 1;
-}
-/* errno can never be -1, so you can
- * use this to conditionally set an integer
- * for comparison. see example in lseek_on_eintr
- */
-int
-try_err(int loop_err, int errval)
-{
-	if (loop_err)
-		return errval;
-	return -1;
 }
 
 int

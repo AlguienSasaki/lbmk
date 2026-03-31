@@ -496,8 +496,8 @@ cat_buf(unsigned char *b)
 		err_exit(errno, "null pointer in cat command");
 
 	if (rw_file_exact(STDOUT_FILENO, b,
-	    GBE_PART_SIZE, 0, IO_WRITE, LOOP_EAGAIN, LOOP_EINTR,
-	    MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
+	    GBE_PART_SIZE, 0, IO_WRITE, MAX_ZERO_RW_RETRY, OFF_ERR)
+	    < 0)
 		err_exit(errno, "stdout: cat");
 }
 void
