@@ -143,28 +143,27 @@ rset(void *buf, size_t n)
 	goto out;
 #else
 	size_t off = 0;
-	ssize_t rc = 0;
+
+retry_rand:
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
+	ssize_t rc;
 	int fd = -1;
-	open_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400, NULL);
-retry_rand:
-	if ((rc = read_on_eintr(fd,
-	    (unsigned char *)buf + off, n - off)) < 0) {
+
+	open_file_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400, NULL);
+
+	while (rw_retry(saved_errno,
+		rc = read_on_eintr(fd,
+		    (unsigned char *)buf + off, n - off, 0)));
 #elif defined(__linux__)
-retry_rand:
-	if ((rc = (ssize_t)syscall(SYS_getrandom,
-	    (unsigned char *)buf + off, n - off, 0)) < 0) {
+	long rc;
+	while (sys_retry(saved_errno,
+		rc = syscall(SYS_getrandom,
+		    (unsigned char *)buf + off, n - off, 0)));
 #else
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
-		if (errno == EINTR ||
-		    errno == EAGAIN)
-			goto retry_rand;
-
-		goto err; /* possibly unsupported by kernel */
-	}
 
 	if (rc == 0)
 		goto err; /* prevent infinite loop on fatal err */
@@ -176,7 +175,7 @@ retry_rand:
     ((USE_URANDOM) > 0)
 	close_on_eintr(&fd);
 #endif
-	goto out;
+
 #endif
 out:
 	errno = saved_errno;

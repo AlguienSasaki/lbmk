@@ -497,6 +497,10 @@ ssize_t pread_on_eintr(int fd,
     void *buf, size_t count, off_t off);
 ssize_t pwrite_on_eintr(int fd,
     void *buf, size_t count, off_t off);
+int off_retry(int saved_errno, off_t rval);
+int sys_retry(int saved_errno, long rval);
+int fs_retry(int saved_errno, int rval);
+int rw_retry(int saved_errno, ssize_t rval);
 
 /* Error handling and cleanup
  */
@@ -557,7 +561,7 @@ int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);
 int fs_open(const char *path, int flags);
 void free_and_set_null(char **buf);
-void open_on_eintr(const char *path, int *fd, int flags, mode_t mode,
+void open_file_on_eintr(const char *path, int *fd, int flags, mode_t mode,
     struct stat *st);
 struct filesystem *rootfs(void);
 int fs_resolve_at(int dirfd, const char *path, int flags);
@@ -567,7 +571,7 @@ int fs_open_component(int dirfd, const char *name,
     int flags, int is_last);
 int fs_dirname_basename(const char *path,
     char **dir, char **base, int allow_relative);
-int openat2p(int dirfd, const char *path,
+int openat_on_eintr(int dirfd, const char *path,
     int flags, mode_t mode);
 int mkdirat_on_eintr(int dirfd, 
     const char *pathname, mode_t mode);

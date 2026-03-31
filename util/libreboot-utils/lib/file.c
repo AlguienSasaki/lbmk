@@ -466,7 +466,6 @@ err_is_file:
 /* POSIX can say whatever it wants.
  * specification != implementation
  */
-
 ssize_t
 rw_over_nrw(ssize_t r, size_t nrw)
 {
@@ -476,32 +475,10 @@ rw_over_nrw(ssize_t r, size_t nrw)
 	    if_err(r == -1, 0) ||
 	    if_err((size_t)r > SSIZE_MAX, ERANGE) ||
 	    if_err((size_t)r > nrw, ERANGE))
-		goto err_rw_over_nrw;
+		return set_errno(saved_errno, EIO);
 
 	errno = saved_errno;
 	return r;
-
-err_rw_over_nrw:
-	return set_errno(saved_errno, EIO);
-}
-
-off_t
-lseek_on_eintr(int fd, off_t off, int whence,
-    int loop_eagain, int loop_eintr)
-{
-	off_t old;
-
-	old = -1;
-
-	do {
-		old = lseek(fd, off, whence);
-	} while (old == (off_t)-1 && (
-	    errno == try_err(loop_eintr, EINTR) ||
-	    errno == try_err(loop_eintr, ETXTBSY) ||
-	    errno == try_err(loop_eagain, EAGAIN) ||
-	    errno == try_err(loop_eagain, EWOULDBLOCK)));
-
-	return old;
 }
 
 /* two functions that reduce sloccount by
@@ -534,91 +511,6 @@ try_err(int loop_err, int errval)
 	if (loop_err)
 		return errval;
 	return -1;
-}
-
-void
-open_on_eintr(const char *path,
-    int *fd, int flags, mode_t mode,
-    struct stat *st)
-{
-	int r = -1;
-	int saved_errno = errno;
-
-	if (path == NULL)
-		err_exit(EINVAL, "open_on_eintr: null path");
-
-	if (fd == NULL)
-		err_exit(EFAULT, "%s: open_on_eintr: null fd ptr", path);
-
-	if (*fd >= 0)
-		err_exit(EBADF, "%s: open_on_eintr: file already open", path);
-
-	do {
-		r = open(path, flags, mode);
-	} while (r == -1 && (
-	    errno == EINTR || errno == EAGAIN ||
-	    errno == EWOULDBLOCK || errno == ETXTBSY));
-
-	if (r < 0)
-		err_exit(errno, "%s: open_on_eintr: could not close", path);
-
-	*fd = r;
-
-	if (st != NULL) {
-		if (fstat(*fd, st) < 0)
-			err_exit(errno, "%s: stat", path);
-
-		if (!S_ISREG(st->st_mode))
-			err_exit(errno, "%s: not a regular file", path);
-	}
-
-	if (lseek_on_eintr(*fd, 0, SEEK_CUR, 1, 1) == (off_t)-1)
-		err_exit(errno, "%s: file not seekable", path);
-
-	errno = saved_errno;
-}
-
-void
-close_on_eintr(int *fd)
-{
-	int r;
-	int saved_errno = errno;
-
-	if (fd == NULL)
-		err_exit(EINVAL, "close_on_eintr: null pointer");
-
-	if (*fd < 0)
-		return;
-
-	do {
-		r = close(*fd);
-	} while (r == -1 && (
-	    errno == EINTR || errno == EAGAIN ||
-	    errno == EWOULDBLOCK || errno == ETXTBSY));
-
-	if (r < 0)
-		err_exit(errno, "close_on_eintr: could not close");
-
-	*fd = -1;
-
-	errno = saved_errno;
-}
-
-int
-fsync_on_eintr(int fd)
-{
-	int r;
-	int saved_errno = errno;
-
-	do {
-		r = fsync(fd);
-	} while (r == -1 && (errno == EINTR || errno == EAGAIN ||
-	    errno == ETXTBSY || errno == EWOULDBLOCK));
-
-	if (r >= 0)
-		errno = saved_errno;
-
-	return r;
 }
 
 int
@@ -663,7 +555,7 @@ rootfs(void)
 
 		global_fs.rootfd = -1;
 
-		open_on_eintr("/", &global_fs.rootfd,
+		open_file_on_eintr("/", &global_fs.rootfd,
 		    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0400, NULL);
 
 		if (global_fs.rootfd < 0)
@@ -792,7 +684,7 @@ fs_open_component(int dirfd, const char *name,
 	int fd;
 	struct stat st;
 
-	fd = openat2p(dirfd, name,
+	fd = openat_on_eintr(dirfd, name,
 	    (is_last ? flags : (O_RDONLY | O_DIRECTORY)) |
 	    O_NOFOLLOW | O_CLOEXEC, (flags & O_CREAT) ? 0600 : 0);
 
@@ -859,14 +751,54 @@ fs_dirname_basename(const char *path,
 	return 0;
 }
 
-/* portable wrapper for use of openat2 on linux,
- * with fallback for others e.g. openbsd
+/* TODO: why does this abort, but others
+   e.g. open_file_on_eintr, don't???
  */
+void
+open_file_on_eintr(const char *path,
+    int *fd, int flags, mode_t mode,
+    struct stat *st)
+{
+	int saved_errno = errno;
+	int rval;
+
+	if (path == NULL)
+		err_exit(EINVAL, "open_file_on_eintr: null path");
+	if (fd == NULL)
+		err_exit(EFAULT, "%s: open_file_on_eintr: null fd ptr", path);
+	if (*fd >= 0)
+		err_exit(EBADF,
+		    "%s: open_file_on_eintr: file already open", path);
+
+	while (fs_retry(saved_errno,
+	    rval = open(path, flags, mode)));
+
+	if (rval < 0)
+		err_exit(errno,
+		    "%s: open_file_on_eintr: could not close", path);
+
+	*fd = rval;
+
+	if (st != NULL) {
+		if (fstat(*fd, st) < 0)
+			err_exit(errno, "%s: stat", path);
+
+		if (!S_ISREG(st->st_mode))
+			err_exit(errno, "%s: not a regular file", path);
+	}
+
+	if (lseek_on_eintr(*fd, 0, SEEK_CUR, 1, 1) == (off_t)-1)
+		err_exit(errno, "%s: file not seekable", path);
+
+	errno = saved_errno;
+}
+
+
+#ifdef __linux__ /* we use openat2 on linux */
 int
-openat2p(int dirfd, const char *path,
+openat_on_eintr(int dirfd, const char *path,
     int flags, mode_t mode)
 {
-#ifdef __linux__
 	struct open_how how = {
 		.flags = flags,
 		.mode = mode,
@@ -876,36 +808,48 @@ openat2p(int dirfd, const char *path,
 		    RESOLVE_NO_MAGICLINKS
 	};
 	int saved_errno = errno;
-	int rval;
-#endif
+	long rval;
 
 	if (if_err(dirfd < 0, EBADF) ||
 	    if_err(path == NULL, EFAULT))
+		return set_errno(saved_errno, EIO);
+
+	while (sys_retry(saved_errno,
+	    rval = syscall(SYS_openat2, dirfd, path, &how, sizeof(how))));
+
+	if (rval == -1) /* avoid long->int UB for -1 */
 		return -1;
 
-retry:
-	errno = 0;
+	return (int)rval;
+}
+#else /* regular openat on non-linux e.g. openbsd */
+int
+openat_on_eintr(int dirfd, const char *path,
+    int flags, mode_t mode)
+{
+	int saved_errno = errno;
+	int rval;
 
-#ifdef __linux__
-	/* more secure than regular openat,
-	 * but linux-only at the time of writing
-	 */
-	rval = syscall(SYS_openat2, dirfd, path, &how, sizeof(how));
-#else
-	/* less secure, but e.g. openbsd
-	 * doesn't have openat2 yet
-	 */
-	rval = openat(dirfd, path, flags, mode);
+	if (if_err(dirfd < 0, EBADF) ||
+	    if_err(path == NULL, EFAULT))
+		return set_errno(saved_errno, EIO);
+
+	while (fs_retry(saved_errno,
+	    rval = openat(dirfd, path, flags, mode)));
+
+	return rval;
+}
 #endif
-	if (rval == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
 
-	if (rval >= 0)
-		errno = saved_errno;
+off_t
+lseek_on_eintr(int fd, off_t off, int whence,
+    int loop_eagain, int loop_eintr)
+{
+	int saved_errno = errno;
+	off_t rval;
+
+	while (off_retry(saved_errno,
+	    rval = lseek(fd, off, whence)));
 
 	return rval;
 }
@@ -919,21 +863,10 @@ mkdirat_on_eintr(int dirfd,
 
 	if (if_err(dirfd < 0, EBADF) ||
 	    if_err(path == NULL, EFAULT))
-		return -1;
+		return set_errno(saved_errno, EIO);
 
-retry:
-	errno = 0;
-	rval = mkdirat(dirfd, path, mode);
-
-	if (rval == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
-
-	if (rval >= 0)
-		errno = saved_errno;
+	while (fs_retry(saved_errno,
+	    rval = mkdirat(dirfd, path, mode)));
 
 	return rval;
 }
@@ -943,27 +876,17 @@ read_on_eintr(int fd,
     void *buf, size_t count)
 {
 	int saved_errno = errno;
-	int rval;
+	ssize_t rval;
 
 	if (if_err(buf == NULL, EFAULT) ||
 	    if_err(fd < 0, EBADF) ||
 	    if_err(count == 0, EINVAL))
-		goto err;
+		return set_errno(saved_errno, EIO);
 
-retry:
-	errno = 0;
+	while (rw_retry(saved_errno,
+	    rval = read(fd, buf, count)));
 
-	if ((rval = read(fd, buf, count)) == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
-
-	errno = saved_errno;
 	return rval;
-err:
-	return set_errno(saved_errno, EIO);
 }
 
 ssize_t
@@ -972,28 +895,18 @@ pread_on_eintr(int fd,
     off_t off)
 {
 	int saved_errno = errno;
-	int rval;
+	ssize_t rval;
 
 	if (if_err(buf == NULL, EFAULT) ||
 	    if_err(fd < 0, EBADF) ||
 	    if_err(off < 0, EFAULT) ||
 	    if_err(count == 0, EINVAL))
-		goto err;
+		return set_errno(saved_errno, EIO);
 
-retry:
-	errno = 0;
+	while (rw_retry(saved_errno,
+	    rval = pread(fd, buf, count, off)));
 
-	if ((rval = pread(fd, buf, count, off)) == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
-
-	errno = saved_errno;
 	return rval;
-err:
-	return set_errno(saved_errno, EIO);
 }
 
 ssize_t
@@ -1001,27 +914,17 @@ write_on_eintr(int fd,
     void *buf, size_t count)
 {
 	int saved_errno = errno;
-	int rval;
+	ssize_t rval;
 
 	if (if_err(buf == NULL, EFAULT) ||
 	    if_err(fd < 0, EBADF) ||
 	    if_err(count == 0, EINVAL))
-		goto err;
+		return set_errno(saved_errno, EIO);
 
-retry:
-	errno = 0;
+	while (rw_retry(saved_errno,
+	    rval = write(fd, buf, count)));
 
-	if ((rval = write(fd, buf, count)) == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
-
-	errno = saved_errno;
 	return rval;
-err:
-	return set_errno(saved_errno, EIO);
 }
 
 ssize_t
@@ -1030,26 +933,108 @@ pwrite_on_eintr(int fd,
     off_t off)
 {
 	int saved_errno = errno;
-	int rval;
+	ssize_t rval;
 
 	if (if_err(buf == NULL, EFAULT) ||
 	    if_err(fd < 0, EBADF) ||
 	    if_err(off < 0, EFAULT) ||
 	    if_err(count == 0, EINVAL))
-		goto err;
+		return set_errno(saved_errno, EIO);
 
-retry:
-	errno = 0;
+	while (rw_retry(saved_errno,
+	    rval = pwrite(fd, buf, count, off)));
 
-	if ((rval = pwrite(fd, buf, count, off)) == -1 && (
-	    errno == EINTR ||
-	    errno == EAGAIN ||
-	    errno == EWOULDBLOCK ||
-	    errno == ETXTBSY))
-		goto retry;
-
-	errno = saved_errno;
 	return rval;
-err:
-	return set_errno(saved_errno, EIO);
+}
+
+int
+fsync_on_eintr(int fd)
+{
+	int saved_errno = errno;
+	int rval;
+
+	if (if_err(fd < 0, EBADF))
+		return set_errno(saved_errno, EIO);
+
+	while (fs_retry(saved_errno,
+	    rval = fsync(fd)));
+
+	return rval;
+}
+
+void
+close_on_eintr(int *fd)
+{
+	int saved_errno = errno;
+	int rval;
+
+	if (fd == NULL)
+		err_exit(EINVAL, "close_on_eintr: null pointer");
+	if (*fd < 0)
+		return;
+
+	while (fs_retry(saved_errno,
+	    rval = close(*fd)));
+
+	if (rval < 0)
+		err_exit(errno, "close_on_eintr: could not close");
+
+	*fd = -1;
+}
+
+/* unified eintr looping.
+ * differently typed functions
+ * to avoid potential UB
+ *
+ * ONE MACRO TO RULE THEM ALL:
+ */
+#define fs_err_retry() \
+	if ((rval == -1) && \
+	    (errno == EINTR || \
+	     errno == EAGAIN || \
+	     errno == EWOULDBLOCK || \
+	     errno == ETXTBSY)) \
+		return 1; \
+	if (rval >= 0) \
+		errno = saved_errno; \
+	return 0
+
+
+/* retry switch for offset-based
+ * functions e.g. lseek
+ */
+/* retry switch for functions that
+   return long status e.g. linux syscall
+ */
+int
+off_retry(int saved_errno, off_t rval)
+{
+	fs_err_retry();
+}
+
+/* retry switch for functions that
+   return long status e.g. linux syscall
+ */
+int
+sys_retry(int saved_errno, long rval)
+{
+	fs_err_retry();
+}
+
+/* retry switch for functions that
+   return int status e.g. mkdirat
+ */
+int
+fs_retry(int saved_errno, int rval)
+{
+	fs_err_retry();
+}
+
+/* retry switch for functions that
+   return rw count in ssize_t e.g. read()
+ */
+int
+rw_retry(int saved_errno, ssize_t rval)
+{
+	fs_err_retry();
 }

@@ -33,7 +33,7 @@ open_gbe_file(void)
 
 	f->gbe_fd = -1;
 
-	open_on_eintr(f->fname, &f->gbe_fd,
+	open_file_on_eintr(f->fname, &f->gbe_fd,
 	    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY,
 	    ((cmd->flags & O_ACCMODE) == O_RDONLY) ? 0400 : 0600,
 	    &f->gbe_st);

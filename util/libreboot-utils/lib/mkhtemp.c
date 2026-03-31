@@ -624,7 +624,7 @@ mkhtemp_try_create(int dirfd,
 		}
 #endif
 
-		*fd = openat2p(dirfd, fname_copy,
+		*fd = openat_on_eintr(dirfd, fname_copy,
 		    O_RDWR | O_CREAT | O_EXCL |
 		    O_NOFOLLOW | O_CLOEXEC | O_NOCTTY, 0600);
 
@@ -648,7 +648,7 @@ mkhtemp_try_create(int dirfd,
 		if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
 			goto err;
 
-		if ((*fd = openat2p(dirfd, fname_copy,
+		if ((*fd = openat_on_eintr(dirfd, fname_copy,
 		    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0)) < 0)
 			goto err;
 
@@ -662,7 +662,7 @@ mkhtemp_try_create(int dirfd,
 
 	}
 
-	/* NOTE: openat2p and mkdirat_on_eintr
+	/* NOTE: openat_on_eintr and mkdirat_on_eintr
 	 * already handled EINTR/EAGAIN looping
 	 */
 
