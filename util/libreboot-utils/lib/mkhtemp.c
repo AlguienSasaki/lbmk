@@ -55,12 +55,6 @@ int
 new_tmp_common(int *fd, char **path, int type,
     char *tmpdir, const char *template)
 {
-#if defined(PATH_LEN) && \
-    (PATH_LEN) >= 256
-	size_t maxlen = PATH_LEN;
-#else
-	size_t maxlen = 4096;
-#endif
 	struct stat st;
 
 	const char *templatestr;
@@ -131,11 +125,11 @@ new_tmp_common(int *fd, char **path, int type,
 		templatestr = "tmp.XXXXXXXXXX";
 
 	/* may as well calculate in advance */
-	destlen = slen(tmpdir, maxlen, &dirlen) + 1
-	    + slen(templatestr, maxlen, &templatestr_len);
+	destlen = slen(tmpdir, PATH_MAX, &dirlen) + 1
+	    + slen(templatestr, PATH_MAX, &templatestr_len);
 	/* full path: */
 	dest = scatn(3, (const char *[]) { tmpdir, "/", templatestr },
-	    maxlen, &dest);
+	    PATH_MAX, &dest);
 
 	fname = dest + dirlen + 1;
 
@@ -298,19 +292,12 @@ same_dir(const char *a, const char *b)
 	int saved_errno = errno;
 	int rval_scmp;
 
-#if defined(PATH_LEN) && \
-    (PATH_LEN) >= 256
-	size_t maxlen = (PATH_LEN);
-#else
-	size_t maxlen = 4096;
-#endif
-
 	/* optimisation: if both dirs
 	   are the same, we don't need
 	   to check anything. sehr schnell!
 	 */
 	/* bonus: scmp checks null for us */
-	if (!scmp(a, b, maxlen, &rval_scmp))
+	if (!scmp(a, b, PATH_MAX, &rval_scmp))
 		goto success_same_dir;
 
 	fd_a = fs_open(a, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
@@ -531,12 +518,6 @@ mkhtemp(int *fd,
 	int close_errno;
 	int saved_errno = errno;
 
-#if defined(PATH_LEN) && \
-    (PATH_LEN) >= 256
-	size_t max_len = PATH_LEN;
-#else
-	size_t max_len = 4096;
-#endif
 	int r;
 	char *end;
 
@@ -547,10 +528,10 @@ mkhtemp(int *fd,
 		return -1;
 
 	/* count X */
-	for (end = template + slen(template, max_len, &template_len);
+	for (end = template + slen(template, PATH_MAX, &template_len);
 	    end > template && *--end == 'X'; xc++);
 
-	fname_len = slen(fname, max_len, &fname_len);
+	fname_len = slen(fname, PATH_MAX, &fname_len);
 	if (if_err(strrchr(fname, '/') != NULL, EINVAL))
 		return -1;
 

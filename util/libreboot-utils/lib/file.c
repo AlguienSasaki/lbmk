@@ -71,7 +71,6 @@ fsync_dir(const char *path)
 	int saved_errno = errno;
 
 	size_t pathlen = 0;
-	size_t maxlen = 0;
 
 	char *dirbuf = NULL;
 	int dirfd = -1;
@@ -81,14 +80,7 @@ fsync_dir(const char *path)
 
 	int close_errno;
 
-#if defined(PATH_LEN) && \
-    (PATH_LEN) >= 256
-	maxlen = PATH_LEN;
-#else
-	maxlen = 4096;
-#endif
-
-	if (if_err(slen(path, maxlen, &pathlen) == 0, EINVAL))
+	if (if_err(slen(path, PATH_MAX, &pathlen) == 0, EINVAL))
 		goto err_fsync_dir;
 
 	memcpy(smalloc(&dirbuf, pathlen + 1),
@@ -677,7 +669,7 @@ rootfs(void)
  * TODO:
 	missing length bound check.
 	potential CPU DoS on very long paths, spammed repeatedly.
-	perhaps cap at PATH_LEN?
+	perhaps cap at MAX_PATH?
  */
 int
 fs_resolve_at(int dirfd, const char *path, int flags)
@@ -685,12 +677,7 @@ fs_resolve_at(int dirfd, const char *path, int flags)
 	int nextfd = -1;
 	int curfd;
 	const char *p;
-#if defined(PATH_LEN) && \
-    ((PATH_LEN) >= 256)
-	char name[PATH_LEN];
-#else
-	char name[4096];
-#endif
+	char name[PATH_MAX];
 	int saved_errno = errno;
 	int r;
 	int is_last;
@@ -756,12 +743,6 @@ fs_next_component(const char **p,
 {
 	const char *s = *p;
 	size_t len = 0;
-#if defined(PATH_LEN) && \
-(PATH_LEN) >= 256
-	size_t maxlen = PATH_LEN;
-#else
-	size_t maxlen = 4096;
-#endif
 
 	while (*s == '/')
 		s++;
@@ -775,7 +756,7 @@ fs_next_component(const char **p,
 		len++;
 
 	if (len == 0 || len >= namesz ||
-	    len >= maxlen) {
+	    len >= PATH_MAX) {
 		errno = ENAMETOOLONG;
 		return -1;
 	}
@@ -831,17 +812,11 @@ fs_dirname_basename(const char *path,
 	char *slash;
 	size_t len;
 	int rval;
-#if defined(PATH_LEN) && \
-(PATH_LEN) >= 256
-	size_t maxlen = PATH_LEN;
-#else
-	size_t maxlen = 4096;
-#endif
 
 	if (if_err(path == NULL || dir == NULL || base == NULL, EFAULT))
 		return -1;
 
-	slen(path, maxlen, &len);
+	slen(path, PATH_MAX, &len);
 	memcpy(smalloc(&buf, len + 1),
 	    path, len + 1);
 
@@ -863,7 +838,7 @@ fs_dirname_basename(const char *path,
 		}
 	} else if (allow_relative) {
 
-		sdup(".", maxlen, dir);
+		sdup(".", PATH_MAX, dir);
 		*base = buf;
 	} else {
 		errno = EINVAL;

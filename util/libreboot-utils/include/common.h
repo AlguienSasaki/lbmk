@@ -65,8 +65,10 @@ int fchmod(int fd, mode_t mode);
 
 #define MAX_CMD_LEN 50
 
-#ifndef PATH_LEN
-#define PATH_LEN 4096
+#ifndef PATH_MAX
+#error PATH_MAX_undefined
+#elif ((PATH_MAX) < 1024)
+#error PATH_MAX_too_low
 #endif
 
 #define OFF_ERR 0
@@ -613,7 +615,7 @@ typedef char assert_read[(IO_READ==0)?1:-1];
 typedef char assert_write[(IO_WRITE==1)?1:-1];
 typedef char assert_pread[(IO_PREAD==2)?1:-1];
 typedef char assert_pwrite[(IO_PWRITE==3)?1:-1];
-typedef char assert_pathlen[(PATH_LEN>=256)?1:-1];
+typedef char assert_pathlen[(PATH_MAX>=1024)?1:-1];
 /* commands */
 typedef char assert_cmd_dump[(CMD_DUMP==0)?1:-1];
 typedef char assert_cmd_setmac[(CMD_SETMAC==1)?1:-1];

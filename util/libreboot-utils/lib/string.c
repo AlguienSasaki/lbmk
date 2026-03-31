@@ -601,7 +601,7 @@ lbsetprogname(char *argv0)
 	if (!set) {
 		if (argv0 == NULL)
 			return "libreboot-utils";
-		(void) sdup(argv0, 4096, &progname);
+		(void) sdup(argv0, PATH_MAX, &progname);
 		set = 1;
 	}
 

@@ -40,12 +40,6 @@ exit_cleanup(void);
 int
 main(int argc, char *argv[])
 {
-#if defined (PATH_LEN) && \
-    (PATH_LEN) >= 256
-	size_t maxlen = PATH_LEN;
-#else
-	size_t maxlen = 4096;
-#endif
 	size_t len;
 	size_t tlen;
 	size_t xc = 0;
@@ -55,7 +49,7 @@ main(int argc, char *argv[])
 	char *p;
 	char *s = NULL;
 	char *rp;
-	char resolved[maxlen];
+	char resolved[PATH_MAX];
 	char c;
 
 	int fd = -1;
@@ -95,7 +89,7 @@ main(int argc, char *argv[])
 
 	/* custom template e.g. foo.XXXXXXXXXXXXXXXXXXXXX */
 	if (template != NULL) {	
-		for (p = template + slen(template, maxlen, &tlen);
+		for (p = template + slen(template, PATH_MAX, &tlen);
 		    p > template && *--p == 'X'; xc++);
 
 		if (xc < 3) /* the gnu mktemp errs on less than 3 */
@@ -129,8 +123,8 @@ main(int argc, char *argv[])
 	if (*s == '\0')
 		err_exit(EFAULT, "empty string initialisation");
 
-	slen(s, maxlen, &len); /* Nullterminierung prüfen */
-	/* for good measure */
+	slen(s, PATH_MAX, &len); /* Nullterminierung prüfen */
+	/* for good measure. (bonus: also re-checks length overflow) */
 
 	printf("%s\n", s);
 
