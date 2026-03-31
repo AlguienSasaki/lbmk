@@ -770,6 +770,7 @@ open_file_on_eintr(const char *path,
 		err_exit(EBADF,
 		    "%s: open_file_on_eintr: file already open", path);
 
+	errno = 0;
 	while (fs_retry(saved_errno,
 	    rval = open(path, flags, mode)));
 
@@ -814,6 +815,7 @@ openat_on_eintr(int dirfd, const char *path,
 	    if_err(path == NULL, EFAULT))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (sys_retry(saved_errno,
 	    rval = syscall(SYS_openat2, dirfd, path, &how, sizeof(how))));
 
@@ -834,6 +836,7 @@ openat_on_eintr(int dirfd, const char *path,
 	    if_err(path == NULL, EFAULT))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (fs_retry(saved_errno,
 	    rval = openat(dirfd, path, flags, mode)));
 
@@ -848,6 +851,7 @@ lseek_on_eintr(int fd, off_t off, int whence,
 	int saved_errno = errno;
 	off_t rval;
 
+	errno = 0;
 	while (off_retry(saved_errno,
 	    rval = lseek(fd, off, whence)));
 
@@ -865,6 +869,7 @@ mkdirat_on_eintr(int dirfd,
 	    if_err(path == NULL, EFAULT))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (fs_retry(saved_errno,
 	    rval = mkdirat(dirfd, path, mode)));
 
@@ -883,6 +888,7 @@ read_on_eintr(int fd,
 	    if_err(count == 0, EINVAL))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (rw_retry(saved_errno,
 	    rval = read(fd, buf, count)));
 
@@ -903,6 +909,7 @@ pread_on_eintr(int fd,
 	    if_err(count == 0, EINVAL))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (rw_retry(saved_errno,
 	    rval = pread(fd, buf, count, off)));
 
@@ -921,6 +928,7 @@ write_on_eintr(int fd,
 	    if_err(count == 0, EINVAL))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (rw_retry(saved_errno,
 	    rval = write(fd, buf, count)));
 
@@ -941,6 +949,7 @@ pwrite_on_eintr(int fd,
 	    if_err(count == 0, EINVAL))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (rw_retry(saved_errno,
 	    rval = pwrite(fd, buf, count, off)));
 
@@ -956,6 +965,7 @@ fsync_on_eintr(int fd)
 	if (if_err(fd < 0, EBADF))
 		return set_errno(saved_errno, EIO);
 
+	errno = 0;
 	while (fs_retry(saved_errno,
 	    rval = fsync(fd)));
 
@@ -973,6 +983,7 @@ close_on_eintr(int *fd)
 	if (*fd < 0)
 		return;
 
+	errno = 0;
 	while (fs_retry(saved_errno,
 	    rval = close(*fd)));
 
@@ -995,9 +1006,28 @@ close_on_eintr(int *fd)
 	     errno == EWOULDBLOCK || \
 	     errno == ETXTBSY)) \
 		return 1; \
-	if (rval >= 0) \
+	if (rval >= 0 && !errno) \
 		errno = saved_errno; \
 	return 0
+/*
+ * Regarding the errno logic above:
+ * on success, it is permitted that
+ * a syscall could still set errno.
+ * We reset errno after storingit
+ * for later preservation, in functions
+ * that call *_retry() functions.
+ *
+ * They rely ultimately on this
+ * macro for errno restoration. We
+ * assume therefore that errno was
+ * reset to zero before the retry
+ * loop. If errno is then *set* on
+ * success, we leave it alone. Otherwise,
+ * we restore the caller's saved errno.
+ *
+ * This offers some consistency, while
+ * complying with POSIX specification.
+ */
 
 
 /* retry switch for offset-based
