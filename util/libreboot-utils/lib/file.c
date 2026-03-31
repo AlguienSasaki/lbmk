@@ -1003,8 +1003,7 @@ close_on_eintr(int *fd)
 	if ((rval == -1) && \
 	    (errno == EINTR || \
 	     errno == EAGAIN || \
-	     errno == EWOULDBLOCK || \
-	     errno == ETXTBSY)) \
+	     errno == EWOULDBLOCK)) \
 		return 1; \
 	if (rval >= 0 && !errno) \
 		errno = saved_errno; \
