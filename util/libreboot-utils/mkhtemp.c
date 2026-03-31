@@ -1,10 +1,12 @@
-/* SPDX-License-Identifier: MIT
- * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
- *
+/* SPDX-License-Identifier: MIT                                        ( >:3 )
+ * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>                    /| |\
+ *                                                                       / \
  * Hardened mktemp (mkhtemp!)
  *
  * WORK IN PROGRESS (proof of concept), or, v0.0000001
  * DO NOT PUT THIS IN YOUR LINUX DISTRO YET.
+ *
+ * In other words: for reference only -- PATCHES WELCOME!
  *
  * I will remove this notice when the code is mature, and
  * probably contact several of your projects myself.
@@ -139,8 +141,4 @@ static void
 exit_cleanup(void)
 {
 	return;
-}/* 
-
-  ( >:3 )    
-   /| |\
-    / \                                                                      */
+}

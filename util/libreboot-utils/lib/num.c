@@ -28,8 +28,6 @@
 unsigned short
 hextonum(char ch_s)
 {
-	int saved_errno = errno;
-
 	unsigned char ch;
 	size_t rval;
 
@@ -43,8 +41,8 @@ hextonum(char ch_s)
 	if ((unsigned int)(ch - 'a') <= 5)
 		return ch - 'a' + 10;
 
-	if (ch == '?' || ch == 'x')
-		return rsize(16); /* <-- with rejection sampling! */
+	if (ch == '?' || ch == 'x') /* random */
+		return (short)rsize(16); /* <-- with rejection sampling! */
 
 	return 16;
 }

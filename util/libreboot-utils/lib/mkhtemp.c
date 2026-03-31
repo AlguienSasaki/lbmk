@@ -67,20 +67,15 @@ new_tmp_common(int *fd, char **path, int type,
 	int dirfd = -1;
 	const char *fname = NULL;
 
-	struct stat st_dir_initial;
+	struct stat st_dir_first;
 
 	char *fail_dir = NULL;
 
-	if (path == NULL || fd == NULL) {
-		errno = EFAULT;
-		goto err;
-	}
+	errno = 0;
 
-	/* don't mess with someone elses file */
-	if (*fd >= 0) {
-		errno = EEXIST;
+	if (if_err(path == NULL || fd == NULL, EFAULT) ||
+	    if_err(*fd >= 0, EEXIST)) /* don't touch someone else's file */
 		goto err;
-	}
 
 	/* regarding **path:
 	* the pointer (to the pointer)
@@ -111,12 +106,7 @@ new_tmp_common(int *fd, char **path, int type,
 		tmpdir = env_tmpdir(0, &fail_dir, tmpdir);
 #endif
 	}
-	if (tmpdir == NULL)
-		goto err;
-
-	if (*tmpdir == '\0')
-		goto err;
-	if (*tmpdir != '/')
+	if (if_err(tmpdir ==NULL || *tmpdir == '\0' || *tmpdir != '/', EINVAL))
 		goto err;
 
 	if (template != NULL)
@@ -138,11 +128,11 @@ new_tmp_common(int *fd, char **path, int type,
 	if (dirfd < 0)
 		goto err;
 
-	if (fstat(dirfd, &st_dir_initial) < 0)
+	if (fstat(dirfd, &st_dir_first) < 0)
 		goto err;
 
 	*fd = mkhtemp(fd, &st, dest, dirfd,
-	    fname, &st_dir_initial, type);
+	    fname, &st_dir_first, type);
 	if (*fd < 0)
 		goto err;
 
@@ -151,15 +141,10 @@ new_tmp_common(int *fd, char **path, int type,
 	errno = saved_errno;
 	*path = dest;
 
+	reset_caller_errno(0);
 	return 0;
 
 err:
-
-	if (errno != saved_errno)
-		saved_errno = errno;
-	else
-		saved_errno = errno = EIO;
-
 	free_and_set_null(&dest);
 
 	close_on_eintr(&dirfd);
@@ -173,7 +158,7 @@ err:
 		*path = fail_dir;
 
 	errno = saved_errno;
-	return -1;
+	return with_fallback_errno(EIO);
 }
 
 
@@ -184,12 +169,16 @@ char *
 env_tmpdir(int bypass_all_sticky_checks, char **tmpdir,
     char *override_tmpdir)
 {
-	char *t;
+	char *t = NULL;
 	int allow_noworld_unsticky;
 	int saved_errno = errno;
 
 	static const char tmp[] = "/tmp";
 	static const char vartmp[] = "/var/tmp";
+
+	char *rval = NULL;
+
+	errno = 0;
 
 	/* tmpdir is a user override, if set */
 	if (override_tmpdir == NULL)
@@ -200,48 +189,38 @@ env_tmpdir(int bypass_all_sticky_checks, char **tmpdir,
 	if (t != NULL && *t != '\0') {
 
 		if (tmpdir_policy(t,
-		    &allow_noworld_unsticky) < 0) {
-			if (tmpdir != NULL)
-				*tmpdir = t;
-			return NULL; /* errno already set */
-		}
+		    &allow_noworld_unsticky) < 0)
+			goto err;
 
 		if (!world_writeable_and_sticky(t,
 		    allow_noworld_unsticky,
-		    bypass_all_sticky_checks)) {
-			if (tmpdir != NULL)
-				*tmpdir = t;
-			return NULL;
-		}
+		    bypass_all_sticky_checks))
+			goto err;
 
-		errno = saved_errno;
-		return t;
+		rval = t;
+		goto out;
 	}
 
 	allow_noworld_unsticky = 0;
 
-	if (world_writeable_and_sticky(tmp,
-	    allow_noworld_unsticky,
-	    bypass_all_sticky_checks)) {
+	if (world_writeable_and_sticky(tmp, allow_noworld_unsticky,
+	    bypass_all_sticky_checks))
+		rval = (char *)tmp;
+	else if (world_writeable_and_sticky(vartmp,
+	    allow_noworld_unsticky, bypass_all_sticky_checks))
+		rval = (char *)vartmp;
+	else
+		goto err;
 
-		if (tmpdir != NULL)
-			*tmpdir = (char *)tmp;
-
-		errno = saved_errno;
-		return (char *)tmp;
-	}
-
-	if (world_writeable_and_sticky(vartmp,
-	    allow_noworld_unsticky,
-	    bypass_all_sticky_checks)) {
-
-		if (tmpdir != NULL)
-			*tmpdir = (char *)vartmp;
-
-		errno = saved_errno;
-		return (char *)vartmp;
-	}
-
+out:
+	reset_caller_errno(0);
+	if (tmpdir != NULL)
+		*tmpdir = rval;
+	return rval;
+err:
+	if (tmpdir != NULL && t != NULL)
+		*tmpdir = t;
+	(void) with_fallback_errno(EPERM);
 	return NULL;
 }
 
@@ -251,13 +230,11 @@ tmpdir_policy(const char *path,
 {
 	int saved_errno = errno;
 	int r;
+	errno = 0;
 
-	if (path == NULL ||
-	    allow_noworld_unsticky == NULL) {
-
-		errno = EFAULT;
-		return -1;
-	}
+	if (if_err(path == NULL ||
+	    allow_noworld_unsticky == NULL, EFAULT))
+		goto err_tmpdir_policy;
 
 	*allow_noworld_unsticky = 1;
 
@@ -273,11 +250,11 @@ tmpdir_policy(const char *path,
 	if (r > 0)
 		*allow_noworld_unsticky = 0;
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 
 err_tmpdir_policy:
-	return set_errno(saved_errno, EIO);
+	return with_fallback_errno(EPERM);
 }
 
 int
@@ -290,63 +267,48 @@ same_dir(const char *a, const char *b)
 	struct stat st_b;
 
 	int saved_errno = errno;
-	int rval_scmp;
+	int rval = 0; /* LOGICAL error, 0, if 0 is returned */
+	errno = 0;
 
 	/* optimisation: if both dirs
 	   are the same, we don't need
 	   to check anything. sehr schnell!
 	 */
 	/* bonus: scmp checks null for us */
-	if (!scmp(a, b, PATH_MAX, &rval_scmp))
+	if (!scmp(a, b, PATH_MAX, &rval))
 		goto success_same_dir;
+	else
+		rval = 0; /* reset */
 
-	fd_a = fs_open(a, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
-	if (fd_a < 0)
-		goto err_same_dir;
-
-	fd_b = fs_open(b, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
-	if (fd_b < 0)
-		goto err_same_dir;
-
-	if (fstat(fd_a, &st_a) < 0)
-		goto err_same_dir;
-
-	if (fstat(fd_b, &st_b) < 0)
+	if ((fd_a = fs_open(a, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)) < 0 ||
+	    (fd_b = fs_open(b, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)) < 0 ||
+	    fstat(fd_a, &st_a) < 0 ||
+	    fstat(fd_b, &st_b) < 0)
 		goto err_same_dir;
 
 	if (st_a.st_dev == st_b.st_dev &&
 	    st_a.st_ino == st_b.st_ino) {
-
-		close_on_eintr(&fd_a);
-		close_on_eintr(&fd_b);
-
 success_same_dir:
-
-		/* SUCCESS
-		 */
-
-		errno = saved_errno;
-		return 1;
+		rval = 1; /* SUCCESS */
 	}
 
 	close_on_eintr(&fd_a);
 	close_on_eintr(&fd_b);
 
-	/* FAILURE (logical)
+	/* we reset caller errno regardless
+	 * of success, so long as it's not
+	 * a syscall error
 	 */
-
-	errno = saved_errno;
-	return 0;
+	reset_caller_errno(0);
+	return rval;
 
 err_same_dir:
-
-	/* FAILURE (probably syscall)
+	/* FAILURE (probably syscall) - returns -1
 	 */
-
 	close_on_eintr(&fd_a);
 	close_on_eintr(&fd_b);
 
-	return set_errno(saved_errno, EIO);
+	return with_fallback_errno(EIO); /* -1 */
 }
 
 /* bypass_all_sticky_checks: if set,
@@ -367,81 +329,45 @@ world_writeable_and_sticky(
 	int dirfd = -1;
 
 	int saved_errno = errno;
+	errno = 0;
 
-	if (s == NULL || *s == '\0') {
-		errno = EINVAL;
+	if (if_err(s == NULL || *s == '\0', EINVAL) ||
+	    (dirfd = fs_open(s, O_RDONLY | O_DIRECTORY)) < 0 ||
+	    fstat(dirfd, &st) < 0 ||
+	    if_err(!S_ISDIR(st.st_mode), ENOTDIR))
 		goto sticky_hell;
-	}
-
-	/* mitigate symlink attacks*
-	 */
-	dirfd = fs_open(s, O_RDONLY | O_DIRECTORY);
-	if (dirfd < 0)
-		goto sticky_hell;
-
-	if (fstat(dirfd, &st) < 0)
-		goto sticky_hell;
-
-	if (!S_ISDIR(st.st_mode)) {
-		errno = ENOTDIR;
-		goto sticky_hell;
-	}
-
-	/* all of these checks are probably
-	 * redundant (execution rights)
-	if (!(st.st_mode & S_IXUSR) ||
-	    !(st.st_mode & S_IXGRP) ||
-	    !(st.st_mode & S_IXOTH)) {
-	*/
-	/* just require it for *you*, for now */
-	if (!(st.st_mode & S_IXUSR)) {
-		errno = EACCES;
-		goto sticky_hell;
-	}
 
 	/* *normal-**ish mode (libc):
 	 */
-
 	if (bypass_all_sticky_checks)
 		goto sticky_heaven; /* normal == no security */
 
 	/* extremely not-libc mode:
+	 * only require stickiness on world-writeable dirs:
 	 */
-
 	if (st.st_mode & S_IWOTH) { /* world writeable */
 
-		/* if world-writeable, only
-		 * allow sticky files
-		 */
-		if (st.st_mode & S_ISVTX)
-			goto sticky_heaven; /* sticky */
+		if (if_err(!(st.st_mode & S_ISVTX), EPERM))
+			goto sticky_hell; /* not sticky */
 
-		errno = EPERM;
-		goto sticky_hell; /* not sticky */
+		goto sticky_heaven; /* sticky! */
+	} else if (allow_noworld_unsticky) {
+		goto sticky_heaven; /* sticky visa */
+	} else {
+		goto sticky_hell; /* visa denied */
 	}
 
-	/* for good measure */
-	if (faccessat(dirfd, 	".", X_OK, AT_EACCESS) < 0)
-		goto sticky_hell;
-
-	/* non-world-writeable, so
-	 * stickiness is do-not-care
-	 */
-	if (allow_noworld_unsticky)
-		goto sticky_heaven; /* sticky! */
-
-	goto sticky_hell; /* heaven visa denied */
-
 sticky_heaven:
-	close_on_eintr(&dirfd);
-	errno = saved_errno;
+	if (faccessat(dirfd, 	".", X_OK, AT_EACCESS) < 0)
+		goto sticky_hell; /* down you go! */
 
+	close_on_eintr(&dirfd);
+	reset_caller_errno(0);
 	return 1;
 
 sticky_hell:
 	close_on_eintr(&dirfd);
-
-	(void) set_errno(saved_errno, EPERM);
+	(void) with_fallback_errno(EPERM);
 	return 0;
 }
 
@@ -503,7 +429,7 @@ mkhtemp(int *fd,
     char *template,
     int dirfd,
     const char *fname,
-    struct stat *st_dir_initial,
+    struct stat *st_dir_first,
     int type)
 {
 	size_t template_len = 0;
@@ -521,11 +447,13 @@ mkhtemp(int *fd,
 	int r;
 	char *end;
 
+	errno = 0;
+
 	if (if_err(fd == NULL || template == NULL || fname == NULL ||
-	          st_dir_initial == NULL, EFAULT) ||
+	          st_dir_first == NULL, EFAULT) ||
 	    if_err(*fd >= 0, EEXIST) ||
 	    if_err(dirfd < 0, EBADF))
-		return -1;
+		goto err;
 
 	/* count X */
 	for (end = template + slen(template, PATH_MAX, &template_len);
@@ -533,15 +461,15 @@ mkhtemp(int *fd,
 
 	fname_len = slen(fname, PATH_MAX, &fname_len);
 	if (if_err(strrchr(fname, '/') != NULL, EINVAL))
-		return -1;
+		goto err;
 
 	if (if_err(xc < 3 || xc > template_len, EINVAL) ||
 	    if_err(fname_len > template_len, EOVERFLOW))
-		return -1;
+		goto err;
 
 	if (if_err(vcmp(fname, template + template_len - fname_len,
 	      fname_len) != 0, EINVAL))
-		return -1;
+		goto err;
 
 	/* fname_copy = templatestr region only; p points to trailing XXXXXX */
 	memcpy(smalloc(&fname_copy, fname_len + 1),
@@ -552,7 +480,7 @@ mkhtemp(int *fd,
 	for (retries = 0; retries < MKHTEMP_RETRY_MAX; retries++) {
 
 		r = mkhtemp_try_create(dirfd,
-		    st_dir_initial, fname_copy,
+		    st_dir_first, fname_copy,
 		    p, xc, fd, st, type);
 
 		if (r == 0)
@@ -569,19 +497,22 @@ mkhtemp(int *fd,
 	}
 
 	errno = EEXIST;
-
 err:
 	close_on_eintr(fd);
+	free_and_set_null(&fname_copy);
+
+	return with_fallback_errno(EIO);
 
 success:
 	free_and_set_null(&fname_copy);
 
-	return (*fd >= 0) ? *fd : -1;
+	reset_caller_errno(0);
+	return *fd;
 }
 
 int
 mkhtemp_try_create(int dirfd,
-    struct stat *st_dir_initial,
+    struct stat *st_dir_first,
     char *fname_copy,
     char *p,
     size_t xc,
@@ -597,8 +528,10 @@ mkhtemp_try_create(int dirfd,
 	int file_created = 0;
 	int dir_created = 0;
 
+	errno = 0;
+
 	if (if_err(fd == NULL || st == NULL || p ==NULL || fname_copy ==NULL ||
-	      st_dir_initial == NULL, EFAULT) ||
+	      st_dir_first == NULL, EFAULT) ||
 	    if_err(*fd >= 0, EEXIST))
 		goto err;
 
@@ -608,14 +541,14 @@ mkhtemp_try_create(int dirfd,
 	memcpy(p, rstr = rchars(xc), xc);
 	free_and_set_null(&rstr);
 
-	if (if_err_sys(fd_verify_dir_identity(dirfd, st_dir_initial) < 0))
+	if (if_err_sys(fd_verify_dir_identity(dirfd, st_dir_first) < 0))
 		goto err;
 
 	if (type == MKHTEMP_FILE) {
 #ifdef __linux__
 		/* try O_TMPFILE fast path */
 		if (mkhtemp_tmpfile_linux(dirfd,
-		    st_dir_initial, fname_copy,
+		    st_dir_first, fname_copy,
 		    p, xc, fd, st) == 0) {
 
 			errno = saved_errno;
@@ -645,7 +578,7 @@ mkhtemp_try_create(int dirfd,
 		dir_created = 1;
 
 		/* do it again (mitigate directory race) */
-		if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
+		if (fd_verify_dir_identity(dirfd, st_dir_first) < 0)
 			goto err;
 
 		if ((*fd = openat_on_eintr(dirfd, fname_copy,
@@ -657,7 +590,7 @@ mkhtemp_try_create(int dirfd,
 			goto err;
 
 		/* NOTE: pointless to check nlink here (only just opened) */
-		if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
+		if (fd_verify_dir_identity(dirfd, st_dir_first) < 0)
 			goto err;
 
 	}
@@ -680,7 +613,7 @@ mkhtemp_try_create(int dirfd,
 
 	if (type == MKHTEMP_FILE) {
 
-		if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
+		if (fd_verify_dir_identity(dirfd, st_dir_first) < 0)
 			goto err;
 
 		if (secure_file(fd, st, &st_open,
@@ -689,7 +622,7 @@ mkhtemp_try_create(int dirfd,
 
 	} else { /* dir: MKHTEMP_DIR */
 
-		if (fd_verify_identity(*fd, &st_open, st_dir_initial) < 0)
+		if (fd_verify_identity(*fd, &st_open, st_dir_first) < 0)
 			goto err;
 
 		if (if_err(!S_ISDIR(st_open.st_mode), ENOTDIR) ||
@@ -698,10 +631,11 @@ mkhtemp_try_create(int dirfd,
 			goto err;
 	}
 
-	errno = saved_errno;
 	rval = 1;
-	goto out;
 
+out:
+	reset_caller_errno(0);
+	return rval;
 err:
 	close_on_eintr(fd);
 
@@ -710,9 +644,7 @@ err:
 	if (dir_created)
 		(void) unlinkat(dirfd, fname_copy, AT_REMOVEDIR);
 
-	rval = -1;
-out:
-	return rval;
+	return with_fallback_errno(EPERM);
 }
 
 /* linux has its own special hardening
@@ -725,7 +657,7 @@ out:
 #ifdef __linux__
 int
 mkhtemp_tmpfile_linux(int dirfd,
-    struct stat *st_dir_initial,
+    struct stat *st_dir_first,
     char *fname_copy,
     char *p,
     size_t xc,
@@ -737,22 +669,21 @@ mkhtemp_tmpfile_linux(int dirfd,
 	size_t retries;
 	int linked = 0;
 	char *rstr = NULL;
+	errno = 0;
 
-	if (fd == NULL || st == NULL ||
+	if (if_err(fd == NULL || st == NULL ||
 	    fname_copy == NULL || p == NULL ||
-	    st_dir_initial == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
+	    st_dir_first == NULL, EFAULT))
+		goto err;
 
 	/* create unnamed tmpfile */
 	tmpfd = openat(dirfd, ".",
 	    O_TMPFILE | O_RDWR | O_CLOEXEC, 0600);
 
 	if (tmpfd < 0)
-		return -1;
+		goto err;
 
-	if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
+	if (fd_verify_dir_identity(dirfd, st_dir_first) < 0)
 		goto err;
 
 	for (retries = 0; retries < MKHTEMP_RETRY_MAX; retries++) {
@@ -761,30 +692,19 @@ mkhtemp_tmpfile_linux(int dirfd,
 		free_and_set_null(&rstr);
 
 		if (fd_verify_dir_identity(dirfd,
-		    st_dir_initial) < 0)
+		    st_dir_first) < 0)
 			goto err;
 
-		if (linkat(tmpfd, "",
-		    dirfd, fname_copy,
-		    AT_EMPTY_PATH) == 0) {
+		if (linkat(tmpfd, "", dirfd, fname_copy, AT_EMPTY_PATH) == 0) {
 
 			linked = 1; /* file created */
 
-			if (fd_verify_dir_identity(dirfd, st_dir_initial) < 0)
+			if (fd_verify_dir_identity(dirfd, st_dir_first) < 0 ||
+			    fstat(*fd = tmpfd, st) < 0 ||
+			    secure_file(fd, st, st, O_APPEND, 1, 1, 0600) < 0)
 				goto err;
 
-			/* success */
-			*fd = tmpfd;
-
-			if (fstat(*fd, st) < 0)
-				goto err;
-
-			if (secure_file(fd, st, st,
-			    O_APPEND, 1, 1, 0600) < 0)
-				goto err;
-
-			errno = saved_errno;
-			return 0;
+			goto out;
 		}
 
 		if (errno != EEXIST)
@@ -794,13 +714,15 @@ mkhtemp_tmpfile_linux(int dirfd,
 	}
 
 	errno = EEXIST;
-
 err:
 	if (linked)
 		(void) unlinkat(dirfd, fname_copy, 0);
 
 	close_on_eintr(&tmpfd);
-	return -1;
+	return with_fallback_errno(EIO);
+out:
+	reset_caller_errno(0);
+	return 0;
 }
 #endif
 
@@ -821,6 +743,7 @@ int secure_file(int *fd,
 	int flags;
 	struct stat st_now;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(fd == NULL || st == NULL, EFAULT) ||
 	    if_err(*fd < 0, EBADF) ||
@@ -862,23 +785,28 @@ int secure_file(int *fd,
 	if (fchmod(*fd, mode) == -1)
 		goto err_demons;
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 
 err_demons:
-	return set_errno(saved_errno, EIO);
+	return with_fallback_errno(EIO);
 }
 
 int
 fd_verify_regular(int fd,
     const struct stat *expected,
     struct stat *out)
-{if (
-	if_err_sys(fd_verify_identity(fd, expected, out) < 0) ||
-	    if_err(!S_ISREG(out->st_mode), EBADF)
-	)	return -1;
-	else
+{
+	int saved_errno = errno;
+	errno = 0;
+
+	if (if_err_sys(fd_verify_identity(fd, expected, out) < 0) ||
+	    if_err(!S_ISREG(out->st_mode), EBADF)) {
+		return with_fallback_errno(EIO);
+	} else {
+		reset_caller_errno(0);
 		return 0; /* regular file */
+	}
 }
 
 int
@@ -888,17 +816,18 @@ fd_verify_identity(int fd,
 {
 	struct stat st_now;
 	int saved_errno = errno;
+	errno = 0;
 
 if(	if_err(fd < 0 || expected == NULL, EFAULT) ||
 	  if_err_sys(fstat(fd, &st_now)) ||
 	    if_err(st_now.st_dev != expected->st_dev ||
 	      st_now.st_ino != expected->st_ino, ESTALE))
-		return -1;
+		return with_fallback_errno(EIO);
 
 	if (out != NULL)
 		*out = st_now;
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 }
 
@@ -908,45 +837,35 @@ fd_verify_dir_identity(int fd,
 {
 	struct stat st_now;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(fd < 0 || expected == NULL, EFAULT) ||
-	    if_err_sys(fstat(fd, &st_now) < 0))
-		return -1;
+	    if_err_sys(fstat(fd, &st_now) < 0) ||
+	    if_err(st_now.st_dev != expected->st_dev, ESTALE) ||
+	    if_err(st_now.st_ino != expected->st_ino, ESTALE) ||
+	    if_err(!S_ISDIR(st_now.st_mode), ENOTDIR))
+		goto err;
 
-	if (st_now.st_dev != expected->st_dev ||
-	    st_now.st_ino != expected->st_ino) {
-		errno = ESTALE;
-		return -1;
-	}
-
-	if (!S_ISDIR(st_now.st_mode)) {
-		errno = ENOTDIR;
-		return -1;
-	}
-
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
+err:
+	return with_fallback_errno(EIO);
 }
 
 int
 is_owner(struct stat *st)
 {
-	if (st == NULL) {
+	int saved_errno = errno;
+	errno = 0;
 
-		errno = EFAULT;
-		return -1;
-	}
+	if (if_err(st == NULL, EFAULT) ||
+	    if_err(st->st_uid != geteuid() /* someone else's file */
+#if defined(ALLOW_ROOT_OVERRIDE) && ((ALLOW_ROOT_OVERRIDE) > 0)
+	      && geteuid() != 0 /* override for root */
+#endif
+	    , EPERM)) return with_fallback_errno(EIO);
 
-#if ALLOW_ROOT_OVERRIDE
-	if (st->st_uid != geteuid() && /* someone else's file */
-	    geteuid() != 0) { /* override for root */
-#else
-	if (st->st_uid != geteuid()) { /* someone else's file */
-#endif				       /* and no root override */
-		errno = EPERM;
-		return -1;
-	}
-
+	reset_caller_errno(0);
 	return 0;
 }
 
@@ -955,6 +874,7 @@ lock_file(int fd, int flags)
 {
 	struct flock fl;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(fd < 0, EBADF) ||
 	    if_err(flags < 0, EINVAL))
@@ -972,9 +892,9 @@ lock_file(int fd, int flags)
 	if (fcntl(fd, F_SETLK, &fl) == -1)
 		goto err_lock_file;
 
-	saved_errno = errno;
+	reset_caller_errno(0);
 	return 0;
 
 err_lock_file:
-	return set_errno(saved_errno, EIO);
+	return with_fallback_errno(EIO);
 }

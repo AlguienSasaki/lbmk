@@ -37,7 +37,6 @@ main(int argc, char **argv)
 
 	fprintf(stderr, "\n%s\n", same ? "You win!" : "You lose!");
 
-	printf("%lu\n", PATH_MAX);
 	return same ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

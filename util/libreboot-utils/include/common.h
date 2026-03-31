@@ -26,6 +26,24 @@
 #include <unistd.h>
 #endif
 
+/* dangerously cool macros:
+ */
+
+#define SUCCESS(x) ((x) >= 0)
+
+/* syscalls can set errno even on success; this
+ * is rare, but permitted. in various functions, we
+ * reset errno on success, to what the caller had,
+ * but we must still honour what was returned.
+ *
+ * lib/file.c is littered with examples
+ */
+#define reset_caller_errno(return_value) \
+	do { \
+		if (SUCCESS(return_value) && (!errno)) \
+			errno = saved_errno; \
+	} while (0)
+
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
 /* system prototypes
@@ -464,7 +482,7 @@ ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 int fsync_dir(const char *path);
 ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
     off_t off, int rw_type, size_t max_retries, int off_reset);
-ssize_t prw(int fd, void *mem, size_t nrw,
+ssize_t rw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
@@ -489,7 +507,7 @@ int rw_retry(int saved_errno, ssize_t rval);
  */
 
 void usage(void);
-int set_errno(int saved_errno, int fallback);
+int with_fallback_errno(int fallback);
 void err_exit(int nvm_errval, const char *msg, ...);
 func_t errhook(func_t ptr); /* hook function for cleanup on err */
 const char *lbgetprogname(void);
@@ -506,7 +524,7 @@ int new_tmpdir(int *fd, char **path, char *tmpdir,
 int new_tmp_common(int *fd, char **path, int type,
     char *tmpdir, const char *template);
 int mkhtemp_try_create(int dirfd,
-    struct stat *st_dir_initial,
+    struct stat *st_dir_first,
     char *fname_copy,
     char *p,
     size_t xc,
@@ -515,7 +533,7 @@ int mkhtemp_try_create(int dirfd,
     int type);
 int
 mkhtemp_tmpfile_linux(int dirfd,
-    struct stat *st_dir_initial,
+    struct stat *st_dir_first,
     char *fname_copy,
     char *p,
     size_t xc,
@@ -523,7 +541,7 @@ mkhtemp_tmpfile_linux(int dirfd,
     struct stat *st);
 int mkhtemp(int *fd, struct stat *st,
     char *template, int dirfd, const char *fname,
-    struct stat *st_dir_initial, int type);
+    struct stat *st_dir_first, int type);
 int world_writeable_and_sticky(const char *s,
     int sticky_allowed, int always_sticky);
 int same_dir(const char *a, const char *b);

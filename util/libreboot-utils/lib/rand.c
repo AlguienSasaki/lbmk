@@ -127,6 +127,7 @@ void
 rset(void *buf, size_t n)
 {
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(buf == NULL, EFAULT))
 		goto err;
@@ -140,7 +141,6 @@ rset(void *buf, size_t n)
     ((USE_URANDOM) > 0))
 
 	arc4random_buf(buf, n);
-	goto out;
 #else
 	size_t off = 0;
 
@@ -166,7 +166,7 @@ retry_rand:
 #endif
 
 	if (rc < 0)
-		goto err;
+		goto err; /* syscall fehler */
 
 	if (rc == 0)
 		goto err; /* prevent infinite loop on fatal err */
@@ -180,16 +180,15 @@ retry_rand:
 #endif
 
 #endif
-out:
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return;
 err:
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 	close_on_eintr(&fd);
 #endif
-	err_exit(ECANCELED,
-	    "Randomisation failure, possibly unsupported in your kernel");
+	(void) with_fallback_errno(ECANCELED);
+	err_exit(errno, "Randomisierungsfehler");
 	exit(EXIT_FAILURE);
 }
 #endif

@@ -50,6 +50,7 @@ pagesize(void)
 {
 	static long rval = 0;
 	static int set = 0;
+	int saved_errno = 0;
 
 	if (!set) {
 		if ((rval = sysconf(_SC_PAGESIZE)) < 0)
@@ -57,6 +58,7 @@ pagesize(void)
 		set = 1;
 	}
 
+	reset_caller_errno(0);
 	return rval;
 }
 
@@ -92,7 +94,9 @@ smalloc(char **buf, size_t size)
 void *
 vmalloc(void **buf, size_t size)
 {
+	int saved_errno = errno;
 	void *rval = NULL;
+	errno = 0;
 
 	if (size >= SIZE_MAX - 1)
 		err_exit(EOVERFLOW, "integer overflow in vmalloc");
@@ -116,6 +120,7 @@ vmalloc(void **buf, size_t size)
 	if ((rval = malloc(size)) == NULL)
 		err_exit(errno, "malloc fail in vmalloc");
 
+	reset_caller_errno(0);
 	return *buf = rval;
 }
 
@@ -131,6 +136,7 @@ scmp(const char *a,
 	size_t wa;
 	size_t wb;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(a == NULL || b == NULL || rval == NULL, EFAULT))
 		goto err;
@@ -171,14 +177,14 @@ scmp(const char *a,
 			goto out;
 
 err:
-	(void) set_errno(saved_errno, EFAULT);
+	(void) with_fallback_errno(EFAULT);
 	if (rval != NULL)
 		*rval = -1;
 
 	err_exit(errno, "scmp");
 	return -1;
 out:
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return *rval;
 }
 
@@ -215,13 +221,14 @@ slen(const char *s,
 	size_t i = 0;
 	size_t w;
 	size_t j;
+	errno = 0;
 
 	if (if_err(s == NULL || rval == NULL, EFAULT))
 		goto err;
 
 	for ( ; ((uintptr_t)(s + i) % sizeof(size_t)) != 0; i++) {
 
-		if (i >= maxlen)
+		if (if_err(i >= maxlen, EOVERFLOW))
 			goto err;
 		if (s[i] == '\0') {
 			*rval = i;
@@ -252,14 +259,14 @@ slen(const char *s,
 	}
 
 err:
-	(void) set_errno(saved_errno, EFAULT);
+	(void) with_fallback_errno(EFAULT);
 	if (rval != NULL)
 		*rval = 0;
 
 	err_exit(errno, "slen"); /* abort */
 	return 0; /* gcc15 is happy */
 out:
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return *rval;
 }
 
@@ -273,6 +280,7 @@ sdup(const char *s,
 	size_t i = 0;
 	char *out = NULL;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(dest == NULL || *dest != NULL || s == NULL, EFAULT))
 		goto err;
@@ -326,12 +334,12 @@ err:
 	if (dest != NULL)
 		*dest = NULL;
 
-	(void) set_errno(saved_errno, EFAULT);
+	(void) with_fallback_errno(EFAULT);
 	err_exit(errno, "sdup");
 
 	return NULL;
 out:
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return *dest;
 }
 
@@ -345,6 +353,7 @@ scatn(ssize_t sc, const char **sv,
 	char *rcur = NULL;
 	char *rtmp = NULL;
 	size_t i;
+	errno = 0;
 
 	if (if_err(sc < 2, EINVAL) ||
 	    if_err(sv == NULL, EFAULT) ||
@@ -368,7 +377,7 @@ scatn(ssize_t sc, const char **sv,
 		rtmp = NULL;
 	}
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	*rval = final;
 	return *rval;
 err:
@@ -376,7 +385,7 @@ err:
 	free_and_set_null(&rtmp);
 	free_and_set_null(&final);
 
-	(void) set_errno(saved_errno, EFAULT);
+	(void) with_fallback_errno(EFAULT);
 
 	err_exit(errno, "scatn");
 	return NULL;
@@ -391,6 +400,7 @@ scat(const char *s1, const char *s2,
 	size_t size2;
 	char *rval = NULL;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(dest == NULL || *dest != NULL, EFAULT))
 		goto err;
@@ -408,11 +418,11 @@ scat(const char *s1, const char *s2,
 	memcpy(rval + size1, s2, size2);
 	*(rval + size1 + size2) = '\0';
 
+	reset_caller_errno(0);
 	*dest = rval;
-	errno = saved_errno;
 	return *dest;
 err:
-	(void) set_errno(saved_errno, EINVAL);
+	(void) with_fallback_errno(EINVAL);
 	if (dest != NULL)
 		*dest = NULL;
 	err_exit(errno, "scat");
@@ -431,6 +441,7 @@ dcat(const char *s, size_t n,
 	char *rval1 = NULL;
 	char *rval2 = NULL;
 	int saved_errno = errno;
+	errno = 0;
 
 	if (if_err(dest1 == NULL || dest2 == NULL, EFAULT))
 		goto err;
@@ -450,7 +461,7 @@ dcat(const char *s, size_t n,
 	*dest1 = rval1;
 	*dest2 = rval2;
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return;
 
 err:
@@ -459,7 +470,7 @@ err:
 	free_and_set_null(&rval1);
 	free_and_set_null(&rval2);
 
-	(void) set_errno(saved_errno, EINVAL);
+	(void) with_fallback_errno(EINVAL);
 	err_exit(errno, "dcat");
 }
 
@@ -477,6 +488,7 @@ vcmp(const void *s1, const void *s2, size_t n)
 
 	const unsigned char *x;
 	const unsigned char *y;
+	errno = 0;
 
 	if (if_err(s1 == NULL || s2 == NULL, EFAULT))
 		err_exit(EFAULT, "vcmp: null input");
@@ -497,7 +509,7 @@ vcmp(const void *s1, const void *s2, size_t n)
 		if (x[i] != y[i])
 			return (int)x[i] - (int)y[i];
 
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 }
 
@@ -507,9 +519,9 @@ vcmp(const void *s1, const void *s2, size_t n)
  * under error condition.
  */
 int
-set_errno(int saved_errno, int fallback)
+with_fallback_errno(int fallback)
 {
-	if (errno == saved_errno)
+	if (!errno)
 		errno = fallback;
 	return -1;
 }
@@ -525,7 +537,8 @@ err_exit(int nvm_errval, const char *msg, ...)
 
 	func_t err_cleanup = errhook(NULL);
 	err_cleanup();
-	errno = saved_errno;
+	reset_caller_errno(0);
+	saved_errno = errno;
 
 	if (!errno)
 		saved_errno = errno = ECANCELED;
@@ -536,6 +549,7 @@ err_exit(int nvm_errval, const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 
+	errno = saved_errno;
 	fprintf(stderr, ": %s\n", strerror(errno));
 
 	exit(EXIT_FAILURE);
@@ -615,11 +629,12 @@ xpledgex(const char *promises, const char *execpromises)
 {
 	int saved_errno = errno;
 	(void) promises, (void) execpromises, (void) saved_errno;
+	errno = 0;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
 		err_exit(errno, "pledge");
 #endif
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 }
 int
@@ -627,10 +642,11 @@ xunveilx(const char *path, const char *permissions)
 {
 	int saved_errno = errno;
 	(void) path, (void) permissions, (void) saved_errno;
+	errno = 0;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
 		err_exit(errno, "pledge");
 #endif
-	errno = saved_errno;
+	reset_caller_errno(0);
 	return 0;
 }

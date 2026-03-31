@@ -470,9 +470,9 @@ ret_gbe_mv:
 	if (rval >= 0) 
 		goto out;
 
-	return set_errno(saved_errno, EIO);
+	return with_fallback_errno(EIO);
 out:
-	errno = saved_errno;
+	reset_caller_errno(rval);
 	return rval;
 }
 
@@ -572,6 +572,5 @@ rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 	return rw_over_nrw(r, nrw);
 
 err_rw_gbe_file_exact:
-	errno = EIO;
-	return -1;
+	return with_fallback_errno(EIO);
 }
