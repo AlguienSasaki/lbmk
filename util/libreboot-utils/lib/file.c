@@ -826,12 +826,14 @@ close_on_eintr(int *fd)
  * ONE MACRO TO RULE THEM ALL:
  */
 #define fs_err_retry() \
-	if ((rval == -1) && \
-	    (errno == EINTR)) \
-		return 1; \
-	if (rval >= 0 && !errno) \
-		errno = saved_errno; \
-	return 0
+	do { \
+		if ((rval == -1) && \
+		    (errno == EINTR)) \
+			return 1; \
+		if (rval >= 0 && !errno) \
+			errno = saved_errno; \
+		return 0; \
+	} while(0)
 /*
  * Regarding the errno logic above:
  * on success, it is permitted that

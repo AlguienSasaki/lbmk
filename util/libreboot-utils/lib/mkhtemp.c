@@ -699,6 +699,10 @@ mkhtemp_tmpfile_linux(int dirfd,
 
 			linked = 1; /* file created */
 
+			/* TODO: potential fd leak here.
+			 * probably should only set *fd on successful
+			 * return from this function (see below)
+			 */
 			if (fd_verify_dir_identity(dirfd, st_dir_first) < 0 ||
 			    fstat(*fd = tmpfd, st) < 0 ||
 			    secure_file(fd, st, st, O_APPEND, 1, 1, 0600) < 0)
