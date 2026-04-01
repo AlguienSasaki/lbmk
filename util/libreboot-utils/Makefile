@@ -148,4 +148,4 @@ distclean: clean
 # mode targets (portable replacement for ifeq)
 
 strict:
-	$(MAKE) CFLAGS="$(HELLFLAGS)" CC_MODE="$(HELLCC)"
+	$(MAKE) CFLAGS="$(CFLAGS) $(HELLFLAGS)" CC_MODE="$(HELLCC)"
