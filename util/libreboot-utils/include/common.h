@@ -471,14 +471,6 @@ int check_file(int fd, struct stat *st);
 ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 off_t lseek_on_eintr(int fd, off_t off,
     int whence);
-ssize_t read_on_eintr(int fd,
-    void *buf, size_t count);
-ssize_t write_on_eintr(int fd,
-    void *buf, size_t count);
-ssize_t pread_on_eintr(int fd,
-    void *buf, size_t count, off_t off);
-ssize_t pwrite_on_eintr(int fd,
-    void *buf, size_t count, off_t off);
 int off_retry(int saved_errno, off_t rval);
 int sys_retry(int saved_errno, long rval);
 int fs_retry(int saved_errno, int rval);

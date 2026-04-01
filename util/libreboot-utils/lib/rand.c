@@ -165,8 +165,7 @@ retry_rand: {
 	open_file_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400, NULL);
 
 	while (rw_retry(saved_errno,
-		rc = read_on_eintr(fd,
-		    (unsigned char *)buf + off, n - off)));
+	    rc = rw(fd, (unsigned char *)buf + off, n - off, 0, IO_READ)));
 #elif defined(__linux__)
 	long rc;
 	while (sys_retry(saved_errno,

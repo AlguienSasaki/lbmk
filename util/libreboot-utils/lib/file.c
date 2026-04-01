@@ -202,14 +202,20 @@ err_rw_file_exact:
 	return with_fallback_errno(EIO);
 }
 
-/* rw() - read-write but with more
+/**
+ * rw() - read-write but with more
  * safety checks than barebones libc
  *
  * A fallback is provided for regular read/write.
  * rw_type can be IO_READ (read), IO_WRITE (write),
  * IO_PREAD (pread) or IO_PWRITE
+ *
+ * WARNING: this function allows zero-byte returns.
+ * this is intentional, to mimic libc behaviour.
+ * use rw_file_exact if you need to avoid this.
+ * (ditto partial writes/reads)
+ *
  */
-
 ssize_t
 rw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type)
@@ -219,27 +225,34 @@ rw(int fd, void *mem, size_t nrw,
 	int saved_errno = errno;
 	errno = 0;
 
-	if (io_args(fd, mem, nrw, off, rw_type) == -1)
-		return with_fallback_errno(EINVAL);
+	if (io_args(fd, mem, nrw, off, rw_type) == -1 ||
+	    if_err(mem == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(off < 0, EFAULT) ||
+	    if_err(nrw == 0, EINVAL))
+		return with_fallback_errno(EIO);
 
-	switch (rw_type) {
-	case IO_WRITE:
-		r = write_on_eintr(fd, mem, nrw);
-		break;
-	case IO_READ:
-		r = read_on_eintr(fd, mem, nrw);
-		break;
-	case IO_PWRITE:
-		r = pwrite_on_eintr(fd, mem, nrw, off);
-		break;
-	case IO_PREAD:
-		r = pread_on_eintr(fd, mem, nrw, off);
-		break;
-	default:
-		errno = EINVAL;
-		break;
-	}
+	do {
+		switch (rw_type) {
+		case IO_READ:
+			r = read(fd, mem, nrw);
+			break;
+		case IO_WRITE:
+			r = write(fd, mem, nrw);
+			break;
+		case IO_PREAD:
+			r = pread(fd, mem, nrw, off);
+			break;
+		case IO_PWRITE:
+			r = pwrite(fd, mem, nrw, off);
+			break;
+		default:
+			errno = EINVAL;
+			break;
+		}
 
+	} while (rw_retry(saved_errno, r));
+	
 	if ((rval = rw_over_nrw(r, nrw)) < 0)
 		return with_fallback_errno(EIO);
 
@@ -698,90 +711,6 @@ mkdirat_on_eintr(int dirfd,
 
 	while (fs_retry(saved_errno,
 	    rval = mkdirat(dirfd, path, mode)));
-
-	reset_caller_errno(rval);
-	return rval;
-}
-
-ssize_t
-read_on_eintr(int fd,
-    void *buf, size_t count)
-{
-	int saved_errno = errno;
-	ssize_t rval = 0;
-	errno = 0;
-
-	if (if_err(buf == NULL, EFAULT) ||
-	    if_err(fd < 0, EBADF) ||
-	    if_err(count == 0, EINVAL))
-		return with_fallback_errno(EIO);
-
-	while (rw_retry(saved_errno,
-	    rval = read(fd, buf, count)));
-
-	reset_caller_errno(rval);
-	return rval;
-}
-
-ssize_t
-pread_on_eintr(int fd,
-    void *buf, size_t count,
-    off_t off)
-{
-	int saved_errno = errno;
-	ssize_t rval = 0;
-	errno = 0;
-
-	if (if_err(buf == NULL, EFAULT) ||
-	    if_err(fd < 0, EBADF) ||
-	    if_err(off < 0, EFAULT) ||
-	    if_err(count == 0, EINVAL))
-		return with_fallback_errno(EIO);
-
-	while (rw_retry(saved_errno,
-	    rval = pread(fd, buf, count, off)));
-
-	reset_caller_errno(rval);
-	return rval;
-}
-
-ssize_t
-write_on_eintr(int fd,
-    void *buf, size_t count)
-{
-	int saved_errno = errno;
-	ssize_t rval = 0;
-	errno = 0;
-
-	if (if_err(buf == NULL, EFAULT) ||
-	    if_err(fd < 0, EBADF) ||
-	    if_err(count == 0, EINVAL))
-		return with_fallback_errno(EIO);
-
-	while (rw_retry(saved_errno,
-	    rval = write(fd, buf, count)));
-
-	reset_caller_errno(rval);
-	return rval;
-}
-
-ssize_t
-pwrite_on_eintr(int fd,
-    void *buf, size_t count,
-    off_t off)
-{
-	int saved_errno = errno;
-	ssize_t rval = 0;
-	errno = 0;
-
-	if (if_err(buf == NULL, EFAULT) ||
-	    if_err(fd < 0, EBADF) ||
-	    if_err(off < 0, EFAULT) ||
-	    if_err(count == 0, EINVAL))
-		return with_fallback_errno(EIO);
-
-	while (rw_retry(saved_errno,
-	    rval = pwrite(fd, buf, count, off)));
 
 	reset_caller_errno(rval);
 	return rval;
