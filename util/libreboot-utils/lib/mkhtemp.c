@@ -4,10 +4,6 @@
  * Hardened mktemp (be nice to the demon).
  */
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 700
-#endif
-
 /* for openat2 / fast path: */
 #ifdef __linux__
 #if !defined(USE_OPENAT) || \

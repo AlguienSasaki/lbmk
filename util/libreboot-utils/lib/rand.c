@@ -4,9 +4,6 @@
  * Random number generation
  */
 
-#ifndef RAND_H
-#define RAND_H
-
 #if defined(USE_ARC4) && \
     ((USE_ARC4) > 0)
 #define _DEFAULT_SOURCE 1 /* for arc4random on *linux* */
@@ -201,4 +198,3 @@ err:
 	exitf("Randomisierungsfehler");
 	exit(EXIT_FAILURE);
 }
-#endif
