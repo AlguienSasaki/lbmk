@@ -744,15 +744,21 @@ int secure_file(int *fd,
     int do_lock,
     mode_t mode)
 {
-	int flags;
+	int flags = -1;
 	struct stat st_now;
 	int saved_errno = errno;
 	errno = 0;
 
 	if (if_err(fd == NULL || st == NULL, EFAULT) ||
-	    if_err(*fd < 0, EBADF) ||
-	    if_err_sys((flags = fcntl(*fd, F_GETFL)) == -1) ||
-	    if_err(bad_flags > 0 && (flags & bad_flags), EPERM))
+	    if_err(*fd < 0, EBADF))
+		goto err_demons;
+
+	while (fs_retry(saved_errno,
+	    flags = fcntl(*fd, F_GETFL)));
+	if (flags == -1)
+		goto err_demons;
+
+	if (if_err(bad_flags > 0 && (flags & bad_flags), EPERM))
 		goto err_demons;
 
 	if (expected != NULL) {
@@ -878,6 +884,7 @@ lock_file(int fd, int flags)
 {
 	struct flock fl;
 	int saved_errno = errno;
+	int fcntl_rval = -1;
 	errno = 0;
 
 	if (if_err(fd < 0, EBADF) ||
@@ -893,7 +900,9 @@ lock_file(int fd, int flags)
 
 	fl.l_whence = SEEK_SET;
 
-	if (fcntl(fd, F_SETLK, &fl) == -1)
+	while (fs_retry(saved_errno,
+	    fcntl_rval = fcntl(fd, F_SETLK, &fl)));
+	if (fcntl_rval == -1)
 		goto err_lock_file;
 
 	reset_caller_errno(0);

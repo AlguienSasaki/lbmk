@@ -28,6 +28,8 @@ open_gbe_file(void)
 	struct xstate *x = xstatus();
 	struct commands *cmd = &x->cmd[x->i];
 	struct xfile *f = &x->f;
+	int saved_errno = errno;
+	errno = 0;
 
 	int _flags;
 
@@ -46,7 +48,8 @@ open_gbe_file(void)
 	if (f->gbe_st.st_nlink == 0)
 		err_exit(EIO, "%s: file unlinked while open", f->fname);
 
-	_flags = fcntl(f->gbe_fd, F_GETFL);
+	while (fs_retry(saved_errno,
+	    _flags = fcntl(f->gbe_fd, F_GETFL)));
 	if (_flags == -1)
 		err_exit(errno, "%s: fcntl(F_GETFL)", f->fname);
 
@@ -74,6 +77,8 @@ open_gbe_file(void)
 	if (lock_file(f->gbe_fd, cmd->flags) == -1)
 		err_exit(errno, "%s: can't lock", f->fname);
 */
+
+	reset_caller_errno(0);
 }
 
 void
