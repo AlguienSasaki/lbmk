@@ -158,7 +158,8 @@ rw_exact(int fd, unsigned char *mem, size_t nrw,
 	while (1) {
 	
 		/* Prevent theoretical overflow */
-		if (if_err(rval >= 0 && (size_t)rval > (nrw - rc), EOVERFLOW))
+		if (if_err(rval >= 0 && (size_t)rval > (nrw - (size_t)rc),
+		    EOVERFLOW))
 			goto err_rw_exact;
 
 		rc += rval;
