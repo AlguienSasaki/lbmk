@@ -608,7 +608,7 @@ open_file_on_eintr(const char *path,
 			exitf("%s: not a regular file", path);
 	}
 
-	if (lseek_on_eintr(*fd, 0, SEEK_CUR) == (off_t)-1)
+	if (lseek(*fd, 0, SEEK_CUR) == (off_t)-1)
 		exitf("%s: file not seekable", path);
 
 	errno = saved_errno; /* see previous comment */
@@ -669,20 +669,6 @@ openat_on_eintr(int dirfd, const char *path,
 	return rval;
 }
 #endif
-
-off_t
-lseek_on_eintr(int fd, off_t off, int whence)
-{
-	int saved_errno = errno;
-	off_t rval = 0;
-	errno = 0;
-
-	while (off_retry(saved_errno,
-	    rval = lseek(fd, off, whence)));
-
-	reset_caller_errno(rval);
-	return rval;
-}
 
 int
 mkdirat_on_eintr(int dirfd, 
