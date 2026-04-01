@@ -16,9 +16,8 @@
  * while the specification that it implements evolves.
  */
 
-#if !defined(_POSIX_C_SOURCE)
-/* for openat2 on linux */
-#define _POSIX_C_SOURCE 200809L
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
 #endif
 
 #include <sys/types.h>

@@ -6,10 +6,6 @@
  * These images configure your Intel Gigabit Ethernet adapter.
  */
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 

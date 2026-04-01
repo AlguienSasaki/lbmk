@@ -4,8 +4,23 @@
  * Hardened mktemp (be nice to the demon).
  */
 
-#if !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE 200809L
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+#endif
+
+/* for openat2 / fast path: */
+#ifdef __linux__
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+#include <sys/syscall.h>
+#include <linux/openat2.h>
+#ifndef O_TMPFILE
+#define O_TMPFILE 020000000
+#endif
+#ifndef AT_EMPTY_PATH
+#define AT_EMPTY_PATH 0x1000
+#endif
 #endif
 
 #include <sys/types.h>
@@ -17,18 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-/* for openat2 / fast path: */
-#ifdef __linux__
-#include <linux/openat2.h>
-#include <sys/syscall.h>
-#ifndef O_TMPFILE
-#define O_TMPFILE 020000000
-#endif
-#ifndef AT_EMPTY_PATH
-#define AT_EMPTY_PATH 0x1000
-#endif
-#endif
 
 #include "../include/common.h"
 

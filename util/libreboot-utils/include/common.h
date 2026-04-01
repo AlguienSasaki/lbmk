@@ -13,18 +13,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
-#include <errno.h>
-
-/* for linux getrandom
- */
-#if defined(__linux__)
-#include <sys/random.h>
-#include <sys/syscall.h>
-#endif
-
-#ifdef __OpenBSD__ /* for pledge */
-#include <unistd.h>
-#endif
 
 /* dangerously cool macros:
  */
@@ -48,10 +36,6 @@
 
 /* system prototypes
  */
-
-int fchmod(int fd, mode_t mode);
-char *realpath(const char *path,
-    char *resolved);
 
 #ifndef USE_URANDOM
 #define USE_URANDOM 0

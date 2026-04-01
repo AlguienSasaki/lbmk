@@ -16,8 +16,17 @@ more correct usage example:
 long max = pathconf("/", _PC_PATH_MAX);
  */
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+#endif
+
+/* for openat2: */
+#ifdef __linux__
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+#include <linux/openat2.h>
+#include <sys/syscall.h>
 #endif
 
 #include <sys/types.h>
@@ -29,13 +38,6 @@ long max = pathconf("/", _PC_PATH_MAX);
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-/* for openat2: */
-#ifdef __linux__
-#include <linux/openat2.h>
-#include <sys/syscall.h>
-long syscall(long number, ...);
-#endif
 
 #include "../include/common.h"
 

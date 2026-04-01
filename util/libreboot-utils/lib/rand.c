@@ -7,19 +7,21 @@
 #ifndef RAND_H
 #define RAND_H
 
-#ifdef __OpenBSD__
-#include <sys/param.h>
-#endif
-#include <sys/types.h>
-
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
 #elif defined(__linux__)
-#include <sys/random.h>
-#include <sys/syscall.h>
-long syscall(long number, ...);
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
+#include <sys/syscall.h>
+#include <sys/random.h>
+#endif
+
+#ifdef __OpenBSD__
+#include <sys/param.h>
+#endif
+#include <sys/types.h>
 
 #include <errno.h>
 #include <fcntl.h>
