@@ -465,7 +465,6 @@ int io_args(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int check_file(int fd, struct stat *st);
 ssize_t rw_over_nrw(ssize_t r, size_t nrw);
-int off_retry(int saved_errno, off_t rval);
 int sys_retry(int saved_errno, long rval);
 int fs_retry(int saved_errno, int rval);
 int rw_retry(int saved_errno, ssize_t rval);

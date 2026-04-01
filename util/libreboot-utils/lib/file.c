@@ -762,18 +762,6 @@ xclose(int *fd)
  */
 
 
-/* retry switch for offset-based
- * functions e.g. lseek
- */
-/* retry switch for functions that
-   return long status e.g. linux syscall
- */
-int
-off_retry(int saved_errno, off_t rval)
-{
-	fs_err_retry();
-}
-
 /* retry switch for functions that
    return long status e.g. linux syscall
  */

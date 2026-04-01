@@ -156,24 +156,24 @@ retry_rand: {
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
-	ssize_t rc;
+	ssize_t rval;
 	int fd = -1;
 
 	open_file_on_eintr("/dev/urandom", &fd, O_RDONLY, 0400, NULL);
 
 	while (rw_retry(saved_errno,
-	    rc = rw(fd, (unsigned char *)buf + off, n - off, 0, IO_READ)));
+	    rval = rw(fd, (unsigned char *)buf + off, n - off, 0, IO_READ)));
 #elif defined(__linux__)
-	long rc;
+	long rval;
 	while (sys_retry(saved_errno,
-		rc = syscall(SYS_getrandom,
+		rval = syscall(SYS_getrandom,
 		    (unsigned char *)buf + off, n - off, 0)));
 #else
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
 
-	if (rc < 0 || /* syscall fehler */
-	    rc == 0) { /* prevent infinite loop on fatal err */
+	if (rval < 0 || /* syscall fehler */
+	    rval == 0) { /* prevent infinite loop on fatal err */
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 		xclose(&fd);
@@ -181,7 +181,7 @@ retry_rand: {
 		goto err;
 	}
 
-	if ((off += (size_t)rc) < n)
+	if ((off += (size_t)rval) < n)
 		goto retry_rand;
 
 #if defined(USE_URANDOM) && \
