@@ -8,7 +8,7 @@
 CC = cc
 HELLCC = clang
 
-CFLAGS = -Os -Wall -Wextra -std=c99 -pedantic -Werror
+CFLAGS = -Os -Wall -Wextra -std=c99 -pedantic
 LDFLAGS =
 DESTDIR =
 PREFIX = /usr/local
