@@ -48,9 +48,7 @@ open_gbe_file(void)
 	if (f->gbe_st.st_nlink == 0)
 		exitf("%s: file unlinked while open", f->fname);
 
-	while (fs_retry(saved_errno,
-	    _flags = fcntl(f->gbe_fd, F_GETFL)));
-	if (_flags == -1)
+	if ((_flags = fcntl(f->gbe_fd, F_GETFL)) == -1)
 		exitf("%s: fcntl(F_GETFL)", f->fname);
 
 	/* O_APPEND allows POSIX write() to ignore

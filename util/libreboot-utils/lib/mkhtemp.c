@@ -752,9 +752,7 @@ int secure_file(int *fd,
 	    if_err(*fd < 0, EBADF))
 		goto err_demons;
 
-	while (fs_retry(saved_errno,
-	    flags = fcntl(*fd, F_GETFL)));
-	if (flags == -1)
+	if ((flags = fcntl(*fd, F_GETFL)) == -1)
 		goto err_demons;
 
 	if (if_err(bad_flags > 0 && (flags & bad_flags), EPERM))
@@ -899,9 +897,7 @@ lock_file(int fd, int flags)
 
 	fl.l_whence = SEEK_SET;
 
-	while (fs_retry(saved_errno,
-	    fcntl_rval = fcntl(fd, F_SETLK, &fl)));
-	if (fcntl_rval == -1)
+	if ((fcntl_rval = fcntl(fd, F_SETLK, &fl)) == -1)
 		goto err_lock_file;
 
 	reset_caller_errno(0);
