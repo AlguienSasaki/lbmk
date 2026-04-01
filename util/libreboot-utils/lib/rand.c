@@ -175,11 +175,14 @@ retry_rand: {
 #error Unsupported operating system (possibly unsecure randomisation)
 #endif
 
-	if (rc < 0)
-		goto err; /* syscall fehler */
-
-	if (rc == 0)
-		goto err; /* prevent infinite loop on fatal err */
+	if (rc < 0 || /* syscall fehler */
+	    rc == 0) { /* prevent infinite loop on fatal err */
+#if defined(USE_URANDOM) && \
+    ((USE_URANDOM) > 0)
+		close_on_eintr(&fd);
+#endif
+		goto err;
+	}
 
 	if ((off += (size_t)rc) < n)
 		goto retry_rand;
