@@ -7,10 +7,17 @@
 #ifndef RAND_H
 #define RAND_H
 
-#if defined(USE_URANDOM) && \
+#if defined(USE_ARC4) && \
+    ((USE_ARC4) > 0)
+#define _DEFAULT_SOURCE 1 /* for arc4random on *linux* */
+			/* (not needed on bsd - on bsd,
+			   it is used automatically unless
+			   overridden with USE_URANDOM */
+#elif defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
 #include <fcntl.h> /* if not arc4random: /dev/urandom */
-#elif defined(__linux__)
+#elif defined(__linux__) && \
+    !(defined(USE_ARC4) && ((USE_ARC4) > 0))
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -134,10 +141,15 @@ rset(void *buf, size_t n)
 	if (n == 0)
 		exitf("rset: zero-byte request");
 
-#if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
+/* on linux, getrandom is recommended,
+   but you can pass -DUSE_ARC4=1 to use arc4random.
+   useful for portability testing from linux.
+ */
+#if (defined(USE_ARC4) && ((USE_ARC4) > 0)) || \
+    ((defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
     defined(__DragonFly__)) && !(defined(USE_URANDOM) && \
-    ((USE_URANDOM) > 0))
+    ((USE_URANDOM) > 0)))
 
 	arc4random_buf(buf, n);
 #else
