@@ -16,10 +16,6 @@ more correct usage example:
 long max = pathconf("/", _PC_PATH_MAX);
  */
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE 700
-#endif
-
 /* for openat2: */
 #ifdef __linux__
 #if !defined(USE_OPENAT) || \
