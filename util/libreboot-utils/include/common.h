@@ -83,10 +83,6 @@
 #error "Unexpected bit layout"
 #endif
 
-#ifndef MAX_ZERO_RW_RETRY
-#define MAX_ZERO_RW_RETRY 5
-#endif
-
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
@@ -462,7 +458,7 @@ ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 
 int fsync_dir(const char *path);
 ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
-    off_t off, int rw_type, size_t max_retries);
+    off_t off, int rw_type);
 ssize_t rw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int io_args(int fd, void *mem, size_t nrw,

@@ -146,7 +146,7 @@ err_fsync_dir:
 
 ssize_t
 rw_file_exact(int fd, unsigned char *mem, size_t nrw,
-    off_t off, int rw_type, size_t max_retries)
+    off_t off, int rw_type)
 {
 	int saved_errno = errno;
 	ssize_t rval = 0;
@@ -154,7 +154,6 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 	size_t nrw_cur;
 	off_t off_cur;
 	void *mem_cur;
-	size_t retries_on_zero = 0;
 	errno = 0;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
@@ -178,17 +177,8 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 
 		off_cur = off + (off_t)rc;
 
-		if ((rval = rw(fd, mem_cur, nrw_cur, off_cur, rw_type)) < 0)
+		if ((rval = rw(fd, mem_cur, nrw_cur, off_cur, rw_type)) <= 0)
 			goto err_rw_file_exact;
-
-		if (rval == 0) {
-			if (retries_on_zero++ < max_retries)
-				continue;
-
-			goto err_rw_file_exact;
-		}
-
-		retries_on_zero = 0;
 	}
 
 	if (if_err((size_t)rc != nrw, EIO) ||
