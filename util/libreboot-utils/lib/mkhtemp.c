@@ -4,9 +4,8 @@
  * Hardened mktemp (be nice to the demon).
  */
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
-/* for openat2 syscall on linux */
-#define _GNU_SOURCE 1
+#if !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
 #endif
 
 #include <sys/types.h>

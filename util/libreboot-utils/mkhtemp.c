@@ -16,9 +16,9 @@
  * while the specification that it implements evolves.
  */
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
+#if !defined(_POSIX_C_SOURCE)
 /* for openat2 on linux */
-#define _GNU_SOURCE 1
+#define _POSIX_C_SOURCE 200809L
 #endif
 
 #include <sys/types.h>

@@ -50,6 +50,12 @@
  */
 
 int fchmod(int fd, mode_t mode);
+char *realpath(const char *path,
+    char *resolved);
+
+#ifndef USE_URANDOM
+#define USE_URANDOM 0
+#endif
 
 #define MKHTEMP_RETRY_MAX 512
 #define MKHTEMP_SPIN_THRESHOLD 32

@@ -2,6 +2,11 @@
  * Copyright (c) 2026 Leah Rowe <leah@libreboot.org>                    /| |\
    Something something non-determinism                                   / \ */
 
+#if !defined(_POSIX_C_SOURCE)
+/* for openat2 on linux */
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
