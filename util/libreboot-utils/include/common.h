@@ -525,7 +525,7 @@ int secure_file(int *fd,
     int check_seek,
     int do_lock,
     mode_t mode);
-void close_on_eintr(int *fd);
+void xclose(int *fd);
 int fsync_on_eintr(int fd);
 int fs_rename_at(int olddirfd, const char *old,
              int newdirfd, const char *new);

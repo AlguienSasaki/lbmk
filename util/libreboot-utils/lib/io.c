@@ -251,8 +251,8 @@ write_to_gbe_bin(void)
 
 	saved_errno = errno;
 
-	close_on_eintr(&f->tmp_fd);
-	close_on_eintr(&f->gbe_fd);
+	xclose(&f->tmp_fd);
+	xclose(&f->gbe_fd);
 
 	errno = saved_errno;
 
@@ -437,7 +437,7 @@ gbe_mv(void)
 		tmp_gbe_bin_exists = 0;
 
 	if (f->gbe_fd > -1) {
-		close_on_eintr(&f->gbe_fd);
+		xclose(&f->gbe_fd);
 
 		if (fsync_dir(f->fname) < 0) {
 			f->io_err_gbe_bin = 1;
@@ -445,7 +445,7 @@ gbe_mv(void)
 		}
 	}
 
-	close_on_eintr(&f->tmp_fd);
+	xclose(&f->tmp_fd);
 
 	/* before this function is called,
 	 * tmp_fd may have been moved

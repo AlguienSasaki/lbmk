@@ -108,8 +108,8 @@ exit_cleanup(void)
 	f = &x->f;
 
 	/* close fds if still open */
-	close_on_eintr(&f->tmp_fd);
-	close_on_eintr(&f->gbe_fd);
+	xclose(&f->tmp_fd);
+	xclose(&f->gbe_fd);
 
 	/* unlink tmpfile if it exists */
 	if (f->tname != NULL) {

@@ -134,7 +134,7 @@ new_tmp_common(int *fd, char **path, int type,
 	if (*fd < 0)
 		goto err;
 
-	close_on_eintr(&dirfd);
+	xclose(&dirfd);
 
 	errno = saved_errno;
 	*path = dest;
@@ -145,8 +145,8 @@ new_tmp_common(int *fd, char **path, int type,
 err:
 	free_and_set_null(&dest);
 
-	close_on_eintr(&dirfd);
-	close_on_eintr(fd);
+	xclose(&dirfd);
+	xclose(fd);
 
 	/* where a TMPDIR isn't found, and we err,
 	 * we pass this back through for the
@@ -290,8 +290,8 @@ success_same_dir:
 		rval = 1; /* SUCCESS */
 	}
 
-	close_on_eintr(&fd_a);
-	close_on_eintr(&fd_b);
+	xclose(&fd_a);
+	xclose(&fd_b);
 
 	/* we reset caller errno regardless
 	 * of success, so long as it's not
@@ -303,8 +303,8 @@ success_same_dir:
 err_same_dir:
 	/* FAILURE (probably syscall) - returns -1
 	 */
-	close_on_eintr(&fd_a);
-	close_on_eintr(&fd_b);
+	xclose(&fd_a);
+	xclose(&fd_b);
 
 	return with_fallback_errno(EIO); /* -1 */
 }
@@ -359,12 +359,12 @@ sticky_heaven:
 	if (faccessat(dirfd, 	".", X_OK, AT_EACCESS) < 0)
 		goto sticky_hell; /* down you go! */
 
-	close_on_eintr(&dirfd);
+	xclose(&dirfd);
 	reset_caller_errno(0);
 	return 1;
 
 sticky_hell:
-	close_on_eintr(&dirfd);
+	xclose(&dirfd);
 	(void) with_fallback_errno(EPERM);
 	return 0;
 }
@@ -495,7 +495,7 @@ mkhtemp(int *fd,
 
 	errno = EEXIST;
 err:
-	close_on_eintr(fd);
+	xclose(fd);
 	free_and_set_null(&fname_copy);
 
 	return with_fallback_errno(EIO);
@@ -635,7 +635,7 @@ out:
 	reset_caller_errno(0);
 	return rval;
 err:
-	close_on_eintr(fd);
+	xclose(fd);
 
 	if (file_created)
 		(void) unlinkat(dirfd, fname_copy, 0);
@@ -721,7 +721,7 @@ err:
 	if (linked)
 		(void) unlinkat(dirfd, fname_copy, 0);
 
-	close_on_eintr(&tmpfd);
+	xclose(&tmpfd);
 	return with_fallback_errno(EIO);
 out:
 	reset_caller_errno(0);

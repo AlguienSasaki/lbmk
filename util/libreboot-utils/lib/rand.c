@@ -176,7 +176,7 @@ retry_rand: {
 	    rc == 0) { /* prevent infinite loop on fatal err */
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
-		close_on_eintr(&fd);
+		xclose(&fd);
 #endif
 		goto err;
 	}
@@ -186,7 +186,7 @@ retry_rand: {
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
-	close_on_eintr(&fd);
+	xclose(&fd);
 #endif
 }
 

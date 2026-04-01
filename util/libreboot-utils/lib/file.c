@@ -110,7 +110,7 @@ fsync_dir(const char *path)
 	    if_err_sys((rval = fsync_on_eintr(dirfd)) == -1))
 		goto err_fsync_dir;
 
-	close_on_eintr(&dirfd);
+	xclose(&dirfd);
 	free_and_set_null(&dirbuf);
 
 	reset_caller_errno(rval);
@@ -118,7 +118,7 @@ fsync_dir(const char *path)
 
 err_fsync_dir:
 	free_and_set_null(&dirbuf);
-	close_on_eintr(&dirfd);
+	xclose(&dirfd);
 
 	return with_fallback_errno(EIO);
 }
@@ -419,7 +419,7 @@ fs_resolve_at(int dirfd, const char *path, int flags)
 
 		/* close previous fd if not the original input */
 		if (curfd != dirfd)
-			close_on_eintr(&curfd);
+			xclose(&curfd);
 
 		curfd = nextfd;
 		nextfd = -1;
@@ -432,11 +432,11 @@ err:
 	saved_errno = errno;
 
 	if (nextfd >= 0)
-		close_on_eintr(&nextfd);
+		xclose(&nextfd);
 
 	/* close curfd only if it's not the original */
 	if (curfd != dirfd && curfd >= 0)
-		close_on_eintr(&curfd);
+		xclose(&curfd);
 
 	errno = saved_errno;
 	return with_fallback_errno(EIO);
@@ -721,22 +721,19 @@ fsync_on_eintr(int fd)
 }
 
 void
-close_on_eintr(int *fd)
+xclose(int *fd)
 {
 	int saved_errno = errno;
 	int rval = 0;
 
 	if (fd == NULL)
-		exitf("close_on_eintr: null pointer");
+		exitf("xclose: null pointer");
 	if (*fd < 0)
 		return;
 
 	errno = 0;
-	while (fs_retry(saved_errno,
-	    rval = close(*fd)));
-
-	if (rval < 0)
-		exitf("close_on_eintr: could not close");
+	if ((rval = close(*fd)) < 0)
+		exitf("xclose: could not close");
 
 	*fd = -1;
 
