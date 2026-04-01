@@ -622,7 +622,7 @@ openat_on_eintr(int dirfd, const char *path,
     int flags, mode_t mode)
 {
 	struct open_how how = {
-		.flags = flags,
+		.flags = (unsigned long long)flags,
 		.mode = mode,
 		.resolve =
 		    RESOLVE_BENEATH |
