@@ -1,0 +1,50 @@
+From 9408a39adcc458b6af7e11f9a4780296e2aa480a Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 1 Apr 2026 07:39:07 +0100
+Subject: [PATCH 1/1] u-boot: fix build error on newer hostcc
+
+because... they changed a flag.
+
+because they're gnu. this fixes building
+u-boot x86 on arch linux.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ arch/sandbox/config.mk | 4 ++--
+ arch/x86/config.mk     | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/sandbox/config.mk b/arch/sandbox/config.mk
+index 405843800e9..2ee59817252 100644
+--- a/arch/sandbox/config.mk
++++ b/arch/sandbox/config.mk
+@@ -46,10 +46,10 @@ cmd_u-boot-spl = (cd $(obj) && $(CC) -o $(SPL_BIN) -Wl,-T u-boot-spl.lds \
+ 
+ ifeq ($(HOST_ARCH),$(HOST_ARCH_X86_64))
+ EFI_LDS := ${SRCDIR}/../../../arch/x86/lib/elf_x86_64_efi.lds
+-EFI_TARGET := --target=efi-app-x86_64
++EFI_TARGET := --output-target=efi-app-x86_64
+ else ifeq ($(HOST_ARCH),$(HOST_ARCH_X86))
+ EFI_LDS := ${SRCDIR}/../../../arch/x86/lib/elf_ia32_efi.lds
+-EFI_TARGET := --target=efi-app-ia32
++EFI_TARGET := --output-target=efi-app-ia32
+ else ifeq ($(HOST_ARCH),$(HOST_ARCH_AARCH64))
+ EFI_LDS := ${SRCDIR}/../../../arch/arm/lib/elf_aarch64_efi.lds
+ OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .data \
+diff --git a/arch/x86/config.mk b/arch/x86/config.mk
+index 2e3a7119e79..329632164f7 100644
+--- a/arch/x86/config.mk
++++ b/arch/x86/config.mk
+@@ -127,7 +127,7 @@ endif
+ endif
+ 
+ ifdef CONFIG_X86_64
+-EFI_TARGET := --target=efi-app-x86_64
++EFI_TARGET := --output-target=efi-app-x86_64
+ else
+-EFI_TARGET := --target=efi-app-ia32
++EFI_TARGET := --output-target=efi-app-ia32
+ endif
+-- 
+2.47.3
+
