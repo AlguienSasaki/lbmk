@@ -84,14 +84,12 @@ int fchmod(int fd, mode_t mode);
 #define MAX_CMD_LEN 50
 
 #ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+#ifndef PATH_MAX
 #error PATH_MAX_undefined
 #elif ((PATH_MAX) < 1024)
 #error PATH_MAX_too_low
-#endif
-
-#define OFF_ERR 0
-#ifndef OFF_RESET
-#define OFF_RESET 1
 #endif
 
 #ifndef S_ISVTX
@@ -481,7 +479,7 @@ ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 
 int fsync_dir(const char *path);
 ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
-    off_t off, int rw_type, size_t max_retries, int off_reset);
+    off_t off, int rw_type, size_t max_retries);
 ssize_t rw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);
 int io_args(int fd, void *mem, size_t nrw,
@@ -489,7 +487,7 @@ int io_args(int fd, void *mem, size_t nrw,
 int check_file(int fd, struct stat *st);
 ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 off_t lseek_on_eintr(int fd, off_t off,
-    int whence, int loop_eagain, int loop_eintr);
+    int whence);
 ssize_t read_on_eintr(int fd,
     void *buf, size_t count);
 ssize_t write_on_eintr(int fd,
@@ -508,7 +506,7 @@ int rw_retry(int saved_errno, ssize_t rval);
 
 void usage(void);
 int with_fallback_errno(int fallback);
-void err_exit(int nvm_errval, const char *msg, ...);
+void exitf(const char *msg, ...);
 func_t errhook(func_t ptr); /* hook function for cleanup on err */
 const char *lbgetprogname(void);
 void no_op(void);
@@ -636,8 +634,6 @@ typedef char bool_skip_checksum_read[(SKIP_CHECKSUM_READ==0)?1:-1];
 typedef char bool_checksum_read[(CHECKSUM_READ==1)?1:-1];
 typedef char bool_skip_checksum_write[(SKIP_CHECKSUM_WRITE==0)?1:-1];
 typedef char bool_checksum_write[(CHECKSUM_WRITE==1)?1:-1];
-typedef char bool_off_err[(OFF_ERR==0)?1:-1];
-typedef char bool_off_reset[(OFF_RESET==0||OFF_RESET==1)?1:-1];
 
 #endif
 #endif

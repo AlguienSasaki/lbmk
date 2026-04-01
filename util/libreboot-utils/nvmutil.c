@@ -6,6 +6,10 @@
  * These images configure your Intel Gigabit Ethernet adapter.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -44,15 +48,15 @@ main(int argc, char *argv[])
 	xunveilx("/dev/urandom", "r");
 
 #ifndef S_ISREG
-	err_exit(ECANCELED,
+	exitf(
 	    "Can't determine file types (S_ISREG undefined)");
 #endif
 #if ((CHAR_BIT) != 8)
-	err_exit(ECANCELED, "Unsupported char size");
+	exitf("Unsupported char size");
 #endif
 
 	if ((x = xstart(argc, argv)) == NULL)
-		err_exit(ECANCELED, "NULL state on init");
+		exitf("NULL state on init");
 
 	/* parse user command */
 /* TODO: CHECK ACCESSES VIA xstatus() */
@@ -72,7 +76,7 @@ main(int argc, char *argv[])
 	xpledgex("stdio flock rpath wpath cpath", NULL);
 
 	if (cmd->run == NULL)
-		err_exit(errno, "Command not set");
+		exitf("Command not set");
 
 	sanitize_command_list();
 	open_gbe_file();
@@ -88,7 +92,7 @@ main(int argc, char *argv[])
 
 	exit_cleanup();
 	if (f->io_err_gbe_bin)
-		err_exit(EIO, "%s: error writing final file");
+		exitf("%s: error writing final file");
 
 	free_and_set_null(&f->tname);
 

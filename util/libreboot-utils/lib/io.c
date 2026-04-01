@@ -41,17 +41,17 @@ open_gbe_file(void)
 	    &f->gbe_st);
 
 	if (f->gbe_st.st_nlink > 1)
-		err_exit(EINVAL,
+		exitf(
 		    "%s: warning: file has multiple (%lu) hard links\n",
 		    f->fname, (size_t)f->gbe_st.st_nlink);
 
 	if (f->gbe_st.st_nlink == 0)
-		err_exit(EIO, "%s: file unlinked while open", f->fname);
+		exitf("%s: file unlinked while open", f->fname);
 
 	while (fs_retry(saved_errno,
 	    _flags = fcntl(f->gbe_fd, F_GETFL)));
 	if (_flags == -1)
-		err_exit(errno, "%s: fcntl(F_GETFL)", f->fname);
+		exitf("%s: fcntl(F_GETFL)", f->fname);
 
 	/* O_APPEND allows POSIX write() to ignore
 	 * the current write offset and write at EOF,
@@ -59,7 +59,7 @@ open_gbe_file(void)
 	 */
 
 	if (_flags & O_APPEND)
-		err_exit(EIO, "%s: O_APPEND flag", f->fname);
+		exitf("%s: O_APPEND flag", f->fname);
 
 	f->gbe_file_size = f->gbe_st.st_size;
 
@@ -69,13 +69,13 @@ open_gbe_file(void)
 	case SIZE_128KB:
 		break;
 	default:
-		err_exit(EINVAL, "File size must be 8KB, 16KB or 128KB");
+		exitf("File size must be 8KB, 16KB or 128KB");
 	}
 
 /* currently fails (EBADF), locks are advisory anyway: */
 /*
 	if (lock_file(f->gbe_fd, cmd->flags) == -1)
-		err_exit(errno, "%s: can't lock", f->fname);
+		exitf("%s: can't lock", f->fname);
 */
 
 	reset_caller_errno(0);
@@ -109,44 +109,44 @@ read_file(void)
 	/* read main file
 	 */
 	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
-	    0, IO_PREAD, MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PREAD, MAX_ZERO_RW_RETRY);
 
 	if (_r < 0)
-		err_exit(errno, "%s: read failed", f->fname);
+		exitf("%s: read failed", f->fname);
 
 	/* copy to tmpfile
 	 */
 	_r = rw_file_exact(f->tmp_fd, f->buf, f->gbe_file_size,
-	    0, IO_PWRITE, MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PWRITE, MAX_ZERO_RW_RETRY);
 
 	if (_r < 0)
-		err_exit(errno, "%s: %s: copy failed",
+		exitf("%s: %s: copy failed",
 		    f->fname, f->tname);
 
 	/* file size comparison
 	 */
 	if (fstat(f->tmp_fd, &_st) == -1)
-		err_exit(errno, "%s: stat", f->tname);
+		exitf("%s: stat", f->tname);
 
 	f->gbe_tmp_size = _st.st_size;
 
 	if (f->gbe_tmp_size != f->gbe_file_size)
-		err_exit(EIO, "%s: %s: not the same size",
+		exitf("%s: %s: not the same size",
 		    f->fname, f->tname);
 
 	/* needs sync, for verification
 	 */
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		err_exit(errno, "%s: fsync (tmpfile copy)", f->tname);
+		exitf("%s: fsync (tmpfile copy)", f->tname);
 
 	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
-	    0, IO_PREAD, MAX_ZERO_RW_RETRY, OFF_ERR);
+	    0, IO_PREAD, MAX_ZERO_RW_RETRY);
 
 	if (_r < 0)
-		err_exit(errno, "%s: read failed (cmp)", f->tname);
+		exitf("%s: read failed (cmp)", f->tname);
 
 	if (vcmp(f->buf, f->bufcmp, f->gbe_file_size) != 0)
-		err_exit(errno, "%s: %s: read contents differ (pre-test)",
+		exitf("%s: %s: read contents differ (pre-test)",
 		    f->fname, f->tname);
 }
 
@@ -164,10 +164,10 @@ write_gbe_file(void)
 		return;
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		err_exit(errno, "%s: file inode/device changed", f->tname);
+		exitf("%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		err_exit(errno, "%s: file has changed", f->fname);
+		exitf("%s: file has changed", f->fname);
 
 	update_checksum = cmd->chksum_write;
 
@@ -200,7 +200,7 @@ rw_gbe_file_part(size_t p, int rw_type,
 	gbe_rw_size = cmd->rw_size;
 
 	if (rw_type < IO_PREAD || rw_type > IO_PWRITE)
-		err_exit(errno, "%s: %s: part %lu: invalid rw_type, %d",
+		exitf("%s: %s: part %lu: invalid rw_type, %d",
 		    f->fname, rw_type_str, (size_t)p, rw_type);
 
 	mem_offset = gbe_mem_offset(p, rw_type_str);
@@ -210,11 +210,11 @@ rw_gbe_file_part(size_t p, int rw_type,
 	    gbe_rw_size, file_offset, rw_type);
 
 	if (rval == -1)
-		err_exit(errno, "%s: %s: part %lu",
+		exitf("%s: %s: part %lu",
 		    f->fname, rw_type_str, (size_t)p);
 
 	if ((size_t)rval != gbe_rw_size)
-		err_exit(EIO, "%s: partial %s: part %lu",
+		exitf("%s: partial %s: part %lu",
 		    f->fname, rw_type_str, (size_t)p);
 }
 
@@ -238,7 +238,7 @@ write_to_gbe_bin(void)
 	 */
 
 	if (fsync_on_eintr(f->tmp_fd) == -1)
-		err_exit(errno, "%s: fsync (pre-verification)",
+		exitf("%s: fsync (pre-verification)",
 		    f->tname);
 
 	check_written_part(0);
@@ -247,7 +247,7 @@ write_to_gbe_bin(void)
 	report_io_err_rw();
 
 	if (f->io_err_gbe)
-		err_exit(EIO, "%s: bad write", f->fname);
+		exitf("%s: bad write", f->fname);
 
 	saved_errno = errno;
 
@@ -319,10 +319,10 @@ check_written_part(size_t p)
 	memset(f->pad, 0xff, sizeof(f->pad));
 
 	if (same_file(f->tmp_fd, &f->tmp_st, 0) < 0)
-		err_exit(errno, "%s: file inode/device changed", f->tname);
+		exitf("%s: file inode/device changed", f->tname);
 
 	if (same_file(f->gbe_fd, &f->gbe_st, 1) < 0)
-		err_exit(errno, "%s: file changed during write", f->fname);
+		exitf("%s: file changed during write", f->fname);
 
 	rval = rw_gbe_file_exact(f->tmp_fd, f->pad,
 	    gbe_rw_size, file_offset, IO_PREAD);
@@ -424,23 +424,9 @@ gbe_mv(void)
 	int saved_errno;
 	int tmp_gbe_bin_exists;
 
-	char *dest_tmp;
-	int dest_fd = -1;
-
-	char *dir = NULL;
-	char *base = NULL;
-	char *dest_name = NULL;
-
-	int dirfd = -1;
-
-	struct stat st_dir;
-
 	/* will be set 0 if it doesn't
 	 */
 	tmp_gbe_bin_exists = 1;
-
-	dest_tmp = NULL;
-	dest_fd = -1;
 
 	saved_errno = errno;
 
@@ -450,7 +436,6 @@ gbe_mv(void)
 	if (rval > -1)
 		tmp_gbe_bin_exists = 0;
 
-ret_gbe_mv:
 	if (f->gbe_fd > -1) {
 		close_on_eintr(&f->gbe_fd);
 
@@ -532,11 +517,11 @@ gbe_x_offset(size_t p, const char *f_op, const char *d_type,
 	off = ((off_t)p) * (off_t)nsize;
 
 	if (off > ncmp - GBE_PART_SIZE)
-		err_exit(ECANCELED, "%s: GbE %s %s out of bounds",
+		exitf("%s: GbE %s %s out of bounds",
 		    f->fname, d_type, f_op);
 
 	if (off != 0 && off != ncmp >> 1)
-		err_exit(ECANCELED, "%s: GbE %s %s at bad offset",
+		exitf("%s: GbE %s %s at bad offset",
 		    f->fname, d_type, f_op);
 
 	return off;
@@ -572,7 +557,7 @@ rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 		goto err_rw_gbe_file_exact;
 
 	r = rw_file_exact(fd, mem, nrw, off, rw_type,
-	    MAX_ZERO_RW_RETRY, OFF_ERR);
+	    MAX_ZERO_RW_RETRY);
 
 	return rw_over_nrw(r, nrw);
 

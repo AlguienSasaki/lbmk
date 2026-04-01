@@ -58,10 +58,8 @@ new_tmp_common(int *fd, char **path, int type,
 	struct stat st;
 
 	const char *templatestr;
-	size_t templatestr_len;
 
 	size_t dirlen;
-	size_t destlen;
 	char *dest = NULL; /* final path (will be written into "path") */
 	int saved_errno = errno;
 	int dirfd = -1;
@@ -114,9 +112,8 @@ new_tmp_common(int *fd, char **path, int type,
 	else
 		templatestr = "tmp.XXXXXXXXXX";
 
-	/* may as well calculate in advance */
-	destlen = slen(tmpdir, PATH_MAX, &dirlen) + 1
-	    + slen(templatestr, PATH_MAX, &templatestr_len);
+       /* may as well calculate in advance */
+	dirlen = slen(tmpdir, PATH_MAX, &dirlen);
 	/* full path: */
 	dest = scatn(3, (const char *[]) { tmpdir, "/", templatestr },
 	    PATH_MAX, &dest);
@@ -441,7 +438,6 @@ mkhtemp(int *fd,
 
 	size_t retries;
 
-	int close_errno;
 	int saved_errno = errno;
 
 	int r;

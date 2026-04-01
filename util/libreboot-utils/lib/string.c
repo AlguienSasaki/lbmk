@@ -54,7 +54,7 @@ pagesize(void)
 
 	if (!set) {
 		if ((rval = sysconf(_SC_PAGESIZE)) < 0)
-			err_exit(errno, "could not determine page size");
+			exitf("could not determine page size");
 		set = 1;
 	}
 
@@ -66,7 +66,7 @@ void
 free_and_set_null(char **buf)
 {
 	if (buf == NULL)
-		err_exit(EFAULT,
+		exitf(
 		    "null ptr (to ptr for freeing) in free_and_set_null");
 
 	if (*buf == NULL)
@@ -99,9 +99,9 @@ vmalloc(void **buf, size_t size)
 	errno = 0;
 
 	if (size >= SIZE_MAX - 1)
-		err_exit(EOVERFLOW, "integer overflow in vmalloc");
+		exitf("integer overflow in vmalloc");
 	if (buf == NULL)
-		err_exit(EFAULT, "Bad pointer passed to vmalloc");
+		exitf("Bad pointer passed to vmalloc");
 
 	/* lots of programs will
 	 * re-initialise a buffer
@@ -111,14 +111,14 @@ vmalloc(void **buf, size_t size)
 	 * force the programmer to behave
 	 */
 	if (*buf != NULL)
-		err_exit(EFAULT, "Non-null pointer given to vmalloc");
+		exitf("Non-null pointer given to vmalloc");
 
 	if (!size)
-		err_exit(EFAULT,
+		exitf(
 		   "Tried to vmalloc(0) and that is very bad. Fix it now");
 
 	if ((rval = malloc(size)) == NULL)
-		err_exit(errno, "malloc fail in vmalloc");
+		exitf("malloc fail in vmalloc");
 
 	reset_caller_errno(0);
 	return *buf = rval;
@@ -181,7 +181,7 @@ err:
 	if (rval != NULL)
 		*rval = -1;
 
-	err_exit(errno, "scmp");
+	exitf("scmp");
 	return -1;
 out:
 	reset_caller_errno(0);
@@ -195,7 +195,7 @@ int ccmp(const char *a, const char *b,
 	unsigned char bc;
 
 	if (if_err(a == NULL || b == NULL || rval == NULL, EFAULT))
-		err_exit(errno, "ccmp");
+		exitf("ccmp");
 
 	ac = (unsigned char)a[i];
 	bc = (unsigned char)b[i];
@@ -263,7 +263,7 @@ err:
 	if (rval != NULL)
 		*rval = 0;
 
-	err_exit(errno, "slen"); /* abort */
+	exitf("slen"); /* abort */
 	return 0; /* gcc15 is happy */
 out:
 	reset_caller_errno(0);
@@ -335,7 +335,7 @@ err:
 		*dest = NULL;
 
 	(void) with_fallback_errno(EFAULT);
-	err_exit(errno, "sdup");
+	exitf("sdup");
 
 	return NULL;
 out:
@@ -352,7 +352,7 @@ scatn(ssize_t sc, const char **sv,
 	char *final = NULL;
 	char *rcur = NULL;
 	char *rtmp = NULL;
-	size_t i;
+	ssize_t i;
 	errno = 0;
 
 	if (if_err(sc < 2, EINVAL) ||
@@ -387,7 +387,7 @@ err:
 
 	(void) with_fallback_errno(EFAULT);
 
-	err_exit(errno, "scatn");
+	exitf("scatn");
 	return NULL;
 }
 
@@ -425,7 +425,7 @@ err:
 	(void) with_fallback_errno(EINVAL);
 	if (dest != NULL)
 		*dest = NULL;
-	err_exit(errno, "scat");
+	exitf("scat");
 
 	return NULL;
 }
@@ -471,7 +471,7 @@ err:
 	free_and_set_null(&rval2);
 
 	(void) with_fallback_errno(EINVAL);
-	err_exit(errno, "dcat");
+	exitf("dcat");
 }
 
 /* because no libc reimagination is complete
@@ -491,7 +491,7 @@ vcmp(const void *s1, const void *s2, size_t n)
 	errno = 0;
 
 	if (if_err(s1 == NULL || s2 == NULL, EFAULT))
-		err_exit(EFAULT, "vcmp: null input");
+		exitf("vcmp: null input");
 
 	x = s1;
 	y = s2;
@@ -529,11 +529,10 @@ with_fallback_errno(int fallback)
 /* the one for nvmutil state is in state.c */
 /* this one just exits */
 void
-err_exit(int nvm_errval, const char *msg, ...)
+exitf(const char *msg, ...)
 {
 	va_list args;
 	int saved_errno = errno;
-	const char *p;
 
 	func_t err_cleanup = errhook(NULL);
 	err_cleanup();
@@ -561,7 +560,7 @@ err_exit(int nvm_errval, const char *msg, ...)
  * e.g. you might want to
  * close some files, depending
  * on your program.
- * see: err_exit()
+ * see: exitf()
  */
 func_t errhook(func_t ptr)
 {
@@ -632,7 +631,7 @@ xpledgex(const char *promises, const char *execpromises)
 	errno = 0;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err_exit(errno, "pledge");
+		exitf("pledge");
 #endif
 	reset_caller_errno(0);
 	return 0;
@@ -645,7 +644,7 @@ xunveilx(const char *path, const char *permissions)
 	errno = 0;
 #ifdef __OpenBSD__
 	if (pledge(promises, execpromises) == -1)
-		err_exit(errno, "pledge");
+		exitf("pledge");
 #endif
 	reset_caller_errno(0);
 	return 0;

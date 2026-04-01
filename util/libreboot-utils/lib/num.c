@@ -29,7 +29,6 @@ unsigned short
 hextonum(char ch_s)
 {
 	unsigned char ch;
-	size_t rval;
 
 	ch = (unsigned char)ch_s;
 
@@ -81,7 +80,7 @@ spew_hex(const void *data, size_t len)
 		if (len <= 4294967296) /* below 4GB */
 			printf("%08zx  ", i);
 		else
-			printf("%0*zx  ", sizeof(size_t) * 2, i);
+			printf("%16zu  ", i);
 
 		for (j = 0; j < 16; j++) {
 
@@ -112,6 +111,6 @@ void
 check_bin(size_t a, const char *a_name)
 {
 	if (a > 1)
-		err_exit(EINVAL, "%s must be 0 or 1, but is %lu",
+		exitf("%s must be 0 or 1, but is %lu",
 		    a_name, (size_t)a);
 }

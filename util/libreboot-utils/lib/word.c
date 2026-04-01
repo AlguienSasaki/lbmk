@@ -63,6 +63,6 @@ check_nvm_bound(size_t c, size_t p)
 	check_bin(p, "part number");
 
 	if (c >= NVM_WORDS)
-		err_exit(ECANCELED, "check_nvm_bound: out of bounds %lu",
+		exitf("check_nvm_bound: out of bounds %lu",
 		    (size_t)c);
 }

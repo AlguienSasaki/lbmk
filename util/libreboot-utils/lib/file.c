@@ -16,6 +16,9 @@ more correct usage example:
 long max = pathconf("/", _PC_PATH_MAX);
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -137,7 +140,7 @@ err_fsync_dir:
 
 ssize_t
 rw_file_exact(int fd, unsigned char *mem, size_t nrw,
-    off_t off, int rw_type, size_t max_retries, int off_reset)
+    off_t off, int rw_type, size_t max_retries)
 {
 	int saved_errno = errno;
 	ssize_t rval = 0;
@@ -207,7 +210,6 @@ rw(int fd, void *mem, size_t nrw,
 {
 	ssize_t rval = 0;
 	ssize_t r = -1;
-	struct stat st;
 	int saved_errno = errno;
 	errno = 0;
 
@@ -566,11 +568,11 @@ open_file_on_eintr(const char *path,
 	errno = 0;
 
 	if (path == NULL)
-		err_exit(EINVAL, "open_file_on_eintr: null path");
+		exitf("open_file_on_eintr: null path");
 	if (fd == NULL)
-		err_exit(EFAULT, "%s: open_file_on_eintr: null fd ptr", path);
+		exitf("%s: open_file_on_eintr: null fd ptr", path);
 	if (*fd >= 0)
-		err_exit(EBADF,
+		exitf(
 		    "%s: open_file_on_eintr: file already open", path);
 
 	errno = 0;
@@ -578,7 +580,7 @@ open_file_on_eintr(const char *path,
 	    rval = open(path, flags, mode)));
 
 	if (rval < 0)
-		err_exit(errno,
+		exitf(
 		    "%s: open_file_on_eintr: could not close", path);
 
 	reset_caller_errno(rval);
@@ -594,14 +596,14 @@ open_file_on_eintr(const char *path,
 
 	if (st != NULL) {
 		if (fstat(*fd, st) < 0)
-			err_exit(errno, "%s: stat", path);
+			exitf("%s: stat", path);
 
 		if (!S_ISREG(st->st_mode))
-			err_exit(errno, "%s: not a regular file", path);
+			exitf("%s: not a regular file", path);
 	}
 
-	if (lseek_on_eintr(*fd, 0, SEEK_CUR, 1, 1) == (off_t)-1)
-		err_exit(errno, "%s: file not seekable", path);
+	if (lseek_on_eintr(*fd, 0, SEEK_CUR) == (off_t)-1)
+		exitf("%s: file not seekable", path);
 
 	errno = saved_errno; /* see previous comment */
 }
@@ -662,8 +664,7 @@ openat_on_eintr(int dirfd, const char *path,
 #endif
 
 off_t
-lseek_on_eintr(int fd, off_t off, int whence,
-    int loop_eagain, int loop_eintr)
+lseek_on_eintr(int fd, off_t off, int whence)
 {
 	int saved_errno = errno;
 	off_t rval = 0;
@@ -803,7 +804,7 @@ close_on_eintr(int *fd)
 	int rval = 0;
 
 	if (fd == NULL)
-		err_exit(EINVAL, "close_on_eintr: null pointer");
+		exitf("close_on_eintr: null pointer");
 	if (*fd < 0)
 		return;
 
@@ -812,7 +813,7 @@ close_on_eintr(int *fd)
 	    rval = close(*fd)));
 
 	if (rval < 0)
-		err_exit(errno, "close_on_eintr: could not close");
+		exitf("close_on_eintr: could not close");
 
 	*fd = -1;
 

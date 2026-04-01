@@ -43,24 +43,24 @@ sanitize_command_index(size_t c)
 	check_command_num(c);
 
 	if (cmd->argc < 3)
-		err_exit(EINVAL, "cmd index %lu: argc below 3, %d",
+		exitf("cmd index %lu: argc below 3, %d",
 		    (size_t)c, cmd->argc);
 
 	if (cmd->str == NULL)
-		err_exit(EINVAL, "cmd index %lu: NULL str",
+		exitf("cmd index %lu: NULL str",
 		    (size_t)c);
 
 	if (*cmd->str == '\0')
-		err_exit(EINVAL, "cmd index %lu: empty str",
+		exitf("cmd index %lu: empty str",
 		    (size_t)c);
 
 	if (slen(cmd->str, MAX_CMD_LEN +1, &rval) > MAX_CMD_LEN) {
-		err_exit(EINVAL, "cmd index %lu: str too long: %s",
+		exitf("cmd index %lu: str too long: %s",
 		    (size_t)c, cmd->str);
 	}
 
 	if (cmd->run == NULL)
-		err_exit(EINVAL, "cmd index %lu: cmd ptr null",
+		exitf("cmd index %lu: cmd ptr null",
 		    (size_t)c);
 
 	check_bin(cmd->arg_part, "cmd.arg_part");
@@ -74,19 +74,19 @@ sanitize_command_index(size_t c)
 	case NVM_SIZE:
 		break;
 	default:
-		err_exit(EINVAL, "Unsupported rw_size: %lu",
+		exitf("Unsupported rw_size: %lu",
 		    (size_t)gbe_rw_size);
 	}
 
 	if (gbe_rw_size > GBE_PART_SIZE)
-		err_exit(EINVAL, "rw_size larger than GbE part: %lu",
+		exitf("rw_size larger than GbE part: %lu",
 		    (size_t)gbe_rw_size);
 
 	_flag = (cmd->flags & O_ACCMODE);
 
 	if (_flag != O_RDONLY &&
 	    _flag != O_RDWR)
-		err_exit(EINVAL, "invalid cmd.flags setting");
+		exitf("invalid cmd.flags setting");
 }
 
 void
@@ -114,7 +114,7 @@ set_cmd(int argc, char *argv[])
 			return;
 		}
 
-		err_exit(EINVAL,
+		exitf(
 		    "Too few args on command '%s'", cmd);
 	}
 
@@ -139,11 +139,11 @@ set_cmd_args(int argc, char *argv[])
 	/* Maintainer bug
 	 */
 	if (cmd->arg_part && argc < 4)
-		err_exit(EINVAL,
+		exitf(
 		    "arg_part set for command that needs argc4");
 
 	if (cmd->arg_part && i == CMD_SETMAC)
-		err_exit(EINVAL,
+		exitf(
 		    "arg_part set on CMD_SETMAC");
 
 	if (i == CMD_SETMAC) {
@@ -165,13 +165,13 @@ conv_argv_part_num(const char *part_str)
 	unsigned char ch;
 
 	if (part_str[0] == '\0' || part_str[1] != '\0')
-		err_exit(EINVAL, "Partnum string '%s' wrong length", part_str);
+		exitf("Partnum string '%s' wrong length", part_str);
 
 	/* char signedness is implementation-defined
 	 */
 	ch = (unsigned char)part_str[0];
 	if (ch < '0' || ch > '1')
-		err_exit(EINVAL, "Bad part number (%c)", ch);
+		exitf("Bad part number (%c)", ch);
 
 	return (size_t)(ch - '0');
 }
@@ -180,7 +180,7 @@ void
 check_command_num(size_t c)
 {
 	if (!valid_command(c))
-		err_exit(EINVAL, "Invalid run_cmd arg: %lu",
+		exitf("Invalid run_cmd arg: %lu",
 		    (size_t)c);
 }
 
@@ -196,7 +196,7 @@ valid_command(size_t c)
 	cmd = &x->cmd[c];
 
 	if (c != cmd->chk)
-		err_exit(EINVAL,
+		exitf(
 		    "Invalid cmd chk value (%lu) vs arg: %lu",
 		    cmd->chk, c);
 
@@ -231,7 +231,7 @@ parse_mac_string(void)
 	size_t rval;
 
 	if (slen(x->mac.str, 18, &rval) != 17)
-		err_exit(EINVAL, "MAC address is the wrong length");
+		exitf("MAC address is the wrong length");
 
 	memset(mac->mac_buf, 0, sizeof(mac->mac_buf));
 
@@ -239,10 +239,10 @@ parse_mac_string(void)
 		set_mac_byte(mac_byte);
 
 	if ((mac->mac_buf[0] | mac->mac_buf[1] | mac->mac_buf[2]) == 0)
-		err_exit(EINVAL, "Must not specify all-zeroes MAC address");
+		exitf("Must not specify all-zeroes MAC address");
 
 	if (mac->mac_buf[0] & 1)
-		err_exit(EINVAL, "Must not specify multicast MAC address");
+		exitf("Must not specify multicast MAC address");
 }
 
 void
@@ -260,7 +260,7 @@ set_mac_byte(size_t mac_byte_pos)
 
 	if (mac_str_pos < 15) {
 		if ((separator = mac->str[mac_str_pos + 2]) != ':')
-			err_exit(EINVAL, "Invalid MAC address separator '%c'",
+			exitf("Invalid MAC address separator '%c'",
 			    separator);
 	}
 
@@ -282,9 +282,9 @@ set_mac_nib(size_t mac_str_pos,
 
 	if ((hex_num = hextonum(mac_ch)) > 15) {
 		if (hex_num >= 17)
-			err_exit(EIO, "Randomisation failure");
+			exitf("Randomisation failure");
 		else
-			err_exit(EINVAL, "Invalid character '%c'",
+			exitf("Invalid character '%c'",
 			    mac->str[mac_str_pos + mac_nib_pos]);
 	}
 
@@ -467,7 +467,7 @@ cat(size_t nff)
 
 	if ((size_t)x->cat != nff) {
 
-		err_exit(ECANCELED, "erroneous call to cat");
+		exitf("erroneous call to cat");
 	}
 
 	fflush(NULL);
@@ -490,11 +490,11 @@ void
 cat_buf(unsigned char *b)
 {
 	if (b == NULL)
-		err_exit(errno, "null pointer in cat command");
+		exitf("null pointer in cat command");
 
 	if (rw_file_exact(STDOUT_FILENO, b,
-	    GBE_PART_SIZE, 0, IO_WRITE, MAX_ZERO_RW_RETRY, OFF_ERR) < 0)
-		err_exit(errno, "stdout: cat");
+	    GBE_PART_SIZE, 0, IO_WRITE, MAX_ZERO_RW_RETRY) < 0)
+		exitf("stdout: cat");
 }
 void
 check_cmd(void (*fn)(void),
@@ -504,7 +504,7 @@ check_cmd(void (*fn)(void),
 	size_t i = x->i;
 
 	if (x->cmd[i].run != fn)
-		err_exit(ECANCELED, "Running %s, but cmd %s is set",
+		exitf("Running %s, but cmd %s is set",
 		    name, x->cmd[i].str);
 
 	/* prevent second command
@@ -516,6 +516,6 @@ check_cmd(void (*fn)(void),
 void
 cmd_helper_err(void)
 {
-	err_exit(ECANCELED,
+	exitf(
 	    "Erroneously running command twice");
 }

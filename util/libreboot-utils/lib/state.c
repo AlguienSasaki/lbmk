@@ -4,6 +4,10 @@
  * State machine (singleton) for nvmutil data.
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -92,9 +96,9 @@ xstart(int argc, char *argv[])
 		return &us;
 
 	if (argc < 3)
-		err_exit(EINVAL, "xstart: Too few arguments");
+		exitf("xstart: Too few arguments");
 	if (argv == NULL)
-		err_exit(EINVAL, "xstart: NULL argv");
+		exitf("xstart: NULL argv");
 	
 	first_run = 0;
 
@@ -106,11 +110,11 @@ xstart(int argc, char *argv[])
 	us.f.tname = NULL;
 
 	if ((realdir = realpath(us.f.fname, NULL)) == NULL)
-		err_exit(errno, "xstart: can't get realpath of %s",
+		exitf("xstart: can't get realpath of %s",
 		    us.f.fname);
 
 	if (fs_dirname_basename(realdir, &dir, &base, 0) < 0)
-		err_exit(errno, "xstart: don't know CWD of %s",
+		exitf("xstart: don't know CWD of %s",
 		    us.f.fname);
 
 	sdup(base, PATH_MAX, &us.f.base);
@@ -118,26 +122,26 @@ xstart(int argc, char *argv[])
 	us.f.dirfd = fs_open(dir,
 	    O_RDONLY | O_DIRECTORY);
 	if (us.f.dirfd < 0)
-		err_exit(errno, "%s: open dir", dir);
+		exitf("%s: open dir", dir);
 
 	if (new_tmpfile(&us.f.tmp_fd, &us.f.tname, dir, ".gbe.XXXXXXXXXX") < 0)
-		err_exit(errno, "%s", us.f.tname);
+		exitf("%s", us.f.tname);
 
 	if (fs_dirname_basename(us.f.tname,
 	    &tmpdir, &tmpbase_local, 0) < 0)
-		err_exit(errno, "tmp basename");
+		exitf("tmp basename");
 
 	sdup(tmpbase_local, PATH_MAX, &us.f.tmpbase);
 
 	free_and_set_null(&tmpdir);
 
 	if (us.f.tname == NULL)
-		err_exit(errno, "x->f.tname null");
+		exitf("x->f.tname null");
 	if (*us.f.tname == '\0')
-		err_exit(errno, "x->f.tname empty");
+		exitf("x->f.tname empty");
 
 	if (fstat(us.f.tmp_fd, &us.f.tmp_st) < 0)
-		err_exit(errno, "%s: stat", us.f.tname);
+		exitf("%s: stat", us.f.tname);
 
 	memset(us.f.real_buf, 0, sizeof(us.f.real_buf));
 	memset(us.f.bufcmp, 0, sizeof(us.f.bufcmp));
@@ -154,7 +158,7 @@ xstatus(void)
 	struct xstate *x = xstart(0, NULL);
 
 	if (x == NULL)
-		err_exit(EACCES, "NULL pointer to xstate");
+		exitf("NULL pointer to xstate");
 
 	return x;
 }

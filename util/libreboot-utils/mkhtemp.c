@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 		    p > template && *--p == 'X'; xc++);
 
 		if (xc < 3) /* the gnu mktemp errs on less than 3 */
-			err_exit(EINVAL,
+			exitf(
 			"template must have 3 X or more on end (12+ advised");
 	}
 
@@ -109,21 +109,21 @@ main(int argc, char *argv[])
 	if (tmpdir != NULL) {
 		rp = realpath(tmpdir, resolved);
 		if (rp == NULL)
-			err_exit(errno, "%s", tmpdir);
+			exitf("%s", tmpdir);
 
 		tmpdir = resolved;
 	}
 
 	if (new_tmp_common(&fd, &s, type,
 	    tmpdir, template) < 0)
-		err_exit(errno, "%s", s);
+		exitf("%s", s);
 
 	xpledgex("stdio", NULL);
 
 	if (s == NULL)
-		err_exit(EFAULT, "bad string initialisation");
+		exitf("bad string initialisation");
 	if (*s == '\0')
-		err_exit(EFAULT, "empty string initialisation");
+		exitf("empty string initialisation");
 
 	slen(s, PATH_MAX, &len); /* Nullterminierung prüfen */
 	/* for good measure. (bonus: also re-checks length overflow) */
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 
 err_usage:
-	err_exit(EINVAL,
+	exitf(
 	    "usage: %s [-d] [-p dir] [template]\n", lbgetprogname());
 }
 

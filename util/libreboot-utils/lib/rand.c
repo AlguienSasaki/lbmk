@@ -7,6 +7,10 @@
 #ifndef RAND_H
 #define RAND_H
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
+
 #ifdef __OpenBSD__
 #include <sys/param.h>
 #endif
@@ -107,7 +111,7 @@ rsize(size_t n)
 {
 	size_t rval = SIZE_MAX;
 	if (!n)
-		err_exit(EFAULT, "rsize: division by zero");
+		exitf("rsize: division by zero");
 
 	/* rejection sampling (clamp rand to eliminate modulo bias) */
 	for (; rval >= SIZE_MAX - (SIZE_MAX % n); rset(&rval, sizeof(rval)));
@@ -133,7 +137,7 @@ rset(void *buf, size_t n)
 		goto err;
 
 	if (n == 0)
-		err_exit(EPERM, "rset: zero-byte request");
+		exitf("rset: zero-byte request");
 
 #if (defined(__OpenBSD__) || defined(__FreeBSD__) || \
     defined(__NetBSD__) || defined(__APPLE__) || \
@@ -144,7 +148,7 @@ rset(void *buf, size_t n)
 #else
 	size_t off = 0;
 
-retry_rand:
+retry_rand: {
 
 #if defined(USE_URANDOM) && \
     ((USE_URANDOM) > 0)
@@ -178,6 +182,7 @@ retry_rand:
     ((USE_URANDOM) > 0)
 	close_on_eintr(&fd);
 #endif
+}
 
 #endif
 	reset_caller_errno(0);
@@ -188,7 +193,7 @@ err:
 	close_on_eintr(&fd);
 #endif
 	(void) with_fallback_errno(ECANCELED);
-	err_exit(errno, "Randomisierungsfehler");
+	exitf("Randomisierungsfehler");
 	exit(EXIT_FAILURE);
 }
 #endif
