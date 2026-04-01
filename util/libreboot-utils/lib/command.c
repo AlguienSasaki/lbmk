@@ -492,7 +492,7 @@ cat_buf(unsigned char *b)
 	if (b == NULL)
 		exitf("null pointer in cat command");
 
-	if (rw_file_exact(STDOUT_FILENO, b,
+	if (rw_exact(STDOUT_FILENO, b,
 	    GBE_PART_SIZE, 0, IO_WRITE) < 0)
 		exitf("stdout: cat");
 }

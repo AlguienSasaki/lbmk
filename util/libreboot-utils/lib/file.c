@@ -127,7 +127,7 @@ err_fsync_dir:
 	return with_fallback_errno(EIO);
 }
 
-/* rw_file_exact() - Read perfectly or die
+/* rw_exact() - Read perfectly or die
  *
  * Read/write, and absolutely insist on an
  * absolute read; e.g. if 100 bytes are
@@ -145,7 +145,7 @@ err_fsync_dir:
  */
 
 ssize_t
-rw_file_exact(int fd, unsigned char *mem, size_t nrw,
+rw_exact(int fd, unsigned char *mem, size_t nrw,
     off_t off, int rw_type)
 {
 	int saved_errno = errno;
@@ -157,13 +157,13 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 	errno = 0;
 
 	if (io_args(fd, mem, nrw, off, rw_type) == -1)
-		goto err_rw_file_exact;
+		goto err_rw_exact;
 
 	while (1) {
 	
 		/* Prevent theoretical overflow */
 		if (if_err(rval >= 0 && (size_t)rval > (nrw - rc), EOVERFLOW))
-			goto err_rw_file_exact;
+			goto err_rw_exact;
 
 		rc += rval;
 		if ((size_t)rc >= nrw)
@@ -173,22 +173,22 @@ rw_file_exact(int fd, unsigned char *mem, size_t nrw,
 		nrw_cur = (size_t)(nrw - (size_t)rc);
 
 		if (if_err(off < 0, EOVERFLOW))
-			goto err_rw_file_exact;
+			goto err_rw_exact;
 
 		off_cur = off + (off_t)rc;
 
 		if ((rval = rw(fd, mem_cur, nrw_cur, off_cur, rw_type)) <= 0)
-			goto err_rw_file_exact;
+			goto err_rw_exact;
 	}
 
 	if (if_err((size_t)rc != nrw, EIO) ||
 	    (rval = rw_over_nrw(rc, nrw)) < 0)
-		goto err_rw_file_exact;
+		goto err_rw_exact;
 
 	reset_caller_errno(rval);
 	return rval;
 
-err_rw_file_exact:
+err_rw_exact:
 	return with_fallback_errno(EIO);
 }
 
@@ -202,7 +202,7 @@ err_rw_file_exact:
  *
  * WARNING: this function allows zero-byte returns.
  * this is intentional, to mimic libc behaviour.
- * use rw_file_exact if you need to avoid this.
+ * use rw_exact if you need to avoid this.
  * (ditto partial writes/reads)
  *
  */

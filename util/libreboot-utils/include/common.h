@@ -457,7 +457,7 @@ ssize_t rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
  */
 
 int fsync_dir(const char *path);
-ssize_t rw_file_exact(int fd, unsigned char *mem, size_t len,
+ssize_t rw_exact(int fd, unsigned char *mem, size_t len,
     off_t off, int rw_type);
 ssize_t rw(int fd, void *mem, size_t nrw,
     off_t off, int rw_type);

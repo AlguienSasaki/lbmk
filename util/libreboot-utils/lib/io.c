@@ -108,7 +108,7 @@ read_file(void)
 
 	/* read main file
 	 */
-	_r = rw_file_exact(f->gbe_fd, f->buf, f->gbe_file_size,
+	_r = rw_exact(f->gbe_fd, f->buf, f->gbe_file_size,
 	    0, IO_PREAD);
 
 	if (_r < 0)
@@ -116,7 +116,7 @@ read_file(void)
 
 	/* copy to tmpfile
 	 */
-	_r = rw_file_exact(f->tmp_fd, f->buf, f->gbe_file_size,
+	_r = rw_exact(f->tmp_fd, f->buf, f->gbe_file_size,
 	    0, IO_PWRITE);
 
 	if (_r < 0)
@@ -139,7 +139,7 @@ read_file(void)
 	if (fsync_on_eintr(f->tmp_fd) == -1)
 		exitf("%s: fsync (tmpfile copy)", f->tname);
 
-	_r = rw_file_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
+	_r = rw_exact(f->tmp_fd, f->bufcmp, f->gbe_file_size,
 	    0, IO_PREAD);
 
 	if (_r < 0)
@@ -556,7 +556,7 @@ rw_gbe_file_exact(int fd, unsigned char *mem, size_t nrw,
 	if (nrw > (size_t)GBE_PART_SIZE)
 		goto err_rw_gbe_file_exact;
 
-	r = rw_file_exact(fd, mem, nrw, off, rw_type);
+	r = rw_exact(fd, mem, nrw, off, rw_type);
 
 	return rw_over_nrw(r, nrw);
 
