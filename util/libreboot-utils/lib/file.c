@@ -717,9 +717,29 @@ xclose(int *fd)
 	if (*fd < 0)
 		return;
 
+	/* nuance regarding EINTR on close():
+	 * EINTR can be set on error, but there's
+	 * no guarantee whether the fd is then still
+	 * open or closed. on some other commands, we
+	 * loop EINTR, but for close, we instead skip
+	 * aborting *if the errno is EINTR* - so don't
+	 * loop it, but do regard EINTR with rval -1
+	 * as essenitally a successful close()
+	 */
+
+	/* because we don't want to mess with someone
+	 * elses file if that fd is then reassigned.
+	 * if the operation truly did fail, we ignore
+	 * it. just leave it flying in the wind */
+
 	errno = 0;
-	if ((rval = close(*fd)) < 0)
-		exitf("xclose: could not close");
+	if ((rval = close(*fd)) < 0) {
+		if (errno != EINTR)
+			exitf("xclose: could not close");
+
+		/* regard EINTR as a successful close */
+		rval = 0;
+	}
 
 	*fd = -1;
 
