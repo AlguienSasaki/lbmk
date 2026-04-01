@@ -616,7 +616,7 @@ open_file_on_eintr(const char *path,
 
 
 #if defined(__linux__) && \
-    ((USE_OPENAT) < 1) /* we use openat2 on linux */
+    (!defined(USE_OPENAT) || ((USE_OPENAT) < 1)) /* we use openat2 on linux */
 int
 openat_on_eintr(int dirfd, const char *path,
     int flags, mode_t mode)
