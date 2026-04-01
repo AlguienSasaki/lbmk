@@ -14,6 +14,12 @@ DESTDIR =
 PREFIX = /usr/local
 INSTALL = install
 
+# used for portability testing on linux:
+#
+PORT_OPENAT = -DUSE_OPENAT=1
+PORT_ARC4 = -DUSE_ARC4=1
+PORT_URANDOM = -DUSE_URANDOM=1
+
 .SUFFIXES: .c .o
 
 LDIR =
@@ -149,3 +155,12 @@ distclean: clean
 
 strict:
 	$(MAKE) CFLAGS="$(CFLAGS) $(HELLFLAGS)" CC_MODE="$(HELLCC)"
+
+# BSD-like portability test (openat + arc4random)
+portable-bsd:
+	$(MAKE) CFLAGS="$(CFLAGS) $(PORT_OPENAT) $(PORT_ARC4)" CC_MODE="$(CC)"
+
+# fallback portability test (openat + urandom -- old linux mostly)
+portable-urandom:
+	$(MAKE) CFLAGS="$(CFLAGS) $(PORT_OPENAT) $(PORT_URANDOM)" \
+	    CC_MODE="$(CC)"
