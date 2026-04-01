@@ -10,6 +10,8 @@
 
 /* for openat2 / fast path: */
 #ifdef __linux__
+#if !defined(USE_OPENAT) || \
+    ((USE_OPENAT) < 1) /* if 1: use openat, not openat2 */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -20,6 +22,7 @@
 #endif
 #ifndef AT_EMPTY_PATH
 #define AT_EMPTY_PATH 0x1000
+#endif
 #endif
 #endif
 
@@ -543,7 +546,8 @@ mkhtemp_try_create(int dirfd,
 		goto err;
 
 	if (type == MKHTEMP_FILE) {
-#ifdef __linux__
+#if defined(__linux__) && \
+    (!defined(USE_OPENAT) || ((USE_OPENAT) < 1))
 		/* try O_TMPFILE fast path */
 		if (mkhtemp_tmpfile_linux(dirfd,
 		    st_dir_first, fname_copy,
@@ -652,7 +656,8 @@ err:
    we still use openat() on bsd, which is
    still ok with our other mitigations
  */
-#ifdef __linux__
+#if defined(__linux__) && \
+    (!defined(USE_OPENAT) || ((USE_OPENAT) < 1))
 int
 mkhtemp_tmpfile_linux(int dirfd,
     struct stat *st_dir_first,

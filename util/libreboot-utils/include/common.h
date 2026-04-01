@@ -34,13 +34,6 @@
 
 #define items(x) (sizeof((x)) / sizeof((x)[0]))
 
-/* system prototypes
- */
-
-#ifndef USE_URANDOM
-#define USE_URANDOM 0
-#endif
-
 #define MKHTEMP_RETRY_MAX 512
 #define MKHTEMP_SPIN_THRESHOLD 32
 

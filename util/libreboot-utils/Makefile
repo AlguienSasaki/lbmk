@@ -7,6 +7,7 @@
 
 CC = cc
 HELLCC = clang
+OLDCC = $(CC) -DUSE_URANDOM=1 -DUSE_OPENAT
 
 CFLAGS = -Os -Wall -Wextra -std=c99 -pedantic -Werror
 LDFLAGS =

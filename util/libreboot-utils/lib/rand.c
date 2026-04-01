@@ -154,7 +154,7 @@ retry_rand: {
 
 	while (rw_retry(saved_errno,
 		rc = read_on_eintr(fd,
-		    (unsigned char *)buf + off, n - off, 0)));
+		    (unsigned char *)buf + off, n - off)));
 #elif defined(__linux__)
 	long rc;
 	while (sys_retry(saved_errno,
@@ -183,10 +183,6 @@ retry_rand: {
 	reset_caller_errno(0);
 	return;
 err:
-#if defined(USE_URANDOM) && \
-    ((USE_URANDOM) > 0)
-	close_on_eintr(&fd);
-#endif
 	(void) with_fallback_errno(ECANCELED);
 	exitf("Randomisierungsfehler");
 	exit(EXIT_FAILURE);

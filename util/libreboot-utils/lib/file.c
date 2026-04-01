@@ -22,11 +22,14 @@ long max = pathconf("/", _PC_PATH_MAX);
 
 /* for openat2: */
 #ifdef __linux__
+#if !defined(USE_OPENAT) || \
+    ((USE_OPENAT) < 1) /* if 1: use openat, not openat2 */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
 #include <linux/openat2.h>
 #include <sys/syscall.h>
+#endif
 #endif
 
 #include <sys/types.h>
@@ -612,7 +615,8 @@ open_file_on_eintr(const char *path,
 }
 
 
-#ifdef __linux__ /* we use openat2 on linux */
+#if defined(__linux__) && \
+    ((USE_OPENAT) < 1) /* we use openat2 on linux */
 int
 openat_on_eintr(int dirfd, const char *path,
     int flags, mode_t mode)
