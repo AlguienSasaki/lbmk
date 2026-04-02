@@ -694,26 +694,27 @@ mkhtemp_tmpfile_linux(int dirfd,
 		    st_dir_first) < 0)
 			goto err;
 
-		if (linkat(tmpfd, "", dirfd, fname_copy, AT_EMPTY_PATH) == 0) {
+		if (linkat(tmpfd, "", dirfd,
+		    fname_copy, AT_EMPTY_PATH) == -1) {
 
-			linked = 1; /* file created */
-
-			/* TODO: potential fd leak here.
-			 * probably should only set *fd on successful
-			 * return from this function (see below)
-			 */
-			if (fd_verify_dir_identity(dirfd, st_dir_first) < 0 ||
-			    fstat(*fd = tmpfd, st) < 0 ||
-			    secure_file(fd, st, st, O_APPEND, 1, 1, 0600) < 0)
+			if (errno == EEXIST)
+				continue; /* retry on collision */
+			else
 				goto err;
-
-			goto out;
 		}
 
-		if (errno != EEXIST)
+		linked = 1; /* file created */
+
+		/* TODO: potential fd leak here.
+		 * probably should only set *fd on successful
+		 * return from this function (see below)
+		 */
+		if (fd_verify_dir_identity(dirfd, st_dir_first) < 0 ||
+		    fstat(*fd = tmpfd, st) < 0 ||
+		    secure_file(fd, st, st, O_APPEND, 1, 1, 0600) < 0)
 			goto err;
 
-		/* retry on collision */
+		goto out;
 	}
 
 	errno = EEXIST;
