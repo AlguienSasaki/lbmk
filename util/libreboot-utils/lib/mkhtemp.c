@@ -717,7 +717,8 @@ mkhtemp_tmpfile_linux(int dirfd,
 		goto out;
 	}
 
-	errno = EEXIST;
+	if (!errno)
+		errno = EEXIST;
 err:
 	if (linked)
 		(void) unlinkat(dirfd, fname_copy, 0);
