@@ -547,7 +547,7 @@ mkhtemp_try_create(int dirfd,
 		/* try O_TMPFILE fast path */
 		if (mkhtemp_tmpfile_linux(dirfd,
 		    st_dir_first, fname_copy,
-		    p, xc, fd, st) == 0) {
+		    p, xc, fd, st) >= 0) {
 
 			errno = saved_errno;
 			rval = 1;
