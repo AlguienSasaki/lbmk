@@ -676,7 +676,7 @@ mkhtemp_tmpfile_linux(int dirfd,
 		goto err;
 
 	/* create unnamed tmpfile */
-	tmpfd = openat(dirfd, ".",
+	tmpfd = openat_on_eintr(dirfd, ".",
 	    O_TMPFILE | O_RDWR | O_CLOEXEC, 0600);
 
 	if (tmpfd < 0)
