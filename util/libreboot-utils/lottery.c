@@ -16,6 +16,9 @@ exit_cleanup(void);
 int
 main(int argc, char **argv)
 {
+#ifndef __linux__
+#error This code is currently buggy on BSD systems. Only use on Linux.
+#endif
 	int same = 0;
 	char *buf;
 	size_t size = BUFSIZ;

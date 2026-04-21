@@ -27,6 +27,9 @@ exit_cleanup(void);
 int
 main(int argc, char *argv[])
 {
+#ifndef __linux__
+#error This code is currently buggy on BSD systems. Only use on Linux.
+#endif
 	struct xstate *x;
 	struct commands *cmd;
 	struct xfile *f;

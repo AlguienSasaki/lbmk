@@ -41,6 +41,9 @@ exit_cleanup(void);
 int
 main(int argc, char *argv[])
 {
+#ifndef __linux__
+#error This code is currently buggy on BSD systems. Only use on Linux.
+#endif
 	size_t len;
 	size_t tlen;
 	size_t xc = 0;
