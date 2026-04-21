@@ -2,34 +2,36 @@
 # Copyright (c) 2022,2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
-# Makefile for nvmutil, which is an application
-# that modifies Intel GbE NVM configurations.
-
 CC = cc
-HELLCC = clang
-
 CFLAGS = -Os -Wall -Wextra -std=c99 -pedantic
 LDFLAGS =
-DESTDIR =
 PREFIX = /usr/local
+DESTDIR =
 INSTALL = install
 
-# used for portability testing on linux:
-#
-PORT_OPENAT = -DUSE_OPENAT=1
-PORT_ARC4 = -DUSE_ARC4=1
-PORT_URANDOM = -DUSE_URANDOM=1
+PROGS = nvmutil mkhtemp lottery
 
-.SUFFIXES: .c .o
+OBJDIR = obj
 
-LDIR =
+# sources
+LIB_SRCS = \
+	lib/state.c \
+	lib/file.c \
+	lib/string.c \
+	lib/usage.c \
+	lib/command.c \
+	lib/num.c \
+	lib/io.c \
+	lib/checksum.c \
+	lib/word.c \
+	lib/mkhtemp.c \
+	lib/rand.c
 
-HELLFLAGS = $(STRICT) -Weverything
+NVMUTIL_SRCS = nvmutil.c $(LIB_SRCS)
+MKHTEMP_SRCS = mkhtemp.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
+LOTTERY_SRCS = lottery.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
 
-PROG = nvmutil
-PROGMKH = mkhtemp
-PROGLOT = lottery
-
+# manually mapped objects (yes, explicit = portable)
 OBJS_NVMUTIL = \
 	obj/nvmutil.o \
 	obj/lib/state.o \
@@ -60,107 +62,77 @@ OBJS_LOTTERY = \
 	obj/lib/mkhtemp.o \
 	obj/lib/rand.o
 
-# default mode
-CC_MODE = $(CC)
+all: $(PROGS)
 
-all: $(PROG) $(PROGMKH) $(PROGLOT)
+nvmutil: $(OBJS_NVMUTIL)
+	$(CC) $(CFLAGS) $(OBJS_NVMUTIL) -o $@ $(LDFLAGS)
 
-$(PROG): $(OBJS_NVMUTIL)
-	$(CC_MODE) $(CFLAGS) $(OBJS_NVMUTIL) -o $(PROG) $(LDFLAGS)
+mkhtemp: $(OBJS_MKHTEMP)
+	$(CC) $(CFLAGS) $(OBJS_MKHTEMP) -o $@ $(LDFLAGS)
 
-$(PROGMKH): $(OBJS_MKHTEMP)
-	$(CC_MODE) $(CFLAGS) $(OBJS_MKHTEMP) -o $(PROGMKH) $(LDFLAGS)
+lottery: $(OBJS_LOTTERY)
+	$(CC) $(CFLAGS) $(OBJS_LOTTERY) -o $@ $(LDFLAGS)
 
-$(PROGLOT): $(OBJS_LOTTERY)
-	$(CC_MODE) $(CFLAGS) $(OBJS_LOTTERY) -o $(PROGLOT) $(LDFLAGS)
-
-# ensure obj directory exists
-$(OBJS_NVMUTIL): obj
-$(OBJS_MKHTEMP): obj
-$(OBJS_LOTTERY): obj
-
+# ensure dirs exist
 obj:
-	mkdir obj || true
-	mkdir obj/lib || true
+	mkdir -p obj/lib
 
-# main program object
+# compile rules (EXPLICIT = portable)
+obj/nvmutil.o: nvmutil.c | obj
+	$(CC) $(CFLAGS) -c nvmutil.c -o $@
 
-obj/nvmutil.o: nvmutil.c
-	$(CC_MODE) $(CFLAGS) -c nvmutil.c -o obj/nvmutil.o
+obj/mkhtemp.o: mkhtemp.c | obj
+	$(CC) $(CFLAGS) -c mkhtemp.c -o $@
 
-obj/mkhtemp.o: mkhtemp.c
-	$(CC_MODE) $(CFLAGS) -c mkhtemp.c -o obj/mkhtemp.o
+obj/lottery.o: lottery.c | obj
+	$(CC) $(CFLAGS) -c lottery.c -o $@
 
-obj/lottery.o: lottery.c
-	$(CC_MODE) $(CFLAGS) -c lottery.c -o obj/lottery.o
+obj/lib/state.o: lib/state.c | obj
+	$(CC) $(CFLAGS) -c lib/state.c -o $@
 
-# library/helper objects
+obj/lib/file.o: lib/file.c | obj
+	$(CC) $(CFLAGS) -c lib/file.c -o $@
 
-obj/lib/state.o: lib/state.c
-	$(CC_MODE) $(CFLAGS) -c lib/state.c -o obj/lib/state.o
+obj/lib/string.o: lib/string.c | obj
+	$(CC) $(CFLAGS) -c lib/string.c -o $@
 
-obj/lib/file.o: lib/file.c
-	$(CC_MODE) $(CFLAGS) -c lib/file.c -o obj/lib/file.o
+obj/lib/usage.o: lib/usage.c | obj
+	$(CC) $(CFLAGS) -c lib/usage.c -o $@
 
-obj/lib/string.o: lib/string.c
-	$(CC_MODE) $(CFLAGS) -c lib/string.c -o obj/lib/string.o
+obj/lib/command.o: lib/command.c | obj
+	$(CC) $(CFLAGS) -c lib/command.c -o $@
 
-obj/lib/usage.o: lib/usage.c
-	$(CC_MODE) $(CFLAGS) -c lib/usage.c -o obj/lib/usage.o
+obj/lib/num.o: lib/num.c | obj
+	$(CC) $(CFLAGS) -c lib/num.c -o $@
 
-obj/lib/command.o: lib/command.c
-	$(CC_MODE) $(CFLAGS) -c lib/command.c -o obj/lib/command.o
+obj/lib/io.o: lib/io.c | obj
+	$(CC) $(CFLAGS) -c lib/io.c -o $@
 
-obj/lib/num.o: lib/num.c
-	$(CC_MODE) $(CFLAGS) -c lib/num.c -o obj/lib/num.o
+obj/lib/checksum.o: lib/checksum.c | obj
+	$(CC) $(CFLAGS) -c lib/checksum.c -o $@
 
-obj/lib/io.o: lib/io.c
-	$(CC_MODE) $(CFLAGS) -c lib/io.c -o obj/lib/io.o
+obj/lib/word.o: lib/word.c | obj
+	$(CC) $(CFLAGS) -c lib/word.c -o $@
 
-obj/lib/checksum.o: lib/checksum.c
-	$(CC_MODE) $(CFLAGS) -c lib/checksum.c -o obj/lib/checksum.o
+obj/lib/mkhtemp.o: lib/mkhtemp.c | obj
+	$(CC) $(CFLAGS) -c lib/mkhtemp.c -o $@
 
-obj/lib/word.o: lib/word.c
-	$(CC_MODE) $(CFLAGS) -c lib/word.c -o obj/lib/word.o
+obj/lib/rand.o: lib/rand.c | obj
+	$(CC) $(CFLAGS) -c lib/rand.c -o $@
 
-obj/lib/mkhtemp.o: lib/mkhtemp.c
-	$(CC_MODE) $(CFLAGS) -c lib/mkhtemp.c -o obj/lib/mkhtemp.o
-
-obj/lib/rand.o: lib/rand.c
-	$(CC_MODE) $(CFLAGS) -c lib/rand.c -o obj/lib/rand.o
-
-# install
-
-install: $(PROG) $(PROGMKH) $(PROGLOT)
-	$(INSTALL) -d $(DESTDIR)$(PREFIX)/bin
-	$(INSTALL) $(PROG) $(DESTDIR)$(PREFIX)/bin/$(PROG)
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROG)
-	$(INSTALL) $(PROGMKH) $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
-	$(INSTALL) $(PROGLOT) $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
+install: $(PROGS)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	for p in $(PROGS); do \
+		$(INSTALL) $$p $(DESTDIR)$(PREFIX)/bin/$$p; \
+		chmod 755 $(DESTDIR)$(PREFIX)/bin/$$p; \
+	done
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROG)
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGMKH)
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(PROGLOT)
+	for p in $(PROGS); do \
+		rm -f $(DESTDIR)$(PREFIX)/bin/$$p; \
+	done
 
 clean:
-	rm -f $(PROG) $(PROGMKH) $(OBJS_NVMUTIL) $(OBJS_MKHTEMP) \
-	    $(OBJS_LOTTERY) $(PROGLOT)
+	rm -rf $(OBJDIR) $(PROGS)
 
 distclean: clean
-
-# mode targets (portable replacement for ifeq)
-
-strict:
-	$(MAKE) CFLAGS="$(CFLAGS) $(HELLFLAGS)" CC_MODE="$(HELLCC)"
-
-# BSD-like portability test (openat + arc4random)
-portable-bsd:
-	$(MAKE) CFLAGS="$(CFLAGS) $(PORT_OPENAT) $(PORT_ARC4)" CC_MODE="$(CC)"
-
-# fallback portability test (openat + urandom -- old linux mostly)
-portable-urandom:
-	$(MAKE) CFLAGS="$(CFLAGS) $(PORT_OPENAT) $(PORT_URANDOM)" \
-	    CC_MODE="$(CC)"
