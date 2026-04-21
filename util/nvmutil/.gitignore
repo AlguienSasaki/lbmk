@@ -1,0 +1,7 @@
+/nvm
+/nvmutil
+/mkhtemp
+/lottery
+*.bin
+*.o
+*.d
