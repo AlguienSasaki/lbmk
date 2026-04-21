@@ -1,50 +1,24 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2022,2026 Leah Rowe <leah@libreboot.org>
-# Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com>
+# SPDX-FileCopyrightText: 2022,2025 Leah Rowe <leah@libreboot.org>
+# SPDX-FileCopyrightText: 2023 Riku Viitanen <riku.viitanen@protonmail.com>
 
-CC = cc
-CFLAGS = -Os -Wall -Wextra -std=c99 -pedantic
-LDFLAGS =
-PREFIX = /usr/local
-DESTDIR =
-INSTALL = install
+CC?=cc
+CFLAGS?=-Os -Wall -Wextra -Werror -pedantic
+DESTDIR?=
+PREFIX?=/usr/local
+INSTALL?=install
 
-PROGS = nvmutil
+nvm: nvmutil.c
+	$(CC) $(CFLAGS) nvmutil.c -o nvm
 
-LIB_OBJS = \
-	lib/state.o \
-	lib/file.o \
-	lib/string.o \
-	lib/usage.o \
-	lib/command.o \
-	lib/num.o \
-	lib/io.o \
-	lib/checksum.o \
-	lib/word.o
-
-OBJS_NVMUTIL = nvmutil.o $(LIB_OBJS)
-
-all: $(PROGS)
-
-nvmutil: $(OBJS_NVMUTIL)
-	$(CC) $(CFLAGS) $(OBJS_NVMUTIL) -o $@ $(LDFLAGS)
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-
-install: $(PROGS)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	for p in $(PROGS); do \
-		$(INSTALL) $$p $(DESTDIR)$(PREFIX)/bin/$$p; \
-		chmod 755 $(DESTDIR)$(PREFIX)/bin/$$p; \
-	done
+install:
+	$(INSTALL) nvm $(DESTDIR)$(PREFIX)/bin/nvm
 
 uninstall:
-	for p in $(PROGS); do \
-		rm -f $(DESTDIR)$(PREFIX)/bin/$$p; \
-	done
+	rm -f $(DESTDIR)$(PREFIX)/bin/nvm
+
+distclean:
+	rm -f nvm
 
 clean:
-	rm -f $(PROGS) *.o lib/*.o
-
-distclean: clean
+	rm -f nvm
