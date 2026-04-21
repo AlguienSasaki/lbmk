@@ -59,8 +59,11 @@ main(int argc, char *argv[])
 	(void) errhook(exit_cleanup);
 	(void) lbsetprogname(argv[0]);
 
+#ifdef __OpenBSD__
 	/* https://man.openbsd.org/pledge.2 */
-	xpledgex("stdio flock rpath wpath cpath", NULL);
+	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
+		exitf("pledge");
+#endif
 
 	while ((c =
 	    getopt(argc, argv, "qdp:")) != -1) {
@@ -117,7 +120,10 @@ main(int argc, char *argv[])
 	    tmpdir, template) < 0)
 		exitf("%s", s);
 
-	xpledgex("stdio", NULL);
+#ifdef __OpenBSD__
+	if (pledge("stdio", NULL) == -1)
+		exitf("pledge");
+#endif
 
 	if (s == NULL)
 		exitf("bad string initialisation");

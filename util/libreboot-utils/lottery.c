@@ -24,8 +24,11 @@ main(int argc, char **argv)
 	(void) errhook(exit_cleanup);
 	(void) lbsetprogname(argv[0]);
 
+#ifdef __OpenBSD__
 	/* https://man.openbsd.org/pledge.2 */
-	xpledgex("stdio", NULL);
+	if (pledge("stdio", NULL) == -1)
+		exitf("pledge");
+#endif
 
 	buf = rmalloc(size);
 	if (!vcmp(buf, buf + (size >> 1), size >> 1))

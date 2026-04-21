@@ -38,10 +38,14 @@ main(int argc, char *argv[])
 
 	(void) errhook(exit_cleanup);
 
+#ifdef __OpenBSD
 	/* https://man.openbsd.org/pledge.2 */
 	/* https://man.openbsd.org/unveil.2 */
-	xpledgex("stdio flock rpath wpath cpath unveil", NULL);
-	xunveilx("/dev/urandom", "r");
+	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
+		exitf("pledge");
+	if (unveil("/dev/urandom", "r") == -1)
+		exitf("unveil");
+#endif	
 
 #ifndef S_ISREG
 	exitf(
@@ -62,14 +66,22 @@ main(int argc, char *argv[])
 	cmd = &x->cmd[x->i];
 	f = &x->f;
 
-	if ((cmd->flags & O_ACCMODE) == O_RDONLY)
-		xunveilx(f->fname, "r");
-	else
-		xunveilx(f->fname, "rwc");
+#ifdef __OpenBSD__
+	if ((cmd->flags & O_ACCMODE) == O_RDONLY) {
+		if (unveil(f->fname, "r") == -1)
+			exitf("unveil");
+	} else {
+		if (unveil(f->fname, "rwc") == -1)
+			exitf("unveil");
+	}
 
-	xunveilx(f->tname, "rwc");
-	xunveilx(NULL, NULL);
-	xpledgex("stdio flock rpath wpath cpath", NULL);
+	if (unveil(f->tname, "rwc") == -1)
+		exitf("unveil");
+	if (unveil(NULL, NULL) == -1)
+		exitf("unveil");
+	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
+		exitf("pledge");
+#endif
 
 	if (cmd->run == NULL)
 		exitf("Command not set");

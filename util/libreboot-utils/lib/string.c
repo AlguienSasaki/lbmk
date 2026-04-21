@@ -620,32 +620,3 @@ lbsetprogname(char *argv0)
 
 	return progname;
 }
-
-/* https://man.openbsd.org/pledge.2
-   https://man.openbsd.org/unveil.2     */
-int
-xpledgex(const char *promises, const char *execpromises)
-{
-	int saved_errno = errno;
-	(void) promises, (void) execpromises, (void) saved_errno;
-	errno = 0;
-#ifdef __OpenBSD__
-	if (pledge(promises, execpromises) == -1)
-		exitf("pledge");
-#endif
-	reset_caller_errno(0);
-	return 0;
-}
-int
-xunveilx(const char *path, const char *permissions)
-{
-	int saved_errno = errno;
-	(void) path, (void) permissions, (void) saved_errno;
-	errno = 0;
-#ifdef __OpenBSD__
-	if (pledge(promises, execpromises) == -1)
-		exitf("pledge");
-#endif
-	reset_caller_errno(0);
-	return 0;
-}

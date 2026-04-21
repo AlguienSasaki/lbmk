@@ -357,8 +357,6 @@ void write_mac_part(size_t partnum);
 
 size_t page_remain(const void *p);
 long pagesize(void);
-int xunveilx(const char *path, const char *permissions);
-int xpledgex(const char *promises, const char *execpromises);
 char *smalloc(char **buf, size_t size);
 void *vmalloc(void **buf, size_t size);
 size_t slen(const char *scmp, size_t maxlen,
