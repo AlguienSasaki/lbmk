@@ -11,56 +11,22 @@ INSTALL = install
 
 PROGS = nvmutil mkhtemp lottery
 
-OBJDIR = obj
+LIB_OBJS = \
+	lib/state.o \
+	lib/file.o \
+	lib/string.o \
+	lib/usage.o \
+	lib/command.o \
+	lib/num.o \
+	lib/io.o \
+	lib/checksum.o \
+	lib/word.o \
+	lib/mkhtemp.o \
+	lib/rand.o
 
-# sources
-LIB_SRCS = \
-	lib/state.c \
-	lib/file.c \
-	lib/string.c \
-	lib/usage.c \
-	lib/command.c \
-	lib/num.c \
-	lib/io.c \
-	lib/checksum.c \
-	lib/word.c \
-	lib/mkhtemp.c \
-	lib/rand.c
-
-NVMUTIL_SRCS = nvmutil.c $(LIB_SRCS)
-MKHTEMP_SRCS = mkhtemp.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
-LOTTERY_SRCS = lottery.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
-
-# explicit object lists (portable)
-OBJS_NVMUTIL = \
-	obj/nvmutil.o \
-	obj/lib/state.o \
-	obj/lib/file.o \
-	obj/lib/string.o \
-	obj/lib/usage.o \
-	obj/lib/command.o \
-	obj/lib/num.o \
-	obj/lib/io.o \
-	obj/lib/checksum.o \
-	obj/lib/word.o \
-	obj/lib/mkhtemp.o \
-	obj/lib/rand.o
-
-OBJS_MKHTEMP = \
-	obj/mkhtemp.o \
-	obj/lib/file.o \
-	obj/lib/string.o \
-	obj/lib/num.o \
-	obj/lib/mkhtemp.o \
-	obj/lib/rand.o
-
-OBJS_LOTTERY = \
-	obj/lottery.o \
-	obj/lib/file.o \
-	obj/lib/string.o \
-	obj/lib/num.o \
-	obj/lib/mkhtemp.o \
-	obj/lib/rand.o
+OBJS_NVMUTIL = nvmutil.o $(LIB_OBJS)
+OBJS_MKHTEMP = mkhtemp.o lib/file.o lib/string.o lib/num.o lib/mkhtemp.o lib/rand.o
+OBJS_LOTTERY = lottery.o lib/file.o lib/string.o lib/num.o lib/mkhtemp.o lib/rand.o
 
 all: $(PROGS)
 
@@ -73,52 +39,8 @@ mkhtemp: $(OBJS_MKHTEMP)
 lottery: $(OBJS_LOTTERY)
 	$(CC) $(CFLAGS) $(OBJS_LOTTERY) -o $@ $(LDFLAGS)
 
-# ensure directories exist
-obj:
-	mkdir -p obj/lib
-
-# compile rules (no order-only deps)
-obj/nvmutil.o: nvmutil.c obj
-	$(CC) $(CFLAGS) -c nvmutil.c -o $@
-
-obj/mkhtemp.o: mkhtemp.c obj
-	$(CC) $(CFLAGS) -c mkhtemp.c -o $@
-
-obj/lottery.o: lottery.c obj
-	$(CC) $(CFLAGS) -c lottery.c -o $@
-
-obj/lib/state.o: lib/state.c obj
-	$(CC) $(CFLAGS) -c lib/state.c -o $@
-
-obj/lib/file.o: lib/file.c obj
-	$(CC) $(CFLAGS) -c lib/file.c -o $@
-
-obj/lib/string.o: lib/string.c obj
-	$(CC) $(CFLAGS) -c lib/string.c -o $@
-
-obj/lib/usage.o: lib/usage.c obj
-	$(CC) $(CFLAGS) -c lib/usage.c -o $@
-
-obj/lib/command.o: lib/command.c obj
-	$(CC) $(CFLAGS) -c lib/command.c -o $@
-
-obj/lib/num.o: lib/num.c obj
-	$(CC) $(CFLAGS) -c lib/num.c -o $@
-
-obj/lib/io.o: lib/io.c obj
-	$(CC) $(CFLAGS) -c lib/io.c -o $@
-
-obj/lib/checksum.o: lib/checksum.c obj
-	$(CC) $(CFLAGS) -c lib/checksum.c -o $@
-
-obj/lib/word.o: lib/word.c obj
-	$(CC) $(CFLAGS) -c lib/word.c -o $@
-
-obj/lib/mkhtemp.o: lib/mkhtemp.c obj
-	$(CC) $(CFLAGS) -c lib/mkhtemp.c -o $@
-
-obj/lib/rand.o: lib/rand.c obj
-	$(CC) $(CFLAGS) -c lib/rand.c -o $@
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
 install: $(PROGS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
@@ -133,6 +55,6 @@ uninstall:
 	done
 
 clean:
-	rm -rf $(OBJDIR) $(PROGS)
+	rm -f $(PROGS) *.o lib/*.o
 
 distclean: clean
