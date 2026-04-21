@@ -1,0 +1,5 @@
+/nvm
+/nvmutil
+*.bin
+*.o
+*.d

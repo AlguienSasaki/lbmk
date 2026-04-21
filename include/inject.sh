@@ -6,7 +6,7 @@
 
 cbcfgsdir="config/coreboot"
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
-nvmutil="util/libreboot-utils/nvmutil"
+nvmutil="util/nvmutil/nvmutil"
 ifdtool="elf/coreboot/default/ifdtool"
 
 checkvars="CONFIG_GBE_BIN_PATH"
@@ -197,8 +197,8 @@ modify_mac()
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbtmp/gbe"
 
 	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
-		x_ make -C util/libreboot-utils clean
-		x_ make -C util/libreboot-utils
+		x_ make -C util/nvmutil clean
+		x_ make -C util/nvmutil
 
 		x_ "$nvmutil" "$xbtmp/gbe" setmac "$new_mac"
 	fi
