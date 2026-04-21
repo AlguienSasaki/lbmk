@@ -8,17 +8,17 @@ DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
 
-nvm: nvmutil.c
-	$(CC) $(CFLAGS) nvmutil.c -o nvm
+nvmutil: nvmutil.c
+	$(CC) $(CFLAGS) nvmutil.c -o nvmutil
 
 install:
-	$(INSTALL) nvm $(DESTDIR)$(PREFIX)/bin/nvm
+	$(INSTALL) nvmutil $(DESTDIR)$(PREFIX)/bin/nvmutil
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/nvm
+	rm -f $(DESTDIR)$(PREFIX)/bin/nvmutil
 
 distclean:
-	rm -f nvm
+	rm -f nvmutil
 
 clean:
-	rm -f nvm
+	rm -f nvmutil
