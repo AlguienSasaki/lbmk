@@ -4,9 +4,6 @@
  * State machine (singleton) for nvmutil data.
  */
 
-#ifdef __OpenBSD__
-#include <sys/param.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -102,18 +99,6 @@ xstatus(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-/* https://man.openbsd.org/pledge.2
-   https://man.openbsd.org/unveil.2     */
-#if defined(__OpenBSD__) && defined(OpenBSD)
-#if (OpenBSD) >= 604
-	if (pledge("stdio flock rpath wpath cpath unveil", NULL) == -1)
-		err(errno, "pledge plus unveil");
-#elif (OpenBSD) >= 509
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		err(errno, "pledge");
-#endif
-#endif
-
 #ifndef S_ISREG
 	err(ECANCELED, "Can't determine file types (S_ISREG undefined)");
 #endif
@@ -125,23 +110,12 @@ xstatus(int argc, char *argv[])
 		err(EINVAL, "Unsupported char size");
 #endif
 
-#if defined(__OpenBSD__) && defined(OpenBSD) && \
-    (OpenBSD) >= 604
-	/* can only use local tmp on openbsd, due to unveil */
-	us.f.tname = new_tmpfile(&us.f.tmp_fd, 1, NULL);
-#else
 	us.f.tname = new_tmpfile(&us.f.tmp_fd, 0, NULL);
-#endif
 	if (us.f.tname == NULL)
 		err(errno, "Can't create tmpfile");
 	if (*us.f.tname == '\0')
 		err(errno, "tmp dir is an empty string");
 
-#if defined(__OpenBSD__) && defined(OpenBSD) && \
-    OpenBSD >= 604
-	if (unveil(us.f.tname, "rwc") == -1)
-		err(errno, "unveil rwc: %s", us.f.tname);
-#endif
 	if (fstat(us.f.tmp_fd, &us.f.tmp_st) < 0)
 		err(errno, "%s: stat", us.f.tname);
 
@@ -150,26 +124,6 @@ xstatus(int argc, char *argv[])
 	/* parse user command */
 	set_cmd(argc, argv);
 	set_cmd_args(argc, argv);
-
-#if defined(__OpenBSD__) && defined(OpenBSD) && \
-    (OpenBSD) >= 604
-	if ((us.cmd[i].flags & O_ACCMODE) == O_RDONLY) {
-		if (unveil(us.f.fname, "r") == -1)
-			err(errno, "%s: unveil r", us.f.fname);
-	} else {
-		if (unveil(us.f.fname, "rwc") == -1)
-			err(errno, "%s: unveil rw", us.f.fname);
-	}
-
-	if (unveil(us.f.tname, "rwc") == -1)
-		err(errno, "%s: unveil rwc", us.f.tname);
-
-	if (unveil(NULL, NULL) == -1)
-		err(errno, "unveil block (rw)");
-
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
-		err(errno, "pledge (kill unveil)");
-#endif
 
 	open_gbe_file();
 
