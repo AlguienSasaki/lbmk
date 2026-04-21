@@ -366,6 +366,8 @@ int scmp(const char *a, const char *b,
     size_t maxlen, int *rval);
 int ccmp(const char *a, const char *b, size_t i,
     int *rval);
+int dup_pair(char **dir, const char *d,
+    char **base, const char *b);
 char *sdup(const char *s,
     size_t n, char **dest);
 char *scatn(ssize_t sc, const char **sv,

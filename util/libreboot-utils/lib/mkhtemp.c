@@ -195,7 +195,11 @@ env_tmpdir(int bypass_all_sticky_checks, char **tmpdir,
 		    bypass_all_sticky_checks))
 			goto err;
 
-		rval = t;
+		rval = NULL;
+		if (t != NULL) {
+			if (sdup(t, PATH_MAX, &rval) == NULL)
+				goto err;
+		}
 		goto out;
 	}
 

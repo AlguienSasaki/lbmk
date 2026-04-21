@@ -270,6 +270,27 @@ out:
 	return *rval;
 }
 
+int
+dup_pair(char **dir, const char *d,
+    char **base, const char *b)
+{
+	char *dtmp = NULL;
+	char *btmp = NULL;
+
+	if (d && sdup(d, PATH_MAX, &dtmp) == NULL)
+		return -1;
+
+	if (b && sdup(b, PATH_MAX, &btmp) == NULL) {
+		free(dtmp);
+		return -1;
+	}
+
+	*dir = dtmp;
+	*base = btmp;
+
+	return 0;
+}
+
 /* strict word-based strdup */
 char *
 sdup(const char *s,

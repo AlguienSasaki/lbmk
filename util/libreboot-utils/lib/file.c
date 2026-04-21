@@ -521,6 +521,8 @@ fs_dirname_basename(const char *path,
 	char *buf = NULL;
 	char *slash;
 	size_t len;
+	const char *d = NULL;
+	const char *b = NULL;
 	errno = 0;
 
 	if (if_err(path == NULL || dir == NULL || base == NULL, EFAULT))
@@ -539,21 +541,26 @@ fs_dirname_basename(const char *path,
 	if (slash) {
 
 		*slash = '\0';
-		*dir = buf;
-		*base = slash + 1;
+		d = buf;
+		b = slash + 1;
 
-		if (**dir == '\0') {
-			(*dir)[0] = '/';
-			(*dir)[1] = '\0';
-		}
+		if (*d == '\0')
+			d = "/";
 	} else if (allow_relative) {
 
-		sdup(".", PATH_MAX, dir);
-		*base = buf;
+		d = ".";
+		b = buf;
 	} else {
 		free_and_set_null(&buf);
 		goto err;
 	}
+
+	if (dup_pair(dir, d, base, b) < 0) {
+		free_and_set_null(&buf);
+		goto err;
+	}
+
+	free_and_set_null(&buf);
 
 	reset_caller_errno(0);
 	return 0;
