@@ -76,11 +76,15 @@ op_t op[] = {
 };
 void (*cmd)(void) = NULL;
 
-#define ERR() errno = errno ? errno : ECANCELED
-#define err_if(x) if (x) err(ERR(), "%s", filename)
+#define err_if(x) if (x) err(EXIT_FAILURE, "%s", filename)
 
-#define xopen(f,l,p) if ((f = open_on_eintr(l, p)) == -1) err(ERR(), "%s", l); \
-    if (fstat(f, &st) == -1) err(ERR(), "%s", l)
+#define xopen(f,l,p) \
+	do { \
+	if ((f = open_on_eintr(l, p)) == -1) \
+		err(EXIT_FAILURE, "%s", l); \
+	if (fstat(f, &st) == -1) \
+		err(EXIT_FAILURE, "%s", l); \
+	} while(0)
 
 #define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
 #define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
@@ -115,7 +119,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, " %s FILE copy 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE brick 0|1\n", argv[0]);
 		fprintf(stderr, " %s FILE setchecksum 0|1\n", argv[0]);
-		err(errno = ECANCELED, "Too few arguments");
+		errno = EINVAL;
+		err(EXIT_FAILURE, "Too few arguments");
 	}
 
 	filename = argv[1];
@@ -158,7 +163,8 @@ main(int argc, char *argv[])
 				cmd = op[i].cmd;
 				break;
 			}
-			err(errno = EINVAL, "Too few args on command '%s'",
+			errno = EINVAL;
+			err(EXIT_FAILURE, "Too few args on command '%s'",
 			    op[i].str);
 		}
 	} else {
@@ -174,16 +180,18 @@ main(int argc, char *argv[])
 			strMac = MAC_ADDRESS;
 	} else if ((cmd != NULL) && (argc > 3)) { /* user-supplied partnum */
 		err_if((errno = (!((part = PARTN[0] - '0') == 0 || part == 1))
-		    || PARTN[1] ? EINVAL : errno)); /* only allow '0' or '1' */
+		    || PARTN[1] ? EINVAL : 0)); /* only allow '0' or '1' */
 	}
-	err_if((errno = (cmd == NULL) ? EINVAL : errno));
+	if (cmd == NULL) {
+		errno = EINVAL;
+		err(EXIT_FAILURE, "Bad command");
+	}
 
 	readGbe();
 	(*cmd)();
 	writeGbe();
 
-	err_if((errno != 0) && (cmd != cmd_dump));
-	return errno;
+	return EXIT_SUCCESS;
 }
 
 void
@@ -200,7 +208,8 @@ openFiles(const char *path)
 		partsize = st.st_size >> 1;
 		break;
 	default:
-		err(errno = ECANCELED, "Invalid file size (not 8/16/128KiB)");
+		errno = ECANCELED;
+		err(EXIT_FAILURE, "Invalid file size (not 8/16/128KiB)");
 		break;
 	}
 
@@ -220,7 +229,7 @@ readGbe(void)
 
 	char *buf = malloc(nf << (do_read[0] & do_read[1]));
 	if (buf == NULL)
-		err(errno, NULL);
+		err(EXIT_FAILURE, "malloc");
 
 	gbe[0] = (size_t) buf;
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
@@ -235,7 +244,7 @@ readGbe(void)
 		    nf, p * partsize, IO_PREAD);
 		err_if(nr == -1);
 		if (nr != nf)
-			err(errno == ECANCELED,
+			err(EXIT_FAILURE,
 			    "%ld bytes read from '%s', expected %ld bytes\n",
 			    nr, filename, nf);
 
@@ -269,29 +278,38 @@ cmd_setmac(void)
 	}
 
 	if (mac_updated)
-		errno = 0;
+		return;
+
+	errno = EINVAL;
+	err(EXIT_FAILURE, "Error updating MAC address");
 }
 
 void
 parseMacString(const char *strMac, uint16_t *mac)
 {
 	uint64_t total = 0;
-	if (strnlen(strMac, 20) != 17)
-		err(errno = EINVAL, "Invalid MAC address string length");
+	if (strnlen(strMac, 20) != 17) {
+		errno = EINVAL;
+		err(EXIT_FAILURE, "Invalid MAC address string length");
+	}
 
 	for (uint8_t h, i = 0; i < 16; i += 3) {
 		if (i != 15)
-			if (strMac[i + 2] != ':')
-				err(errno = EINVAL,
+			if (strMac[i + 2] != ':') {
+				errno = EINVAL;
+				err(EXIT_FAILURE,
 				    "Invalid MAC address separator '%c'",
 				    strMac[i + 2]);
+			}
 
 		int byte = i / 3;
 
 		for (int nib = 0; nib < 2; nib++, total += h) {
-			if ((h = hextonum(strMac[i + nib])) > 15)
-				err(errno = EINVAL, "Invalid character '%c'",
+			if ((h = hextonum(strMac[i + nib])) > 15) {
+				errno = EINVAL;
+				err(EXIT_FAILURE, "Invalid character '%c'",
 				    strMac[i + nib]);
+			}
 
 			/* If random, ensure that local/unicast bits are set */
 			if ((byte == 0) && (nib == 1))
@@ -305,10 +323,15 @@ parseMacString(const char *strMac, uint16_t *mac)
 		}
 	}
 
+	if (!((total == 0) || (mac[0] & 1)))
+		return;
+
+	errno = EINVAL;
+
 	if (total == 0)
-		err(errno = EINVAL, "Invalid MAC (all-zero MAC address)");
+		err(EXIT_FAILURE, "Invalid MAC (all-zero MAC address)");
 	if (mac[0] & 1)
-		err(errno = EINVAL, "Invalid MAC (multicast bit set)");
+		err(EXIT_FAILURE, "Invalid MAC (multicast bit set)");
 }
 
 uint8_t
@@ -350,9 +373,6 @@ cmd_dump(void)
 		printf("MAC (part %d): ", partnum);
 		macf(partnum);
 		hexdump(partnum);
-
-		if ((numInvalid < 2) && (partnum))
-			errno = 0;
 	}
 }
 
@@ -431,7 +451,6 @@ goodChecksum(int partnum)
 		return 1;
 
 	fprintf(stderr, "WARNING: BAD checksum in part %d\n", partnum);
-	errno = ECANCELED;
 	return 0;
 }
 
@@ -448,10 +467,12 @@ writeGbe(void)
 		ssize_t nw = rw_exact(fd, (uint8_t *) gbe[p], nf,
 		    p * partsize, IO_PWRITE);
 		err_if(nw == -1);
-		if (nw != nf)
-			err(errno == ECANCELED,
+		if (nw != nf) {
+			errno = ECANCELED;
+			err(EXIT_SUCCESS,
 			    "%ld bytes written to '%s', expected %ld bytes\n",
 			    nw, filename, nf);
+		}
 
 		tnw += nf;
 	}
@@ -462,13 +483,10 @@ writeGbe(void)
 		cmd_dump();
 	}
 
-	if ((!tnw) && (flags != O_RDONLY) && (!errno))
+	if ((!tnw) && (flags != O_RDONLY))
 		fprintf(stderr, "No changes needed on file '%s'\n", filename);
 	else if (tnw)
 		printf("%ld bytes written to file '%s'\n", tnw, filename);
-
-	if (tnw)
-		errno = 0;
 
 	xclose(&fd);
 }
