@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 
 #ifdef __OpenBSD__
 	/* https://man.openbsd.org/pledge.2 */
-	if (pledge("stdio flock rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio flock rpath wpath cpath fattr", NULL) == -1)
 		exitf("pledge");
 #endif
 
