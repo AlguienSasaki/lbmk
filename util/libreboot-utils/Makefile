@@ -31,7 +31,7 @@ NVMUTIL_SRCS = nvmutil.c $(LIB_SRCS)
 MKHTEMP_SRCS = mkhtemp.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
 LOTTERY_SRCS = lottery.c lib/file.c lib/string.c lib/num.c lib/mkhtemp.c lib/rand.c
 
-# manually mapped objects (yes, explicit = portable)
+# explicit object lists (portable)
 OBJS_NVMUTIL = \
 	obj/nvmutil.o \
 	obj/lib/state.o \
@@ -73,51 +73,51 @@ mkhtemp: $(OBJS_MKHTEMP)
 lottery: $(OBJS_LOTTERY)
 	$(CC) $(CFLAGS) $(OBJS_LOTTERY) -o $@ $(LDFLAGS)
 
-# ensure dirs exist
+# ensure directories exist
 obj:
 	mkdir -p obj/lib
 
-# compile rules (EXPLICIT = portable)
-obj/nvmutil.o: nvmutil.c | obj
+# compile rules (no order-only deps)
+obj/nvmutil.o: nvmutil.c obj
 	$(CC) $(CFLAGS) -c nvmutil.c -o $@
 
-obj/mkhtemp.o: mkhtemp.c | obj
+obj/mkhtemp.o: mkhtemp.c obj
 	$(CC) $(CFLAGS) -c mkhtemp.c -o $@
 
-obj/lottery.o: lottery.c | obj
+obj/lottery.o: lottery.c obj
 	$(CC) $(CFLAGS) -c lottery.c -o $@
 
-obj/lib/state.o: lib/state.c | obj
+obj/lib/state.o: lib/state.c obj
 	$(CC) $(CFLAGS) -c lib/state.c -o $@
 
-obj/lib/file.o: lib/file.c | obj
+obj/lib/file.o: lib/file.c obj
 	$(CC) $(CFLAGS) -c lib/file.c -o $@
 
-obj/lib/string.o: lib/string.c | obj
+obj/lib/string.o: lib/string.c obj
 	$(CC) $(CFLAGS) -c lib/string.c -o $@
 
-obj/lib/usage.o: lib/usage.c | obj
+obj/lib/usage.o: lib/usage.c obj
 	$(CC) $(CFLAGS) -c lib/usage.c -o $@
 
-obj/lib/command.o: lib/command.c | obj
+obj/lib/command.o: lib/command.c obj
 	$(CC) $(CFLAGS) -c lib/command.c -o $@
 
-obj/lib/num.o: lib/num.c | obj
+obj/lib/num.o: lib/num.c obj
 	$(CC) $(CFLAGS) -c lib/num.c -o $@
 
-obj/lib/io.o: lib/io.c | obj
+obj/lib/io.o: lib/io.c obj
 	$(CC) $(CFLAGS) -c lib/io.c -o $@
 
-obj/lib/checksum.o: lib/checksum.c | obj
+obj/lib/checksum.o: lib/checksum.c obj
 	$(CC) $(CFLAGS) -c lib/checksum.c -o $@
 
-obj/lib/word.o: lib/word.c | obj
+obj/lib/word.o: lib/word.c obj
 	$(CC) $(CFLAGS) -c lib/word.c -o $@
 
-obj/lib/mkhtemp.o: lib/mkhtemp.c | obj
+obj/lib/mkhtemp.o: lib/mkhtemp.c obj
 	$(CC) $(CFLAGS) -c lib/mkhtemp.c -o $@
 
-obj/lib/rand.o: lib/rand.c | obj
+obj/lib/rand.o: lib/rand.c obj
 	$(CC) $(CFLAGS) -c lib/rand.c -o $@
 
 install: $(PROGS)
