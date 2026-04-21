@@ -2,24 +2,38 @@
 /* Copyright (c) 2022-2025 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
+#include <sys/types.h>
 #include <sys/stat.h>
 
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdint.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
+#include <stdint.h>
 
 void cmd_setchecksum(void), cmd_brick(void), swap(int partnum), writeGbe(void),
-    cmd_dump(void), cmd_setmac(void), readGbe(void), checkdir(const char *path),
+    cmd_dump(void), cmd_setmac(void), readGbe(void),
     macf(int partnum), hexdump(int partnum), openFiles(const char *path),
     cmd_copy(void), parseMacString(const char *strMac, uint16_t *mac),
-    cmd_swap(void);
-int goodChecksum(int partnum);
+    cmd_swap(void), xclose(int *fd);
+int goodChecksum(int partnum), open_on_eintr(const char *pathname, int flags),
+    fs_retry(int saved_errno, int rval),
+    rw_retry(int saved_errno, ssize_t rval), if_err(int condition, int errval),
+    if_err_sys(int condition);
+ssize_t rw_exact(int fd, unsigned char *mem, size_t nrw,
+    off_t off, int rw_type);
+ssize_t rw(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type);
+int io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type);
+int with_fallback_errno(int fallback);
+ssize_t rw_over_nrw(ssize_t r, size_t nrw);
 uint8_t hextonum(char chs), rhex(void);
 
 #define COMMAND argv[2]
@@ -33,6 +47,11 @@ uint8_t hextonum(char chs), rhex(void);
 #define SIZE_8KB 0x2000
 #define SIZE_16KB 0x4000
 #define SIZE_128KB 0x20000
+
+#define IO_READ 0
+#define IO_WRITE 1
+#define IO_PREAD 2
+#define IO_PWRITE 3
 
 uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
@@ -60,12 +79,20 @@ void (*cmd)(void) = NULL;
 #define ERR() errno = errno ? errno : ECANCELED
 #define err_if(x) if (x) err(ERR(), "%s", filename)
 
-#define xopen(f,l,p) if ((f = open(l, p)) == -1) err(ERR(), "%s", l); \
+#define xopen(f,l,p) if ((f = open_on_eintr(l, p)) == -1) err(ERR(), "%s", l); \
     if (fstat(f, &st) == -1) err(ERR(), "%s", l)
 
 #define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
 #define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
     nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
+
+#define SUCCESS(x) ((x) >= 0)
+
+#define reset_caller_errno(return_value) \
+	do { \
+		if (SUCCESS(return_value) && (!errno)) \
+			errno = saved_errno; \
+	} while (0)
 
 int
 main(int argc, char *argv[])
@@ -103,9 +130,6 @@ main(int argc, char *argv[])
 #endif
 		}
 	}
-
-	checkdir("/dev/urandom");
-	checkdir(filename);
 
 #ifdef __OpenBSD__
 	err_if(unveil("/dev/urandom", "r") == -1);
@@ -163,16 +187,6 @@ main(int argc, char *argv[])
 }
 
 void
-checkdir(const char *path)
-{
-	if (opendir(path) != NULL)
-		err(errno = EISDIR, "%s", path);
-	if (errno == ENOTDIR)
-		errno = 0;
-	err_if(errno);
-}
-
-void
 openFiles(const char *path)
 {
 	struct stat st;
@@ -217,7 +231,8 @@ readGbe(void)
 		if (!do_read[p])
 			continue;
 
-		ssize_t nr = pread(fd, (uint8_t *) gbe[p], nf, p * partsize);
+		ssize_t nr = rw_exact(fd, (uint8_t *) gbe[p],
+		    nf, p * partsize, IO_PREAD);
 		err_if(nr == -1);
 		if (nr != nf)
 			err(errno == ECANCELED,
@@ -316,7 +331,8 @@ rhex(void)
 {
 	static uint8_t n = 0, rnum[16];
 	if (!n)
-		err_if(pread(rfd, (uint8_t *) &rnum, (n = 15) + 1, 0) == -1);
+		err_if(rw_exact(rfd, (uint8_t *) &rnum,
+		    (n = 15) + 1, 0, IO_READ) == -1);
 	return rnum[n--] & 0xf;
 }
 
@@ -429,7 +445,8 @@ writeGbe(void)
 			continue;
 
 		swap(p); /* swap bytes on big-endian host CPUs */
-		ssize_t nw = pwrite(fd, (uint8_t *) gbe[p], nf, p * partsize);
+		ssize_t nw = rw_exact(fd, (uint8_t *) gbe[p], nf,
+		    p * partsize, IO_PWRITE);
 		err_if(nw == -1);
 		if (nw != nf)
 			err(errno == ECANCELED,
@@ -453,7 +470,32 @@ writeGbe(void)
 	if (tnw)
 		errno = 0;
 
-	err_if(close(fd) == -1);
+	xclose(&fd);
+}
+
+void
+xclose(int *fd)
+{
+	int saved_errno = errno;
+	int rval = 0;
+
+	if (fd == NULL)
+		err(EXIT_FAILURE, "xclose: null pointer");
+	if (*fd < 0)
+		return;
+
+	errno = 0;
+	if ((rval = close(*fd)) < 0) {
+		if (errno != EINTR)
+			err(EXIT_FAILURE, "xclose: could not close");
+
+		/* regard EINTR as a successful close */
+		rval = 0;
+	}
+
+	*fd = -1;
+
+	reset_caller_errno(rval);
 }
 
 void
@@ -469,4 +511,197 @@ swap(int partnum)
 		n[x] ^= n[w];
 		n[w] ^= n[x];
 	}
+}
+
+int
+open_on_eintr(const char *pathname,
+    int flags)
+{
+	int saved_errno = errno;
+	int rval = 0;
+	errno = 0;
+
+	while (fs_retry(saved_errno,
+	    rval = open(pathname, flags)));
+
+	reset_caller_errno(rval);
+	return rval;
+}
+
+
+ssize_t
+rw_exact(int fd, unsigned char *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	int saved_errno = errno;
+	ssize_t rval = 0;
+	ssize_t rc = 0;
+	size_t nrw_cur;
+	off_t off_cur;
+	void *mem_cur;
+	errno = 0;
+
+	if (io_args(fd, mem, nrw, off, rw_type) == -1)
+		goto err_rw_exact;
+
+	while (1) {
+	
+		/* Prevent theoretical overflow */
+		if (if_err(rval >= 0 && (size_t)rval > (nrw - (size_t)rc),
+		    EOVERFLOW))
+			goto err_rw_exact;
+
+		rc += rval;
+		if ((size_t)rc >= nrw)
+			break;
+
+		mem_cur = (void *)(mem + (size_t)rc);
+		nrw_cur = (size_t)(nrw - (size_t)rc);
+
+		if (if_err(off < 0, EOVERFLOW))
+			goto err_rw_exact;
+
+		off_cur = off + (off_t)rc;
+
+		if ((rval = rw(fd, mem_cur, nrw_cur, off_cur, rw_type)) <= 0)
+			goto err_rw_exact;
+	}
+
+	if (if_err((size_t)rc != nrw, EIO) ||
+	    (rval = rw_over_nrw(rc, nrw)) < 0)
+		goto err_rw_exact;
+
+	reset_caller_errno(rval);
+	return rval;
+
+err_rw_exact:
+	return with_fallback_errno(EIO);
+}
+
+ssize_t
+rw(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	ssize_t rval = 0;
+	ssize_t r = -1;
+	int saved_errno = errno;
+	errno = 0;
+
+	if (io_args(fd, mem, nrw, off, rw_type) == -1 ||
+	    if_err(mem == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(off < 0, EFAULT) ||
+	    if_err(nrw == 0, EINVAL))
+		return with_fallback_errno(EIO);
+
+	do {
+		switch (rw_type) {
+		case IO_READ:
+			r = read(fd, mem, nrw);
+			break;
+		case IO_WRITE:
+			r = write(fd, mem, nrw);
+			break;
+		case IO_PREAD:
+			r = pread(fd, mem, nrw, off);
+			break;
+		case IO_PWRITE:
+			r = pwrite(fd, mem, nrw, off);
+			break;
+		default:
+			errno = EINVAL;
+			break;
+		}
+
+	} while (rw_retry(saved_errno, r));
+	
+	if ((rval = rw_over_nrw(r, nrw)) < 0)
+		return with_fallback_errno(EIO);
+
+	reset_caller_errno(rval);
+	return rval;
+}
+
+int
+io_args(int fd, void *mem, size_t nrw,
+    off_t off, int rw_type)
+{
+	int saved_errno = errno;
+	errno = 0;
+
+	if (if_err(mem == NULL, EFAULT) ||
+	    if_err(fd < 0, EBADF) ||
+	    if_err(off < 0, ERANGE) ||
+	    if_err(!nrw, EPERM) || /* TODO: toggle zero-byte check */
+	    if_err(nrw > (size_t)SSIZE_MAX, ERANGE) ||
+	    if_err(((size_t)off + nrw) < (size_t)off, ERANGE) ||
+	    if_err(rw_type > IO_PWRITE, EINVAL))
+		goto err_io_args;
+
+	reset_caller_errno(0);
+	return 0;
+
+err_io_args:
+	return with_fallback_errno(EINVAL);
+}
+
+ssize_t
+rw_over_nrw(ssize_t r, size_t nrw)
+{
+	if (if_err(!nrw, EIO) ||
+	    (r == -1) ||
+	    if_err((size_t)r > SSIZE_MAX, ERANGE) ||
+	    if_err((size_t)r > nrw, ERANGE))
+		return with_fallback_errno(EIO);
+
+	return r;
+}
+
+int
+with_fallback_errno(int fallback)
+{
+	if (!errno)
+		errno = fallback;
+	return -1;
+}
+
+/* two functions that reduce sloccount by
+ * two hundred lines */
+int
+if_err(int condition, int errval)
+{
+	if (!condition)
+		return 0;
+	if (errval)
+		errno = errval;
+	return 1;
+}
+int
+if_err_sys(int condition)
+{
+	if (!condition)
+		return 0;
+	return 1;
+}
+
+#define fs_err_retry() \
+	do { \
+		if ((rval == -1) && \
+		    (errno == EINTR)) \
+			return 1; \
+		if (rval >= 0 && !errno) \
+			errno = saved_errno; \
+		return 0; \
+	} while(0)
+
+int
+fs_retry(int saved_errno, int rval)
+{
+	fs_err_retry();
+}
+
+int
+rw_retry(int saved_errno, ssize_t rval)
+{
+	fs_err_retry();
 }
