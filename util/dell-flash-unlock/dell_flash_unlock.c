@@ -47,9 +47,9 @@ main(int argc, char *argv[])
 	(void)argv;
 
 	if (sys_iopl(3) == -1)
-		err(errno, "Could not access IO ports");
+		err(EXIT_FAILURE, "Could not access IO ports");
 	if ((devmemfd = open("/dev/mem", O_RDONLY)) == -1)
-		err(errno, "/dev/mem");
+		err(EXIT_FAILURE, "/dev/mem");
 
 	/* Read RCBA and PMBASE from the LPC config registers */
 	long int rcba = pci_read_32(LPC_DEV, 0xf0) & 0xffffc000;
@@ -59,11 +59,11 @@ main(int argc, char *argv[])
 	rcba_mmio = mmap(0, RCBA_MMIO_LEN, PROT_READ, MAP_SHARED, devmemfd,
 			rcba);
 	if (rcba_mmio == MAP_FAILED)
-		err(errno, "Could not map RCBA");
+		err(EXIT_FAILURE, "Could not map RCBA");
 
 	if (get_fdo_status() == 1) { /* Descriptor not overridden */
 		if (check_lpc_decode() == -1)
-			err(errno = ECANCELED, "Can't forward I/O to LPC");
+			err(EXIT_FAILURE, "Can't forward I/O to LPC");
 
 		printf("Sending FDO override command to EC:\n");
 		ec_set_fdo();
@@ -80,7 +80,8 @@ main(int argc, char *argv[])
 				"to enable SMIs.\n (shutdown is buggy when "
 				"SMIs are disabled)\n");
 		} else {
-			err(errno = ECANCELED, "Could not disable SMIs!");
+			errno = EIO;
+			err(EXIT_FAILURE, "Could not disable SMIs!");
 		}
 	} else { /* SMI locks not in place or bypassed */
 		if (get_gbl_smi_en()) {
@@ -97,7 +98,7 @@ main(int argc, char *argv[])
 		}
 	}
 	sys_iopl(0);
-	return errno;
+	return EXIT_SUCCESS;
 }
 
 int
@@ -137,6 +138,7 @@ check_lpc_decode(void)
 		pci_write_32(LPC_DEV, 0x84 + 4 * gen_dec_free, 0x911);
 		return 0;
 	} else {
+		errno = EIO;
 		return -1;
 	}
 }
@@ -165,7 +167,7 @@ send_ec_cmd(uint8_t cmd)
 	sys_outb(EC_INDEX, 0);
 	sys_outb(EC_DATA, cmd);
 	if (wait_ec() == -1)
-		err(errno = ECANCELED, "Timeout while waiting for EC!");
+		err(EXIT_FAILURE, "Timeout while waiting for EC!");
 }
 
 int
@@ -179,6 +181,8 @@ wait_ec(void)
 		timeout--;
 		usleep(1000);
 	} while (busy && timeout > 0);
+	if (timeout <= 0)
+		errno = EIO;
 	return timeout > 0 ? 0 : -1;
 }
 

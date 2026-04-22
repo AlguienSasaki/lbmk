@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023 Nicholas Chin
 
 CC=cc
-CFLAGS=-Wall -Wextra -Werror -O2 -pedantic
+CFLAGS=-Wall -Wextra -O2
 SRCS=dell_flash_unlock.c accessors.c
 
 all: $(SRCS) accessors.h
