@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2022-2025 Leah Rowe <leah@libreboot.org> */
+/* Copyright (c) 2022-2026 Leah Rowe <leah@libreboot.org> */
 /* Copyright (c) 2023 Riku Viitanen <riku.viitanen@protonmail.com> */
 
 #include <sys/types.h>
@@ -55,7 +55,8 @@ uint8_t hextonum(char chs), rhex(void);
 
 uint16_t mac[3] = {0, 0, 0};
 ssize_t nf;
-size_t partsize, gbe[2];
+size_t partsize;
+uintptr_t gbe[2];
 uint8_t nvmPartChanged[2] = {0, 0}, do_read[2] = {1, 1};
 int flags, rfd, fd, part;
 
@@ -94,8 +95,8 @@ void (*cmd)(void) = NULL;
 
 #define reset_caller_errno(return_value) \
 	do { \
-		if (SUCCESS(return_value) && (!errno)) \
-			errno = saved_errno; \
+	if (SUCCESS(return_value) && (!errno)) \
+		errno = saved_errno; \
 	} while (0)
 
 int
@@ -199,6 +200,7 @@ openFiles(const char *path)
 {
 	struct stat st;
 
+	xopen(rfd, "/dev/urandom", O_RDONLY);	
 	xopen(fd, path, flags);
 
 	switch(st.st_size) {
@@ -213,7 +215,8 @@ openFiles(const char *path)
 		break;
 	}
 
-	xopen(rfd, "/dev/urandom", O_RDONLY);
+	if (if_err(!S_ISREG(st.st_mode), EBADF))
+		err(EXIT_FAILURE, "Not a GbE file");	
 }
 
 void
