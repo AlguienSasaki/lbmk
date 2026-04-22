@@ -23,7 +23,6 @@
 #define FREQ_DATA_MAX 60
 #define THRESHOLD 500
 
-#define ERR() (errno = errno ? errno : ECANCELED)
 #define reset_char() ascii = 0, ascii_bit = 7
 
 signed short frame[MAX_SAMPLES], pulse[MAX_SAMPLES];
@@ -42,17 +41,17 @@ main(int argc, char *argv[])
 	int c;
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
-		err(ERR(), "pledge");
+		err(EXIT_FAILURE, "pledge");
 #endif
 	while ((c = getopt(argc, argv, "d")) != -1)
-		if (!(debug = (c == 'd')))
-			err(errno = EINVAL, NULL);
+		if (!(debug = (c == 'd'))) {
+			errno = EINVAL;
+			err(EXIT_FAILURE, "%c: Invalid option", c);
+		}
 	setvbuf(stdout, NULL, _IONBF, 0);
 	while (!feof(stdin))
 		handle_audio();
-	if (errno && debug)
-		err(errno, "Unhandled error, errno %d", errno);
-	return errno;
+	return EXIT_SUCCESS;
 }
 
 void
@@ -83,7 +82,7 @@ decode_pulse(void)
 
 	fread(frame + ringpos, 1, sizeof(frame[0]), stdin);
 	if (ferror(stdin) != 0)
-		err(ERR(), "Could not read from frame.");
+		err(EXIT_FAILURE, "Could not read from frame.");
 
 	if ((pulse[ringpos] = (abs(frame[ringpos]) > THRESHOLD) ? 1 : 0))
 		++freq_separator;
@@ -118,7 +117,7 @@ print_stats(void)
 {
 	long stdin_pos;
 	if ((stdin_pos = ftell(stdin)) == -1)
-		err(ERR(), NULL);
+		err(EXIT_FAILURE, NULL);
 	printf ("%d %d %d @%ld\n", freq_data, freq_separator,
 	    FREQ_DATA_THRESHOLD, stdin_pos - sizeof(frame));
 }
