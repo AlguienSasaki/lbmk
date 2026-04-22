@@ -234,7 +234,7 @@ readGbe(void)
 	if (buf == NULL)
 		err(EXIT_FAILURE, "malloc");
 
-	gbe[0] = (size_t) buf;
+	gbe[0] = (uintptr_t) buf;
 	gbe[1] = gbe[0] + (nf * (do_read[0] & do_read[1]));
 
 	ssize_t tnr = 0;
