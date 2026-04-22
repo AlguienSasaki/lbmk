@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 CC?=cc
-CFLAGS?=-Os -Wall -Wextra -Werror -pedantic
+CFLAGS?=-Os -Wall -Wextra
 DESTDIR?=
 PREFIX?=/usr/local
 INSTALL?=install
