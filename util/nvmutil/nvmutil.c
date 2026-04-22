@@ -433,8 +433,10 @@ cmd_copy(void)
 
 void
 cmd_swap(void) {
-	err_if(!(goodChecksum(0) || goodChecksum(1)));
-	errno = 0;
+	if(!(goodChecksum(0) || goodChecksum(1))) {
+		errno = EINVAL;
+		err(EXIT_FAILURE, "Invalid checksums");
+	}
 
 	gbe[0] ^= gbe[1];
 	gbe[1] ^= gbe[0];
