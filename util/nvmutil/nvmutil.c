@@ -472,7 +472,7 @@ writeGbe(void)
 		err_if(nw == -1);
 		if (nw != nf) {
 			errno = ECANCELED;
-			err(EXIT_SUCCESS,
+			err(EXIT_FAILURE,
 			    "%ld bytes written to '%s', expected %ld bytes\n",
 			    nw, filename, nf);
 		}
