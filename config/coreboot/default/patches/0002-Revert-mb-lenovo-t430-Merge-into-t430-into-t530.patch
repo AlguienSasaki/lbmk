@@ -1,0 +1,1097 @@
+From 3c5b15f0aa0ba2c9e7d4db6f893e13978c045032 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 23 Apr 2026 20:00:33 +0100
+Subject: [PATCH 02/51] Revert "mb/lenovo/t430: Merge into t430 into t530"
+
+This reverts commit 091ae533b9fdb5b78a5edbc2b68c2faee083f1dd.
+---
+ src/mainboard/lenovo/t430/Kconfig             |  80 +++++++++
+ src/mainboard/lenovo/t430/Kconfig.name        |   4 +
+ src/mainboard/lenovo/t430/Makefile.mk         |   8 +
+ src/mainboard/lenovo/t430/acpi/ec.asl         |   4 +
+ src/mainboard/lenovo/t430/acpi/platform.asl   |  23 +++
+ src/mainboard/lenovo/t430/acpi/superio.asl    |   3 +
+ src/mainboard/lenovo/t430/acpi_tables.c       |  15 ++
+ src/mainboard/lenovo/t430/board_info.txt      |   6 +
+ src/mainboard/lenovo/t430/cmos.default        |  20 +++
+ src/mainboard/lenovo/t430/cmos.layout         | 108 ++++++++++++
+ .../lenovo/{t530/variants => }/t430/data.vbt  | Bin
+ src/mainboard/lenovo/t430/devicetree.cb       | 166 ++++++++++++++++++
+ src/mainboard/lenovo/t430/dsdt.asl            |  39 ++++
+ src/mainboard/lenovo/t430/early_init.c        |  40 +++++
+ src/mainboard/lenovo/t430/gma-mainboard.ads   |  22 +++
+ .../lenovo/{t530/variants => }/t430/gpio.c    |   0
+ .../{t530/variants => }/t430/hda_verb.c       |   0
+ src/mainboard/lenovo/t430/mainboard.c         |  15 ++
+ src/mainboard/lenovo/t430/smihandler.c        |  68 +++++++
+ .../lenovo/t430/vboot-ro-me_clean.fmd         |  21 +++
+ src/mainboard/lenovo/t430/vboot-ro.fmd        |  21 +++
+ src/mainboard/lenovo/t430/vboot-rwab.fmd      |  35 ++++
+ src/mainboard/lenovo/t530/Kconfig             |   7 -
+ src/mainboard/lenovo/t530/Kconfig.name        |   3 -
+ src/mainboard/lenovo/t530/Makefile.mk         |   1 -
+ .../t530/{variants/t530 => }/hda_verb.c       |   0
+ .../lenovo/t530/variants/t430/overridetree.cb |  58 ------
+ .../lenovo/t530/variants/w530/hda_verb.c      |  75 --------
+ 28 files changed, 698 insertions(+), 144 deletions(-)
+ create mode 100644 src/mainboard/lenovo/t430/Kconfig
+ create mode 100644 src/mainboard/lenovo/t430/Kconfig.name
+ create mode 100644 src/mainboard/lenovo/t430/Makefile.mk
+ create mode 100644 src/mainboard/lenovo/t430/acpi/ec.asl
+ create mode 100644 src/mainboard/lenovo/t430/acpi/platform.asl
+ create mode 100644 src/mainboard/lenovo/t430/acpi/superio.asl
+ create mode 100644 src/mainboard/lenovo/t430/acpi_tables.c
+ create mode 100644 src/mainboard/lenovo/t430/board_info.txt
+ create mode 100644 src/mainboard/lenovo/t430/cmos.default
+ create mode 100644 src/mainboard/lenovo/t430/cmos.layout
+ rename src/mainboard/lenovo/{t530/variants => }/t430/data.vbt (100%)
+ create mode 100644 src/mainboard/lenovo/t430/devicetree.cb
+ create mode 100644 src/mainboard/lenovo/t430/dsdt.asl
+ create mode 100644 src/mainboard/lenovo/t430/early_init.c
+ create mode 100644 src/mainboard/lenovo/t430/gma-mainboard.ads
+ rename src/mainboard/lenovo/{t530/variants => }/t430/gpio.c (100%)
+ rename src/mainboard/lenovo/{t530/variants => }/t430/hda_verb.c (100%)
+ create mode 100644 src/mainboard/lenovo/t430/mainboard.c
+ create mode 100644 src/mainboard/lenovo/t430/smihandler.c
+ create mode 100644 src/mainboard/lenovo/t430/vboot-ro-me_clean.fmd
+ create mode 100644 src/mainboard/lenovo/t430/vboot-ro.fmd
+ create mode 100644 src/mainboard/lenovo/t430/vboot-rwab.fmd
+ rename src/mainboard/lenovo/t530/{variants/t530 => }/hda_verb.c (100%)
+ delete mode 100644 src/mainboard/lenovo/t530/variants/t430/overridetree.cb
+ delete mode 100644 src/mainboard/lenovo/t530/variants/w530/hda_verb.c
+
+diff --git a/src/mainboard/lenovo/t430/Kconfig b/src/mainboard/lenovo/t430/Kconfig
+new file mode 100644
+index 0000000000..2b6eb17e9c
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/Kconfig
+@@ -0,0 +1,80 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++if BOARD_LENOVO_THINKPAD_T430
++
++config BOARD_SPECIFIC_OPTIONS
++	def_bool y
++	select AZALIA_USE_LEGACY_VERB_TABLE
++	select BOARD_ROMSIZE_KB_12288
++	select DRIVERS_LENOVO_HYBRID_GRAPHICS
++	select DRIVER_LENOVO_SERIALS
++	select DRIVER_LENOVO_SERIALS_EARLY_LOCK
++	select DRIVERS_RICOH_RCE822
++	select EC_LENOVO_H8
++	select EC_LENOVO_PMH7
++	select GFX_GMA_PANEL_1_ON_LVDS
++	select H8_HAS_BAT_THRESHOLDS_IMPL
++	select H8_HAS_BDC_GPIO_DETECTION
++	select H8_HAS_WWAN_GPIO_DETECTION
++	select HAVE_ACPI_RESUME
++	select HAVE_ACPI_TABLES
++	select HAVE_CMOS_DEFAULT
++	select HAVE_OPTION_TABLE
++	select INTEL_GMA_HAVE_VBT
++	select INTEL_INT15
++	select MAINBOARD_HAS_LIBGFXINIT
++	select MAINBOARD_HAS_TPM1
++	select MAINBOARD_USES_IFD_GBE_REGION
++	select MEMORY_MAPPED_TPM
++	select NO_UART_ON_SUPERIO
++	select NORTHBRIDGE_INTEL_SANDYBRIDGE
++	select SERIRQ_CONTINUOUS_MODE
++	select SOUTHBRIDGE_INTEL_C216
++	select SYSTEM_TYPE_LAPTOP
++	select USE_NATIVE_RAMINIT
++
++config VBOOT
++	select GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC
++	select GBB_FLAG_DISABLE_FWMP
++	select GBB_FLAG_DISABLE_LID_SHUTDOWN
++	select GBB_FLAG_DISABLE_PD_SOFTWARE_SYNC
++	select HAS_RECOVERY_MRC_CACHE
++	select VBOOT_VBNV_FLASH
++
++config VBOOT_SLOTS_RW_AB
++	default y
++
++config CBFS_SIZE
++	default 0x700000
++
++config FMDFILE
++	default "src/mainboard/\$(CONFIG_MAINBOARD_DIR)/vboot-rwab.fmd" if VBOOT
++
++config MAINBOARD_DIR
++	default "lenovo/t430"
++
++config MAINBOARD_PART_NUMBER
++	default "ThinkPad T430"
++
++config VGA_BIOS_ID
++	string
++	default "8086,0166"
++
++config DRAM_RESET_GATE_GPIO
++	int
++	default 10
++
++config USBDEBUG_HCD_INDEX
++	int
++	default 2
++
++config PS2K_EISAID
++	default "PNP0303"
++
++config PS2M_EISAID
++	default "LEN0015"
++
++config THINKPADEC_HKEY_EISAID
++	default "LEN0068"
++
++endif
+diff --git a/src/mainboard/lenovo/t430/Kconfig.name b/src/mainboard/lenovo/t430/Kconfig.name
+new file mode 100644
+index 0000000000..f14a1a2d78
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/Kconfig.name
+@@ -0,0 +1,4 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++config BOARD_LENOVO_THINKPAD_T430
++	bool "ThinkPad T430"
+diff --git a/src/mainboard/lenovo/t430/Makefile.mk b/src/mainboard/lenovo/t430/Makefile.mk
+new file mode 100644
+index 0000000000..e4b6fbf0f0
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/Makefile.mk
+@@ -0,0 +1,8 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++bootblock-y += gpio.c
++romstage-y += gpio.c
++
++ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
++bootblock-y += early_init.c
++romstage-y += early_init.c
+diff --git a/src/mainboard/lenovo/t430/acpi/ec.asl b/src/mainboard/lenovo/t430/acpi/ec.asl
+new file mode 100644
+index 0000000000..987593e919
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/acpi/ec.asl
+@@ -0,0 +1,4 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <ec/lenovo/h8/acpi/ec.asl>
++#include <ec/lenovo/h8/acpi/thinkpad_bat_thresholds_b0.asl>
+diff --git a/src/mainboard/lenovo/t430/acpi/platform.asl b/src/mainboard/lenovo/t430/acpi/platform.asl
+new file mode 100644
+index 0000000000..9dee90edc3
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/acpi/platform.asl
+@@ -0,0 +1,23 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++/* The _PTS method (Prepare To Sleep) is called before the OS is
++ * entering a sleep state. The sleep state number is passed in Arg0
++ */
++
++Method(_PTS,1)
++{
++	\_SB.PCI0.LPCB.EC.MUTE(1)
++	\_SB.PCI0.LPCB.EC.USBP(0)
++	\_SB.PCI0.LPCB.EC.RADI(0)
++}
++
++/* The _WAK method is called on system wakeup */
++
++Method(_WAK,1)
++{
++	/* Wake the HKEY to init BT/WWAN */
++	\_SB.PCI0.LPCB.EC.HKEY.WAKE (Arg0)
++
++	/* Not implemented. */
++	Return(Package(){0,0})
++}
+diff --git a/src/mainboard/lenovo/t430/acpi/superio.asl b/src/mainboard/lenovo/t430/acpi/superio.asl
+new file mode 100644
+index 0000000000..ee2eabeb75
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/acpi/superio.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++
++#include <drivers/pc80/pc/ps2_controller.asl>
+diff --git a/src/mainboard/lenovo/t430/acpi_tables.c b/src/mainboard/lenovo/t430/acpi_tables.c
+new file mode 100644
+index 0000000000..36d3e85c1e
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/acpi_tables.c
+@@ -0,0 +1,15 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <acpi/acpi_gnvs.h>
++#include <soc/nvs.h>
++
++void mainboard_fill_gnvs(struct global_nvs *gnvs)
++{
++	/* The lid is open by default */
++	gnvs->lids = 1;
++
++	/* Temperature at which OS will shutdown */
++	gnvs->tcrt = 100;
++	/* Temperature at which OS will throttle CPU */
++	gnvs->tpsv = 90;
++}
+diff --git a/src/mainboard/lenovo/t430/board_info.txt b/src/mainboard/lenovo/t430/board_info.txt
+new file mode 100644
+index 0000000000..09ddde1f85
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/board_info.txt
+@@ -0,0 +1,6 @@
++Category: laptop
++ROM package: SOIC-8
++ROM protocol: SPI
++ROM socketed: n
++Flashrom support: n
++Release year: 2012
+diff --git a/src/mainboard/lenovo/t430/cmos.default b/src/mainboard/lenovo/t430/cmos.default
+new file mode 100644
+index 0000000000..4857f92f67
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/cmos.default
+@@ -0,0 +1,20 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++boot_option=Fallback
++debug_level=Debug
++power_on_after_fail=Disable
++nmi=Enable
++volume=0x3
++first_battery=Primary
++bluetooth=Enable
++wwan=Enable
++wlan=Enable
++touchpad=Enable
++sata_mode=AHCI
++fn_ctrl_swap=Disable
++sticky_fn=Disable
++trackpoint=Enable
++backlight=Both
++hybrid_graphics_mode=Integrated Only
++usb_always_on=Disable
++me_state=Normal
+diff --git a/src/mainboard/lenovo/t430/cmos.layout b/src/mainboard/lenovo/t430/cmos.layout
+new file mode 100644
+index 0000000000..d109a61b4e
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/cmos.layout
+@@ -0,0 +1,108 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++# -----------------------------------------------------------------
++entries
++
++# -----------------------------------------------------------------
++0	120	r	0	reserved_memory
++
++# -----------------------------------------------------------------
++# RTC_BOOT_BYTE (coreboot hardcoded)
++384	1	e	4	boot_option
++388	4	h	0	reboot_counter
++
++# -----------------------------------------------------------------
++# coreboot config options: console
++395	4	e	6	debug_level
++
++#400	8	r	0	reserved for century byte
++
++# coreboot config options: southbridge
++408	1	e	1	nmi
++409	2	e	7	power_on_after_fail
++
++# coreboot config options: EC
++411	1	e	8	first_battery
++412	1	e	1	bluetooth
++413	1	e	1	wwan
++414	1	e	1	touchpad
++415	1	e	1	wlan
++416	1	e	1	trackpoint
++417	1	e	1	fn_ctrl_swap
++418	1	e	1	sticky_fn
++419	2	e	13	usb_always_on
++421	1	e	9	sata_mode
++422	2	e	10	backlight
++
++# coreboot config options: ME
++424	1	e	14	me_state
++425	2	h	0	me_state_prev
++
++# coreboot config options: northbridge
++432	3	e	11	gfx_uma_size
++435	2	e	12	hybrid_graphics_mode
++
++440	8	h	0	volume
++
++# VBOOT
++448	128	r	0	vbnv
++
++# SandyBridge MRC Scrambler Seed values
++896	32	r	0	mrc_scrambler_seed
++928	32	r	0	mrc_scrambler_seed_s3
++960	16	r	0	mrc_scrambler_seed_chk
++
++# coreboot config options: check sums
++984	16	h	0	check_sum
++
++# -----------------------------------------------------------------
++
++enumerations
++
++#ID	value	text
++1	0	Disable
++1	1	Enable
++2	0	Enable
++2	1	Disable
++4	0	Fallback
++4	1	Normal
++6	0	Emergency
++6	1	Alert
++6	2	Critical
++6	3	Error
++6	4	Warning
++6	5	Notice
++6	6	Info
++6	7	Debug
++6	8	Spew
++7	0	Disable
++7	1	Enable
++7	2	Keep
++8	0	Secondary
++8	1	Primary
++9	0	AHCI
++9	1	Compatible
++10	0	Both
++10	1	Keyboard only
++10	2	Thinklight only
++10	3	None
++11	0	32M
++11	1	64M
++11	2	96M
++11	3	128M
++11	4	160M
++11	5	192M
++11	6	224M
++12	0	Integrated Only
++12	1	Discrete Only
++12	2	Dual Graphics
++13	0	Disable
++13	1	AC and battery
++13	2	AC only
++14	0	Normal
++14	1	Disabled
++
++# -----------------------------------------------------------------
++checksums
++
++checksum 392 447 984
+diff --git a/src/mainboard/lenovo/t530/variants/t430/data.vbt b/src/mainboard/lenovo/t430/data.vbt
+similarity index 100%
+rename from src/mainboard/lenovo/t530/variants/t430/data.vbt
+rename to src/mainboard/lenovo/t430/data.vbt
+diff --git a/src/mainboard/lenovo/t430/devicetree.cb b/src/mainboard/lenovo/t430/devicetree.cb
+new file mode 100644
+index 0000000000..198900b399
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/devicetree.cb
+@@ -0,0 +1,166 @@
++chip northbridge/intel/sandybridge
++	register "gfx" = "GMA_STATIC_DISPLAYS(1)"
++
++	# Enable DisplayPort Hotplug with 6ms pulse
++	register "gpu_dp_d_hotplug" = "0x06"
++
++	# Enable Panel as LVDS and configure power delays
++	register "gpu_panel_port_select" = "PANEL_PORT_LVDS"
++	register "gpu_panel_power_cycle_delay" = "6"		# T7: 500ms
++	register "gpu_panel_power_up_delay" = "100"		# T1+T2: 10ms
++	register "gpu_panel_power_down_delay" = "100"		# T5+T6: 10ms
++	register "gpu_panel_power_backlight_on_delay" = "2100"	# T3: 210ms
++	register "gpu_panel_power_backlight_off_delay" = "2100"	# T4: 210ms
++	register "gpu_cpu_backlight" = "0x1155"
++	register "gpu_pch_backlight" = "0x11551155"
++
++	register "spd_addresses" = "{0x50, 0, 0x51, 0}"
++
++	device domain 0 on
++		subsystemid 0x17aa 0x21f3 inherit
++
++		chip southbridge/intel/bd82x6x # Intel Series 6 Cougar Point PCH
++			register "docking_supported" = "true"
++			register "gen1_dec" = "0x000c15e1"
++			register "gen2_dec" = "0x007c1601"
++			register "gen3_dec" = "0x000c06a1"
++			register "gpi13_routing" = "2"
++			register "gpi1_routing" = "2"
++			register "pcie_hotplug_map" = "{ 0, 0, 1, 0, 0, 0, 0, 0 }"
++			register "pcie_port_coalesce" = "true"
++			register "sata_interface_speed_support" = "0x3"
++			register "sata_port_map" = "0x17"
++
++			# Do not enable xHCI Port 4 since WWAN USB is EHCI-only
++			register "superspeed_capable_ports" = "0x7"
++			register "xhci_switchable_ports" = "0x7"
++			register "usb_port_config" = "{
++				{ 1, 1,  0 },
++				{ 1, 1,  1 },
++				{ 1, 2,  3 },
++				{ 1, 1, -1 },
++				{ 1, 1,  2 },
++				{ 1, 0, -1 },
++				{ 0, 0, -1 },
++				{ 1, 2, -1 },
++				{ 1, 0, -1 },
++				{ 1, 1,  5 },
++				{ 1, 0, -1 },
++				{ 1, 0, -1 },
++				{ 1, 3, -1 },
++				{ 1, 1, -1 }
++			}"
++
++			# device specific SPI configuration
++			register "spi_uvscc" = "0x2005"
++			register "spi_lvscc" = "0x2005"
++
++			device ref xhci on end # USB 3.0 Controller
++			device ref mei1 on end # Management Engine Interface 1
++			device ref mei2 off end # Management Engine Interface 2
++			device ref me_ide_r off end # Management Engine IDE-R
++			device ref me_kt off end # Management Engine KT
++			device ref gbe on end # Intel Gigabit Ethernet
++			device ref ehci2 on end # USB2 EHCI #2
++			device ref hda on end # High Definition Audio controller
++			device ref pcie_rp1 on # PCIe Port #1
++				chip drivers/ricoh/rce822 # Ricoh cardreader
++					register "disable_mask" = "0x87"
++					register "sdwppol" = "1"
++					device pci 00.0 on end # Ricoh SD card reader
++				end
++			end
++			device ref pcie_rp2 on end # PCIe Port #2
++			device ref pcie_rp3 on # PCIe Port #3
++				smbios_slot_desc "7" "3" "ExpressCard Slot" "8"
++			end
++			device ref pcie_rp4 off end # PCIe Port #4
++			device ref pcie_rp5 off end # PCIe Port #5
++			device ref pcie_rp6 off end # PCIe Port #6
++			device ref pcie_rp7 off end # PCIe Port #7
++			device ref pcie_rp8 off end # PCIe Port #8
++			device ref ehci1 on end # USB2 EHCI #1
++			device ref pci_bridge off end # PCI bridge
++			device ref lpc on # LPC bridge PCI-LPC bridge
++				chip ec/lenovo/pmh7
++					register "backlight_enable" = "true"
++					register "dock_event_enable" = "true"
++					device pnp ff.1 on end # dummy
++				end
++				chip drivers/pc80/tpm
++					device pnp 0c31.0 on end
++				end
++				chip ec/lenovo/h8
++					device pnp ff.2 on # dummy
++						io 0x60 = 0x62
++						io 0x62 = 0x66
++						io 0x64 = 0x1600
++						io 0x66 = 0x1604
++					end
++					register "config0" = "0xa7"
++					register "config1" = "0x01"
++					register "config2" = "0xa0"
++					register "config3" = "0xe2"
++
++					register "has_keyboard_backlight" = "0"
++
++					register "beepmask0" = "0x02"
++					register "beepmask1" = "0x86"
++					register "has_power_management_beeps" = "1"
++					register "event2_enable" = "0xff"
++					register "event3_enable" = "0xff"
++					register "event4_enable" = "0xf0"
++					register "event5_enable" = "0x3c"
++					register "event6_enable" = "0x00"
++					register "event7_enable" = "0xa1"
++					register "event8_enable" = "0x7b"
++					register "event9_enable" = "0xff"
++					register "eventa_enable" = "0x00"
++					register "eventb_enable" = "0x00"
++					register "eventc_enable" = "0xff"
++					register "eventd_enable" = "0xff"
++					register "evente_enable" = "0x0d"
++
++					register "bdc_gpio_num" = "54"
++					register "bdc_gpio_lvl" = "0"
++
++					register "wwan_gpio_num" = "70"
++					register "wwan_gpio_lvl" = "0"
++				end
++				chip drivers/lenovo/hybrid_graphics
++					device pnp ff.f on end # dummy
++
++					register "detect_gpio" = "21"
++
++					register "has_panel_hybrid_gpio" = "true"
++					register "panel_hybrid_gpio" = "52"
++					register "panel_integrated_lvl" = "true"
++
++					register "has_backlight_gpio" = "false"
++					register "has_dgpu_power_gpio" = "false"
++
++					register "has_thinker1" = "true"
++				end
++			end
++			device ref sata1 on end # SATA Controller 1
++			device ref smbus on # SMBus
++				chip drivers/i2c/at24rf08c # eeprom, 8 virtual devices, same chip
++					device i2c 54 on end
++					device i2c 55 on end
++					device i2c 56 on end
++					device i2c 57 on end
++					device i2c 5c on end
++					device i2c 5d on end
++					device i2c 5e on end
++					device i2c 5f on end
++				end
++			end
++			device ref sata2 off end # SATA Controller 2
++			device ref thermal off end # Thermal
++		end
++		device ref host_bridge on end # Host bridge Host bridge
++		device ref peg10 on end # PCIe Bridge for discrete graphics
++		device ref igd on end # Internal graphics VGA controller
++		device ref dev4 off end # Signal processing controller
++	end
++end
+diff --git a/src/mainboard/lenovo/t430/dsdt.asl b/src/mainboard/lenovo/t430/dsdt.asl
+new file mode 100644
+index 0000000000..1134782675
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/dsdt.asl
+@@ -0,0 +1,39 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#define THINKPAD_EC_GPE 17
++#define BRIGHTNESS_UP \_SB.PCI0.GFX0.INCB
++#define BRIGHTNESS_DOWN \_SB.PCI0.GFX0.DECB
++
++#include <acpi/acpi.h>
++DefinitionBlock(
++	"dsdt.aml",
++	"DSDT",
++	ACPI_DSDT_REV_2,
++	OEM_ID,
++	ACPI_TABLE_CREATOR,
++	0x20110725	// OEM revision
++)
++{
++	#include <acpi/dsdt_top.asl>
++	#include <southbridge/intel/common/acpi/platform.asl>
++
++	#include "acpi/platform.asl"
++
++	// global NVS and variables
++	#include <southbridge/intel/bd82x6x/acpi/globalnvs.asl>
++
++	#include <cpu/intel/common/acpi/cpu.asl>
++
++	Scope (\_SB) {
++		Device (PCI0)
++		{
++			#include <northbridge/intel/sandybridge/acpi/sandybridge.asl>
++			#include <southbridge/intel/bd82x6x/acpi/pch.asl>
++
++			#include <drivers/intel/gma/acpi/default_brightness_levels.asl>
++		}
++	}
++
++	#include <southbridge/intel/common/acpi/sleepstates.asl>
++	#include <ec/lenovo/h8/acpi/thinklight.asl>
++}
+diff --git a/src/mainboard/lenovo/t430/early_init.c b/src/mainboard/lenovo/t430/early_init.c
+new file mode 100644
+index 0000000000..d982660856
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/early_init.c
+@@ -0,0 +1,40 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/pci_ops.h>
++#include <device/pci_def.h>
++#include <ec/lenovo/pmh7/pmh7.h>
++#include <drivers/i2c/at24rf08c/lenovo.h>
++#include <drivers/lenovo/hybrid_graphics/hybrid_graphics.h>
++#include <northbridge/intel/sandybridge/sandybridge.h>
++
++static void hybrid_graphics_init(void)
++{
++	bool peg, igd;
++	u32 reg32;
++
++	early_hybrid_graphics(&igd, &peg);
++
++	if (peg && igd)
++		return;
++
++	/* Hide disabled devices */
++	reg32 = pci_read_config32(PCI_DEV(0, 0, 0), DEVEN);
++	reg32 &= ~(DEVEN_PEG10 | DEVEN_IGD);
++
++	if (peg)
++		reg32 |= DEVEN_PEG10;
++
++	if (igd)
++		reg32 |= DEVEN_IGD;
++	else
++		/* Disable IGD VGA decode, no GTT or GFX stolen */
++		pci_write_config16(PCI_DEV(0, 0, 0), GGC, 2);
++
++	pci_write_config32(PCI_DEV(0, 0, 0), DEVEN, reg32);
++}
++
++void mainboard_early_init(bool s3resume)
++{
++	hybrid_graphics_init();
++	lenovo_mainboard_eeprom_lock();
++}
+diff --git a/src/mainboard/lenovo/t430/gma-mainboard.ads b/src/mainboard/lenovo/t430/gma-mainboard.ads
+new file mode 100644
+index 0000000000..3df1e37f3e
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/gma-mainboard.ads
+@@ -0,0 +1,22 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++     (DP1,
++      DP2,
++      DP3,
++      HDMI1,
++      HDMI2,
++      HDMI3,
++      Analog,
++      LVDS,
++      others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/lenovo/t530/variants/t430/gpio.c b/src/mainboard/lenovo/t430/gpio.c
+similarity index 100%
+rename from src/mainboard/lenovo/t530/variants/t430/gpio.c
+rename to src/mainboard/lenovo/t430/gpio.c
+diff --git a/src/mainboard/lenovo/t530/variants/t430/hda_verb.c b/src/mainboard/lenovo/t430/hda_verb.c
+similarity index 100%
+rename from src/mainboard/lenovo/t530/variants/t430/hda_verb.c
+rename to src/mainboard/lenovo/t430/hda_verb.c
+diff --git a/src/mainboard/lenovo/t430/mainboard.c b/src/mainboard/lenovo/t430/mainboard.c
+new file mode 100644
+index 0000000000..50c944e341
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/mainboard.c
+@@ -0,0 +1,15 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/device.h>
++#include <drivers/intel/gma/int15.h>
++
++static void mainboard_enable(struct device *dev)
++{
++	install_intel_vga_int15_handler(GMA_INT15_ACTIVE_LFP_INT_LVDS,
++					GMA_INT15_PANEL_FIT_DEFAULT,
++					GMA_INT15_BOOT_DISPLAY_DEFAULT, 0);
++}
++
++struct chip_operations mainboard_ops = {
++	.enable_dev = mainboard_enable,
++};
+diff --git a/src/mainboard/lenovo/t430/smihandler.c b/src/mainboard/lenovo/t430/smihandler.c
+new file mode 100644
+index 0000000000..03c899e0d9
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/smihandler.c
+@@ -0,0 +1,68 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <arch/io.h>
++#include <console/console.h>
++#include <cpu/x86/smm.h>
++#include <ec/acpi/ec.h>
++#include <ec/lenovo/h8/h8.h>
++#include <southbridge/intel/common/pmutil.h>
++#include <southbridge/intel/bd82x6x/pch.h>
++
++#define GPE_EC_SCI	1
++#define GPE_EC_WAKE	13
++
++static void mainboard_smi_handle_ec_sci(void)
++{
++	u8 status = inb(EC_SC);
++	u8 event;
++
++	if (!(status & EC_SCI_EVT))
++		return;
++
++	event = ec_query();
++	printk(BIOS_DEBUG, "EC event %#02x\n", event);
++}
++
++void mainboard_smi_gpi(u32 gpi_sts)
++{
++	if (gpi_sts & (1 << GPE_EC_SCI))
++		mainboard_smi_handle_ec_sci();
++}
++
++int mainboard_smi_apmc(u8 data)
++{
++	switch (data) {
++	case APM_CNT_ACPI_ENABLE:
++		/* use 0x1600/0x1604 to prevent races with userspace */
++		ec_set_ports(0x1604, 0x1600);
++		/* route EC_SCI to SCI */
++		gpi_route_interrupt(GPE_EC_SCI, GPI_IS_SCI);
++		/* discard all events, and enable attention */
++		ec_write(0x80, 0x01);
++		break;
++	case APM_CNT_ACPI_DISABLE:
++		/* we have to use port 0x62/0x66, as 0x1600/0x1604 doesn't
++		   provide a EC query function */
++		ec_set_ports(0x66, 0x62);
++		/* route EC_SCI to SMI */
++		gpi_route_interrupt(GPE_EC_SCI, GPI_IS_SMI);
++		/* discard all events, and enable attention */
++		ec_write(0x80, 0x01);
++		break;
++	default:
++		break;
++	}
++	return 0;
++}
++
++void mainboard_smi_sleep(u8 slp_typ)
++{
++	if (slp_typ == 3) {
++		u8 ec_wake = ec_read(0x32);
++		/* If EC wake events are enabled, enable wake on EC WAKE GPE. */
++		if (ec_wake & 0x14) {
++			/* Redirect EC WAKE GPE to SCI. */
++			gpi_route_interrupt(GPE_EC_WAKE, GPI_IS_SCI);
++		}
++	}
++}
+diff --git a/src/mainboard/lenovo/t430/vboot-ro-me_clean.fmd b/src/mainboard/lenovo/t430/vboot-ro-me_clean.fmd
+new file mode 100644
+index 0000000000..5101caa59c
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/vboot-ro-me_clean.fmd
+@@ -0,0 +1,21 @@
++FLASH 0xc00000 {
++	SI_ALL 0x20000 {
++		SI_DESC 0x1000
++		SI_GBE 0x2000
++		SI_ME
++	}
++	SI_BIOS 0xbe0000 {
++		UNIFIED_MRC_CACHE 0x20000 {
++			RECOVERY_MRC_CACHE 0x10000
++			RW_MRC_CACHE 0x10000
++		}
++
++		WP_RO {
++			FMAP 0x800
++			RO_FRID 0x40
++			RO_PADDING 0x7c0
++			GBB 0x1e000
++			COREBOOT(CBFS)
++		}
++	}
++}
+diff --git a/src/mainboard/lenovo/t430/vboot-ro.fmd b/src/mainboard/lenovo/t430/vboot-ro.fmd
+new file mode 100644
+index 0000000000..027849bfe9
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/vboot-ro.fmd
+@@ -0,0 +1,21 @@
++FLASH 0xc00000 {
++	SI_ALL 0x500000 {
++		SI_DESC 0x1000
++		SI_GBE 0x2000
++		SI_ME
++	}
++	SI_BIOS 0x700000 {
++		UNIFIED_MRC_CACHE 0x20000 {
++			RECOVERY_MRC_CACHE 0x10000
++			RW_MRC_CACHE 0x10000
++		}
++
++		WP_RO {
++			FMAP 0x800
++			RO_FRID 0x40
++			RO_PADDING 0x7c0
++			GBB 0x1e000
++			COREBOOT(CBFS)
++		}
++	}
++}
+diff --git a/src/mainboard/lenovo/t430/vboot-rwab.fmd b/src/mainboard/lenovo/t430/vboot-rwab.fmd
+new file mode 100644
+index 0000000000..8819959dfe
+--- /dev/null
++++ b/src/mainboard/lenovo/t430/vboot-rwab.fmd
+@@ -0,0 +1,35 @@
++FLASH 0xc00000 {
++	SI_ALL@0x0 0x500000 {
++		SI_DESC@0x0 0x1000
++		SI_GBE@0x1000 0x2000
++		SI_ME
++	}
++	SI_BIOS@0x500000 0x700000 {
++		RW_SECTION_A 0x280000 {
++			VBLOCK_A 0x10000
++			FW_MAIN_A(CBFS)
++			RW_FWID_A 0x40
++		}
++		RW_SECTION_B 0x280000 {
++			VBLOCK_B 0x10000
++			FW_MAIN_B(CBFS)
++			RW_FWID_B 0x40
++		}
++		UNIFIED_MRC_CACHE@0x500000 0x20000 {
++			RECOVERY_MRC_CACHE@0x0 0x10000
++			RW_MRC_CACHE@0x10000 0x10000
++		}
++		RW_VPD(PRESERVE) 0x1000
++		SMMSTORE(PRESERVE)@0x521000 0x40000
++		RW_NVRAM(PRESERVE)@0x561000 0x2000
++
++		WP_RO {
++			FMAP 0x800
++			RO_FRID 0x40
++			RO_PADDING 0x7c0
++			RO_VPD(PRESERVE) 0x1000
++			GBB 0x1e000
++			COREBOOT(CBFS)
++		}
++	}
++}
+diff --git a/src/mainboard/lenovo/t530/Kconfig b/src/mainboard/lenovo/t530/Kconfig
+index 4f0002f536..8830c39301 100644
+--- a/src/mainboard/lenovo/t530/Kconfig
++++ b/src/mainboard/lenovo/t530/Kconfig
+@@ -38,10 +38,6 @@ config BOARD_LENOVO_W530
+ 	select BOARD_LENOVO_BASEBOARD_T530
+ 	select DRIVERS_RICOH_RCE822
+ 
+-config BOARD_LENOVO_T430
+-	select BOARD_LENOVO_BASEBOARD_T530
+-	select DRIVERS_RICOH_RCE822
+-
+ if BOARD_LENOVO_BASEBOARD_T530
+ 
+ config VBOOT
+@@ -64,7 +60,6 @@ config FMDFILE
+ config VARIANT_DIR
+ 	default "t530" if BOARD_LENOVO_T530
+ 	default "w530" if BOARD_LENOVO_W530
+-	default "t430" if BOARD_LENOVO_T430
+ 
+ config MAINBOARD_DIR
+ 	default "lenovo/t530"
+@@ -75,7 +70,6 @@ config OVERRIDE_DEVICETREE
+ config MAINBOARD_PART_NUMBER
+ 	default "ThinkPad T530" if BOARD_LENOVO_T530
+ 	default "ThinkPad W530" if BOARD_LENOVO_W530
+-	default "ThinkPad T430" if BOARD_LENOVO_T430
+ 
+ config USBDEBUG_HCD_INDEX
+ 	int
+@@ -90,7 +84,6 @@ config VGA_BIOS_ID
+ 	default "8086,0166"
+ 
+ config PS2K_EISAID
+-	default "PNP0303" if BOARD_LENOVO_T430
+ 	default "LEN0071"
+ 
+ config PS2M_EISAID
+diff --git a/src/mainboard/lenovo/t530/Kconfig.name b/src/mainboard/lenovo/t530/Kconfig.name
+index 5b42bd2f89..d8b1925f65 100644
+--- a/src/mainboard/lenovo/t530/Kconfig.name
++++ b/src/mainboard/lenovo/t530/Kconfig.name
+@@ -5,6 +5,3 @@ config BOARD_LENOVO_T530
+ 
+ config BOARD_LENOVO_W530
+ 	bool "ThinkPad W530"
+-
+-config BOARD_LENOVO_T430
+-	bool "ThinkPad T430"
+diff --git a/src/mainboard/lenovo/t530/Makefile.mk b/src/mainboard/lenovo/t530/Makefile.mk
+index 1c72bfe045..69ef08873b 100644
+--- a/src/mainboard/lenovo/t530/Makefile.mk
++++ b/src/mainboard/lenovo/t530/Makefile.mk
+@@ -5,4 +5,3 @@ romstage-y += variants/$(VARIANT_DIR)/gpio.c
+ ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
+ bootblock-y += early_init.c
+ romstage-y += early_init.c
+-ramstage-y += variants/$(VARIANT_DIR)/hda_verb.c
+diff --git a/src/mainboard/lenovo/t530/variants/t530/hda_verb.c b/src/mainboard/lenovo/t530/hda_verb.c
+similarity index 100%
+rename from src/mainboard/lenovo/t530/variants/t530/hda_verb.c
+rename to src/mainboard/lenovo/t530/hda_verb.c
+diff --git a/src/mainboard/lenovo/t530/variants/t430/overridetree.cb b/src/mainboard/lenovo/t530/variants/t430/overridetree.cb
+deleted file mode 100644
+index 72cc6b54e1..0000000000
+--- a/src/mainboard/lenovo/t530/variants/t430/overridetree.cb
++++ /dev/null
+@@ -1,58 +0,0 @@
+-chip northbridge/intel/sandybridge
+-	register "gpu_panel_power_backlight_on_delay" = "2100"	# T3: 210ms
+-	register "gpu_panel_power_backlight_off_delay" = "2100"	# T4: 210ms
+-
+-	register "spd_addresses" = "{0x50, 0, 0x51, 0}"
+-	device domain 0 on
+-		subsystemid 0x17aa 0x21f3 inherit
+-		chip southbridge/intel/bd82x6x # Intel Series 7 Panther Point PCH
+-			register "sata_interface_speed_support" = "0x3"
+-			register "sata_port_map" = "0x17"
+-
+-			# Do not enable xHCI Port 4 since WWAN USB is EHCI-only
+-			register "superspeed_capable_ports" = "0x7"
+-			register "xhci_switchable_ports" = "0x7"
+-			register "usb_port_config" = "{
+-				{ 1, 1,  0 },
+-				{ 1, 1,  1 },
+-				{ 1, 2,  3 },
+-				{ 1, 1, -1 },
+-				{ 1, 1,  2 },
+-				{ 1, 0, -1 },
+-				{ 0, 0, -1 },
+-				{ 1, 2, -1 },
+-				{ 1, 0, -1 },
+-				{ 1, 1,  5 },
+-				{ 1, 0, -1 },
+-				{ 1, 0, -1 },
+-				{ 1, 3, -1 },
+-				{ 1, 1, -1 }
+-			}"
+-
+-			device ref pcie_rp1 on # PCIe Port #1
+-				chip drivers/ricoh/rce822 # Ricoh cardreader
+-					register "disable_mask" = "0x87"
+-					register "sdwppol" = "1"
+-					device pci 00.0 on end # Ricoh SD card reader
+-				end
+-			end
+-			device ref lpc on
+-				chip ec/lenovo/h8
+-					device pnp ff.2 on end # dummy
+-					register "wwan_gpio_num" = "70"
+-					register "wwan_gpio_lvl" = "0"
+-					register "config1" = "0x01"
+-					register "config3" = "0xe2"
+-					register "has_keyboard_backlight" = "0"
+-					register "beepmask0" = "0x02"
+-					register "has_power_management_beeps" = "1"
+-					register "event4_enable" = "0xf0"
+-					register "event5_enable" = "0x3c"
+-					register "event7_enable" = "0xa1"
+-					register "eventa_enable" = "0x00"
+-				end
+-			end
+-			device ref thermal off end # Thermal
+-		end
+-	end
+-end
+diff --git a/src/mainboard/lenovo/t530/variants/w530/hda_verb.c b/src/mainboard/lenovo/t530/variants/w530/hda_verb.c
+deleted file mode 100644
+index 564aff2d77..0000000000
+--- a/src/mainboard/lenovo/t530/variants/w530/hda_verb.c
++++ /dev/null
+@@ -1,75 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-
+-/* Bits 31:28 - Codec Address */
+-/* Bits 27:20 - NID */
+-/* Bits 19:8 - Verb ID */
+-/* Bits 7:0  - Payload */
+-
+-#include <device/azalia_device.h>
+-
+-const u32 cim_verb_data[] = {
+-	0x10ec0269,	/* Codec Vendor / Device ID: Realtek ALC269VC */
+-	0x17aa21fa,	/* Subsystem ID */
+-	18,		/* Number of 4 dword sets */
+-	AZALIA_SUBVENDOR(0, 0x17aa21fa),
+-
+-	/* Ext. Microphone Connector:	External,Right; MicIn,3.5mm; Black,JD; DA,Seq */
+-	AZALIA_PIN_CFG(0, 0x0a, 0x04a11020),
+-
+-	/* Headphones Connector:	External,Right; HP,3.5mm; Black,JD; DA,Seq */
+-	AZALIA_PIN_CFG(0, 0x0b, 0x0421101f),
+-
+-	/* Not connected:		N/A,N/A; Other,Unknown; Unknown,JD; DA,Seq */
+-	AZALIA_PIN_CFG(0, 0x0c, 0x40f000f0),
+-
+-	/* Internal Speakers		Fixed,Int; Speaker,Other Analog; Unknown,nJD; DA,Seq */
+-	AZALIA_PIN_CFG(0, 0x0d, 0x90170110),
+-
+-	/* Not connected */
+-	AZALIA_PIN_CFG(0, 0x0f, 0x40f000f0),
+-
+-	/* Internal Microphone:		Fixed,Int,Top; Mic In,ATIPI; Unknown,nJD; DA,Seq */
+-	AZALIA_PIN_CFG(0, 0x11, 0xd5a30140),
+-	AZALIA_PIN_CFG(0, 0x12, 0x90a60140),
+-	AZALIA_PIN_CFG(0, 0x14, 0x90170110),
+-	AZALIA_PIN_CFG(0, 0x15, 0x03211020),
+-	AZALIA_PIN_CFG(0, 0x18, 0x03a11830),
+-	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
+-
+-	0x01970804,
+-	0x01870803,
+-	0x01470740,
+-	0x00970600,
+-
+-	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
+-	AZALIA_PIN_CFG(0, 0x1d, 0x40138205),
+-	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
+-
+-	/* Misc entries */
+-		0x00370600,
+-		0x00270600,
+-		0x00b707C0, /* Enable PortB as Output with HP amp */
+-		0x00d70740, /* Enable PortD as Output */
+-		0x0017a200, /* Disable ClkEn of PortSenseTst */
+-		0x0017c621, /* Slave Port - Port A used as microphone input for
+-		                            combo Jack
+-		               Master Port - Port B used for Jack Presence Detect
+-		               Enable Combo Jack Detection */
+-		0x0017a208, /* Enable ClkEn of PortSenseTst */
+-		0x00170500, /* Set power state to D0 */
+-
+-	/* --- Codec #3 --- */
+-	0x80862806,	/* Codec Vendor / Device ID: Intel PantherPoint HDMI */
+-	0x80860101,	/* Subsystem ID */
+-	4,		/* Number of 4 dword sets */
+-	AZALIA_SUBVENDOR(3, 0x80860101),
+-	AZALIA_PIN_CFG(3, 0x05, 0x18560010),
+-	AZALIA_PIN_CFG(3, 0x06, 0x18560020),
+-	AZALIA_PIN_CFG(3, 0x07, 0x18560030),
+-};
+-
+-const u32 pc_beep_verbs[] = {
+-	0x02177a00, /* Digital PCBEEP Gain: 0h=-9db, 1h=-6db ... 4h=+3db, 5h=+6db */
+-};
+-
+-AZALIA_ARRAY_SIZES;
+-- 
+2.47.3
+
