@@ -1,0 +1,411 @@
+From 31f8f8de88963b1329aeac1b5c09de53165e7ce8 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 23 Apr 2026 20:27:35 +0100
+Subject: [PATCH 51/51] disable -Werror in the coreboot build system
+
+we don't want it in libreboot, a coreboot distro.
+
+you have NO IDEA how many times users have complained
+in the past that libreboot doesn't build, and it was
+code that was actually fine in practice, but the compiler
+was just being overly pedantic. i often sit there and
+fix each one. no more.
+
+just remove Werror. this shall be libreboot policy from now
+on. it makes sense for coreboot  to enable this, because that
+is for developers. coreboot-distro is for coreboot users.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile.mk                                   | 2 --
+ payloads/libpayload/Makefile.mk               | 2 +-
+ payloads/libpayload/Makefile.payload          | 2 +-
+ payloads/libpayload/sample/Makefile           | 2 +-
+ payloads/libpayload/sample/arch_mock/Makefile | 2 +-
+ payloads/libpayload/tests/Makefile.mk         | 2 +-
+ payloads/linuxcheck/Makefile                  | 2 +-
+ src/lib/gnat/Makefile.mk                      | 1 -
+ tests/Makefile.common                         | 2 +-
+ util/amdfwtool/Makefile.mk                    | 3 ++-
+ util/archive/Makefile                         | 3 ++-
+ util/bincfg/Makefile                          | 3 ++-
+ util/bucts/Makefile                           | 3 ++-
+ util/cbfstool/Makefile.mk                     | 2 +-
+ util/cbfstool/lz4/Makefile                    | 8 ++++----
+ util/cbmem/Makefile                           | 3 ++-
+ util/ectool/Makefile                          | 2 +-
+ util/futility/Makefile.mk                     | 2 +-
+ util/ifdtool/Makefile.mk                      | 2 +-
+ util/intelvbttool/Makefile                    | 2 +-
+ util/msrtool/configure                        | 2 +-
+ util/pmh7tool/Makefile                        | 2 +-
+ util/superiotool/Makefile                     | 6 +++---
+ util/uio_usbdebug/Makefile                    | 2 +-
+ util/xcompile/xcompile                        | 2 +-
+ 25 files changed, 33 insertions(+), 31 deletions(-)
+
+diff --git a/Makefile.mk b/Makefile.mk
+index 8f541ad187..ff9ed89e00 100644
+--- a/Makefile.mk
++++ b/Makefile.mk
+@@ -555,7 +555,6 @@ CFLAGS_common += -ffunction-sections
+ CFLAGS_common += -fdata-sections
+ CFLAGS_common += -fno-pie
+ CFLAGS_common += -Wstring-compare
+-CFLAGS_common += -Werror
+ ifeq ($(CONFIG_COMPILER_GCC),y)
+ CFLAGS_common += -Wold-style-declaration
+ CFLAGS_common += -Wcast-function-type
+@@ -581,7 +580,6 @@ endif
+ ADAFLAGS_common += -gnatp
+ ADAFLAGS_common += -Wuninitialized
+ ADAFLAGS_common += -Wall
+-ADAFLAGS_common += -Werror
+ ADAFLAGS_common += -pipe
+ ADAFLAGS_common += -g
+ ADAFLAGS_common += -nostdinc
+diff --git a/payloads/libpayload/Makefile.mk b/payloads/libpayload/Makefile.mk
+index 0f5d1a0e11..45c2c5ad74 100644
+--- a/payloads/libpayload/Makefile.mk
++++ b/payloads/libpayload/Makefile.mk
+@@ -80,7 +80,7 @@ CFLAGS += -nostdlib -fno-builtin -ffreestanding -fomit-frame-pointer
+ CFLAGS += -ffunction-sections -fdata-sections
+ CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wvla
+ CFLAGS += -Wwrite-strings -Wredundant-decls -Wimplicit-fallthrough
+-CFLAGS += -Wstrict-aliasing -Wshadow -Wno-address-of-packed-member -Werror
++CFLAGS += -Wstrict-aliasing -Wshadow -Wno-address-of-packed-member
+ 
+ ifeq ($(CONFIG_LP_LTO),y)
+ CFLAGS += -flto
+diff --git a/payloads/libpayload/Makefile.payload b/payloads/libpayload/Makefile.payload
+index 2eafd4bec3..c74704c58d 100644
+--- a/payloads/libpayload/Makefile.payload
++++ b/payloads/libpayload/Makefile.payload
+@@ -84,7 +84,7 @@ endif
+ 
+ CFLAGS  = $(CFLAGS_$(ARCH))
+ CFLAGS += -Os -ffreestanding
+-CFLAGS += -Wall -Wextra -Wmissing-prototypes -Wvla -Werror
++CFLAGS += -Wall -Wextra -Wmissing-prototypes -Wvla
+ ifeq ($(CONFIG_LP_LTO),y)
+ CFLAGS += -flto
+ endif
+diff --git a/payloads/libpayload/sample/Makefile b/payloads/libpayload/sample/Makefile
+index 1249e9a017..269511d7df 100644
+--- a/payloads/libpayload/sample/Makefile
++++ b/payloads/libpayload/sample/Makefile
+@@ -44,7 +44,7 @@ AS := $(AS_$(ARCH-y))
+ LIBPAYLOAD_DIR := ../install/libpayload
+ XCC := CC="$(CC)" $(LIBPAYLOAD_DIR)/bin/lpgcc
+ XAS := AS="$(AS)" $(LIBPAYLOAD_DIR)/bin/lpas
+-CFLAGS := -fno-builtin -Wall -Werror -Os
++CFLAGS := -fno-builtin -Wall -Os
+ TARGET := hello
+ OBJS := $(TARGET).o
+ 
+diff --git a/payloads/libpayload/sample/arch_mock/Makefile b/payloads/libpayload/sample/arch_mock/Makefile
+index a1e748111e..a146c2b3be 100644
+--- a/payloads/libpayload/sample/arch_mock/Makefile
++++ b/payloads/libpayload/sample/arch_mock/Makefile
+@@ -12,7 +12,7 @@ CC := gcc
+ AS := as
+ OBJCOPY := objcopy
+ LIBPAYLOAD_DIR := ../../install/libpayload
+-CFLAGS := -fno-builtin -Wall -Werror -Os \
++CFLAGS := -fno-builtin -Wall -Os \
+ 	-include $(LIBPAYLOAD_DIR)/include/kconfig.h \
+ 	-include $(LIBPAYLOAD_DIR)/include/compiler.h \
+ 	-I $(LIBPAYLOAD_DIR)/include \
+diff --git a/payloads/libpayload/tests/Makefile.mk b/payloads/libpayload/tests/Makefile.mk
+index 6b6c78d835..b2e7433b65 100644
+--- a/payloads/libpayload/tests/Makefile.mk
++++ b/payloads/libpayload/tests/Makefile.mk
+@@ -45,7 +45,7 @@ TEST_CFLAGS += -I$(cmockasrc)/include
+ # Minimal subset of warnings and errors. Tests can be less strict than actual build.
+ TEST_CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wvla
+ TEST_CFLAGS += -Wwrite-strings -Wno-address-of-packed-member -Wimplicit-fallthrough
+-TEST_CFLAGS += -Wstrict-aliasing -Wshadow -Werror
++TEST_CFLAGS += -Wstrict-aliasing -Wshadow
+ TEST_CFLAGS += -Wno-unknown-warning-option -Wno-source-mgr -Wno-main-return-type
+ 
+ TEST_CFLAGS += -std=gnu11 -ffunction-sections -fdata-sections -fno-builtin
+diff --git a/payloads/linuxcheck/Makefile b/payloads/linuxcheck/Makefile
+index 838c90df0c..a9d016db36 100644
+--- a/payloads/linuxcheck/Makefile
++++ b/payloads/linuxcheck/Makefile
+@@ -3,7 +3,7 @@ XCOMPILE=$(LIBPAYLOAD_DIR)/libpayload.xcompile
+ # build libpayload and put .config file in $(CURDIR) instead of ../libpayload
+ # to avoid pollute the libpayload source directory and possible conflicts
+ LPOPTS=obj="$(CURDIR)/build" DESTDIR="$(CURDIR)" DOTCONFIG="$(CURDIR)/.config"
+-CFLAGS += -Wall -Wvla -Werror -Os -ffreestanding -nostdinc -nostdlib
++CFLAGS += -Wall -Wvla -Os -ffreestanding -nostdinc -nostdlib
+ ifeq ($(CONFIG_ARCH_X86),y)
+ TARGETARCH = i386
+ endif
+diff --git a/src/lib/gnat/Makefile.mk b/src/lib/gnat/Makefile.mk
+index 150a715067..9d9591bc00 100644
+--- a/src/lib/gnat/Makefile.mk
++++ b/src/lib/gnat/Makefile.mk
+@@ -12,7 +12,6 @@ ADAFLAGS_libgnat-$(1) := \
+ 	-gnatpg \
+ 	-I$$(src)/lib/gnat/ \
+ 	$$(GCC_ADAFLAGS_$(1)) \
+-	-Werror \
+ 	-fno-pie \
+ 
+ libgnat-$(1)-y += a-unccon.ads
+diff --git a/tests/Makefile.common b/tests/Makefile.common
+index 085e4cffc4..831867cf5c 100644
+--- a/tests/Makefile.common
++++ b/tests/Makefile.common
+@@ -46,7 +46,7 @@ TEST_INCLUDES += -I$(dir $(TEST_KCONFIG_AUTOHEADER))
+ # -Wmissing-prototypes just make working with the test framework cumbersome.
+ # Only put conservative warnings here that really detect code that's obviously
+ # unintentional.
+-TEST_CFLAGS += -Wall -Werror -Wundef -Wstrict-prototypes -Wno-inline-asm
++TEST_CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-inline-asm
+ TEST_CFLAGS += -Wno-unknown-warning-option -Wno-source-mgr -Wno-main-return-type
+ TEST_CFLAGS += -Wno-array-compare -Wno-trigraphs
+ TEST_CFLAGS += -Wno-unused-but-set-variables
+diff --git a/util/amdfwtool/Makefile.mk b/util/amdfwtool/Makefile.mk
+index 0b9cc1b644..271afce4a7 100644
+--- a/util/amdfwtool/Makefile.mk
++++ b/util/amdfwtool/Makefile.mk
+@@ -6,7 +6,8 @@ amdfwtoolobj = amdfwtool.o data_parse.o signed_psp.o handle_file.o opts.o
+ amdfwreadobj = amdfwread.o
+ amdfwheader = amdfwtool.h
+ 
+-WERROR ?= -Werror
++# no werror for you
++WERROR ?=
+ AMDFWTOOLCFLAGS :=-O2 -Wall -Wextra -Wshadow $(WERROR)
+ AMDFWTOOLCFLAGS += -I $(top)/src/commonlib/bsd/include
+ AMDFWTOOLCFLAGS += -D_GNU_SOURCE # memmem() from string.h
+diff --git a/util/archive/Makefile b/util/archive/Makefile
+index 2de6a6294a..70820aeba2 100644
+--- a/util/archive/Makefile
++++ b/util/archive/Makefile
+@@ -1,7 +1,8 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ PROGRAM = archive
+ HOSTCC ?= gcc
+-WERROR=-Werror
++# no werror for u
++WERROR=
+ CFLAGS=-O2 -Wall -Wextra -Wshadow ${WERROR}
+ 
+ SRCS = $(PROGRAM).c
+diff --git a/util/bincfg/Makefile b/util/bincfg/Makefile
+index dbcbc7711c..debef6c597 100644
+--- a/util/bincfg/Makefile
++++ b/util/bincfg/Makefile
+@@ -3,7 +3,8 @@ CC = gcc
+ YACC = bison
+ LEX = flex
+ TARGET=bincfg
+-WERROR=-Werror
++# no werror for u
++WERROR=
+ CFLAGS=-O2 -Wall -Wextra -Wshadow ${WERROR}
+ CFLAGS+=-Wno-unused-function
+ LDFLAGS= -lfl
+diff --git a/util/bucts/Makefile b/util/bucts/Makefile
+index d32258d1ec..a81aa5e1ae 100644
+--- a/util/bucts/Makefile
++++ b/util/bucts/Makefile
+@@ -3,7 +3,8 @@ CC:=gcc
+ OBJ:=bucts.o
+ TARGET=bucts
+ VERSION:=$(shell git describe)
+-WERROR=-Werror
++# no werror for u
++WERROR=
+ CFLAGS=-O2 -Wall -Wextra -Wshadow ${WERROR}
+ 
+ ifeq ($(shell uname), FreeBSD)
+diff --git a/util/cbfstool/Makefile.mk b/util/cbfstool/Makefile.mk
+index d3f07f9777..e34f69c1f1 100644
+--- a/util/cbfstool/Makefile.mk
++++ b/util/cbfstool/Makefile.mk
+@@ -140,7 +140,7 @@ cse_serger_obj += common.o
+ cse_serger_obj += cse_helpers.o
+ cse_serger_obj += $(foreach var, $(bpdt_formats_obj), $(var))
+ 
+-TOOLCFLAGS ?= -Werror -Wall -Wextra -Wshadow
++TOOLCFLAGS ?= -Wall -Wextra -Wshadow
+ TOOLCFLAGS += -Wcast-qual -Wmissing-prototypes -Wredundant-decls -Wshadow
+ TOOLCFLAGS += -Wstrict-prototypes -Wwrite-strings
+ TOOLCFLAGS += -O2
+diff --git a/util/cbfstool/lz4/Makefile b/util/cbfstool/lz4/Makefile
+index d624e84703..be484c805f 100644
+--- a/util/cbfstool/lz4/Makefile
++++ b/util/cbfstool/lz4/Makefile
+@@ -72,10 +72,10 @@ cmake:
+ 	@cd cmake_unofficial; cmake CMakeLists.txt; $(MAKE)
+ 
+ gpptest: clean
+-	$(MAKE) all CC=g++ CFLAGS="-O3 -I../lib -Wall -Wextra -Wundef -Wshadow -Wcast-align -Werror"
++	$(MAKE) all CC=g++ CFLAGS="-O3 -I../lib -Wall -Wextra -Wundef -Wshadow -Wcast-align"
+ 
+ clangtest: clean
+-	CFLAGS="-O3 -Werror -Wconversion -Wno-sign-conversion" $(MAKE) all CC=clang
++	CFLAGS="-O3 -Wconversion -Wno-sign-conversion" $(MAKE) all CC=clang
+ 
+ sanitize: clean
+ 	CFLAGS="-O3 -g -fsanitize=undefined" $(MAKE) test CC=clang FUZZER_TIME="-T1mn" NB_LOOPS=-i1
+@@ -84,8 +84,8 @@ staticAnalyze: clean
+ 	CFLAGS=-g clang-tidy $(CLANG_TIDY_CHECKS) $(CLANG_TIDY_ARGS) $(SRCS)
+ 
+ armtest: clean
+-	CFLAGS="-O3 -Werror" $(MAKE) -C $(LZ4DIR) all CC=arm-linux-gnueabi-gcc
+-	CFLAGS="-O3 -Werror" $(MAKE) -C $(PRGDIR) bins CC=arm-linux-gnueabi-gcc
++	CFLAGS="-O3" $(MAKE) -C $(LZ4DIR) all CC=arm-linux-gnueabi-gcc
++	CFLAGS="-O3" $(MAKE) -C $(PRGDIR) bins CC=arm-linux-gnueabi-gcc
+ 
+ versionsTest: clean
+ 	$(MAKE) -C versionsTest
+diff --git a/util/cbmem/Makefile b/util/cbmem/Makefile
+index e265ea6693..3aaaeac794 100644
+--- a/util/cbmem/Makefile
++++ b/util/cbmem/Makefile
+@@ -9,7 +9,8 @@ CC       ?= $(CROSS_COMPILE)gcc
+ INSTALL  ?= /usr/bin/env install
+ PREFIX   ?= /usr/local
+ CFLAGS   ?= -O2
+-WERROR=-Werror
++# no werror for you!
++WERROR=
+ CFLAGS   += -Wall -Wextra -Wmissing-prototypes -Wshadow $(WERROR)
+ CPPFLAGS += -I . -I $(ROOT)/commonlib/include -I $(ROOT)/commonlib/bsd/include
+ CPPFLAGS += -include $(ROOT)/commonlib/bsd/include/commonlib/bsd/compiler.h
+diff --git a/util/ectool/Makefile b/util/ectool/Makefile
+index a90773e5c6..5724ac6009 100644
+--- a/util/ectool/Makefile
++++ b/util/ectool/Makefile
+@@ -1,7 +1,7 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ 
+ CC ?= gcc
+-WERROR=-Werror
++WERROR=
+ CFLAGS = -O2 -Wall -Wextra -Wshadow $(WERROR)
+ PROGRAM = ectool
+ INSTALL ?= /usr/bin/env install
+diff --git a/util/futility/Makefile.mk b/util/futility/Makefile.mk
+index a7bcee50d3..cb5363b93e 100644
+--- a/util/futility/Makefile.mk
++++ b/util/futility/Makefile.mk
+@@ -10,7 +10,7 @@ $(VBOOT_FUTILITY): | check-openssl-presence
+ 	unset CFLAGS LDFLAGS; $(MAKE) -C $(VBOOT_SOURCE) \
+ 		BUILD=$(VBOOT_HOST_BUILD) \
+ 		CC="$(HOSTCC)" \
+-		WERROR="-Werror -Wno-deprecated-declarations" \
++		WERROR="-Wno-deprecated-declarations" \
+ 		PKG_CONFIG="$(HOSTPKGCONFIG)" \
+ 		V=$(V) \
+ 		USE_FLASHROM=0 \
+diff --git a/util/ifdtool/Makefile.mk b/util/ifdtool/Makefile.mk
+index 2b97bf51c8..47953aedb1 100644
+--- a/util/ifdtool/Makefile.mk
++++ b/util/ifdtool/Makefile.mk
+@@ -2,7 +2,7 @@
+ 
+ ifdtoolobj = ifdtool.o fmap.o kv_pair.o valstr.o
+ 
+-IFDTOOLCFLAGS  = -O2 -g -Wall -Wextra -Wmissing-prototypes -Werror
++IFDTOOLCFLAGS  = -O2 -g -Wall -Wextra -Wmissing-prototypes
+ IFDTOOLCFLAGS += -I$(top)/src/commonlib/include -I$(top)/src/commonlib/bsd/include
+ IFDTOOLCFLAGS += -I$(top)/util/cbfstool/flashmap
+ IFDTOOLCFLAGS += -include $(top)/src/commonlib/bsd/include/commonlib/bsd/compiler.h
+diff --git a/util/intelvbttool/Makefile b/util/intelvbttool/Makefile
+index 5c770dec9e..8963263354 100644
+--- a/util/intelvbttool/Makefile
++++ b/util/intelvbttool/Makefile
+@@ -6,7 +6,7 @@ CC ?= gcc
+ INSTALL ?= /usr/bin/env install
+ PREFIX ?= /usr/local
+ CFLAGS ?= -O2 -g
+-CFLAGS += -Wall -Werror
++CFLAGS += -Wall
+ CFLAGS += -I../../src/commonlib/include -I ../../src/commonlib/bsd/include
+ 
+ all: $(PROGRAM)
+diff --git a/util/msrtool/configure b/util/msrtool/configure
+index 659cbcd66b..731e24f550 100755
+--- a/util/msrtool/configure
++++ b/util/msrtool/configure
+@@ -133,7 +133,7 @@ CC=`findprog "compiler" "${CC}" clang gcc cc icc` || exit
+ INSTALL=`findprog "install" "${INSTALL}" install ginstall` || exit
+ 
+ test -n "$DEBUG" && myCFLAGS="-O2 -g" || myCFLAGS="-Os"
+-CFLAGS="${CFLAGS} ${myCFLAGS} -Wall -Werror"
++CFLAGS="${CFLAGS} ${myCFLAGS} -Wall"
+ 
+ cat > .config.c << EOF
+ #include <pci/pci.h>
+diff --git a/util/pmh7tool/Makefile b/util/pmh7tool/Makefile
+index 0a2ebbe147..c04d7e9bf9 100644
+--- a/util/pmh7tool/Makefile
++++ b/util/pmh7tool/Makefile
+@@ -1,7 +1,7 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ 
+ CC = gcc
+-CFLAGS = -O2 -Wall -Wextra -Werror
++CFLAGS = -O2 -Wall -Wextra
+ PROGRAM = pmh7tool
+ INSTALL = /usr/bin/env install
+ PREFIX	= /usr/local
+diff --git a/util/superiotool/Makefile b/util/superiotool/Makefile
+index 39839d9aa6..06aa7b6571 100644
+--- a/util/superiotool/Makefile
++++ b/util/superiotool/Makefile
+@@ -12,7 +12,7 @@ PREFIX  ?= /usr/local
+ VERSION := -D'SUPERIOTOOL_VERSION="$(shell git describe 2>/dev/null)"'
+ 
+ CFLAGS += -O2 -Wall -Wstrict-prototypes -Wundef -Wstrict-aliasing \
+-         -Werror-implicit-function-declaration -std=c11 -pedantic $(VERSION) \
++         -std=c11 -pedantic $(VERSION) \
+          -Wno-variadic-macros -I $(TOP)/src/commonlib/bsd/include
+ LDFLAGS += -lz
+ 
+@@ -24,8 +24,8 @@ ifeq ($(OS_ARCH), Darwin)
+ LIBS = -framework IOKit -framework DirectHW -lpci -lz
+ endif
+ ifeq ($(OS_ARCH), FreeBSD)
+-CFLAGS = -O2 -Wall -Werror -Wstrict-prototypes -Wundef -Wstrict-aliasing \
+-         -Werror-implicit-function-declaration -std=c11 $(VERSION) \
++CFLAGS = -O2 -Wall -Wstrict-prototypes -Wundef -Wstrict-aliasing \
++         -std=c11 $(VERSION) \
+          -I/usr/local/include
+ LDFLAGS += -L/usr/local/lib
+ LIBS = -lz
+diff --git a/util/uio_usbdebug/Makefile b/util/uio_usbdebug/Makefile
+index af1cc8e1ec..2ceb28cd53 100644
+--- a/util/uio_usbdebug/Makefile
++++ b/util/uio_usbdebug/Makefile
+@@ -30,7 +30,7 @@ KCONFIG_H	:= ../../src/include/kconfig.h
+ 
+ CFLAGS		+= \
+ 		   -m32 -g \
+-		   -Wall -Wextra -Werror \
++		   -Wall -Wextra \
+ 		   -Wno-unused-parameter -Wno-error=sign-compare
+ CPPFLAGS	+= \
+ 		   -Iinclude/ \
+diff --git a/util/xcompile/xcompile b/util/xcompile/xcompile
+index f88da69306..ef43e28683 100755
+--- a/util/xcompile/xcompile
++++ b/util/xcompile/xcompile
+@@ -124,7 +124,7 @@ testcc() {
+ 	local tmp_o="$TMPFILE.o"
+ 	rm -f "$tmp_c" "$tmp_o"
+ 	echo "void _start(void) {}" >"$tmp_c"
+-	"$cc" -nostdlib -Werror $cflags -c "$tmp_c" -o "$tmp_o" >/dev/null 2>&1
++	"$cc" -nostdlib $cflags -c "$tmp_c" -o "$tmp_o" >/dev/null 2>&1
+ }
+ 
+ testld() {
+-- 
+2.47.3
+

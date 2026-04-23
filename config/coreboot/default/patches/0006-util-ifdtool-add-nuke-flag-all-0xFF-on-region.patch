@@ -1,4 +1,4 @@
-From 68e1738c5a46181b1fd1fcd44fe314da297b95d0 Mon Sep 17 00:00:00 2001
+From 75892a195d53054ceee67e23c487c4103f559332 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sun, 19 Feb 2023 18:21:43 +0000
 Subject: [PATCH 06/51] util/ifdtool: add --nuke flag (all 0xFF on region)

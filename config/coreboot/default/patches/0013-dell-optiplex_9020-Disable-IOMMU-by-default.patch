@@ -1,4 +1,4 @@
-From 2bd978a08ffee969bbf61af8f145b9e6b050d321 Mon Sep 17 00:00:00 2001
+From 1586b045a75b9cf8cd68a44739beefa501e6cbd3 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 23:00:09 +0000
 Subject: [PATCH 13/51] dell/optiplex_9020: Disable IOMMU by default

@@ -1,4 +1,4 @@
-From 33b89af06765839c0f9a6e599789c520e794a22a Mon Sep 17 00:00:00 2001
+From c1fd80b55e3ab8f651c2ad6e6eec6cdcb3922f9b Mon Sep 17 00:00:00 2001
 From: persmule <persmule@gmail.com>
 Date: Sun, 31 Oct 2021 23:33:26 +0000
 Subject: [PATCH 03/51] lenovo/t400: Enable all SATA ports
