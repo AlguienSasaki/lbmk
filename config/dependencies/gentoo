@@ -18,3 +18,8 @@ sys-libs/libselinux dev-python/pyelftools dev-python/pycparser dev-python/cffi \
 dev-python/pycryptodome app-text/doxygen media-fonts/unifont media-libs/libsdl2 \
 sys-power/acpi_call sys-devel/crossdev \
 "
+pkg_use_file="/etc/portage/package.use/lbmk"
+pkg_use="""
+>=gnustep-base/gnustep-make-2.9.3-r2::gentoo native-exceptions
+>=sys-devel/gcc-15.2.1::gentoo objc ada openmp multilib graphite sanitize pgo lto fortran cxx
+"""
