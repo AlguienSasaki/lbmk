@@ -1,0 +1,30 @@
+From 962bfe1366598145a93cf6a7ed0f78393e5e9ff7 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 23 Dec 2025 18:46:45 +0100
+Subject: [PATCH 43/48] hp8300cmt: use legacy verb table
+
+same as for the 780 optiplex patch
+
+coreboot is making some changes to the way verbs are
+handled. for now, this change is being made to adapt.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/hp/compaq_elite_8300_cmt/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
+index d2bfd35dc4..30be7fb3fe 100644
+--- a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
++++ b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
+@@ -2,6 +2,7 @@ if BOARD_HP_COMPAQ_ELITE_8300_CMT
+ 
+ config BOARD_SPECIFIC_OPTIONS
+ 	def_bool y
++	select AZALIA_USE_LEGACY_VERB_TABLE
+ 	select BOARD_ROMSIZE_KB_16384
+ 	select HAVE_ACPI_RESUME
+ 	select HAVE_ACPI_TABLES
+-- 
+2.47.3
+

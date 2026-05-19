@@ -1,0 +1,36 @@
+From a93c01173c2f88b4a09286740c030314040c39fc Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 11 May 2025 16:28:23 -0600
+Subject: [PATCH 39/48] mb/dell/snb_ivb_latitude: Disable EC initiated shutdown
+ at 87 degrees
+
+If command 0xBF isn't sent, the EC will shut down the system without
+warning once the CPU reaches approximately 87 degrees, without the
+system thermal throttling first. Call the newly added function from the
+MEC5035 code to send this command and disable this behavior.
+
+Tested on the Latitude E6430.
+
+Change-Id: I2b2dc1e3ab115e05d05eaac06892343394d37fdf
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/mainboard/dell/snb_ivb_latitude/early_init.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/mainboard/dell/snb_ivb_latitude/early_init.c b/src/mainboard/dell/snb_ivb_latitude/early_init.c
+index ff83db095b..ef385a0a70 100644
+--- a/src/mainboard/dell/snb_ivb_latitude/early_init.c
++++ b/src/mainboard/dell/snb_ivb_latitude/early_init.c
+@@ -11,4 +11,9 @@ void bootblock_mainboard_early_init(void)
+ 			| KBC_LPC_EN | FDD_LPC_EN | LPT_LPC_EN
+ 			| COMB_LPC_EN | COMA_LPC_EN);
+ 	mec5035_early_init();
++
++	/* Observed from LPC logs with vendor firmware. Seems to disable
++	 * EC-initiated shutdown when the CPU reaches approximately 87 degrees.
++	 * The exact meaning of the parameter is currently unknown. */
++	mec5035_cmd_bf(0x07);
+ }
+-- 
+2.47.3
+

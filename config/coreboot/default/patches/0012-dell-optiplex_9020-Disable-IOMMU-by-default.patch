@@ -1,0 +1,29 @@
+From 0f76a919522c9624c2b5df2a9c17525ab21bd6b9 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Sat, 2 Mar 2024 23:00:09 +0000
+Subject: [PATCH 12/48] dell/optiplex_9020: Disable IOMMU by default
+
+Needed to make graphics cards work. Turning it on is
+recommended if only using iGPU, otherwise leave it off
+by default. The IOMMU is extremely buggy when a graphics
+card is used. Leaving it off by default will ensure that
+the default ROM images in Libreboot will work on any setup.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/dell/optiplex_9020/cmos.default | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/dell/optiplex_9020/cmos.default b/src/mainboard/dell/optiplex_9020/cmos.default
+index 8000eea8c0..0700f971ee 100644
+--- a/src/mainboard/dell/optiplex_9020/cmos.default
++++ b/src/mainboard/dell/optiplex_9020/cmos.default
+@@ -4,4 +4,4 @@ debug_level=Debug
+ nmi=Disable
+ power_on_after_fail=Disable
+ fan_full_speed=Disable
+-iommu=Enable
++iommu=Disable
+-- 
+2.47.3
+

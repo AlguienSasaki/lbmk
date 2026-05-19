@@ -1,0 +1,30 @@
+From f692cd96a4484b8e60bd112454d1bdbc3c689017 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 5 Nov 2023 11:41:41 +0000
+Subject: [PATCH 09/48] dell/e6430: use ME Soft Temporary Disable
+
+i overlooked this. it's set on other boards.
+
+we use me_cleaner anyway, and we set the hap bit, but
+this additional setting takes effect even if the ME
+region is unaltered. it's just another layer of
+disablement, to absolutely ensure Intel ME is not alive
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/dell/snb_ivb_latitude/cmos.default | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/dell/snb_ivb_latitude/cmos.default b/src/mainboard/dell/snb_ivb_latitude/cmos.default
+index 2a5b30f2b7..279415dfd1 100644
+--- a/src/mainboard/dell/snb_ivb_latitude/cmos.default
++++ b/src/mainboard/dell/snb_ivb_latitude/cmos.default
+@@ -6,4 +6,4 @@ bluetooth=Enable
+ wwan=Enable
+ wlan=Enable
+ sata_mode=AHCI
+-me_state=Normal
++me_state=Disabled
+-- 
+2.47.3
+

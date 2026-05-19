@@ -1,0 +1,60 @@
+From b9cc1be6f9d591dbc4f73b1448f8fce5ea20a0b4 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Fri, 20 Feb 2026 01:23:32 +0000
+Subject: [PATCH 46/48] util/ifdtool: option to allow region override
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/ifdtool/ifdtool.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
+index d181888e0f..dfefe316a9 100644
+--- a/util/ifdtool/ifdtool.c
++++ b/util/ifdtool/ifdtool.c
+@@ -78,6 +78,8 @@ static unsigned int max_regions = 0;
+ static int selected_chip = 0;
+ static int platform = -1;
+ 
++static int ignore_region_override = 0;
++
+ static const struct region_name region_names[MAX_REGIONS] = {
+ 	{ "Flash Descriptor", "fd", "flashregion_0_flashdescriptor.bin", "SI_DESC" },
+ 	{ "BIOS", "bios", "flashregion_1_bios.bin", "SI_BIOS" },
+@@ -2093,7 +2095,9 @@ static void new_layout(const char *filename, char *image, int size,
+ 		}
+ 
+ 		for (j = i + 1; j < max_regions; j++) {
+-			if (regions_collide(&new_regions[i], &new_regions[j])) {
++			if (ignore_region_override) {
++				printf("Ignoring region overlap by user's will.\n");
++			} else if (regions_collide(&new_regions[i], &new_regions[j])) {
+ 				fprintf(stderr, "Regions would overlap.\n");
+ 				exit(EXIT_FAILURE);
+ 			}
+@@ -2351,10 +2355,11 @@ int main(int argc, char *argv[])
+ 		{"newvalue", 1, NULL, 'V'},
+ 		{"topswapsize", 1, NULL, 'T'},
+ 		{"nuke", 1, NULL, 'N'},
++		{"ignore-region-overlap", 0, NULL, 'I'},
+ 		{0, 0, 0, 0}
+ 	};
+ 
+-	while ((opt = getopt_long(argc, argv, "S:V:df:F:D:C:M:xi:n:O:s:p:T:elrugEcvth?",
++	while ((opt = getopt_long(argc, argv, "I:S:V:df:F:D:C:M:xi:n:O:s:p:T:elrugEcvth?",
+ 					long_options, &option_index)) != EOF) {
+ 		switch (opt) {
+ 		case 'd':
+@@ -2598,6 +2603,9 @@ int main(int argc, char *argv[])
+                        }
+                        mode_nuke = 1;
+                        break;
++		case 'I':
++			ignore_region_override = 1;
++			break;
+ 		case 'v':
+ 			print_version();
+ 			exit(EXIT_SUCCESS);
+-- 
+2.47.3
+

@@ -1,0 +1,92 @@
+From bb286d13cb7702e9396deab04023cc58dcc01a15 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 11 May 2025 15:41:22 -0600
+Subject: [PATCH 38/48] ec/dell/mec5035: Add command to disable EC-initiated
+ thermal shutdown
+
+If command 0xBF isn't sent, the EC shuts down the system without warning
+as soon as the CPU temperature reaches about 87 degrees, without letting
+the CPU thermal throttle to try and reduce the temperature. With vendor
+firmware, the CPU is able to reach around 100 degrees before thermal
+throttling.
+
+This command was found by collecting EC commands by logging the LPC bus
+while running with vendor firmware and then replaying observed commands
+from coreboot. By systematically replaying subsets of commands in a
+binary search pattern and then stress testing the system, the command to
+disable the shutdown was isolated.
+
+The exact meaning of the parameters for this command are unknown at this
+time, but do seem to differ between different generations of these
+laptops. Due to this, the commmand should be called by mainboard
+specific code which passes the specific parameter value used.
+
+The Google Wilco EC code, which runs on Latitude Chromebooks and shares
+many commands with the standard Latitude ECs, suggests that command 0xBF
+tells the EC about the processors CPUID. However, the values observed in
+LPC bus logs do not seem to correspond with any CPUID values on the
+non-Chromebook systems I tested.
+
+Observed command parameter values (sent on mailbox registers 2-4):
+- E6430 (Ivy Bridge): 0x07, 0x00, 0x00
+- M6800 (Haswell): 0x14, 0x00, 0x00
+
+Change-Id: I42f09a3ef681007f64d9c5b1a29248b594737a86
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/mec5035.c | 19 +++++++++++++++++++
+ src/ec/dell/mec5035/mec5035.h |  2 ++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
+index c5067c16f6..b316fa4989 100644
+--- a/src/ec/dell/mec5035/mec5035.c
++++ b/src/ec/dell/mec5035/mec5035.c
+@@ -114,6 +114,25 @@ void mec5035_sleep_enable(void)
+ 	ec_command(CMD_SLEEP_ENABLE);
+ }
+ 
++void mec5035_cmd_bf(u8 i)
++{
++	/*
++	 * If this command isn't sent, the EC shuts down the system as soon as
++	 * the CPU temperature reaches about 87 degrees. It is unknown exactly
++	 * what the parameters represent. The Google Wilco EC code, which runs
++	 * on Latitude Chromebooks and shares some commands with the standard
++	 * Latitude EC code, suggests command 0xBF tells the EC the CPUID, but
++	 * the values observed in LPC bus logs don't seem to match any CPUID
++	 * values of the normal Latitudes this was tested with.
++	 * Observed i values:
++	 * - E6430 (Ivy Bridge): 0x7
++	 * - M6800 (Haswell): 0x14
++	 */
++	u8 buf[3] = {i, 0, 0};
++	write_mailbox_regs(buf, 2, 3);
++	ec_command(CMD_BF);
++}
++
+ void mec5035_early_init(void)
+ {
+ 	/* If this isn't sent the EC shuts down the system after about 15
+diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
+index 5cd907bf71..71d1a71075 100644
+--- a/src/ec/dell/mec5035/mec5035.h
++++ b/src/ec/dell/mec5035/mec5035.h
+@@ -14,6 +14,7 @@ enum mec5035_cmd {
+ 	CMD_POWER_BUTTON_TO_HOST = 0x3e,
+ 	CMD_ACPI_WAKEUP_CHANGE = 0x4a,
+ 	CMD_SLEEP_ENABLE = 0x64,
++	CMD_BF = 0xbf,
+ 	CMD_CPU_OK = 0xc2,
+ };
+ 
+@@ -65,5 +66,6 @@ void mec5035_change_wake(u8 source, enum ec_wake_change change);
+ void mec5035_sleep_enable(void);
+ 
+ void mec5035_smi_sleep(int slp_type);
++void mec5035_cmd_bf(u8 i);
+ 
+ #endif /* _EC_DELL_MEC5035_H_ */
+-- 
+2.47.3
+

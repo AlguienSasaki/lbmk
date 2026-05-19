@@ -1,0 +1,147 @@
+From fdf4774a6e80b1f94079abb346049113dfbf5241 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Fri, 3 May 2024 11:03:32 -0600
+Subject: [PATCH 14/48] ec/dell/mec5035: Add S3 suspend SMI handler
+
+This is necessary for S3 resume to work on SNB and newer Dell Latitude
+laptops. If a command isn't sent, the EC cuts power to the DIMMs,
+preventing the system from resuming. These commands were found using an
+FPGA to log all LPC bus transactions between the host and the EC and
+then narrowing down which ones were actually necessary.
+
+Interestingly, the command IDs appear to be identical to those in
+ec/google/wilco, the EC used on Dell Latitude Chromebooks, and that EC
+implements a similar S3 SMI handler as the one implemented in this
+commit. The Wilco EC Kconfig does suggest that its firmware is a
+modified version of Dell's usual Latitude EC firmware, so the
+similarities seem to be intentional.
+
+These similarities also identified a command to enable or disable wake
+sources like the power button and lid switch, and this was added to the
+SMI handler to disable lid wake as the system does not yet resume
+properly from a like wake with coreboot.
+
+Tested on the Latitude E6430 (Ivy Bridge) and the Precision M6800
+(Haswell, not yet pushed).
+
+Change-Id: I655868aba46911d128f6c24f410dc6fdf83f3070
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/Makefile.mk  |  1 +
+ src/ec/dell/mec5035/mec5035.c    | 13 +++++++++++++
+ src/ec/dell/mec5035/mec5035.h    | 22 ++++++++++++++++++++++
+ src/ec/dell/mec5035/smihandler.c | 17 +++++++++++++++++
+ 4 files changed, 53 insertions(+)
+ create mode 100644 src/ec/dell/mec5035/smihandler.c
+
+diff --git a/src/ec/dell/mec5035/Makefile.mk b/src/ec/dell/mec5035/Makefile.mk
+index 4ebdd811f9..be557e4599 100644
+--- a/src/ec/dell/mec5035/Makefile.mk
++++ b/src/ec/dell/mec5035/Makefile.mk
+@@ -5,5 +5,6 @@ ifeq ($(CONFIG_EC_DELL_MEC5035),y)
+ bootblock-y += mec5035.c
+ romstage-y += mec5035.c
+ ramstage-y += mec5035.c
++smm-y += mec5035.c smihandler.c
+ 
+ endif
+diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
+index 17ac2c1dab..c5067c16f6 100644
+--- a/src/ec/dell/mec5035/mec5035.c
++++ b/src/ec/dell/mec5035/mec5035.c
+@@ -100,6 +100,19 @@ static void mec5035_power_button_route(enum ec_power_button_route target)
+ 	write_mailbox_regs(&buf, 2, 1);
+ 	ec_command(CMD_POWER_BUTTON_TO_HOST);
+ }
++void mec5035_change_wake(u8 source, enum ec_wake_change change)
++{
++	u8 buf[ACPI_WAKEUP_NUM_ARGS] = {change, source, 0, 0x40};
++	write_mailbox_regs(buf, 2, ACPI_WAKEUP_NUM_ARGS);
++	ec_command(CMD_ACPI_WAKEUP_CHANGE);
++}
++
++void mec5035_sleep_enable(void)
++{
++	u8 buf[SLEEP_EN_NUM_ARGS] = {3, 0};
++	write_mailbox_regs(buf, 2, SLEEP_EN_NUM_ARGS);
++	ec_command(CMD_SLEEP_ENABLE);
++}
+ 
+ void mec5035_early_init(void)
+ {
+diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
+index 5fdf56631b..5cd907bf71 100644
+--- a/src/ec/dell/mec5035/mec5035.h
++++ b/src/ec/dell/mec5035/mec5035.h
+@@ -4,6 +4,7 @@
+ #define _EC_DELL_MEC5035_H_
+ 
+ #include <stdint.h>
++#include <types.h>
+ 
+ #define NUM_REGISTERS	32
+ 
+@@ -11,6 +12,8 @@ enum mec5035_cmd {
+ 	CMD_MOUSE_TP = 0x1a,
+ 	CMD_RADIO_CTRL = 0x2b,
+ 	CMD_POWER_BUTTON_TO_HOST = 0x3e,
++	CMD_ACPI_WAKEUP_CHANGE = 0x4a,
++	CMD_SLEEP_ENABLE = 0x64,
+ 	CMD_CPU_OK = 0xc2,
+ };
+ 
+@@ -39,9 +42,28 @@ enum ec_power_button_route {
+ 	HOST
+ };
+ 
++#define ACPI_WAKEUP_NUM_ARGS 4
++enum ec_wake_change {
++	WAKE_OFF = 0,
++	WAKE_ON
++};
++
++/* Copied from ec/google/wilco/commands.h. Not sure if these all apply */
++enum ec_acpi_wake_events {
++	EC_ACPI_WAKE_PWRB = BIT(0),     /* Wake up by power button */
++	EC_ACPI_WAKE_LID = BIT(1),      /* Wake up by lid switch */
++	EC_ACPI_WAKE_RTC = BIT(5),      /* Wake up by RTC */
++};
++
++#define SLEEP_EN_NUM_ARGS 2
++
+ u8 mec5035_mouse_touchpad(enum ec_mouse_setting setting);
+ void mec5035_cpu_ok(void);
+ void mec5035_early_init(void);
+ void mec5035_control_radio(enum ec_radio_dev device, enum ec_radio_state state);
++void mec5035_change_wake(u8 source, enum ec_wake_change change);
++void mec5035_sleep_enable(void);
++
++void mec5035_smi_sleep(int slp_type);
+ 
+ #endif /* _EC_DELL_MEC5035_H_ */
+diff --git a/src/ec/dell/mec5035/smihandler.c b/src/ec/dell/mec5035/smihandler.c
+new file mode 100644
+index 0000000000..958733bf97
+--- /dev/null
++++ b/src/ec/dell/mec5035/smihandler.c
+@@ -0,0 +1,17 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <acpi/acpi.h>
++#include <console/console.h>
++#include <ec/acpi/ec.h>
++#include "mec5035.h"
++
++void mec5035_smi_sleep(int slp_type)
++{
++	switch (slp_type) {
++	case ACPI_S3:
++		/* System does not yet resume properly if woken by lid */
++		mec5035_change_wake(EC_ACPI_WAKE_LID, WAKE_OFF);
++		mec5035_sleep_enable();
++		break;
++	}
++}
+-- 
+2.47.3
+

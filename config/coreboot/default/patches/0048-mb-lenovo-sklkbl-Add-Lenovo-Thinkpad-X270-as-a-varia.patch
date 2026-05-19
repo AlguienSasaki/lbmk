@@ -1,0 +1,600 @@
+From f5f73c2539e05cf85bf5eec795e4f91da50838ba Mon Sep 17 00:00:00 2001
+From: Kat Inskip <kat@inskip.me>
+Date: Tue, 17 Feb 2026 16:18:15 -0800
+Subject: [PATCH 48/48] mb/lenovo/sklkbl: Add Lenovo Thinkpad X270 as a variant
+
+This machine is somewhat dissimilar from the X280 in the PCIe allocations in the overridetree. It also lacks soldered RAM, having a single SODIMM slot.
+
+This port was based upon the work done by Johann C Rode for the X280 and the VBT and hda verbs were obtained from that work, not obtained separately. GPIO ports and PCI-e allocations have been checked against schematics after editing.
+
+Functionality has been validated on a ThinkPad X270 with machine type model 20HMS2WU03 with 16GB onboard RAM and i5-7300U CPU. The laptop has been tested running libreboot, booting Guix via GRUB payload. A check of the hardware shows no issues (video, wifi, wired ethernet, reboot, sleep, NVMe).
+
+An untested variety allowing for a Skylake CPU (for 20K5 and 20K6) has been included.
+---
+ src/mainboard/lenovo/sklkbl_thinkpad/Kconfig  |  14 ++
+ .../lenovo/sklkbl_thinkpad/Kconfig.name       |   3 +
+ .../sklkbl_thinkpad/variants/x270/data.vbt    | Bin 0 -> 6144 bytes
+ .../variants/x270/gma-mainboard.ads           |  19 ++
+ .../sklkbl_thinkpad/variants/x270/gpio.c      | 200 ++++++++++++++++++
+ .../sklkbl_thinkpad/variants/x270/hda_verb.c  | 124 +++++++++++
+ .../variants/x270/memory_init_params.c        |  19 ++
+ .../variants/x270/overridetree.cb             |  89 ++++++++
+ 8 files changed, 468 insertions(+)
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
+ create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+index b7cc705699..5945fe7b99 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
+@@ -58,6 +58,16 @@ config BOARD_LENOVO_X280
+ 	select SOC_INTEL_KABYLAKE
+ 	select HAVE_SPD_IN_CBFS
+ 
++config BOARD_LENOVO_X270_20K6
++	bool
++	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select SOC_INTEL_SKYLAKE
++
++config BOARD_LENOVO_X270_20HM
++	bool
++	select BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
++	select SOC_INTEL_KABYLAKE
++
+ if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
+ 
+ config MAINBOARD_DIR
+@@ -69,6 +79,8 @@ config VARIANT_DIR
+ 	default "t480s" if BOARD_LENOVO_T480S
+ 	default "t580" if BOARD_LENOVO_T580
+ 	default "x280" if BOARD_LENOVO_X280
++	default "x270" if BOARD_LENOVO_X270_20HM
++	default "x270" if BOARD_LENOVO_X270_20K6
+ 
+ config OVERRIDE_DEVICETREE
+ 	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
+@@ -79,6 +91,8 @@ config MAINBOARD_PART_NUMBER
+ 	default "T480s" if BOARD_LENOVO_T480S
+ 	default "T580" if BOARD_LENOVO_T580
+ 	default "X280" if BOARD_LENOVO_X280
++	default "X270" if BOARD_LENOVO_X270_20HM
++	default "X270" if BOARD_LENOVO_X270_20K6
+ 
+ config CBFS_SIZE
+ 	default 0x900000
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+index 1d2888840f..43f9296bc5 100644
+--- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
+@@ -14,3 +14,6 @@ config BOARD_LENOVO_T580
+ 
+ config BOARD_LENOVO_X280
+ 	bool "ThinkPad X280"
++
++config BOARD_LENOVO_X270_20HM
++	bool "ThinkPad X270"
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfb312850e0ab4ea834c535df35edb45834ed248
+GIT binary patch
+literal 6144
+zcmeHKUu;ul6hF83w!Qs&FT30g8FkDf5a<SMw;NO(Gu-~!ShtRLf0!jPp+KunJ2ti<
+z!(djDC1OmZCThSK>4S-84?3TW@j;A<!SI4Hfy4)cZ%Ryzkr$&_&%L+X*all8F+}XS
+zJ>Pe}bI<wR^PTT+Hw^^)v9IeuG|<(CMM{ANOgTp7QVK?5eFwvV{=mUtG#2W@Z{Q*L
+zuHvs704a`JC;2pgbL8lFI^*rFBiLwTS1^j*!-oem>Bew+?D_HG5sZf-7&vkyok@=#
+z8c(ONZ(wf#4P2Q8j}K;2xbOJT;q+(=8en9Nz8wwCI}kNrqtD;ir1>5vxw&Phzs2{M
+z%))J<Sa&=U4fIE1`!Lpv;YeSgudl5;7(IaT-dIN@80l{d%gpFYXn5r0=-@NYj-xkJ
+zhfSKMZ6`b*njvFocyy!z1DOo=8a89tn;uJ#zK~8e$jtD+2%^9NaCUG8frDF3Ac;bU
+zsCz}M7L~A|ZxXOdP~y6h)KNnvD(Kq;tPvHG6S|U6bOmfXIhz2mS%j}9X0wZ+T_bqj
+zXxnr^s)&$SfU8N+0TPu)Tf622u#*~`3WpR45fbY~tLKVVqTxv7L=J6+U|N}iqKKzV
+zE3;KBI5a<PSkaG2QQ)<etxVHdmtteC!a2zj7Ps%Ly}K390sQ$Qc~QN9R&g4<C)O^|
+zCHYIxE+Pzy3Y;Q7OYE{Us3cxbyoK0Dyqma<I7WPc_z3Y3@d@J7#IF*+Nqm9Wm84JD
+z=$S38FW#=XSD9S~mKBnGp-}j|Pyl<vHY;76)j4&$rPG}wMJemd7bPnq0P-!;{gk9i
+z=%jhbi>*^Nkaf-o`vHErAoDN*Y&A{MBB|1XA+35B93JbHvvt;HaeY7Ec#IkF@Xxj@
+zP6k(;H@P#F3nedGs=JfjzpYa!OobkwSsK#P$I2^BlEsV4e37vB4$G)q{*N<I(*ajq
+z*&JS9uZYPFRw8QundXtFXdc=`+8A^?Y!r~71H4cTVb}y!kc7B->k!R-c0tBVQz1gd
+z3e(o>A@DI1+dL($vl6C>0P5ZV{-g^pxYUnb>@yes;8K5cv0E<O$kd&T?O~W^>Iue9
+zGkl+^pEC9(!=IS?2V-_OZgs0qxY=Ge4!PAyH+#j6AGy^p-0ZR&e|4+8#AFGZCACdr
+zF$s@L>dO*)UBXW!^=pZJE8*{w>Xz9W8F$NSx6GcD@g-S3E3@;mT(8=*w(DGW^(yn4
+zAdX73_atnRS>NOos_hk9XyacxDE>*#THX@!3ERpD`3eMIq6WR$s^UQVC#{1Gq^xt7
+zU?8;e8r(gGm_M5z*|kA$YW)zZ-l2VHoqv+IZZ{Mr6cJz<1g##<^?;^pBXkQfsMbG8
+zj)o*n*gYj7Okj_PE?l=Ea5?ktR3gF$jT6^<Je&2zx%n8loWqPkcg&O!L&qLnJ3P~*
+z>lfz{96(n%>cxN^_?5@v=|=~qd!SZp&lSg_nlhO)&rS-Zlsuej$mNrsT3tiG@m({M
+zLe6DKG@7OK!rMxtIkS-v>J2YzEOK;RC4{_vs)Sy=U6;SoGqpjBpI>WunFu_%4N1}+
+zr66ea`laMlN~`X%R;)1}c-lG)1mlXaawb#jKo7uXt@_M-9(a%~1Ur_1aKi)nIIh(s
+zEo69Ey~xpeG&5<f3uBVseO=gEven0SZPydqZ;zqEL;w*S*2-EAp-zWn7Alj9vfA(}
+zX3{w6L5jA=55^B2O=tEU8cII^4Wm=b)7I1A=v1~qV!HDZ{Y9GY{GJ!)WJ`0;WudU2
+z?%VTZTSVK|z$@((W&{}Qr^71++qk#jN4{YO;LIHTH^k+$U4C26Ksf{D43sla&OkW>
+I4@?IB2821pg#Z8m
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
+new file mode 100644
+index 0000000000..fcfbd75a92
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
+@@ -0,0 +1,19 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++     (eDP,
++      DP1,
++      DP2,
++      HDMI1,
++      HDMI2,
++      others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
+new file mode 100644
+index 0000000000..ec5db9c53c
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
+@@ -0,0 +1,200 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/gpio.h>
++#include "../../variant.h"
++
++static const struct pad_config gpio_table[] = {
++	/* ------- GPIO Community 0 ------- */
++
++	/* ------- GPIO Group GPP_A ------- */
++	PAD_CFG_NF(GPP_A0, NONE, DEEP, NF1),				/* -KBRC */
++	PAD_CFG_NF(GPP_A1, NATIVE, DEEP, NF1),				/* LPC_AD0 */
++	PAD_CFG_NF(GPP_A2, NATIVE, DEEP, NF1),				/* LPC_AD1 */
++	PAD_CFG_NF(GPP_A3, NATIVE, DEEP, NF1),				/* LPC_AD2 */
++	PAD_CFG_NF(GPP_A4, NATIVE, DEEP, NF1),				/* LPC_AD3 */
++	PAD_CFG_NF(GPP_A5, NONE, DEEP, NF1),				/* -LPC_FRAME */
++	PAD_CFG_NF(GPP_A6, NONE, DEEP, NF1),				/* IRQSER */
++	PAD_CFG_NF(GPP_A7, NONE, DEEP, NF1),				/* -TPM_IRQ */
++	PAD_CFG_NF(GPP_A8, NONE, DEEP, NF1),				/* -CLKRUN */
++	PAD_CFG_NF(GPP_A9, DN_20K, DEEP, NF1),				/* LPCCLK_EC_24M */
++	PAD_CFG_NF(GPP_A10, DN_20K, DEEP, NF1),				/* LPCCLK_DEBUG_24M */
++	PAD_NC(GPP_A11, NONE),
++	PAD_NC(GPP_A12, NONE),						/* BM_BUSY#/ISH_GP6 */
++	PAD_CFG_NF(GPP_A13, NATIVE, DEEP, NF1),				/* -SUSWARN */
++	PAD_CFG_NF(GPP_A14, NATIVE, DEEP, NF1),				/* -SUS_STAT */
++	PAD_CFG_NF(GPP_A15, NATIVE, DEEP, NF1),				/* -SUSACK*/
++	PAD_NC(GPP_A16, NONE),
++	PAD_NC(GPP_A17, NONE),
++	PAD_NC(GPP_A18, NONE),						/* ISH_GP0 */
++	PAD_NC(GPP_A19, NONE),						/* ISH_GP1 */
++	PAD_NC(GPP_A20, NONE),						/* ISH_GP2 */
++	PAD_NC(GPP_A21, NONE),						/* ISH_GP3 */
++	PAD_NC(GPP_A22, NONE),						/* ISH_GP4 */
++	PAD_NC(GPP_A23, NONE),						/* ISH_GP5 */
++
++	/* ------- GPIO Group GPP_B ------- */
++	PAD_CFG_NF(GPP_B0, NONE, DEEP, NF1),				/* CORE_VID0 */
++	PAD_CFG_NF(GPP_B1, NONE, DEEP, NF1),				/* CORE_VID1 */
++	PAD_NC(GPP_B2, NONE),
++	PAD_NC(GPP_B3, NONE),
++	PAD_NC(GPP_B4, NONE),
++	PAD_CFG_NF(GPP_B5, NONE, DEEP, NF1),				/* -CLKREQ_PCIE0 (Card Reader / SD) */
++	PAD_CFG_NF(GPP_B6, NONE, DEEP, NF1),				/* -CLKREQ_PCIE1 (WLAN) */
++	PAD_CFG_NF(GPP_B7, NONE, DEEP, NF1),				/* -CLKREQ_PCIE2 (GBE) */
++	PAD_CFG_NF(GPP_B8, NONE, DEEP, NF1),				/* -CLKREQ_PCIE3 (NVMe) */
++	PAD_CFG_NF(GPP_B9, NONE, DEEP, NF1),
++	PAD_CFG_NF(GPP_B10, NONE, DEEP, NF1),				/* -CLKREQ_PCIE5 (WWAN) */
++	PAD_CFG_NF(GPP_B11, NONE, DEEP, NF1),				/* -EXT_PWR_GATE */
++	PAD_CFG_NF(GPP_B12, NONE, DEEP, NF1),				/* -PCH_SLP_S0 */
++	PAD_CFG_NF(GPP_B13, NONE, DEEP, NF1),				/* -PLTRST */
++	PAD_CFG_NF(GPP_B14, NATIVE, DEEP, NF1),				/* PCH_SPKR */
++	PAD_CFG_GPO(GPP_B15, 0, DEEP),					/* NFC_DLREQ */
++	PAD_NC(GPP_B16, NONE),						/* GSPIO0_CLK */
++	PAD_NC(GPP_B17, NONE),
++	PAD_NC(GPP_B18, NONE),
++	PAD_NC(GPP_B19, NONE),
++	PAD_NC(GPP_B20, NONE),
++	PAD_NC(GPP_B21, NONE),
++	PAD_NC(GPP_B22, NONE),
++	PAD_NC(GPP_B23, NONE),
++
++	/* ------- GPIO Community 1 ------- */
++
++	/* ------- GPIO Group GPP_C ------- */
++	PAD_CFG_NF(GPP_C0, NONE, DEEP, NF1),				/* SMB_CLK */
++	PAD_CFG_NF(GPP_C1, NONE, DEEP, NF1),				/* SMB_DATA */
++	PAD_NC(GPP_C2, NONE),						/* -SMBALERT */
++	PAD_CFG_NF(GPP_C3, NONE, DEEP, NF1),				/* SML0_CLK */
++	PAD_CFG_NF(GPP_C4, NONE, DEEP, NF1),				/* SML0_DATA */
++	PAD_NC(GPP_C5, NONE),
++	PAD_CFG_NF(GPP_C6, NONE, DEEP, NF1),				/* EC_SCL2 */
++	PAD_CFG_NF(GPP_C7, NONE, DEEP, NF1),				/* EC_SDA2 */
++	PAD_NC(GPP_C8, NONE),
++	PAD_NC(GPP_C9, NONE),
++	PAD_NC(GPP_C10, NONE),
++	PAD_NC(GPP_C11, NONE),
++	PAD_NC(GPP_C12, NONE),
++	PAD_NC(GPP_C13, NONE),
++	PAD_NC(GPP_C14, NONE),
++	PAD_NC(GPP_C15, NONE),
++	PAD_CFG_NF(GPP_C16, NONE, DEEP, NF1),				/* I2C0_DATA */
++	PAD_CFG_NF(GPP_C17, NONE, DEEP, NF1),				/* I2C0_CLK */
++	PAD_NC(GPP_C18, NONE),
++	PAD_NC(GPP_C19, NONE),
++	PAD_NC(GPP_C20, NONE),
++	PAD_NC(GPP_C21, NONE),						/* X280: TBT_FORCE_PWR X270: INT#_TYPEC_CPU */
++	PAD_CFG_GPI_SCI(GPP_C22, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_SCI */
++	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* -EC_WAKE */
++
++	/* ------- GPIO Group GPP_D ------- */
++	PAD_NC(GPP_D0, NONE),
++	PAD_NC(GPP_D1, NONE),
++	PAD_NC(GPP_D2, NONE),
++	PAD_NC(GPP_D3, NONE),
++	PAD_NC(GPP_D4, NONE),
++	PAD_NC(GPP_D5, NONE),
++	PAD_NC(GPP_D6, NONE),
++	PAD_NC(GPP_D7, NONE),
++	PAD_NC(GPP_D8, NONE),
++	PAD_NC(GPP_D9, UP_20K),
++	PAD_NC(GPP_D10, NONE),
++	PAD_NC(GPP_D11, UP_20K),
++	PAD_NC(GPP_D12, UP_20K),
++	PAD_NC(GPP_D13, NONE),
++	PAD_NC(GPP_D14, NONE),
++	PAD_NC(GPP_D15, NONE),
++	PAD_NC(GPP_D16, NONE),
++	PAD_CFG_GPO(GPP_D17, 0, DEEP),					/* DDI_PRIORITY */
++	PAD_NC(GPP_D18, NONE),
++	PAD_NC(GPP_D19, NONE),
++	PAD_NC(GPP_D20, NONE),
++	PAD_NC(GPP_D21, NONE),
++	PAD_CFG_GPI_TRIG_OWN(GPP_D22, UP_20K, DEEP, OFF, ACPI),		/* -NFC_DTCT */
++	PAD_NC(GPP_D23, NONE),
++
++	/* ------- GPIO Group GPP_E ------- */
++	PAD_CFG_GPO(GPP_E0, 1, DEEP),                                   /* BDC_ON */
++	PAD_CFG_NF(GPP_E1, NONE, DEEP, NF1),                            /* -SATA1_DTCT */
++	PAD_NC(GPP_E2, NONE),
++	PAD_NC(GPP_E3, NONE), 						/* X280: -TBT_PLUG_EVENT X270: ? */
++	PAD_CFG_GPO(GPP_E4, 1, DEEP),					/* NFC_ON */
++	PAD_CFG_NF(GPP_E5, NONE, RSMRST, NF1),				/* SATA1_DEVSLP */
++	PAD_NC(GPP_E6, NONE),
++	PAD_CFG_GPO(GPP_E7, 1, DEEP),					/* -WWAN_DISABLE */
++	PAD_NC(GPP_E8, NONE),
++	PAD_CFG_NF(GPP_E9, NONE, DEEP, NF1),				/* -USB_PORT0_OC0 */
++	PAD_CFG_NF(GPP_E10, NONE, DEEP, NF1),				/* -USB_PORT1_OC1 */
++	PAD_NC(GPP_E11, NONE),
++	PAD_CFG_GPI_APIC_HIGH(GPP_E12, NONE, DEEP),			/* NFC_INT */
++	PAD_CFG_NF(GPP_E13, NONE, DEEP, NF1),				/* DDIP1_HPD */
++	PAD_CFG_NF(GPP_E14, NONE, DEEP, NF1),				/* DDIP2_HPD */
++	PAD_NC(GPP_E15, NONE),
++	PAD_NC(GPP_E16, NONE),
++	PAD_CFG_NF(GPP_E17, NONE, DEEP, NF1),				/* EDP_HPD */
++	PAD_NC(GPP_E18, NONE),
++	PAD_CFG_NF(GPP_E19, NONE, DEEP, NF1),
++	PAD_CFG_NF(GPP_E20, NONE, DEEP, NF1),				/* DDIP2_CTRLCLK */
++	PAD_CFG_NF(GPP_E21, NONE, DEEP, NF1),				/* DDIP2_CTRLDATA */
++	PAD_NC(GPP_E22, NONE),
++	PAD_NC(GPP_E23, NONE),
++
++	/* ------- GPIO Community 2 ------- */
++
++	/* -------- GPIO Group GPD -------- */
++	PAD_CFG_NF(GPD0, NONE, PWROK, NF1),				/* -BATLOW */
++	PAD_CFG_NF(GPD1, NATIVE, PWROK, NF1),				/* AC_PRESENT */
++	PAD_CFG_NF(GPD2, NATIVE, PWROK, NF1),				/* -LANWAKE */
++	PAD_CFG_NF(GPD3, UP_20K, PWROK, NF1),				/* -PWRSW_EC */
++	PAD_CFG_NF(GPD4, NONE, PWROK, NF1),				/* -PCH_SLP_S3 */
++	PAD_CFG_NF(GPD5, NONE, PWROK, NF1),				/* -PCH_SLP_S4 */
++	PAD_CFG_NF(GPD6, NONE, PWROK, NF1),				/* -PCH_SLP_M */
++	PAD_NC(GPD7, NONE),
++	PAD_CFG_NF(GPD8, NONE, PWROK, NF1),				/* SUSCLK_32K */
++	PAD_CFG_NF(GPD9, NONE, PWROK, NF1),				/* -PCH_SLP_WLAN */
++	PAD_CFG_NF(GPD10, NONE, PWROK, NF1),				/* -PCH_SLP_S5 */
++	PAD_CFG_NF(GPD11, NONE, PWROK, NF1),				/* LANPHYPC */
++
++	/* ------- GPIO Community 3 ------- */
++
++	/* ------- GPIO Group GPP_F ------- */
++	PAD_NC(GPP_F0, NONE),					/* NFC_ACTIVE */
++	PAD_NC(GPP_F1, NONE),
++	PAD_NC(GPP_F2, NONE),
++	PAD_NC(GPP_F3, NONE),
++	PAD_NC(GPP_F4, NONE),					/* -WWAN_RESET */
++	PAD_NC(GPP_F5, UP_20K),
++	PAD_CFG_GPI_TRIG_OWN(GPP_F6, UP_20K, RSMRST, OFF, ACPI),		/* -MIC_HW_EN (R961 to GND) */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F7, UP_20K, RSMRST, OFF, ACPI),		/* -INT_MIC_DTCT */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F8, UP_20K, RSMRST, OFF, ACPI),		/* WWAN_CFG0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F9, UP_20K, RSMRST, OFF, ACPI),		/* WWAN_CFG1 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F10, UP_20K, RSMRST, OFF, ACPI),		/* WWAN_CFG2 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F11, UP_20K, RSMRST, OFF, ACPI),		/* WWAN_CFG3 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F12, UP_20K, RSMRST, OFF, ACPI),		/* PLANARID0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F13, UP_20K, RSMRST, OFF, ACPI),		/* PLANARID1 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F14, UP_20K, RSMRST, OFF, ACPI),		/* PLANARID2 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F15, UP_20K, RSMRST, OFF, ACPI),		/* PLANARID3 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F16, UP_20K, RSMRST, OFF, ACPI),		/* MEMORYID0 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F17, UP_20K, RSMRST, OFF, ACPI),		/* MEMORYID1 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F18, UP_20K, RSMRST, OFF, ACPI),		/* MEMORYID2 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F19, UP_20K, RSMRST, OFF, ACPI),		/* MEMORYID3 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F20, UP_20K, RSMRST, OFF, ACPI),		/* MEMORYID4 */
++	PAD_NC(GPP_F21, UP_20K),
++	PAD_CFG_GPI_TRIG_OWN(GPP_F22, UP_20K, RSMRST, OFF, ACPI),		/* -TAMPER_SW_DTCT */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F23, UP_20K, RSMRST, OFF, ACPI),		/* -SC_DTCT */
++
++	/* ------- GPIO Group GPP_G ------- */
++	PAD_NC(GPP_G0, NONE), 					/* SD_CMD */
++	PAD_NC(GPP_G1, NONE), 					/* SD_DATA0 */
++	PAD_NC(GPP_G2, NONE), 					/* SD_DATA1 */
++	PAD_NC(GPP_G3, NONE),					/* SD_DATA2 */
++	PAD_NC(GPP_G4, NONE),                                   /* X280: TBT_RTD3_PWR_EN X270: SD_DATA3 */
++	PAD_NC(GPP_G5, NONE),                                   /* X280: TBT_FORCE_USB_PWR X270: SD_CD# */
++	PAD_NC(GPP_G6, NONE),                                   /* X280: -TBT_PERST X270: SD_CLK */
++	PAD_NC(GPP_G7, NONE),             			/* X280: -TBT_PCIE_WAKE X270: SD_WP */
++
++};
++
++void variant_config_gpios(void)
++{
++	gpio_configure_pads(gpio_table, ARRAY_SIZE(gpio_table));
++}
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
+new file mode 100644
+index 0000000000..089e605eaf
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
+@@ -0,0 +1,124 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	0x10ec0257, // Vendor/Device ID: Realtek ALC257
++	0x17aa2256, // Subsystem ID
++	18,
++	AZALIA_SUBVENDOR(0, 0x17aa2256),
++
++	AZALIA_PIN_CFG(0, 0x12, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_MIC_IN,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		2, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x13, 0x40000000), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_SPEAKER,
++		AZALIA_OTHER_ANALOG,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_RIGHT,
++		AZALIA_MIC_IN,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		3, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1d, 0x40661b45), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_RIGHT,
++		AZALIA_HP_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 15
++	)),
++
++	//==========Widget node 0x20 - 0 :Hidden register SW reset
++	0x0205001A,
++	0x0204C003,
++	0x0205001A,
++	0x0204C003,
++	0x05850000,
++	0x0584F880,
++	0x05850000,
++	0x0584F880,
++	//==========Widget node 0x20 - 1 : ClassD 2W
++	0x02050038,
++	0x02048981,
++	0x0205001B,
++	0x02040A4B,
++	//==========Widget node 0x20 - 2
++	0x0205003C,
++	0x02043154,
++	0x0205003C,
++	0x02043114,
++	//==========Widget node 0x20 - 3 :
++	0x02050046,
++	0x02040004,
++	0x05750003,
++	0x057409A3,
++	//==========Widget node 0x20 - 4 :JD1 enable 1JD port for HP JD
++	0x02050009,
++	0x02046003,
++	0x0205000A,
++	0x02047770,
++	//==========Widget node 0x20 - 5 : Silence data mode Threshold (-84dB)
++	0x02050037,
++	0x0204FE15,
++	0x02050030,
++	0x02049004,
++
++	0x8086280b, // Vendor/Device ID: Intel Kabylake HDMI
++	0x80860101, // Subsystem ID
++	4,
++	AZALIA_SUBVENDOR(2, 0x80860101),
++
++	AZALIA_PIN_CFG(2, 0x05, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x06, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++};
++
++const u32 pc_beep_verbs[] = {};
++AZALIA_ARRAY_SIZES;
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
+new file mode 100644
+index 0000000000..a2317c026d
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
+@@ -0,0 +1,19 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/romstage.h>
++#include <spd_bin.h>
++
++void mainboard_memory_init_params(FSPM_UPD *mupd)
++{
++	FSP_M_CONFIG *mem_cfg = &mupd->FspmConfig;
++	mem_cfg->DqPinsInterleaved = false;			/* DDR_DQ probably not in interleave mode */
++	mem_cfg->CaVrefConfig      = 1;				/* VREF_CA to CH_A */
++	mem_cfg->MemorySpdDataLen  = CONFIG_DIMM_SPD_SIZE;
++
++	/* Get SPD for memory slots */
++	struct spd_block blk = { .addr_map = { 0x50 } };
++	get_spd_smbus(&blk);
++	dump_spd_info(&blk);
++
++	mem_cfg->MemorySpdPtr00    = (uintptr_t)blk.spd_array[0];
++}
+diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
+new file mode 100644
+index 0000000000..3191cdfac5
+--- /dev/null
++++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
+@@ -0,0 +1,89 @@
++# SPDX-License-Identifier: GPL-2.0-only
++
++chip soc/intel/skylake
++	device domain 0 on
++		device ref south_xhci on
++			register "usb2_ports" = "{
++				[0] = USB2_PORT_MID(OC0),		// JUSB1 (USB-A always on)
++				[1] = USB2_PORT_MID(OC1),		// JUSB2 (USB-A)
++				[2] = USB2_PORT_MID(OC_SKIP),		// JFPR (smartcard slot)
++				[3] = USB2_PORT_MID(OC_SKIP),		// JUSBC (USB docking station)
++				[4] = USB2_PORT_MID(OC_SKIP),		// JIRCAM (IR camera)
++				[5] = USB2_PORT_MID(OC_SKIP),		// JWWAN (M.2 WWAN USB)
++				[6] = USB2_PORT_MID(OC_SKIP),		// JWLAN (M.2 WLAN USB)
++				[7] = USB2_PORT_MID(OC_SKIP),		// JCAM (webcam)
++				[8] = USB2_PORT_MID(OC_SKIP),		// JFPR (fingerprint reader)
++				[9] = USB2_PORT_MID(OC_SKIP),		// JLCD (touch panel)
++			}"
++			register "usb3_ports" = "{
++				[0] = USB3_PORT_DEFAULT(OC0),		// JUSB1 (USB-A always on)
++				[1] = USB3_PORT_DEFAULT(OC1),		// JUSB2 (USB-A)
++				[2] = USB3_PORT_DEFAULT(OC_SKIP),	// JSD (SD card reader)
++				[3] = USB3_PORT_DEFAULT(OC_SKIP),	// JUSB3 (USB docking station)
++			}"
++		end
++
++		# PCIe
++		#   PCIe Controller 1 - 1x2 + 2x1
++		#   PCIE 1     - RP1  - Media / SD   - CLKOUT0 - CLKREQ0
++		#   PCIE 2     - USB3 Port
++		#   PCIE 3     - RP3  - WiGig - CLKOUT1 - CLKREQ1
++		#   PCIE 3     - RP3  - WLAN - CLKOUT2 - CLKREQ2
++		#   PCIE 4     - GbE  - GbE  - CLKOUT3 - CLKREQ3
++		#   PCIe Controller 2 - 1x4
++		#   PCIE 5     - RP5  - NVMe - CLKOUT4 - CLKREQ4
++		#   PCIe Controller 3 - 4x1
++		#   PCIE 7     - RP8 - WWAN - CLKOUT5 - CLKREQ5
++		#   PCIE 8     - Optane
++
++		# Media / SD - x2
++		device ref pcie_rp1 on
++			register "PcieRpClkReqSupport[0]"		= "true"
++			register "PcieRpClkReqNumber[0]"		= "0"
++			register "PcieRpClkSrcNumber[0]"		= "0"
++			register "PcieRpAdvancedErrorReporting[0]"	= "true"
++			register "PcieRpHotPlug[0]"			= "true"
++		end
++
++		# M.2 WLAN x1
++		device ref pcie_rp3 on
++			register "PcieRpClkReqSupport[2]"		= "true"
++			register "PcieRpClkReqNumber[2]"		= "2"
++			register "PcieRpClkSrcNumber[2]"		= "2"
++			register "PcieRpAdvancedErrorReporting[2]"	= "true"
++			register "PcieRpLtrEnable[2]"			= "true"
++			smbios_slot_desc "SlotTypeM2Socket1_DP" "SlotLengthOther" "M.2/A 2230" "SlotDataBusWidth1X"
++		end
++
++		# Ethernet (clobbers RP4)
++                device ref gbe on
++                        register "LanClkReqSupported"                   = "true"
++                        register "LanClkReqNumber"                      = "3"
++			register "PcieRpClkReqNumber[3]"		= "3"
++			register "PcieRpClkSrcNumber[3]"		= "3"
++                        register "EnableLanLtr"                         = "true"
++                        register "EnableLanK1Off"                       = "true"
++                end
++
++		# M.2 2280 SSD - x4 (RP9)
++		device ref pcie_rp5 on
++			register "PcieRpClkReqSupport[4]"		= "true"
++			register "PcieRpClkReqNumber[4]"		= "4"
++			register "PcieRpClkSrcNumber[4]"		= "4"
++			register "PcieRpAdvancedErrorReporting[4]"	= "true"
++			register "PcieRpLtrEnable[4]"			= "true"
++			register "PcieRpHotPlug[4]"			= "false"
++			smbios_slot_desc "SlotTypeM2Socket3" "SlotLengthOther" "M.2/M 2280" "SlotDataBusWidth4X"
++		end
++
++		# M.2 WWAN x1
++		device ref pcie_rp8 on
++			register "PcieRpClkReqSupport[7]"		= "true"
++			register "PcieRpClkReqNumber[7]"		= "5"
++			register "PcieRpClkSrcNumber[7]"		= "5"
++			register "PcieRpAdvancedErrorReporting[7]"	= "true"
++			register "PcieRpLtrEnable[7]"			= "true"
++			smbios_slot_desc "SlotTypeM2Socket1_DP" "SlotLengthOther" "M.2/A 2230" "SlotDataBusWidth1X"
++		end
++	end
++end
+-- 
+2.47.3
+

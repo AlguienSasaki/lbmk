@@ -1,0 +1,33 @@
+From abd26006eff71c9570bc90fdbce3a76f8f559cea Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 4 Oct 2025 22:20:11 +0100
+Subject: [PATCH 36/48] alderlake: don't require full fsp repo for fd path
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/soc/intel/alderlake/Kconfig | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
+index a2e7cff6f6..3402c1e3d5 100644
+--- a/src/soc/intel/alderlake/Kconfig
++++ b/src/soc/intel/alderlake/Kconfig
+@@ -430,7 +430,14 @@ config FSP_HEADER_PATH
+ 
+ config FSP_FD_PATH
+ 	string
+-	depends on FSP_USE_REPO
++#	dependency removed for lbmk purposes, so that the path is present
++#	in the config regardless of whether it's used. this is for ./mk -d
++#	on alderlake boards, which is used by lbmk to manually split fsp,
++#	even though the result is identical to what coreboot produces, because
++#	this enables lbmk to strip the fsp in release archives, and re-insert
++#	for compliance reasons (due to technicalities in intel's licensing),
++#	and to enable lbmk's advanced checksum verification of vendor files
++#	depends on FSP_USE_REPO
+ 	default "3rdparty/fsp/RaptorLakeFspBinPkg/IoT/RaptorLakeP/FSP.fd"   if FSP_TYPE_IOT && SOC_INTEL_ALDERLAKE_PCH_P && SOC_INTEL_RAPTORLAKE
+ 	default "3rdparty/fsp/RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd"   if FSP_TYPE_IOT && SOC_INTEL_RAPTORLAKE_PCH_S
+ 	default "3rdparty/fsp/AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd"     if FSP_TYPE_IOT && SOC_INTEL_ALDERLAKE_PCH_P
+-- 
+2.47.3
+

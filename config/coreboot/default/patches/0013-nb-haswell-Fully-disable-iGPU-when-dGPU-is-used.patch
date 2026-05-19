@@ -1,0 +1,51 @@
+From df64f2825157226b98e002e746114e25b0047438 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Sat, 6 Apr 2024 01:22:47 +0100
+Subject: [PATCH 13/48] nb/haswell: Fully disable iGPU when dGPU is used
+
+My earlier patch disabled decode *and* disabled the iGPU itself, but
+a subsequent revision disabled only VGA decode. Upon revisiting, I
+found that, actually, yes, you also need to disable the iGPU entirely.
+
+Tested on Dell 9020 SFF using broadwell MRC, with both iGPU and dGPU.
+With this patch, the iGPU is completely disabled when you install a
+graphics card, but the iGPU is available to use when no graphics card
+is present.
+
+For more context, see:
+
+Author: Leah Rowe <info@minifree.org>
+Date:   Fri Feb 23 13:33:31 2024 +0000
+
+    nb/haswell: Disable iGPU when dGPU is used
+
+And look at the Gerrit comments:
+
+https://review.coreboot.org/c/coreboot/+/80717/
+
+So, my original submission on change 80717 was actually correct.
+This patch fixes the issue. I tested on iGPU and dGPU, with both
+broadwell and haswell mrc.bin.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/northbridge/intel/haswell/gma.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/northbridge/intel/haswell/gma.c b/src/northbridge/intel/haswell/gma.c
+index f7fad3183d..1b188e92e1 100644
+--- a/src/northbridge/intel/haswell/gma.c
++++ b/src/northbridge/intel/haswell/gma.c
+@@ -466,6 +466,9 @@ static void gma_func0_disable(struct device *dev)
+ {
+ 	/* Disable VGA decode */
+ 	pci_or_config16(pcidev_on_root(0, 0), GGC, 1 << 1);
++
++	/* Required or else the graphics card doesn't work */
++	dev->enabled = 0;
+ }
+ 
+ static struct device_operations gma_func0_ops = {
+-- 
+2.47.3
+

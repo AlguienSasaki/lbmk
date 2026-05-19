@@ -1,0 +1,51 @@
+From ecbf5a133d839b6c8579e384e9db0a036eca939d Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 23 Dec 2025 18:41:27 +0100
+Subject: [PATCH 42/48] mb/dell/optiplex_780: use legacy HDA verb table
+
+See:
+
+commit 31fc5b06a6be62b30739d33eeabe6c2727679bb1
+Author: Nicholas Sudsgaard <devel+coreboot@nsudsgaard.com>
+Date:   Thu Aug 7 08:31:24 2025 +0900
+
+    device: Introduce reworked azalia verb table
+
+and:
+
+commit 50a59d4464917503847eeeb2df4320c35cf2f6cc
+Author: Nicholas Sudsgaard <devel+coreboot@nsudsgaard.com>
+Date:   Mon Sep 15 16:25:21 2025 +0900
+
+    device: Add Kconfig to prepare for reworked verb table implementation
+
+Without this change, lbmk gets the following error
+when building for Dell OptiPlex 780:
+
+i386-elf-ld.bfd: build/ramstage/device/azalia_device.o: in function `azalia_codecs_init':
+/path/to/corebootclone/src/device/azalia_device.c:318:(.text.azalia_codecs_init+0xa): undefined reference to `mainboard_azalia_codecs'
+
+This is a temporary fix. Upstream will require that the code
+be fully adapted at a future date. Therefore, one could consider
+the current functionality to be "deprecated".
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/dell/optiplex_780/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/mainboard/dell/optiplex_780/Kconfig b/src/mainboard/dell/optiplex_780/Kconfig
+index fc649e35d5..172bb2fa87 100644
+--- a/src/mainboard/dell/optiplex_780/Kconfig
++++ b/src/mainboard/dell/optiplex_780/Kconfig
+@@ -2,6 +2,7 @@
+ 
+ config BOARD_DELL_OPTIPLEX_780_COMMON
+ 	def_bool n
++	select AZALIA_USE_LEGACY_VERB_TABLE
+ 	select BOARD_ROMSIZE_KB_8192
+ 	select CPU_INTEL_SOCKET_LGA775
+ 	select DRIVERS_I2C_CK505
+-- 
+2.47.3
+

@@ -1,0 +1,30 @@
+From 5b7bbc6fcc6f737f259906f1919c1e28b6628a7e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 20 Dec 2025 22:36:18 +0100
+Subject: [PATCH 41/48] tests/Makefile.mk: use 3rdparty/cmocka by default
+
+(tests)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ tests/Makefile.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/tests/Makefile.mk b/tests/Makefile.mk
+index 9e3f86a138..a5a518cd35 100644
+--- a/tests/Makefile.mk
++++ b/tests/Makefile.mk
+@@ -25,7 +25,9 @@ TEST_LDFLAGS += --coverage
+ endif
+ 
+ # Use system cmoka in default, or build from 3rdparty source code if requested
+-USE_SYSTEM_CMOCKA ?= 1
++# PATCH NOTE: lbmk sets it to 0 by default. You can still override it to 1
++#             if you wish; upstream sets this to 1 by default, but we do 0
++USE_SYSTEM_CMOCKA ?= 0
+ ifeq ($(USE_SYSTEM_CMOCKA),1)
+ ifeq ($(shell $(HOSTPKG_CONFIG) --exists cmocka || echo 1),1)
+ $(warning No system cmocka, build from 3rdparty instead...)
+-- 
+2.47.3
+

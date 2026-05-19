@@ -1,0 +1,28 @@
+From dc4036353483c5fc0c140fc269d9bddb0bb7a967 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 20 Dec 2025 20:12:48 +0100
+Subject: [PATCH 40/48] fix ifdtool build
+
+not my mistake. someone messed up.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/ifdtool/ifdtool.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
+index cab934c3a5..d181888e0f 100644
+--- a/util/ifdtool/ifdtool.c
++++ b/util/ifdtool/ifdtool.c
+@@ -2598,7 +2598,7 @@ int main(int argc, char *argv[])
+                        }
+                        mode_nuke = 1;
+                        break;
+-		Case 'v':
++		case 'v':
+ 			print_version();
+ 			exit(EXIT_SUCCESS);
+ 			break;
+-- 
+2.47.3
+

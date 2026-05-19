@@ -1,0 +1,46 @@
+From 6a4a79d82df982c2fca859101040e407623f519c Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 6 Oct 2025 04:47:06 +0100
+Subject: [PATCH 37/48] soc/alderlake: disable stack overflow debug option
+
+same as on other boards. based on this commit:
+
+commit 51cc2bacb6b07279b97e9934d079060475481fb6
+Author: Subrata Banik <subratabanik@google.com>
+Author: Subrata Banik <subratabanik@google.com>
+Date:   Fri Dec 13 13:07:28 2024 +0530
+
+    soc/intel/pantherlake: Disable stack overflow debug options
+
+yeah, i've been replicating this change per platform.
+
+we do alderlake now in libreboot, so let's set that here too.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/soc/intel/alderlake/Kconfig | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
+index 3402c1e3d5..06b9199e84 100644
+--- a/src/soc/intel/alderlake/Kconfig
++++ b/src/soc/intel/alderlake/Kconfig
+@@ -331,6 +331,15 @@ config SOC_INTEL_UFS_CLK_FREQ_HZ
+ 	int
+ 	default 19200000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++	bool
++	default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++	bool
++	default n
++
+ config DRIVERS_I2C_DESIGNWARE_CLOCK_MHZ
+ 	int
+ 	default 133
+-- 
+2.47.3
+

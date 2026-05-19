@@ -1,0 +1,42 @@
+From 5c4439fb513c315ef3effff19146b331c492fa9b Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 22 Apr 2025 10:21:59 +0100
+Subject: [PATCH 27/48] hp/8300cmt: remove xhci_overcurrent_mapping
+
+No longer needed, as per the following commit:
+
+commit a3d1e6c4806e6c0e2e744be3a03fce12f21778d1
+Author: Keith Hui <buurin@gmail.com>
+Date:   Tue Dec 31 18:19:31 2024 -0500
+
+    sb/intel/bd82x6x: Apply EHCI mapping to xhci_overcurrent_mapping
+
+Removing this from the devicetree also allows the
+board to compile, otherwise an error is thrown:
+
+build/mainboard/hp/compaq_elite_8300_cmt/static.c:147:10: error: 'const struct southbridge_intel_bd82x6x_config' has no member named 'xhci_overcurrent_mapping'
+  147 |         .xhci_overcurrent_mapping = 0x00000c03,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~
+build/mainboard/hp/compaq_elite_8300_cmt/static.c:147:37: error: excess elements in struct initializer [-Werror]
+  147 |         .xhci_overcurrent_mapping = 0x00000c03,
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
+index 3d21739b72..3a0b6d5c59 100644
+--- a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
++++ b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
+@@ -25,7 +25,6 @@ chip northbridge/intel/sandybridge
+ 			register "spi_lvscc" = "0x2005"
+ 			register "spi_uvscc" = "0x2005"
+ 			register "superspeed_capable_ports" = "0x0000000f"
+-			register "xhci_overcurrent_mapping" = "0x00000c03"
+ 			register "xhci_switchable_ports" = "0x0000000f"
+ 			register "usb_port_config" = "{
+ 				{ 1, 0, 0 },
+-- 
+2.47.3
+

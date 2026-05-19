@@ -1,0 +1,28 @@
+From efeac4de14e3ac46e9146bc6a2d2e03ca04757f1 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 1 Apr 2026 08:10:09 +0100
+Subject: [PATCH] lib/cbfstool: fix build error on newer hostcc
+
+const char being discarded. classic rookie mistake.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ host/lib/cbfstool.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/host/lib/cbfstool.c b/host/lib/cbfstool.c
+index 9b4de49e..2a2578c0 100644
+--- a/host/lib/cbfstool.c
++++ b/host/lib/cbfstool.c
+@@ -259,7 +259,7 @@ static char *extract_config_value(const char *buf, const char *config_field)
+ 	free(to_find);
+ 
+ 	if (start) {
+-		char *end = strchr(start, '\n');
++		const char *end = strchr(start, '\n');
+ 		if (end)
+ 			return strndup(start, end - start);
+ 	}
+-- 
+2.47.3
+

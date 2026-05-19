@@ -1,0 +1,187 @@
+From c7b136f1f4fa2bc1a783711b5a1ee82c5d9ce69f Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Apr 2025 02:58:47 +0100
+Subject: [PATCH 23/48] nb/intel/*: Disable stack overflow debug options
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/northbridge/intel/e7505/Kconfig       |  9 +++++++++
+ src/northbridge/intel/gm45/Kconfig        |  9 +++++++++
+ src/northbridge/intel/haswell/Kconfig     |  9 +++++++++
+ src/northbridge/intel/i440bx/Kconfig      | 13 +++++++++++++
+ src/northbridge/intel/i945/Kconfig        |  9 +++++++++
+ src/northbridge/intel/ironlake/Kconfig    |  9 +++++++++
+ src/northbridge/intel/pineview/Kconfig    |  9 +++++++++
+ src/northbridge/intel/sandybridge/Kconfig |  9 +++++++++
+ src/northbridge/intel/x4x/Kconfig         |  9 +++++++++
+ 9 files changed, 85 insertions(+)
+
+diff --git a/src/northbridge/intel/e7505/Kconfig b/src/northbridge/intel/e7505/Kconfig
+index 039a7396f8..ddcb986f10 100644
+--- a/src/northbridge/intel/e7505/Kconfig
++++ b/src/northbridge/intel/e7505/Kconfig
+@@ -7,3 +7,12 @@ config NORTHBRIDGE_INTEL_E7505
+ 	select NO_CBFS_MCACHE
+ 	select SMM_TSEG
+ 	select NEED_SMALL_2MB_PAGE_TABLES
++
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
+diff --git a/src/northbridge/intel/gm45/Kconfig b/src/northbridge/intel/gm45/Kconfig
+index 35e89b0c88..c5456d0ddf 100644
+--- a/src/northbridge/intel/gm45/Kconfig
++++ b/src/northbridge/intel/gm45/Kconfig
+@@ -58,4 +58,13 @@ config FIXED_DMIBAR_MMIO_BASE
+ config FIXED_EPBAR_MMIO_BASE
+ 	default 0xfed19000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+diff --git a/src/northbridge/intel/haswell/Kconfig b/src/northbridge/intel/haswell/Kconfig
+index c57f1ec380..0a5181b183 100644
+--- a/src/northbridge/intel/haswell/Kconfig
++++ b/src/northbridge/intel/haswell/Kconfig
+@@ -10,6 +10,15 @@ config NORTHBRIDGE_INTEL_HASWELL
+ 
+ if NORTHBRIDGE_INTEL_HASWELL
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ config USE_NATIVE_RAMINIT
+ 	bool "[NOT COMPLETE] Use native raminit"
+ 	default n
+diff --git a/src/northbridge/intel/i440bx/Kconfig b/src/northbridge/intel/i440bx/Kconfig
+index dbb2d7436b..5e9418b6a9 100644
+--- a/src/northbridge/intel/i440bx/Kconfig
++++ b/src/northbridge/intel/i440bx/Kconfig
+@@ -19,3 +19,16 @@ config SDRAMPWR_4DIMM
+ 	  If your board has 4 DIMM slots, you must use select this option, in
+ 	  your Kconfig file of the board. On boards with 3 DIMM slots,
+ 	  do _not_ select this option.
++
++if NORTHBRIDGE_INTEL_I440BX
++
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
++endif
+diff --git a/src/northbridge/intel/i945/Kconfig b/src/northbridge/intel/i945/Kconfig
+index c4e17f90bf..b12f5be091 100644
+--- a/src/northbridge/intel/i945/Kconfig
++++ b/src/northbridge/intel/i945/Kconfig
+@@ -89,4 +89,13 @@ config FIXED_DMIBAR_MMIO_BASE
+ config FIXED_EPBAR_MMIO_BASE
+ 	default 0xfed19000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+diff --git a/src/northbridge/intel/ironlake/Kconfig b/src/northbridge/intel/ironlake/Kconfig
+index 39566a6e5f..f46acf6937 100644
+--- a/src/northbridge/intel/ironlake/Kconfig
++++ b/src/northbridge/intel/ironlake/Kconfig
+@@ -63,4 +63,13 @@ config FIXED_DMIBAR_MMIO_BASE
+ config FIXED_EPBAR_MMIO_BASE
+ 	default 0xfed19000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+diff --git a/src/northbridge/intel/pineview/Kconfig b/src/northbridge/intel/pineview/Kconfig
+index a05b866dad..50e3a7cdb9 100644
+--- a/src/northbridge/intel/pineview/Kconfig
++++ b/src/northbridge/intel/pineview/Kconfig
+@@ -42,4 +42,13 @@ config FIXED_EPBAR_MMIO_BASE
+ config DOMAIN_RESOURCE_32BIT_LIMIT
+ 	default 0xfec00000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+diff --git a/src/northbridge/intel/sandybridge/Kconfig b/src/northbridge/intel/sandybridge/Kconfig
+index 9972a43da0..fe4ac5106c 100644
+--- a/src/northbridge/intel/sandybridge/Kconfig
++++ b/src/northbridge/intel/sandybridge/Kconfig
+@@ -208,4 +208,13 @@ config IGD_DEFAULT_UMA_INDEX
+ 	default 2 if IGD_DEFAULT_UMA_SIZE_96MB
+ 	default 3 if IGD_DEFAULT_UMA_SIZE_128MB
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+diff --git a/src/northbridge/intel/x4x/Kconfig b/src/northbridge/intel/x4x/Kconfig
+index 646af3510b..069fa0244d 100644
+--- a/src/northbridge/intel/x4x/Kconfig
++++ b/src/northbridge/intel/x4x/Kconfig
+@@ -53,4 +53,13 @@ config FIXED_DMIBAR_MMIO_BASE
+ config FIXED_EPBAR_MMIO_BASE
+ 	default 0xfed19000
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++      bool
++      default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++      bool
++      default n
++
+ endif
+-- 
+2.47.3
+

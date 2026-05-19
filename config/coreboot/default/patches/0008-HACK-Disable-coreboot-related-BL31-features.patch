@@ -1,0 +1,28 @@
+From 0e2fa472354b2e68ffbfc01d5bb225ca9d8973f0 Mon Sep 17 00:00:00 2001
+From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+Date: Thu, 22 Jun 2023 16:44:27 +0300
+Subject: [PATCH 08/48] HACK: Disable coreboot related BL31 features
+
+I don't know why, but removing this BL31 make argument lets gru-kevin
+power off properly when shut down from Linux. Needs investigation.
+---
+ src/arch/arm64/Makefile.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/src/arch/arm64/Makefile.mk b/src/arch/arm64/Makefile.mk
+index efd628fee7..6c4f3d702e 100644
+--- a/src/arch/arm64/Makefile.mk
++++ b/src/arch/arm64/Makefile.mk
+@@ -156,9 +156,6 @@ BL31_MAKEARGS += LOG_LEVEL=40
+ # Always enable crash reporting, even on a release build
+ BL31_MAKEARGS += CRASH_REPORTING=1
+ 
+-# Enable coreboot-specific features like CBMEM console support
+-BL31_MAKEARGS += COREBOOT=1
+-
+ # Avoid build/release|build/debug distinction by overriding BUILD_PLAT directly
+ BL31_MAKEARGS += BUILD_PLAT="$(BL31_BUILD)"
+ 
+-- 
+2.47.3
+

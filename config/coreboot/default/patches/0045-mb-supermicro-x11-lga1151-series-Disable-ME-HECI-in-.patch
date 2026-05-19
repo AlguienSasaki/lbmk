@@ -1,0 +1,31 @@
+From 5b52abaa8529f7493f9d4ecf402e9ee130f4f8d2 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sat, 14 Feb 2026 20:13:01 +0000
+Subject: [PATCH 45/48] mb/supermicro/x11-lga1151-series: Disable ME HECI in
+ devicetree
+
+Since we always use me_cleaner, this speeds up boot time by preventing
+coreboot from wasting a few seconds waiting for HECI.
+
+Change-Id: Ifbb16ba9f09129795dabe7861260ea4d995c0350
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ src/mainboard/supermicro/x11-lga1151-series/devicetree.cb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb b/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
+index fbf896c6ae..aa09a41f2f 100644
+--- a/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
++++ b/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
+@@ -15,7 +15,7 @@ chip soc/intel/skylake
+ 		device ref sa_thermal on end
+ 		device ref south_xhci on end
+ 		device ref thermal on end
+-		device ref heci1 on end
++		device ref heci1 off end
+ 		device ref sata on
+ 			register "SataSalpSupport" = "1"
+ 			register "SataPortsEnable" = "{
+-- 
+2.47.3
+

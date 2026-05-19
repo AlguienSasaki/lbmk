@@ -1,0 +1,292 @@
+From beb9b1650fb3aec96544b683fbe53ee16584f3d8 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Sat, 2 Mar 2024 22:51:09 +0000
+Subject: [PATCH 11/48] nb/intel/haswell: make IOMMU a runtime option
+
+When I tested graphics cards on a coreboot port for Dell
+OptiPlex 9020 SFF, I could not use a graphics card unless
+I set iommu=off on the Linux cmdline.
+
+Coreboot's current behaviour is to check whether the CPU
+has vt-d support and, if it does, initialise the IOMMU.
+
+This patch maintains the current behaviour by default, but
+allows the user to turn *off* the IOMMU, even if vt-d is
+supported by the host CPU.
+
+If iommu=Disable is specified, the check will not be
+performed, and the IOMMU will be left disabled. This option
+has been added to all current Haswell boards, though it is
+recommended to leave the IOMMU turned on in most setups.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ src/mainboard/asrock/b85m_pro4/cmos.default    | 1 +
+ src/mainboard/asrock/b85m_pro4/cmos.layout     | 3 +++
+ src/mainboard/asrock/h81m-hds/cmos.default     | 1 +
+ src/mainboard/asrock/h81m-hds/cmos.layout      | 6 ++++++
+ src/mainboard/dell/optiplex_9020/cmos.default  | 1 +
+ src/mainboard/dell/optiplex_9020/cmos.layout   | 6 ++++++
+ src/mainboard/google/beltino/cmos.layout       | 5 +++++
+ src/mainboard/google/slippy/cmos.layout        | 5 +++++
+ src/mainboard/intel/baskingridge/cmos.layout   | 4 ++++
+ src/mainboard/lenovo/haswell/cmos.default      | 1 +
+ src/mainboard/lenovo/haswell/cmos.layout       | 3 +++
+ src/mainboard/supermicro/x10slm-f/cmos.default | 1 +
+ src/mainboard/supermicro/x10slm-f/cmos.layout  | 6 ++++++
+ src/northbridge/intel/haswell/early_init.c     | 5 +++++
+ 14 files changed, 48 insertions(+)
+
+diff --git a/src/mainboard/asrock/b85m_pro4/cmos.default b/src/mainboard/asrock/b85m_pro4/cmos.default
+index 01bf20ad16..dfc8b80fb0 100644
+--- a/src/mainboard/asrock/b85m_pro4/cmos.default
++++ b/src/mainboard/asrock/b85m_pro4/cmos.default
+@@ -4,3 +4,4 @@ boot_option=Fallback
+ debug_level=Debug
+ nmi=Enable
+ power_on_after_fail=Disable
++iommu=Enable
+diff --git a/src/mainboard/asrock/b85m_pro4/cmos.layout b/src/mainboard/asrock/b85m_pro4/cmos.layout
+index efdc333fc2..c9883ea71d 100644
+--- a/src/mainboard/asrock/b85m_pro4/cmos.layout
++++ b/src/mainboard/asrock/b85m_pro4/cmos.layout
+@@ -11,6 +11,7 @@
+ 	395	4	e	4	debug_level
+ 	408	1	e	1	nmi
+ 	409	2	e	5	power_on_after_fail
++	412	1	e	6	iommu
+ 	984	16	h	0	check_sum
+ # -----------------------------------------------------------------
+ 
+@@ -38,6 +39,8 @@
+ 	5	0	Disable
+ 	5	1	Enable
+ 	5	2	Keep
++	6	0	Disable
++	6	1	Enable
+ # -----------------------------------------------------------------
+ 
+ # -----------------------------------------------------------------
+diff --git a/src/mainboard/asrock/h81m-hds/cmos.default b/src/mainboard/asrock/h81m-hds/cmos.default
+index 01bf20ad16..dfc8b80fb0 100644
+--- a/src/mainboard/asrock/h81m-hds/cmos.default
++++ b/src/mainboard/asrock/h81m-hds/cmos.default
+@@ -4,3 +4,4 @@ boot_option=Fallback
+ debug_level=Debug
+ nmi=Enable
+ power_on_after_fail=Disable
++iommu=Enable
+diff --git a/src/mainboard/asrock/h81m-hds/cmos.layout b/src/mainboard/asrock/h81m-hds/cmos.layout
+index c9ba76c78f..95ee3d36fb 100644
+--- a/src/mainboard/asrock/h81m-hds/cmos.layout
++++ b/src/mainboard/asrock/h81m-hds/cmos.layout
+@@ -21,6 +21,9 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	5	power_on_after_fail
+ 
++# enable or disable iommu
++412	1	e	6	iommu
++
+ # coreboot config options: check sums
+ 984	16	h	0	check_sum
+ 
+@@ -52,6 +55,9 @@ enumerations
+ 5	1	Enable
+ 5	2	Keep
+ 
++6	0	Disable
++6	1	Enable
++
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/mainboard/dell/optiplex_9020/cmos.default b/src/mainboard/dell/optiplex_9020/cmos.default
+index 6c4a2a1be7..8000eea8c0 100644
+--- a/src/mainboard/dell/optiplex_9020/cmos.default
++++ b/src/mainboard/dell/optiplex_9020/cmos.default
+@@ -4,3 +4,4 @@ debug_level=Debug
+ nmi=Disable
+ power_on_after_fail=Disable
+ fan_full_speed=Disable
++iommu=Enable
+diff --git a/src/mainboard/dell/optiplex_9020/cmos.layout b/src/mainboard/dell/optiplex_9020/cmos.layout
+index d10ad95b23..4a1496a878 100644
+--- a/src/mainboard/dell/optiplex_9020/cmos.layout
++++ b/src/mainboard/dell/optiplex_9020/cmos.layout
+@@ -21,6 +21,9 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	5	power_on_after_fail
+ 
++# turn iommu on or off
++411	1	e	6	iommu
++
+ # coreboot config options: EC
+ 412	1	e	1	fan_full_speed
+ 
+@@ -55,6 +58,9 @@ enumerations
+ 5	1	Enable
+ 5	2	Keep
+ 
++6	0	Disable
++6	1	Enable
++
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/mainboard/google/beltino/cmos.layout b/src/mainboard/google/beltino/cmos.layout
+index 78d44c1415..c143979ae1 100644
+--- a/src/mainboard/google/beltino/cmos.layout
++++ b/src/mainboard/google/beltino/cmos.layout
+@@ -19,6 +19,9 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	7	power_on_after_fail
+ 
++# enable or disable iommu
++412	1	e	8	iommu
++
+ # coreboot config options: bootloader
+ #Used by ChromeOS:
+ 416	128	r	0	vbnv
+@@ -47,6 +50,8 @@ enumerations
+ 7	0	Disable
+ 7	1	Enable
+ 7	2	Keep
++8	0	Disable
++8	1	Enable
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/mainboard/google/slippy/cmos.layout b/src/mainboard/google/slippy/cmos.layout
+index 78d44c1415..c143979ae1 100644
+--- a/src/mainboard/google/slippy/cmos.layout
++++ b/src/mainboard/google/slippy/cmos.layout
+@@ -19,6 +19,9 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	7	power_on_after_fail
+ 
++# enable or disable iommu
++412	1	e	8	iommu
++
+ # coreboot config options: bootloader
+ #Used by ChromeOS:
+ 416	128	r	0	vbnv
+@@ -47,6 +50,8 @@ enumerations
+ 7	0	Disable
+ 7	1	Enable
+ 7	2	Keep
++8	0	Disable
++8	1	Enable
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/mainboard/intel/baskingridge/cmos.layout b/src/mainboard/intel/baskingridge/cmos.layout
+index 78d44c1415..f2c602f541 100644
+--- a/src/mainboard/intel/baskingridge/cmos.layout
++++ b/src/mainboard/intel/baskingridge/cmos.layout
+@@ -19,6 +19,8 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	7	power_on_after_fail
+ 
++412	1	e	8	iommu
++
+ # coreboot config options: bootloader
+ #Used by ChromeOS:
+ 416	128	r	0	vbnv
+@@ -47,6 +49,8 @@ enumerations
+ 7	0	Disable
+ 7	1	Enable
+ 7	2	Keep
++8	0	Disable
++8	1	Enable
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/mainboard/lenovo/haswell/cmos.default b/src/mainboard/lenovo/haswell/cmos.default
+index 08db97c5a9..cc6b363cd9 100644
+--- a/src/mainboard/lenovo/haswell/cmos.default
++++ b/src/mainboard/lenovo/haswell/cmos.default
+@@ -14,3 +14,4 @@ trackpoint=Enable
+ backlight=Keyboard
+ enable_dual_graphics=Disable
+ usb_always_on=Disable
++iommu=Enable
+diff --git a/src/mainboard/lenovo/haswell/cmos.layout b/src/mainboard/lenovo/haswell/cmos.layout
+index 27915d3ab7..59df76b64c 100644
+--- a/src/mainboard/lenovo/haswell/cmos.layout
++++ b/src/mainboard/lenovo/haswell/cmos.layout
+@@ -23,6 +23,7 @@ entries
+ 
+ # coreboot config options: EC
+ 411	1	e	8	first_battery
++413	1	e	14	iommu
+ 415	1	e	1	wlan
+ 416	1	e	1	trackpoint
+ 417	1	e	1	fn_ctrl_swap
+@@ -72,6 +73,8 @@ enumerations
+ 13	0	Disable
+ 13	1	AC and battery
+ 13	2	AC only
++14	0	Disable
++14	1	Enable
+ 
+ # -----------------------------------------------------------------
+ checksums
+diff --git a/src/mainboard/supermicro/x10slm-f/cmos.default b/src/mainboard/supermicro/x10slm-f/cmos.default
+index 7ce38fb5d7..6049e7938a 100644
+--- a/src/mainboard/supermicro/x10slm-f/cmos.default
++++ b/src/mainboard/supermicro/x10slm-f/cmos.default
+@@ -5,3 +5,4 @@ debug_level=Debug
+ nmi=Enable
+ power_on_after_fail=Keep
+ hide_ast2400=Disable
++iommu=Enable
+diff --git a/src/mainboard/supermicro/x10slm-f/cmos.layout b/src/mainboard/supermicro/x10slm-f/cmos.layout
+index 38ba87aa45..24d39e97ee 100644
+--- a/src/mainboard/supermicro/x10slm-f/cmos.layout
++++ b/src/mainboard/supermicro/x10slm-f/cmos.layout
+@@ -21,6 +21,9 @@ entries
+ 408	1	e	1	nmi
+ 409	2	e	5	power_on_after_fail
+ 
++# enable or disable iommu
++412	1	e	6	iommu
++
+ # coreboot config options: mainboard
+ 416	1	e	1	hide_ast2400
+ 
+@@ -55,6 +58,9 @@ enumerations
+ 5	1	Enable
+ 5	2	Keep
+ 
++6	0	Disable
++6	1	Enable
++
+ # -----------------------------------------------------------------
+ checksums
+ 
+diff --git a/src/northbridge/intel/haswell/early_init.c b/src/northbridge/intel/haswell/early_init.c
+index e47deb5da6..1a7e0b1076 100644
+--- a/src/northbridge/intel/haswell/early_init.c
++++ b/src/northbridge/intel/haswell/early_init.c
+@@ -5,6 +5,7 @@
+ #include <device/mmio.h>
+ #include <device/pci_def.h>
+ #include <device/pci_ops.h>
++#include <option.h>
+ 
+ #include "haswell.h"
+ 
+@@ -157,6 +158,10 @@ static void haswell_setup_misc(void)
+ static void haswell_setup_iommu(void)
+ {
+ 	const u32 capid0_a = pci_read_config32(HOST_BRIDGE, CAPID0_A);
++	u8 enable_iommu = get_uint_option("iommu", 1);
++
++	if (!enable_iommu)
++		return;
+ 
+ 	if (capid0_a & VTD_DISABLE)
+ 		return;
+-- 
+2.47.3
+

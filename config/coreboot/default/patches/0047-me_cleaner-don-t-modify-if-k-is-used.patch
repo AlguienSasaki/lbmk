@@ -1,0 +1,44 @@
+From 1bc6028bf88ca6306ad89fc17fa6f31b9788b248 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Fri, 20 Feb 2026 19:31:19 +0000
+Subject: [PATCH 47/48] me_cleaner: don't modify if -k is used
+
+don't remove *anything*. in libreboot, we only
+ever use -k when we werely want to extract the
+ME, but otherwise not modify it. this is because
+we rely on bruteforce, detecting when me.bin is
+found based on mecleaner validation.
+
+this way, we can much more reliable get the ME
+images.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ util/me_cleaner/me_cleaner.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/util/me_cleaner/me_cleaner.py b/util/me_cleaner/me_cleaner.py
+index 228bac899f..269aa4ad04 100755
+--- a/util/me_cleaner/me_cleaner.py
++++ b/util/me_cleaner/me_cleaner.py
+@@ -677,7 +677,7 @@ if __name__ == "__main__":
+     # ME 6 Ignition: wipe everything
+     me6_ignition = False
+     if not args.check and not args.soft_disable_only and \
+-       variant == "ME" and version[0] == 6:
++       variant == "ME" and version[0] == 6 and not args.keep_modules:
+         mef.seek(ftpr_offset + 0x20)
+         num_modules = unpack("<I", mef.read(4))[0]
+         mef.seek(ftpr_offset + 0x290 + (num_modules + 1) * 0x60)
+@@ -689,7 +689,7 @@ if __name__ == "__main__":
+             me6_ignition = True
+ 
+     if not args.check:
+-        if not args.soft_disable_only and not me6_ignition:
++        if not args.soft_disable_only and not me6_ignition and not args.keep_modules:
+             print("Reading partitions list...")
+             unremovable_part_fpt = b""
+             extra_part_end = 0
+-- 
+2.47.3
+

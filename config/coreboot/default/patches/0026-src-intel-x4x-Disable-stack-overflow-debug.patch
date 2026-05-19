@@ -1,0 +1,33 @@
+From 82f47133c20abc720f5d5fa8a54be465ebd95f28 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 6 Jan 2025 01:53:53 +0000
+Subject: [PATCH 26/48] src/intel/x4x: Disable stack overflow debug
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/northbridge/intel/x4x/Kconfig | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/northbridge/intel/x4x/Kconfig b/src/northbridge/intel/x4x/Kconfig
+index 069fa0244d..8c70344846 100644
+--- a/src/northbridge/intel/x4x/Kconfig
++++ b/src/northbridge/intel/x4x/Kconfig
+@@ -32,6 +32,15 @@ config ECAM_MMCONF_BUS_NUMBER
+ 	int
+ 	default 256
+ 
++# Override DEBUG Kconfig to avoid false alarm about stack overflow.
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS
++	bool
++	default n
++
++config DEBUG_STACK_OVERFLOW_BREAKPOINTS_IN_ALL_STAGES
++	bool
++	default n
++
+ # This number must be equal or lower than what's reported in ACPI PCI _CRS
+ config DOMAIN_RESOURCE_32BIT_LIMIT
+ 	default 0xfec00000
+-- 
+2.47.3
+

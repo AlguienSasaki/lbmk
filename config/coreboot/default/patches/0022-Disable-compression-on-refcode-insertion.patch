@@ -1,0 +1,31 @@
+From 669ef0d2c72326134f64a4fe70f67220ec690c5e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Tue, 31 Dec 2024 14:42:24 +0000
+Subject: [PATCH 22/48] Disable compression on refcode insertion
+
+Compression is not reliably reproducible. In an lbmk release
+context, this means we cannot rely on vendorfile insertion.
+
+Therefore, use uncompressed refcode.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ Makefile.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.mk b/Makefile.mk
+index 5fccb4a52d..c40e06c453 100644
+--- a/Makefile.mk
++++ b/Makefile.mk
+@@ -1414,7 +1414,7 @@ endif
+ cbfs-files-$(CONFIG_HAVE_REFCODE_BLOB) += $(CONFIG_CBFS_PREFIX)/refcode
+ $(CONFIG_CBFS_PREFIX)/refcode-file := $(REFCODE_BLOB)
+ $(CONFIG_CBFS_PREFIX)/refcode-type := stage
+-$(CONFIG_CBFS_PREFIX)/refcode-compression := $(CBFS_COMPRESS_FLAG)
++$(CONFIG_CBFS_PREFIX)/refcode-compression := none
+ 
+ cbfs-files-$(CONFIG_SEABIOS_VGA_COREBOOT) += vgaroms/seavgabios.bin
+ vgaroms/seavgabios.bin-file := $(CONFIG_PAYLOAD_VGABIOS_FILE)
+-- 
+2.47.3
+

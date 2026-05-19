@@ -1,0 +1,37 @@
+From 579c60fd77517497eb18dfeca8d73cdca94c15da Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Apr 2025 05:14:45 +0100
+Subject: [PATCH 32/48] Conditional TBFW setting for kabylake thinkpads
+
+Otherwise, other boards will define it, which
+might trigger the vendor download script, and
+lead to a non-zero exit.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/mainboard/lenovo/Kconfig | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/mainboard/lenovo/Kconfig b/src/mainboard/lenovo/Kconfig
+index 512b326381..b2c7763198 100644
+--- a/src/mainboard/lenovo/Kconfig
++++ b/src/mainboard/lenovo/Kconfig
+@@ -18,6 +18,8 @@ config MAINBOARD_FAMILY
+ 	string
+ 	default MAINBOARD_PART_NUMBER
+ 
++if BOARD_LENOVO_T480 || BOARD_LENOVO_T480S || BOARD_LENOVO_X280 || BOARD_LENOVO_T470S || BOARD_LENOVO_T580
++
+ config LENOVO_TBFW_BIN
+ 	string "Lenovo ThunderBolt firmware bin file"
+ 	default ""
+@@ -44,4 +46,6 @@ config LENOVO_TBFW_BIN
+ 	  Just leave this blank if you don't care about this option. It's not
+ 	  useful for every ThinkPad, only certain models.
+ 
++endif # BOARD_LENOVO_T480 || BOARD_LENOVO_T480S || BOARD_LENOVO_X280 || BOARD_LENOVO_T470S || BOARD_LENOVO_T580
++
+ endif # VENDOR_LENOVO
+-- 
+2.47.3
+

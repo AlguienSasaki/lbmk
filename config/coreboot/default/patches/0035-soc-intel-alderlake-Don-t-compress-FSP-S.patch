@@ -1,0 +1,35 @@
+From fee89a6c872ec26c2ea128ecdce62d6c3abe53f1 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 4 Oct 2025 21:57:43 +0100
+Subject: [PATCH 35/48] soc/intel/alderlake: Don't compress FSP-S
+
+Build systems like lbmk need to reproducibly insert
+certain vendor files on release images.
+
+Compression isn't always reproducible, and making it
+so costs a lot more time than simply disabling compression.
+
+With this change, FSP-S uses slightly more space inside
+the flash, but it's not that much.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/soc/intel/alderlake/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
+index e0ab6b10fd..a2e7cff6f6 100644
+--- a/src/soc/intel/alderlake/Kconfig
++++ b/src/soc/intel/alderlake/Kconfig
+@@ -16,7 +16,7 @@ config SOC_INTEL_ALDERLAKE
+ 	select DRAM_SUPPORT_DDR5
+ 	select DRIVERS_USB_ACPI
+ 	select EDK2_CPU_TIMER_LIB if PAYLOAD_EDK2
+-	select FSP_COMPRESS_FSP_S_LZ4
++#	select FSP_COMPRESS_FSP_S_LZ4
+ 	select FAST_SPI_SUPPORTS_EXT_BIOS_WINDOW
+ 	select FSP_M_XIP
+ 	select FSP_MULTIPHASE_SI_INIT_RETURN_BROKEN
+-- 
+2.47.3
+
