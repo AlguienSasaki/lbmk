@@ -1,4 +1,4 @@
-From 601661d628ff7b8ffee8c1ed13307caa23d489ce Mon Sep 17 00:00:00 2001
+From 0d418d44f61dda7670cfe02226150c2e5d3d6308 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 22:51:09 +0000
 Subject: [PATCH 12/51] nb/intel/haswell: make IOMMU a runtime option
@@ -19,23 +19,23 @@ performed, and the IOMMU will be left disabled. This option
 has been added to all current Haswell boards, though it is
 recommended to leave the IOMMU turned on in most setups.
 
-Signed-off-by: Leah Rowe <leah@libreboot.org>
+Signed-off-by: Leah Rowe <info@minifree.org>
 ---
- src/mainboard/asrock/b85m_pro4/cmos.default    |  1 +
- src/mainboard/asrock/b85m_pro4/cmos.layout     |  3 +++
- src/mainboard/asrock/h81m-hds/cmos.default     |  1 +
- src/mainboard/asrock/h81m-hds/cmos.layout      |  6 ++++++
- src/mainboard/dell/optiplex_9020/cmos.default  |  1 +
- src/mainboard/dell/optiplex_9020/cmos.layout   |  6 ++++++
- src/mainboard/google/beltino/cmos.layout       |  5 +++++
- src/mainboard/google/slippy/cmos.layout        |  5 +++++
- src/mainboard/intel/baskingridge/cmos.layout   |  4 ++++
- src/mainboard/lenovo/haswell/cmos.default      |  1 +
- src/mainboard/lenovo/haswell/cmos.layout       |  3 +++
- src/mainboard/supermicro/x10slm-f/cmos.default |  1 +
- src/mainboard/supermicro/x10slm-f/cmos.layout  |  6 ++++++
- src/northbridge/intel/haswell/early_init.c     | 15 ++++++++++-----
- 14 files changed, 53 insertions(+), 5 deletions(-)
+ src/mainboard/asrock/b85m_pro4/cmos.default    | 1 +
+ src/mainboard/asrock/b85m_pro4/cmos.layout     | 3 +++
+ src/mainboard/asrock/h81m-hds/cmos.default     | 1 +
+ src/mainboard/asrock/h81m-hds/cmos.layout      | 6 ++++++
+ src/mainboard/dell/optiplex_9020/cmos.default  | 1 +
+ src/mainboard/dell/optiplex_9020/cmos.layout   | 6 ++++++
+ src/mainboard/google/beltino/cmos.layout       | 5 +++++
+ src/mainboard/google/slippy/cmos.layout        | 5 +++++
+ src/mainboard/intel/baskingridge/cmos.layout   | 4 ++++
+ src/mainboard/lenovo/haswell/cmos.default      | 1 +
+ src/mainboard/lenovo/haswell/cmos.layout       | 3 +++
+ src/mainboard/supermicro/x10slm-f/cmos.default | 1 +
+ src/mainboard/supermicro/x10slm-f/cmos.layout  | 6 ++++++
+ src/northbridge/intel/haswell/early_init.c     | 6 ++++++
+ 14 files changed, 49 insertions(+)
 
 diff --git a/src/mainboard/asrock/b85m_pro4/cmos.default b/src/mainboard/asrock/b85m_pro4/cmos.default
 index 01bf20ad16..dfc8b80fb0 100644
@@ -265,7 +265,7 @@ index 38ba87aa45..24d39e97ee 100644
  checksums
  
 diff --git a/src/northbridge/intel/haswell/early_init.c b/src/northbridge/intel/haswell/early_init.c
-index 6a5ce53a40..e0007f72ee 100644
+index 6a5ce53a40..5f07fa0b17 100644
 --- a/src/northbridge/intel/haswell/early_init.c
 +++ b/src/northbridge/intel/haswell/early_init.c
 @@ -6,6 +6,7 @@
@@ -276,30 +276,18 @@ index 6a5ce53a40..e0007f72ee 100644
  
  #include "haswell.h"
  
-@@ -80,14 +81,18 @@ static void haswell_setup_misc(void)
+@@ -80,6 +81,11 @@ static void haswell_setup_misc(void)
  static void northbridge_setup_iommu(void)
  {
  	const u32 capid0_a = pci_read_config32(HOST_BRIDGE, CAPID0_A);
 +	u8 enable_iommu = get_uint_option("iommu", 1);
 +
++	if (!enable_iommu)
++		return;
++
  	if (capid0_a & VTD_DISABLE)
  		return;
  
--	/* Setup BARs: zeroize top 32 bits; set enable bit */
--	mchbar_write32(GFXVTBAR + 4, GFXVT_BASE_ADDRESS >> 32);
--	mchbar_write32(GFXVTBAR + 0, GFXVT_BASE_ADDRESS | 1);
--	mchbar_write32(VTVC0BAR + 4, VTVC0_BASE_ADDRESS >> 32);
--	mchbar_write32(VTVC0BAR + 0, VTVC0_BASE_ADDRESS | 1);
-+	if (enable_iommu) {
-+		/* Setup BARs: zeroize top 32 bits; set enable bit */
-+		mchbar_write32(GFXVTBAR + 4, GFXVT_BASE_ADDRESS >> 32);
-+		mchbar_write32(GFXVTBAR + 0, GFXVT_BASE_ADDRESS | 1);
-+		mchbar_write32(VTVC0BAR + 4, VTVC0_BASE_ADDRESS >> 32);
-+		mchbar_write32(VTVC0BAR + 0, VTVC0_BASE_ADDRESS | 1);
-+	}
- 
- 	if (cpu_is_haswell()) {
- 		/*
 -- 
 2.47.3
 

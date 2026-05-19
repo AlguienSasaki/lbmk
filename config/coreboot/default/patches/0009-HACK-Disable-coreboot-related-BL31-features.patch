@@ -1,4 +1,4 @@
-From 9dbbefa5297329f316adeb95c2a78267be146509 Mon Sep 17 00:00:00 2001
+From bd98f54b50b66d291641f88ec3169b9518855862 Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Thu, 22 Jun 2023 16:44:27 +0300
 Subject: [PATCH 09/51] HACK: Disable coreboot related BL31 features

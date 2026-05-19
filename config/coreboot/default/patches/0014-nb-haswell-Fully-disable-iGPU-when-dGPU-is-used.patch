@@ -1,4 +1,4 @@
-From 64e0140fec07d7062b147419781e200509c63053 Mon Sep 17 00:00:00 2001
+From 1179f45055fffb383fffe806e313a315de7c4205 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 6 Apr 2024 01:22:47 +0100
 Subject: [PATCH 14/51] nb/haswell: Fully disable iGPU when dGPU is used

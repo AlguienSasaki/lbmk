@@ -1,4 +1,4 @@
-From bf1bb17d48b43ca468bca0b2d31315450f8cf8c6 Mon Sep 17 00:00:00 2001
+From 6bf8a87bdea4b7d5876e20f734821e6496b51cb9 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 3 Jan 2022 19:06:22 +0000
 Subject: [PATCH 04/51] lenovo/x230: set me_state=Disabled in cmos.default

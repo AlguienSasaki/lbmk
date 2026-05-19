@@ -1,4 +1,4 @@
-From 6b112300df5d4538cf19e3f914f0a44628733204 Mon Sep 17 00:00:00 2001
+From ae01730cad059bb3707b6d938a082dee9494bde5 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 11:41:41 +0000
 Subject: [PATCH 10/51] dell/e6430: use ME Soft Temporary Disable

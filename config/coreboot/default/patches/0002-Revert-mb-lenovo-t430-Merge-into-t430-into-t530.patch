@@ -1,4 +1,4 @@
-From 09cde063eed6777948ee3a2ad7ba5db71531f37e Mon Sep 17 00:00:00 2001
+From 3c5b15f0aa0ba2c9e7d4db6f893e13978c045032 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Thu, 23 Apr 2026 20:00:33 +0100
 Subject: [PATCH 02/51] Revert "mb/lenovo/t430: Merge into t430 into t530"

@@ -1,4 +1,4 @@
-From 42e64e41ec9ce997f6615b7a67655715a67651b4 Mon Sep 17 00:00:00 2001
+From ae7d23355be8efbbe3a1216d8e28c30a07e2e0ef Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
 Date: Sat, 23 Dec 2023 19:02:10 +0200
 Subject: [PATCH 11/51] mb/hp: Add Compaq Elite 8300 CMT port
