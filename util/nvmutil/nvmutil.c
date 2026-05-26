@@ -283,7 +283,7 @@ cmd_setmac(void)
 	if (mac_updated)
 		return;
 
-	errno = EINVAL;
+	errno = ECANCELED;
 	err(EXIT_FAILURE, "Error updating MAC address");
 }
 
@@ -376,6 +376,11 @@ cmd_dump(void)
 		printf("MAC (part %d): ", partnum);
 		macf(partnum);
 		hexdump(partnum);
+
+		if (numInvalid > 1) {
+			errno = EINVAL;
+			err(EXIT_FAILURE, "dump: No valid checksums");
+		}
 	}
 }
 
@@ -407,6 +412,7 @@ hexdump(int partnum)
 	}
 }
 
+/* WARNING: Cannot fail. Make sure the file is valid. */
 void
 cmd_setchecksum(void)
 {
@@ -420,22 +426,30 @@ cmd_setchecksum(void)
 void
 cmd_brick(void)
 {
-	if (goodChecksum(part))
+	if (goodChecksum(part)) {
 		setWord(NVM_CHECKSUM_WORD, part,
 		    ((word(NVM_CHECKSUM_WORD, part)) ^ 0xFF));
+	} else {
+		errno = ECANCELED;
+		err(EXIT_FAILURE, "brick: Bad checksum in part %d", part);
+	}
 }
 
 void
 cmd_copy(void)
 {
 	nvmPartChanged[part ^ 1] = goodChecksum(part);
+	if (!nvmPartChanged[part ^ 1]) {
+		errno = ECANCELED;
+		err(EXIT_FAILURE, "copy: Bad checksum in part %d", part);
+	}
 }
 
 void
 cmd_swap(void) {
 	if(!(goodChecksum(0) || goodChecksum(1))) {
-		errno = EINVAL;
-		err(EXIT_FAILURE, "Invalid checksums");
+		errno = ECANCELED;
+		err(EXIT_FAILURE, "swap: Bad checksums");
 	}
 
 	gbe[0] ^= gbe[1];
@@ -502,8 +516,10 @@ xclose(int *fd)
 	int saved_errno = errno;
 	int rval = 0;
 
-	if (fd == NULL)
+	if (fd == NULL) {
+		errno = EBADF;
 		err(EXIT_FAILURE, "xclose: null pointer");
+	}
 	if (*fd < 0)
 		return;
 
