@@ -77,26 +77,41 @@ op_t op[] = {
 };
 void (*cmd)(void) = NULL;
 
-#define err_if(x) if (x) err(EXIT_FAILURE, "%s", filename)
+#define err_if(x) \
+	do { \
+		if (x) { \
+			err(EXIT_FAILURE, "%s", filename); \
+		} \
+	} while(0)
 
 #define xopen(f,l,p) \
 	do { \
-	if ((f = open_on_eintr(l, p)) == -1) \
-		err(EXIT_FAILURE, "%s", l); \
-	if (fstat(f, &st) == -1) \
-		err(EXIT_FAILURE, "%s", l); \
+		if ((f = open_on_eintr(l, p)) == -1) { \
+			err(EXIT_FAILURE, "%s", l); \
+		} \
+		if (fstat(f, &st) == -1) { \
+			err(EXIT_FAILURE, "%s", l); \
+		} \
 	} while(0)
 
-#define word(pos16, partnum) ((uint16_t *) gbe[partnum])[pos16]
-#define setWord(pos16, p, val16) if (word(pos16, p) != val16) \
-    nvmPartChanged[p] = 1 | (word(pos16, p) = val16)
+#define word(pos16, partnum) \
+	(((uint16_t *) gbe[partnum])[pos16])
 
-#define SUCCESS(x) ((x) >= 0)
+#define setWord(pos16, p, val16) \
+	do { \
+		if (word(pos16, p) != val16) { \
+			nvmPartChanged[p] = 1 | (word(pos16, p) = val16); \
+		} \
+	} while(0)
+
+#define SUCCESS(x) \
+	((x) >= 0)
 
 #define reset_caller_errno(return_value) \
 	do { \
-	if (SUCCESS(return_value) && (!errno)) \
-		errno = saved_errno; \
+		if (SUCCESS(return_value) && (!errno)) { \
+			errno = saved_errno; \
+		} \
 	} while (0)
 
 int
@@ -726,21 +741,24 @@ if_err_sys(int condition)
 #define fs_err_retry() \
 	do { \
 		if ((rval == -1) && \
-		    (errno == EINTR)) \
+		    (errno == EINTR)) { \
 			return 1; \
-		if (rval >= 0 && !errno) \
+		} \
+		if (rval >= 0 && !errno) { \
 			errno = saved_errno; \
-		return 0; \
+		} \
 	} while(0)
 
 int
 fs_retry(int saved_errno, int rval)
 {
 	fs_err_retry();
+	return 0;
 }
 
 int
 rw_retry(int saved_errno, ssize_t rval)
 {
 	fs_err_retry();
+	return 0;
 }
