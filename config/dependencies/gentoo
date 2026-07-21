@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+pkg_add="emerge --ask --verbose --quiet"
+pkglist=" \
+sys-libs/ncurses dev-util/pkgconf sys-libs/libsepol app-arch/xz-utils \
+sys-devel/m4 app-arch/unzip dev-lang/swig app-cdr/cdrtools sys-devel/flex \
+sys-devel/bison dev-libs/openssl sys-apps/gawk net-misc/wget \
+dev-perl/File-Slurp app-eselect/eselect-guile sys-apps/help2man \
+dev-build/libtool dev-lang/nasm dev-libs/libtommath dev-scheme/guile \
+dev-libs/libgpiod app-arch/sharutils dev-libs/libtomcrypt sys-devel/autogen \
+media-libs/freetype sys-fs/e2fsprogs sys-fs/lvm2 dev-libs/libusb \
+sys-block/parted sys-fs/mtools app-arch/lz4 dev-libs/leancrypto sys-fs/fuse \
+sys-apps/dtc net-libs/gnutls net-misc/curl dev-build/cmake dev-vcs/git \
+dev-util/ccache dev-embedded/libftdi app-arch/innoextract sys-devel/gcc \
+sys-apps/pciutils app-crypt/efitools gnustep-base/gnustep-make gnustep-base/gnustep-base \
+app-arch/unar app-arch/p7zip dev-lang/python dev-python/setuptools dev-python/ply \
+sys-libs/libselinux dev-python/pyelftools dev-python/pycparser dev-python/cffi \
+dev-python/pycryptodome app-text/doxygen media-fonts/unifont media-libs/libsdl2 \
+sys-power/acpi_call sys-devel/crossdev \
+"
+pkg_use_file="/etc/portage/package.use/lbmk"
+pkg_use="""
+>=gnustep-base/gnustep-make-2.9.3-r2::gentoo native-exceptions
+>=sys-devel/gcc-15.2.1::gentoo objc ada openmp multilib graphite sanitize pgo lto fortran cxx
+"""

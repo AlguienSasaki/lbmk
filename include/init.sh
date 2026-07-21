@@ -87,6 +87,21 @@ xbmkpkg()
 		err "pkg_add/pkglist not both set" "xbmkpkg" "$@"
 	fi
 
+	if [ "$2" == "gentoo" ]; then
+        if [ -z "$pkg_use" ] || [ -z "$pkg_use_file" ]; then
+            err "pkg_use/pkg_use_file not both set" "xbmkpkg" "$@"
+        fi
+
+		printf "Updating package use...\n"
+		printf "Writing into $pkg_use_file..."
+
+        if [ ! -d `dirname $pkg_use_file` ]; then
+            mkdir `dirname $pkg_use_file`
+        fi
+
+        printf "%s\n" "$pkg_use" >> $pkg_use_file
+	fi
+
 	x_ $pkg_add $pkglist
 
 	if [ -n "$aur_notice" ]; then
@@ -160,7 +175,7 @@ xbmk_set_env()
 		# a parent instance of xbmk never processes its own
 		# command directly; instead, it calls a child instance
 		# of xbmk, and exits with the corresponding return status.
-		
+
 		xbmk_parent_set_env
 
 		return 0
