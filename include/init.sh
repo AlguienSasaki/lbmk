@@ -434,7 +434,7 @@ xbmk_set_mirror()
 
 xbmk_git_init()
 {
-	for gitarg in "--global user.name" "--global user.email"; do
+	for gitarg in "user.name" "user.email"; do
 		gitcmd="git config $gitarg"
 		if ! $gitcmd 1>/dev/null 2>/dev/null; then
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
