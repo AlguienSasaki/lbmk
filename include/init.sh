@@ -97,7 +97,7 @@ xbmkpkg()
 		printf "Writing into $pkg_use_file..."
 
 		if [ ! -d "`dirname $pkg_use_file`" ]; then
-			mkdir "`dirname $pkg_use_file`"
+			mkdir -p "`dirname $pkg_use_file`"
 		fi
 
 		printf "%s\n" "$pkg_use" >> "$pkg_use_file"
