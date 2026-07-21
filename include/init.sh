@@ -450,7 +450,7 @@ xbmk_set_mirror()
 xbmk_git_init()
 {
 	for gitarg in "user.name" "user.email"; do
-		gitcmd="git config $gitarg"
+		gitcmd="git config --includes $gitarg"
 		if ! $gitcmd 1>/dev/null 2>/dev/null; then
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
 			    "xbmk_git_init" "$@"
