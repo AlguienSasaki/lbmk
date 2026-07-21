@@ -12,6 +12,7 @@ export LC_ALL=C.UTF-8
 projectname="libreboot"
 projectsite="https://libreboot.org/"
 
+# TODO: consider just erroring here instead of hardcoding a default
 if [ -z "${PATH+x}" ]; then
 	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 fi
