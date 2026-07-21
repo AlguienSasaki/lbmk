@@ -94,7 +94,7 @@ xbmkpkg()
 		fi
 
 		printf "Updating package use...\n"
-		printf "Writing into $pkg_use_file..."
+		printf "Writing into %s" "$pkg_use_file..."
 
 		if [ ! -d "`dirname $pkg_use_file`" ]; then
 			mkdir -p "`dirname $pkg_use_file`"
