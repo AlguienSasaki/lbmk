@@ -6,7 +6,7 @@ acpica arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-newlib \
 autogen base-devel bison cdrtools cmake curl device-mapper doxygen \
 dtc e2fsprogs flex freetype2 fuse2 gawk gcc-ada gdb gettext git \
 help2man innoextract libftdi libgpiod libjaylink libpciaccess libusb nasm \
-ncurses openssl p7zip ccache less libx86 \
+ncurses openssl 7zip ccache less libx86 \
 pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
 sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib mtools \
 "
