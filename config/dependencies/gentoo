@@ -13,7 +13,7 @@ sys-block/parted sys-fs/mtools app-arch/lz4 dev-libs/leancrypto sys-fs/fuse \
 sys-apps/dtc net-libs/gnutls net-misc/curl dev-build/cmake dev-vcs/git \
 dev-util/ccache dev-embedded/libftdi app-arch/innoextract sys-devel/gcc \
 sys-apps/pciutils app-crypt/efitools gnustep-base/gnustep-make gnustep-base/gnustep-base \
-app-arch/unar app-arch/p7zip dev-lang/python dev-python/setuptools dev-python/ply \
+app-arch/unar app-arch/7zip dev-lang/python dev-python/setuptools dev-python/ply \
 sys-libs/libselinux dev-python/pyelftools dev-python/pycparser dev-python/cffi \
 dev-python/pycryptodome app-text/doxygen media-fonts/unifont media-libs/libsdl2 \
 sys-power/acpi_call sys-devel/crossdev \
