@@ -461,6 +461,21 @@ xbmk_git_init()
 
 			break
 		fi
+		if [ $# -gt 2 ] && [ "$3" != "coreboot" ]; then
+
+			# we still might run -b sometimes, for e.g.
+			# dependencies of ./mk inject. if -b is used
+			# but it's not for coreboot, don't check.
+
+			# coreboot is a multi-tree project, so the third
+			# argument will always be coreboot, when building
+			# with -b.
+
+			# we only need the git name/email check when
+			# doing ./mk -b coreboot
+
+			break
+		fi
 		gitcmd="git config --includes $gitarg"
 		if ! $gitcmd 1>/dev/null 2>/dev/null; then
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
