@@ -452,6 +452,15 @@ xbmk_set_mirror()
 xbmk_git_init()
 {
 	for gitarg in "user.name" "user.email"; do
+		if [ "$2" != "-b" ]; then
+
+			# we only need git name/email set for building
+			# coreboot. this is a bit of a hack, but it should
+			# make xbmk a bit easier to use for example when
+			# someone only wants to run ./mk inject
+
+			break
+		fi
 		gitcmd="git config --includes $gitarg"
 		if ! $gitcmd 1>/dev/null 2>/dev/null; then
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
