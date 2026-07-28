@@ -452,7 +452,7 @@ xbmk_set_mirror()
 xbmk_git_init()
 {
 	for gitarg in "user.name" "user.email"; do
-		if [ "$2" != "-b" ]; then
+		if [ "${2-}" != "-b" ]; then
 
 			# we only need git name/email set for building
 			# coreboot. this is a bit of a hack, but it should
@@ -501,10 +501,12 @@ xbmk_git_init()
 
 	x_ git init 1>/dev/null 2>/dev/null
 	x_ git add -A . 1>/dev/null 2>/dev/null
-	x_ git commit -m "$projectname $version" --date "$cdate" \
+	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
+	    commit -m "$projectname $version" --date "$cdate" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
-	x_ git tag -a "$version" -m "$projectname $version" 1>/dev/null \
-	    2>/dev/null; :
+	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
+	    tag -a "$version" -m "$projectname $version" \
+	    1>/dev/null 2>/dev/null; :
 }
 
 xbmk_child_exec()
