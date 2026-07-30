@@ -10,12 +10,15 @@ set -u -e
 ispwd="true"
 
 if [ "$0" != "./mk" ]; then
+
 	ispwd="false"
 fi
 if [ "$ispwd" = "true" ] && [ -L "mk" ]; then
+
 	ispwd="false"
 fi
 if [ "$ispwd" = "false" ]; then
+
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
 fi
@@ -34,22 +37,29 @@ main()
 {
 	cmd=""
 	if [ $# -gt 0 ]; then
-		cmd="$1"
 
+		cmd="$1"
 		shift 1
 	fi
 
 	case "$cmd" in
+
 	version)
+
 		printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
 		;;
+
 	release|download|inject|prep_mr_import)
+
 		$cmd "$@"
 		;;
+
 	-*)
+
 		return 0
 		;;
 	*)
+
 		err "bad command" main "$@"
 		;;
 	esac
