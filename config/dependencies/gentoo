@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-pkg_add="emerge --ask --verbose --quiet --update"
+pkg_add="emerge --ask --verbose --quiet"
 pkglist=" \
 sys-libs/ncurses dev-util/pkgconf sys-libs/libsepol app-arch/xz-utils \
 sys-devel/m4 app-arch/unzip dev-lang/swig app-cdr/cdrtools sys-devel/flex \
