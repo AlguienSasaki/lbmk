@@ -1,0 +1,52 @@
+From 330177da40df12813d6e45c9cdb6285dcbff8b59 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 3 Aug 2026 22:22:39 +0100
+Subject: [PATCH 1/1] fix gcc error with __unused
+
+just discard it explicitly.
+
+really now, this is better. it's what i do.
+
+(void)foo;
+
+then gcc won't blow up. fixes building on my debian machine.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/commonlib/region.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/src/commonlib/region.c b/src/commonlib/region.c
+index 4a7e285747..b016600da9 100644
+--- a/src/commonlib/region.c
++++ b/src/commonlib/region.c
+@@ -229,18 +229,23 @@ void xlate_region_device_rw_init(struct xlate_region_device *xdev,
+ }
+ 
+ static void *mdev_mmap(const struct region_device *rd, size_t offset,
+-			size_t size __unused)
++			size_t size)
+ {
+ 	const struct mem_region_device *mdev;
+ 
++	(void)size;
++
+ 	mdev = container_of(rd, __typeof__(*mdev), rdev);
+ 
+ 	return &mdev->base[offset];
+ }
+ 
+-static int mdev_munmap(const struct region_device *rd __unused,
+-			void *mapping __unused)
++static int mdev_munmap(const struct region_device *rd,
++			void *mapping)
+ {
++	(void)mapping;
++	(void)rd;
++
+ 	return 0;
+ }
+ 
+-- 
+2.47.3
+
