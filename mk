@@ -11,36 +11,25 @@ xrval=0
 
 (
 xbarg0="$0"
-if [ "${xbarg0##*/}" = "$xbarg0" ]; then
-	xbarg0="`command -v "$xbarg0"`"
-fi
+[ "${xbarg0##*/}" = "$xbarg0" ] && \
+    xbarg0="`command -v "$xbarg0"`"
 
-xbcddir="`readlink -f "$xbarg0" 2>/dev/null`"
-if [ -z "$xbcddir" ]; then
-	xbcddir="`realpath "$xbarg0" 2>/dev/null`"
-fi
-xbcddir="${xbcddir%/*}"
+commandv="`readlink -f "$xbarg0" 2>/dev/null`"
+[ -z "$commandv" ] && \
+    commandv="`realpath "$xbarg0" 2>/dev/null`"
 
-cd "$xbcddir" || exit 1
+cd "${commandv%/*}" || exit 1
 
 . "include/common.sh"
 
-main()
-{
-	cmd="${1-}"
-	[ $# -gt 0 ] && shift 1
+if xeq main "${1-}" \
+    $xbcommands; then
 
-	if ! xeq main "$cmd" $xbcommands; then
-		return 0
-	fi
-
-	$cmd "$@"
+	"$@"
 	set -u -e
 
-	return 1
-}
-
-main "$@" || exit 0
+	exit 0
+fi
 
 . "include/tree.sh"
 
