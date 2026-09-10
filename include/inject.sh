@@ -4,6 +4,16 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
+archive=""
+board=""
+boarddir=""
+IFD_platform=""
+ifdprefix=""
+new_mac=""
+tmpromdir=""
+tree=""
+xchanged=""
+
 cbcfgsdir="config/coreboot"
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvmutil="util/nvmutil/nvmutil"
@@ -16,16 +26,6 @@ fi
 if [ -n "$checkvarschk" ]; then
 	checkvars="$checkvars $checkvarschk"
 fi
-
-archive=""
-board=""
-boarddir=""
-IFD_platform=""
-ifdprefix=""
-new_mac=""
-tmpromdir=""
-tree=""
-xchanged=""
 
 eval "`printf "%s\n" "$checkvars" | \
     awk '{ for (i=1; i<=NF; i++) $i = $i "=;"; print }'`"
