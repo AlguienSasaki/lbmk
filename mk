@@ -27,11 +27,8 @@ cd "$xbcddir" || exit 1
 
 main()
 {
-	cmd=""
-	if [ $# -gt 0 ]; then
-		cmd="$1"
-		shift 1
-	fi
+	cmd="${1-}"
+	[ $# -gt 0 ] && shift 1
 
 	if ! xeq main "$cmd" $xbcommands; then
 		return 0
