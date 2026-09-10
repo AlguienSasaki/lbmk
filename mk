@@ -10,29 +10,21 @@ set -u -e
 xrval=0
 
 (
-ispwd="true"
 xbdir=""
+xbarg0="$0"
 
-if [ "$0" != "./mk" ]; then
-	if [ "${0##*/}" != "$0" ]; then
-		xbdir="`readlink -f "$0" 2>/dev/null`"
-		if [ -z "$xbdir" ]; then
-			xbdir="`realpath "$0" 2>/dev/null`"
-		fi
-		cd "${xbdir%/*}" || exit 1
-	else
-		ispwd="false"
-	fi
+if [ "${0##*/}" = "$0" ]; then
+	xbarg0="`command -v "$0"`"
+	xbdir="${xbarg0%/*}"
+	xbcddir="$xbdir"
 fi
-if [ "$ispwd" = "true" ] && [ -L "mk" ]; then
 
-	ispwd="false"
+xbcddir="`readlink -f "$0" 2>/dev/null`"
+if [ -z "$xbcddir" ]; then
+	xbcddir="`realpath "$0" 2>/dev/null`"
 fi
-if [ "$ispwd" = "false" ]; then
 
-	printf "You must run this in the proper work directory.\n" 1>&2
-	exit 1
-fi
+cd "${xbcddir%/*}" || exit 1
 
 . "include/lib.sh"
 . "include/init.sh"
