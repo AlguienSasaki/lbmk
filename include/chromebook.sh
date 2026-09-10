@@ -32,13 +32,11 @@ mr_edk2tree="chromebook" # tree name in xbmk
 prep_mr_import()
 {
 	if [ -f "$xbmkpwd/CHANGELOG" ]; then
-
 		err "Project import disabled on releases" "prep_mr_import" "$@"
 	fi
 
 	mr_tmpdir="`mktemp -d || err "can't make mrtmpdir"`" || \
 	    err "can't make mrtmpdir" "prep_mr_coreboot" "$@"
-
 	x_ remkdir "$mr_tmpdir"
 
 	x_ prep_mx_edk2conf
@@ -66,7 +64,6 @@ prep_mr_projects()
 {
 	x_ prep_mr "coreboot" "$mr_cbrepo" "$mr_cbbranch" "$mr_cbrev" \
 	    "$mr_cbrevbase" "$mr_cbtree"
-
 	x_ prep_mr "edk2" "$mr_edk2repo" "$mr_edk2branch" "$mr_edk2rev" \
 	    "$mr_edk2revbase" "$mr_edk2tree"
 }
@@ -84,7 +81,6 @@ prep_mr()
 
 	x_ prep_mr_clone "$@"
 	x_ prep_mr_patch "$@"
-
 	x_ prep_mr_file "config/$1/$6/target.cfg" \
 	    "$spdx" \
 	    "" \
@@ -108,13 +104,10 @@ prep_mr_patch()
 	mx_patchdir="config/$1/$6/patches"
 
 	x_ remkdir "$mx_patchdir"
-
 	if [ "$4" != "$5" ]; then
-
 		x_ git -C "$mr_tmpclone" format-patch $5..$4
 		x_ mv "$mr_tmpclone"/*.patch "$mx_patchdir"
 	fi
-
 	# if no patches were created, rmdir will succeed
 	rmdir "$mx_patchdir" 1>/dev/null 2>/dev/null || :
 }
@@ -126,11 +119,10 @@ prep_mr_file()
 
 	x_ rm -f "$mr_filename"
 
-	while [ $# -gt 0 ]; do
-
+	while [ $# -gt 0 ]
+	do
 		printf "%s\n" "$1" >> "$mr_filename" || \
 		    err "Can't write '$1' to '$mr_filename'" prep_mr_file "$@"
-
 		shift 1
 	done
 

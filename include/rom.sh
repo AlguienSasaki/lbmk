@@ -11,21 +11,15 @@ grubdata="config/data/grub"
 buildser()
 {
 	if [ "$1" = "pico" ]; then
-
 		x_ cmake -DPICO_BOARD="$2" \
 		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc"
-
 		x_ cmake --build "$sersrc/build"
-
 	elif [ "$1" = "stm32" ]; then
-
 		x_ make -C "$sersrc" libopencm3-just-make BOARD=$2
-
 		x_ make -C "$sersrc" BOARD=$2
 	fi
 
 	x_ xbmkdir "bin/serprog_$1"
-
 	x_ mv "$serx" "bin/serprog_$1/serprog_$2.${serx##*.}"
 }
 
@@ -69,9 +63,7 @@ mkpayload_grub()
 
 corebootpremake()
 {
-	if [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" = "n" ]; then
-
+	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]; then
 		return 0
 	fi
 
@@ -83,18 +75,14 @@ corebootpremake()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
-	if [ -z "$mode" ] && \
-	    [ "$target" != "$tree" ]; then
-
+	if [ -z "$mode" ] && [ "$target" != "$tree" ]; then
 		x_ ./mk download "$target"
 	fi
 }
 
 cook_coreboot_config()
 {
-	if [ -z "$mode" ] && \
-	    [ -f "$srcdir/.config" ]; then
-
+	if [ -z "$mode" ] && [ -f "$srcdir/.config" ]; then
 		printf "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || \
 		    err "can't cook '$srcdir'" "cook_coreboot_config" "$@"
 	fi
@@ -103,12 +91,9 @@ cook_coreboot_config()
 check_coreboot_util()
 {
 	if [ "$badhash" = "y" ]; then
-
 		x_ rm -f "elf/coreboot/$tree/$1"
 	fi
-
 	if e "elf/coreboot/$tree/$1" f; then
-
 		return 0
 	fi
 
@@ -116,33 +101,26 @@ check_coreboot_util()
 	utilsrcdir="src/coreboot/$tree/util/$1"
 
 	utilmode=""
-
 	if [ -n "$mode" ]; then
-
 		utilmode="clean"
 	fi
 
 	x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
 
 	if [ -n "$mode" ]; then
-
 		# TODO: is this rm command needed?
+
 		x_ rm -Rf "$utilelfdir"
 
 		return 0
-
-	elif [ -n "$mode" ] || \
-	    [ -f "$utilelfdir/$1" ]; then
-
+	elif [ -n "$mode" ] || [ -f "$utilelfdir/$1" ]; then
 		return 0
 	fi
 
 	x_ xbmkdir "$utilelfdir"
-
 	x_ cp "$utilsrcdir/$1" "$utilelfdir"
 
 	if [ "$1" = "cbfstool" ]; then
-
 		x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"
 	fi
 }
@@ -159,9 +137,7 @@ coreboot_pad_one_byte()
 
 mkcorebootbin()
 {
-	if [ "$XBMK_RELEASE" = "y" ] && \
-	    [ "$release" = "n" ]; then
-
+	if [ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ]; then
 		return 0
 	fi
 
@@ -172,9 +148,7 @@ mkcorebootbin()
 		check_coreboot_util ifdtool
 
 	for y in "$target_dir/config"/*; do
-
 		defconfig="$y"
-
 		mkcorebootbin_real
 	done
 
@@ -184,7 +158,6 @@ mkcorebootbin()
 mkcorebootbin_real()
 {
 	if [ "$target" = "$tree" ]; then
-
 		return 0
 	fi
 
@@ -192,28 +165,21 @@ mkcorebootbin_real()
 
 	initmode="${defconfig##*/}"
 	displaymode="${initmode##*_}"
-
 	if [ "$displaymode" = "$initmode" ]; then
-
 		# blank it for "normal" or "fspgop" configs:
 
 		displaymode=""
 	fi
-
 	initmode="${initmode%%_*}"
-
 	cbfstool="elf/coreboot/$tree/cbfstool"
 
 	# cbfstool option backends, if they exist
 	cbfscfg="config/coreboot/$target/cbfs.cfg"
 
 	elfrom="elf/coreboot/$tree/$target/$initmode"
-
 	if [ -n "$displaymode" ]; then
-
 		elfrom="${elfrom}_$displaymode"
 	fi
-
 	elfrom="$elfrom/coreboot.rom"
 
 	$if_not_dry_build \
@@ -222,69 +188,48 @@ mkcorebootbin_real()
 	$if_not_dry_build \
 		unpad_one_byte "$tmprom"
 
-	if [ -n "$payload_uboot" ] && \
-	    [ "$payload_uboot" != "amd64" ] && \
-	    [ "$payload_uboot" != "i386" ] && \
-	    [ "$payload_uboot" != "arm64" ]; then
-
+	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
+	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ]
+	then
 		err "'$target' defines bad u-boot type '$payload_uboot'" \
 		    "mkcorebootbin_real" "$@"
 	fi
 
-	if [ -n "$payload_uboot" ] && \
-	    [ "$payload_uboot" != "arm64" ]; then
-
+	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
 		payload_seabios="y"
 	fi
 
 	if [ -z "$uboot_config" ]; then
-
 		uboot_config="default"
 	fi
-
 	if [ "$payload_grub" = "y" ]; then
-
 		payload_seabios="y"
 	fi
-
-	if [ "$payload_seabios" = "y" ] && \
-	    [ "$payload_uboot" = "arm64" ]; then
-
+	if [ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ]; then
 		$if_not_dry_build \
 			err "$target: U-Boot arm / SeaBIOS/GRUB both enabled" \
 			    "mkcorebootbin_real" "$@"
 	fi
 
 	if [ -z "$grub_scan_disk" ]; then
-
 		grub_scan_disk="nvme ahci ata"
 	fi
-
 	if [ -z "$grubtree" ]; then
-
 		grubtree="default"
 	fi
-
 	grubelf="elf/grub/$grubtree/$grubtree/payload/grub.elf"
 
 	if [ "$payload_memtest" != "y" ]; then
-
 		payload_memtest="n"
 	fi
-
 	if [ "$(uname -m)" != "x86_64" ]; then
-
 		payload_memtest="n"
 	fi
 
-	if [ "$payload_grubsea" = "y" ] && \
-	    [ "$initmode" = "normal" ]; then
-
+	if [ "$payload_grubsea" = "y" ] && [ "$initmode" = "normal" ]; then
 		payload_grubsea="n"
 	fi
-
 	if [ "$payload_grub" != "y" ]; then
-
 		payload_grubsea="n"
 	fi
 
@@ -292,29 +237,20 @@ mkcorebootbin_real()
 		return 0
 
 	if [ -f "$cbfscfg" ]; then
-
 		dx_ add_cbfs_option "$cbfscfg"
 	fi
 
 	if grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
-
 		if [ "$payload_seabios" = "y" ]; then
-
 			pname="seabios"
-
 			add_seabios
 		fi
-
 		if [ "$payload_uboot" = "arm64" ]; then
-
 			pname="uboot"
-
 			add_uboot
 		fi
 	else
-
 		pname="custom"
-
 		cprom
 	fi; :
 }
@@ -326,12 +262,9 @@ add_cbfs_option()
 	# TODO: input sanitization (currently mitigated by careful config)
 
 	op_name="`printf "%s\n" "$1" | awk '{print $1}'`"
-
 	op_arg="`printf "%s\n" "$1" | awk '{print $2}'`"
 
-	if [ -z "$op_name" ] || \
-	    [ -z "$op_arg" ]; then
-
+	if [ -z "$op_name" ] || [ -z "$op_arg" ]; then
 		return 0
 	fi
 
@@ -350,9 +283,7 @@ add_cbfs_option()
 
 add_seabios()
 {
-	if [ -n "$payload_uboot" ] && \
-	    [ "$payload_uboot" != "arm64" ]; then
-
+	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
 		# we must add u-boot first, because it's added as a flat
 		# binary at a specific offset for secondary program loader
 
@@ -361,16 +292,11 @@ add_seabios()
 	fi
 
 	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
-
-	if [ "$initmode" = "fspgop" ]; then
-
+	[ "$initmode" = "fspgop" ] && \
 	    _seabioself="elf/seabios/default/default/libgfxinit/bios.bin.elf"
-	fi
 
 	_seaname="fallback/payload"
-
 	if [ "$payload_grubsea" = "y" ]; then
-
 		 _seaname="seabios.elf"
 	fi
 
@@ -379,39 +305,27 @@ add_seabios()
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
 	opexec="2"
-
 	if [ "$initmode" = "vgarom" ]; then
-
 		opexec="0"
 	fi
-
 	x_ "$cbfstool" "$tmprom" add-int -i $opexec -n etc/pci-optionrom-exec
 
 	x_ "$cbfstool" "$tmprom" add-int -i 0 -n etc/optionroms-checksum
-
-	if [ "$initmode" = "libgfxinit" ] || \
-	    [ "$initmode" = "fspgop" ]; then
-
+	if [ "$initmode" = "libgfxinit" ] || [ "$initmode" = "fspgop" ]; then
 		cbfs "$tmprom" "$seavgabiosrom" vgaroms/seavgabios.bin raw
 	fi
 
 	if [ "$payload_memtest" = "y" ]; then
-
 		# because why not have memtest?
-		# we can have it. we are entitled to it.
-		# so we shall have it, yes. having memtest86+
-		# in your boot flash makes you a better person.
 
 		cbfs "$tmprom" "elf/memtest86plus/memtest.bin" img/memtest
 	fi
 
 	if [ "$payload_grub" = "y" ]; then
-
 		add_grub
 	fi
 
 	if [ "$payload_grubsea" != "y" ]; then
-
 		# ROM image where SeaBIOS doesn't load grub/u-boot first.
 		# U-Boot/GRUB available in ESC menu if enabled for the board
 
@@ -424,18 +338,13 @@ add_seabios()
 
 	if [ "$payload_uboot" = "amd64" ] && \
 	    [ "$displaymode" != "txtmode" ] && \
-	    [ "$initmode" != "normal" ] && \
-	    [ "$payload_grubsea" != "y" ]; then
-
+	    [ "$initmode" != "normal" ] && [ "$payload_grubsea" != "y" ]; then
 		pname="seauboot"
-
 		cprom "seauboot"
 	fi
 
 	if [ "$payload_grub" = "y" ]; then
-
 		pname="seagrub"
-
 		mkseagrub
 	fi
 }
@@ -444,9 +353,7 @@ add_grub()
 {
 	# path in CBFS for the GRUB payload
 	_grubname="img/grub2"
-
 	if [ "$payload_grubsea" = "y" ]; then
-
 		_grubname="fallback/payload"
 	fi
 
@@ -458,9 +365,7 @@ add_grub()
 
 	cbfs "$tmprom" "$xbtmp/tmpcfg" scan.cfg raw
 
-	if [ "$initmode" != "normal" ] && \
-	    [ "$displaymode" != "txtmode" ]; then
-
+	if [ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ]; then
 		cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 		    "background.png" raw
 	fi
@@ -469,10 +374,8 @@ add_grub()
 mkseagrub()
 {
 	if [ "$payload_grubsea" = "y" ]; then
-
 		pname="grub"
 	else
-
 		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
 	fi
 
@@ -482,13 +385,10 @@ mkseagrub()
 add_uboot()
 {
 	if [ "$displaymode" = "txtmode" ]; then
-
 		printf "cb/%s: Can't use U-Boot in text mode\n" "$target" 1>&2
 
 		return 0
-
 	elif [ "$initmode" = "normal" ]; then
-
 		printf "cb/%s: Can't use U-Boot in normal initmode\n" \
 		    "$target" 1>&2
 
@@ -506,22 +406,17 @@ add_uboot()
 
 	# override for x86/x86_64 targets:
 	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
-
 		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
 			# on 64-bit, 0x1120000 is the SPL, with a stub that
 			# loads it, located at 0x1110000
 
 		ubpath="img/u-boot" # 64-bit
-
 		ubtree="x86_64"
 		ubtarget="amd64coreboot"
 
-		if [ "$payload_uboot" = "i386" ]; then
-
-			# override for 32-bit
-
-			ubpath="u-boot"
-
+		if [ "$payload_uboot" = "i386" ]
+		then
+			ubpath="u-boot" # 32-bit
 			ubtree="x86"
 			ubtarget="i386coreboot"; :
 		fi
@@ -530,29 +425,20 @@ add_uboot()
 	ubdir="elf/u-boot/$ubtree/$ubtarget/$uboot_config"
 
 	# aarch64 targets:
-
 	ubootelf="$ubdir/u-boot.elf"
-
 	if [ ! -f "$ubootelf" ]; then
-
 		ubootelf="$ubdir/u-boot"
 	fi
 
 	# override for x86/x86_64 targets:
-
 	if [ "$payload_uboot" = "i386" ]; then
-
 		ubootelf="$ubdir/u-boot-dtb.bin"
-
 	elif [ "$payload_uboot" = "amd64" ]; then
-
 		ubootelf="$ubdir/u-boot-x86-with-spl.bin" # EFI-compatible
 	fi
 
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
-
 	if [ "$payload_seabios" != "y" ]; then
-
 		cprom
 	fi
 }
@@ -567,13 +453,9 @@ cprom()
 	newrom="bin/$target/${pname}_${target}_$initmode.rom"
 
 	if [ -n "$displaymode" ]; then
-
 		newrom="${newrom%.rom}_$displaymode.rom"
 	fi
-
-	if [ $# -gt 0 ] && \
-	    [ "${1%.gkb}" != "$1" ]; then
-
+	if [ $# -gt 0 ] && [ "${1%.gkb}" != "$1" ]; then
 		tmpnew="${1##*/}"
 		newrom="${newrom%.rom}_${tmpnew%.gkb}.rom"
 	fi
@@ -581,18 +463,14 @@ cprom()
 	irom="$tmprom"
 
 	if [ $# -gt 0 ]; then
-
 		irom="$(mktemp || err "!mk irom, $(echo "$@")")" || \
 		    err "can't copy rom" "cprom" "$@"
 
 		x_ cp "$tmprom" "$irom" && cpcmd="mv"
 
 		if [ "${1%.gkb}" != "$1" ]; then
-
 			cbfs "$irom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
-
 		elif [ "$1" = "seauboot" ]; then
-
 			cbfs "$irom" "$grubdata/bootorder_uboot" bootorder raw
 		fi
 	fi
@@ -600,7 +478,6 @@ cprom()
 	printf "Creating new %s image: '%s'\n" "$projectname" "$newrom"
 
 	x_ xbmkdir "bin/$target"
-
 	x_ $cpcmd "$irom" "$newrom"
 }
 
@@ -609,15 +486,10 @@ cbfs()
 	ccmd="add-payload"
 	lzma="-c lzma"
 
-	if [ $# -gt 3 ] && \
-	    [ $# -lt 5 ]; then
-
+	if [ $# -gt 3 ] && [ $# -lt 5 ]; then
 		ccmd="add"
 		lzma="-t $4"
-
-	elif [ $# -gt 4 ] && \
-	    [ "$5" = "0x1110000" ]; then
-
+	elif [ $# -gt 4 ] && [ "$5" = "0x1110000" ]; then
 		ccmd="add-flat-binary" && \
 		lzma="-c lzma -l 0x1110000 -e 0x1110000"
 	fi
@@ -632,14 +504,11 @@ mkcoreboottar()
 	$if_dry_build \
 		return 0
 
-	if [ "$target" = "$tree" ] || \
-	    [ "$XBMK_RELEASE" != "y" ] || \
+	if [ "$target" = "$tree" ] || [ "$XBMK_RELEASE" != "y" ] || \
 	    [ "$release" = "n" ]; then
-
 		return 0
 	fi
 
 	mkrom_tarball "bin/$target"
-
 	x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke
 }

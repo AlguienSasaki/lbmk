@@ -19,7 +19,6 @@ extract_refcode()
 	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16:
 
 	if [ -z "$cbfstoolref" ]; then
-
 		err "cbfstoolref not set" "extract_refcode" "$@"
 	fi
 
@@ -28,10 +27,8 @@ extract_refcode()
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
-	# enable the Intel GbE device, if told by offset MRC_refcode_gbe:
-
+	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
 	if [ -n "$MRC_refcode_gbe" ]; then
-
 		x_ dd if="config/ifd/hp820g2/1.bin" of="$appdir/ref" bs=1 \
 		    seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 	fi
@@ -42,11 +39,8 @@ extract_refcode()
 extract_mrc()
 {
 	if [ -z "$MRC_board" ]; then
-
 		err "MRC_board unset" "extract_mrc" "$@"
-
 	elif [ -z "$CONFIG_MRC_FILE" ]; then
-
 		err "CONFIG_MRC_FILE unset" "extract_mrc" "$@"
 	fi
 
@@ -54,7 +48,6 @@ extract_mrc()
 
 	(
 		x_ cd "$appdir"
-
 		extract_partition "${MRC_url##*/}"
 		extract_archive "$SHELLBALL" .
 

@@ -20,7 +20,6 @@ tmpgitcache="$xbtmp/tmpgit"
 fetch_targets()
 {
 	if [ -d "src/$project/$tree" ]; then
-
 		return 0
 	fi
 
@@ -36,22 +35,16 @@ fetch_project()
 	    err "Can't read config 'config/git/$project/pkg.cfg'" \
 	    "fetch_project" "@"
 
-	if [ -z "$url" ] || \
-	    [ -z "$bkup_url" ]; then
-
+	if [ -z "$url" ] || [ -z "$bkup_url" ]; then
 		err "url/bkup_url not both set 'config/git/$project/pkg.cfg'" \
 		    "fetch_project" "$@"
 	fi
 
 	if [ -n "$xgcctree" ]; then
-
 		x_ ./mk -f coreboot "$xgcctree"
 	fi
-
 	if [ -n "$depend" ]; then
-
 		for d in $depend ; do
-
 			x_ ./mk -f $d
 		done
 	fi
@@ -62,14 +55,12 @@ fetch_project()
 clone_project()
 {
 	if ! singletree "$project"; then
-
 		return 0
 	fi
 
 	loc="src/$project"
 
 	if [ -d "$loc" ]; then
-
 		return 0
 	fi
 
@@ -85,20 +76,15 @@ git_prep()
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
 	if [ -z "$rev" ]; then
-
 		err "$project/$tree: rev not set" "git_prep" "$@"
 	fi
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
-
-	if singletree "$project" || \
-	    [ $# -gt 4 ]; then
-
+	if singletree "$project" || [ $# -gt 4 ]; then
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
 
 	if [ "$_loc" != "${_loc%/*}" ]; then
-
 		x_ xbmkdir "${_loc%/*}"
 	fi
 
@@ -119,59 +105,41 @@ fetch_submodule()
 	if e "$mcfgdir/module.cfg" f missing; then
 		return 0
 	fi
-
 	. "$mcfgdir/module.cfg" || \
 	    err "Can't read '$mcfgdir/module.cfg'" "fetch_submodules" "$@"
 
-	if [ -n "$subgit" ] || \
-	    [ -n "$subgit_bkup" ]; then
-
+	if [ -n "$subgit" ] || [ -n "$subgit_bkup" ]; then
 		st="$st git"
 	fi
-
-	if [ -n "$subcurl" ] || \
-	    [ -n "$subcurl_bkup" ]; then
-
+	if [ -n "$subcurl" ] || [ -n "$subcurl_bkup" ]; then
 		st="$st curl"
 	fi
 
 	st="${st# }"
-
 	if [ "$st" = "git curl" ]; then
-
 		err "$mdir: git+curl defined" "fetch_submodule" "$@"
 	fi
 
 	if [ -z "$st" ]; then
-
 		return 0
 	fi
 
 	if [ "$st" = "curl" ]; then
-
 		if [ -z "$subcurl" ] || [ -z "$subcurl_bkup" ]; then
 			err "subcurl/subcurl_bkup not both set" \
 			    "fetch_submodule" "$@"
 		fi
-
-	elif [ -z "$subgit" ] || \
-	    [ -z "$subgit_bkup" ]; then
-
+	elif [ -z "$subgit" ] || [ -z "$subgit_bkup" ]; then
 		err "subgit/subgit_bkup not both set" "fetch_submodule" "$@"
-
 	elif [ -z "$subhash" ]; then
-
 		err "subhash not set" "fetch_submodule" "$@"
 	fi
 
 	if [ "$st" = "git" ]; then
-
 		x_ rm -Rf "$tmpgit/$1"
-
 		xbget "$st" "$subgit" "$subgit_bkup" "$tmpgit/$1" \
 		    "$subhash" "$mdir/${1##*/}/patches"
 	else
-
 		xbget "$st" "$subcurl" "$subcurl_bkup" "$tmpgit/$1" \
 		    "$subhash" "$mdir/${1##*/}/patches"
 	fi
@@ -183,41 +151,30 @@ fetch_submodule()
 
 xbget()
 {
-	if [ "$1" != "curl" ] && \
-	    [ "$1" != "copy" ] && \
-	    [ "$1" != "git" ]; then
-
+	if [ "$1" != "curl" ] && [ "$1" != "copy" ] && [ "$1" != "git" ]; then
 		err "Bad dlop (arg 1)" "xbget" "$@"
 	fi
 
-	for url in "$2" "$3"; do
-
+	for url in "$2" "$3"
+	do
 		if [ -z "$url" ]; then
-
 			err "empty URL given in" "xbget" "$@"
-
 		elif ! try_fetch "$url" "$@"; then
-
 			continue
 		fi
 
 		case "$1" in
-
 		git)
-
 			if [ ! -d "$4" ]; then
 				continue
 			fi
 			;;
-
 		*)
-
 			if [ ! -f "$4" ]; then
 				continue
 			fi
 			;;
 		esac
-
 		return 0 # successful download/copy
 	done
 
@@ -227,15 +184,11 @@ xbget()
 try_fetch()
 {
 	if [ "$2" = "git" ]; then
-
 		if ! try_fetch_git "$@"; then
-
 			return 1
 		fi
 	else
-
 		if ! try_fetch_file "$@"; then
-
 			return 1
 		fi
 	fi
@@ -248,34 +201,27 @@ try_fetch_git()
 	# directories becomes cache/mirror/foo.example.com/repo
 
 	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-
 		cached="mirror"
 	else
-
 		cached="clone"
 	fi
-
 	cached="$cached/${1#*://}"
 	cached="$XBMK_CACHE/$cached"
 
 	x_ xbmkdir "${5%/*}" "${cached%/*}"
 
 	if ! try_$2 "$cached" "$@"; then
-
 		return 1
 	elif [ ! -d "$cached" ]; then
-
 		return 1
 	fi
 
 	if [ ! -d "$5" ]; then
-
 		tmpclone "$cached" "$5" "$6" "$7" || \
 		    err "Can't clone final repo" "try_fetch" "$@"; :
 	fi
 
 	if [ ! -d "$5" ]; then
-
 		return 1
 	fi
 }
@@ -288,14 +234,11 @@ try_fetch_file()
 	x_ xbmkdir "${5%/*}" "${cached%/*}"
 
 	if bad_checksum "$6" "$cached" 2>/dev/null; then
-
 		x_ rm -f "$cached"
 	fi
 
 	if [ ! -f "$cached" ]; then
-
 		if ! try_$2 "$cached" "$@"; then
-
 			return 1
 		fi
 	fi
@@ -307,50 +250,39 @@ try_fetch_file()
 	fi
 
 	if [ ! -f "$cached" ]; then
-
 		return 1
-
 	elif bad_checksum "$6" "$cached"; then
-
 		x_ rm -f "$cached"
+
 		return 1
 	fi
 
 	if [ "$cached" != "$5" ]; then
-
 		x_ cp "$cached" "$5"
 	fi
 
 	if bad_checksum "$6" "$5"; then
-
 		x_ rm -f "$5"
+
 		return 1
-
 	elif [ ! -f "$5" ]; then
-
 		return 1
 	fi
 }
 
 try_curl()
 {
-	ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
+	_ua=""
 
 	case "$2" in
-
 	https://www.supermicro.com/*)
-
-		ua="curl/8.6.0"
-		;;
-
+		_ua="curl/8.6.0";;
 	*)
-		:
-		;;
-
+		_ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0";;
 	esac
 
-	( x_ curl --location --retry 3 -A "$ua" "$2" -o "$1" ) \
-	    || ( x_ wget --tries 3 -U "$ua" "$2" -O "$1" ) \
+	( x_ curl --location --retry 3 -A "$_ua" "$2" -o "$1" ) \
+	    || ( x_ wget --tries 3 -U "$_ua" "$2" -O "$1" ) \
 	    || return 1; :
 }
 
@@ -367,13 +299,10 @@ try_git()
 	x_ rm -Rf "$tmpgitcache"
 
 	if [ ! -d "$gitdest" ]; then
-
 		if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-
 			( x_ git clone --mirror "$2" "$tmpgitcache" ) || \
 			    return 1
 		else
-
 			( x_ git clone "$2" "$tmpgitcache" ) || return 1
 		fi
 
@@ -383,7 +312,6 @@ try_git()
 
 	if git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null && \
 	    [ "$forcepull" != "y" ]; then
-
 		# don't try to pull the latest changes if the given target
 		# revision already exists locally. this saves a lot of time
 		# during release builds, and reduces the chance that we will
@@ -393,11 +321,9 @@ try_git()
 	fi
 
 	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-
 		( x_ git -C "$gitdest" fetch ) || :; :
 		( x_ git -C "$gitdest" update-server-info ) || :; :
 	else
-
 		( x_ git -C "$gitdest" pull --all ) || :; :
 	fi
 }
@@ -405,22 +331,17 @@ try_git()
 bad_checksum()
 {
 	if e "$2" f missing; then
-
 		return 0
 	fi
 
 	build_sbase
-
 	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \
 	    err "!sha512 '$2' $1" bad_checksum "$@"
 
 	if [ "$csum" = "$1" ]; then
-
 		return 1
 	else
-
 		x_ rm -f "$2"
-
 		printf "BAD SHA512 %s, '%s'; need %s\n" "$csum" "$2" "$1" 1>&2
 	fi
 }
