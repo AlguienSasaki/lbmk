@@ -19,13 +19,7 @@ tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvmutil="util/nvmutil/nvmutil"
 ifdtool="elf/coreboot/default/ifdtool"
 
-checkvars="CONFIG_GBE_BIN_PATH"
-if [ -n "$checkvarsxbmk" ]; then
-	checkvars="$checkvars $checkvarsxbmk"
-fi
-if [ -n "$checkvarschk" ]; then
-	checkvars="$checkvars $checkvarschk"
-fi
+checkvars="CONFIG_GBE_BIN_PATH ${checkvarsxbmk-} ${checkvarschk-}"
 
 eval "`printf "%s\n" "$checkvars" | \
     awk '{ for (i=1; i<=NF; i++) $i = $i "=;"; print }'`"
