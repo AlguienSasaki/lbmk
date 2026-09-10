@@ -10,18 +10,14 @@ set -u -e
 xrval=0
 
 (
-xbdir=""
 xbarg0="$0"
-
-if [ "${0##*/}" = "$0" ]; then
-	xbarg0="`command -v "$0"`"
-	xbdir="${xbarg0%/*}"
-	xbcddir="$xbdir"
+if [ "${xbarg0##*/}" = "$xbarg0" ]; then
+	xbarg0="`command -v "$xbarg0"`"
 fi
 
-xbcddir="`readlink -f "$0" 2>/dev/null`"
+xbcddir="`readlink -f "$xbarg0" 2>/dev/null`"
 if [ -z "$xbcddir" ]; then
-	xbcddir="`realpath "$0" 2>/dev/null`"
+	xbcddir="`realpath "$xbarg0" 2>/dev/null`"
 fi
 
 cd "${xbcddir%/*}" || exit 1
