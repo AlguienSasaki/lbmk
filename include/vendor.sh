@@ -2,7 +2,7 @@
 
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
 # These are variables and functions, extending the functionality of
 # inject.sh, to be used with lbmk; they are kept separate here, so that

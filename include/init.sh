@@ -2,7 +2,7 @@
 
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
-# Copyright (c) 2020-2025 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2020-2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
 export LANG=C.UTF-8
