@@ -35,26 +35,15 @@ main()
 	cmd=""
 	if [ $# -gt 0 ]; then
 		cmd="$1"
-
 		shift 1
 	fi
 
-	case "$cmd" in
-	version)
-		printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
-		;;
-	release|download|inject|prep_mr_import)
-		$cmd "$@"
-		;;
-	-*)
+	if ! xeq main "$cmd" \
+	    version release download inject prep_mr_import; then
 		return 0
-		;;
-	*)
-		err "bad command" main "$@"
-		;;
-	esac
+	fi
 
-	# some commands disable them. turn them back on!
+	$cmd "$@"
 	set -u -e
 
 	return 1

@@ -27,6 +27,11 @@ update_xbmkver()
 	    err "can't write '$versiondate'" "update_xbmkver" "$@"; :
 }
 
+version()
+{
+	printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
+}
+
 xbmk_sanitize_version()
 {
 	if [ -z "$version" ]; then
@@ -220,6 +225,31 @@ x_()
 	else
 		"$@" || err "Unhandled error" "x_" "$@"
 	fi
+}
+
+xeq()
+{
+	if [ $# -lt 2 ]; then
+		err "no args" xeq
+	fi
+	xbcmd="$1"
+	chk="$2"
+	shift 2
+
+	case "$chk" in
+	-*)
+		return 1
+		;;
+	*)
+		for eq in "$@"; do
+			if [ "$chk" = "$eq" ]; then
+				return 0
+			fi
+		done
+		;;
+	esac
+
+	err "bad command" xeq "$xbcmd" "$chk" "$@"
 }
 
 xchk()
