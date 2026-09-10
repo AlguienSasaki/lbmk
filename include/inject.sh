@@ -27,7 +27,8 @@ tmpromdir=""
 tree=""
 xchanged=""
 
-eval "`setvars "" $checkvars`"
+eval "`printf "%s\n" "$checkvars" | \
+    awk '{ for (i=1; i<=NF; i++) $i = $i "=;"; print }'`"
 
 inject()
 {

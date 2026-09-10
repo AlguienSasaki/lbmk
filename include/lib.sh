@@ -85,23 +85,6 @@ e()
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
-setvars()
-{
-	_setvars=""
-
-	if [ $# -lt 2 ]; then
-		return 0
-	fi
-
-	val="$1"
-	shift 1
-
-	while [ $# -gt 0 ]; do
-		printf "%s=\"%s\"\n" "$1" "$val"
-		shift 1
-	done
-}
-
 # return 0 if project is single-tree, otherwise 1
 # e.g. coreboot is multi-tree, so 1
 singletree()
