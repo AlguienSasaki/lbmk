@@ -19,8 +19,9 @@ xbcddir="`readlink -f "$xbarg0" 2>/dev/null`"
 if [ -z "$xbcddir" ]; then
 	xbcddir="`realpath "$xbarg0" 2>/dev/null`"
 fi
+xbcddir="${xbcddir%/*}"
 
-cd "${xbcddir%/*}" || exit 1
+cd "$xbcddir" || exit 1
 
 . "include/lib.sh"
 . "include/init.sh"
