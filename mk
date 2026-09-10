@@ -23,7 +23,7 @@ cd "${commandv%/*}" || exit 1
 if xeq main "${1-}" \
     $xbcommands; then
 
-	"$@"
+	"$@" || exit 1
 	exit 0
 fi
 
