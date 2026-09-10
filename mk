@@ -26,8 +26,6 @@ if xeq main "${1-}" \
     $xbcommands; then
 
 	"$@"
-	set -u -e
-
 	exit 0
 fi
 
