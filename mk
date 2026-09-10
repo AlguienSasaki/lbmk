@@ -7,8 +7,6 @@
 
 set -u -e
 
-xrval=0
-
 (
 xbarg0="$0"
 [ "${xbarg0##*/}" = "$xbarg0" ] && \
@@ -37,6 +35,4 @@ x_ touch "$mkhelpercfg"
 
 . "$mkhelpercfg"
 $cmd
-) || xrval=1
-
-exit $xrval
+) || exit 1; :
