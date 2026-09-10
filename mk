@@ -23,15 +23,7 @@ xbcddir="${xbcddir%/*}"
 
 cd "$xbcddir" || exit 1
 
-. "include/lib.sh"
-. "include/init.sh"
-. "include/vendor.sh"
-. "include/mrc.sh"
-. "include/inject.sh"
-. "include/rom.sh"
-. "include/release.sh"
-. "include/get.sh"
-. "include/chromebook.sh"
+. "include/common.sh"
 
 main()
 {
@@ -41,8 +33,7 @@ main()
 		shift 1
 	fi
 
-	if ! xeq main "$cmd" \
-	    version release download inject prep_mr_import; then
+	if ! xeq main "$cmd" $xbcommands; then
 		return 0
 	fi
 
