@@ -7,15 +7,29 @@
 
 set -u -e
 
+xrval=0
+
+(
 ispwd="true"
+xbdir=""
 
 if [ "$0" != "./mk" ]; then
-	ispwd="false"
+	if [ "${0##*/}" != "$0" ]; then
+		xbdir="`readlink -f "$0" 2>/dev/null`"
+		if [ -z "$xbdir" ]; then
+			xbdir="`realpath "$0" 2>/dev/null`"
+		fi
+		cd "${xbdir%/*}" || exit 1
+	else
+		ispwd="false"
+	fi
 fi
 if [ "$ispwd" = "true" ] && [ -L "mk" ]; then
+
 	ispwd="false"
 fi
 if [ "$ispwd" = "false" ]; then
+
 	printf "You must run this in the proper work directory.\n" 1>&2
 	exit 1
 fi
@@ -59,3 +73,6 @@ x_ touch "$mkhelpercfg"
 
 . "$mkhelpercfg"
 $cmd
+) || xrval=1
+
+exit $xrval
