@@ -11,9 +11,8 @@ tmpgitcache="$xbtmp/tmpgit"
 
 fetch_targets()
 {
-	if [ -d "src/$project/$tree" ]; then
+	[ -d "src/$project/$tree" ] && \
 		return 0
-	fi
 
 	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" "submod"
@@ -32,14 +31,13 @@ fetch_project()
 		    "fetch_project" "$@"
 	fi
 
-	if [ -n "$xgcctree" ]; then
+	[ -n "$xgcctree" ] && \
 		x_ ./mk -f coreboot "$xgcctree"
-	fi
-	if [ -n "$depend" ]; then
+
+	[ -n "$depend" ] && \
 		for d in $depend ; do
 			x_ ./mk -f $d
 		done
-	fi
 
 	clone_project
 }
@@ -52,9 +50,8 @@ clone_project()
 
 	loc="src/$project"
 
-	if [ -d "$loc" ]; then
+	[ -d "$loc" ] && \
 		return 0
-	fi
 
 	remkdir "${tmpgit%/*}"
 	git_prep "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"
@@ -67,18 +64,16 @@ git_prep()
 	_patchdir="$3"
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
-	if [ -z "$rev" ]; then
+	[ -z "$rev" ] && \
 		err "$project/$tree: rev not set" "git_prep" "$@"
-	fi
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 	if singletree "$project" || [ $# -gt 4 ]; then
 		dx_ fetch_submodule "$mdir/module.list"
 	fi
 
-	if [ "$_loc" != "${_loc%/*}" ]; then
+	[ "$_loc" != "${_loc%/*}" ] && \
 		x_ xbmkdir "${_loc%/*}"
-	fi
 
 	x_ mv "$tmpgit" "$_loc"
 }
@@ -108,13 +103,11 @@ fetch_submodule()
 	fi
 
 	st="${st# }"
-	if [ "$st" = "git curl" ]; then
+	[ "$st" = "git curl" ] && \
 		err "$mdir: git+curl defined" "fetch_submodule" "$@"
-	fi
 
-	if [ -z "$st" ]; then
+	[ -z "$st" ] && \
 		return 0
-	fi
 
 	if [ "$st" = "curl" ]; then
 		if [ -z "$subcurl" ] || [ -z "$subcurl_bkup" ]; then
@@ -143,9 +136,8 @@ fetch_submodule()
 
 xbget()
 {
-	if [ "$1" != "curl" ] && [ "$1" != "copy" ] && [ "$1" != "git" ]; then
+	[ "$1" != "curl" ] && [ "$1" != "copy" ] && [ "$1" != "git" ] && \
 		err "Bad dlop (arg 1)" "xbget" "$@"
-	fi
 
 	for url in "$2" "$3"
 	do
@@ -157,14 +149,12 @@ xbget()
 
 		case "$1" in
 		git)
-			if [ ! -d "$4" ]; then
+			[ ! -d "$4" ] && \
 				continue
-			fi
 			;;
 		*)
-			if [ ! -f "$4" ]; then
+			[ ! -f "$4" ] && \
 				continue
-			fi
 			;;
 		esac
 		return 0 # successful download/copy
@@ -192,11 +182,9 @@ try_fetch_git()
 	# let's say it was https://foo.example.com/repo, then cached
 	# directories becomes cache/mirror/foo.example.com/repo
 
-	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
+	cached="clone"
+	[ "$XBMK_CACHE_MIRROR" = "y" ] && \
 		cached="mirror"
-	else
-		cached="clone"
-	fi
 	cached="$cached/${1#*://}"
 	cached="$XBMK_CACHE/$cached"
 
@@ -213,9 +201,8 @@ try_fetch_git()
 		    err "Can't clone final repo" "try_fetch" "$@"; :
 	fi
 
-	if [ ! -d "$5" ]; then
-		return 1
-	fi
+	[ ! -d "$5" ] && \
+		return 1; :
 }
 
 try_fetch_file()
@@ -229,17 +216,15 @@ try_fetch_file()
 		x_ rm -f "$cached"
 	fi
 
-	if [ ! -f "$cached" ]; then
+	[ ! -f "$cached" ] && \
 		if ! try_$2 "$cached" "$@"; then
 			return 1
 		fi
-	fi
 
-	if [ -f "$5" ]; then
+	[ -f "$5" ] && \
 		if bad_checksum "$6" "$5" 2>/dev/null; then
 			x_ cp "$cached" "$5"
 		fi
-	fi
 
 	if [ ! -f "$cached" ]; then
 		return 1
@@ -249,13 +234,11 @@ try_fetch_file()
 		return 1
 	fi
 
-	if [ "$cached" != "$5" ]; then
+	[ "$cached" != "$5" ] && \
 		x_ cp "$cached" "$5"
-	fi
 
 	if bad_checksum "$6" "$5"; then
 		x_ rm -f "$5"
-
 		return 1
 	elif [ ! -f "$5" ]; then
 		return 1
@@ -330,12 +313,11 @@ bad_checksum()
 	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \
 	    err "!sha512 '$2' $1" bad_checksum "$@"
 
-	if [ "$csum" = "$1" ]; then
+	[ "$csum" = "$1" ] && \
 		return 1
-	else
-		x_ rm -f "$2"
-		printf "BAD SHA512 %s, '%s'; need %s\n" "$csum" "$2" "$1" 1>&2
-	fi
+
+	x_ rm -f "$2"
+	printf "BAD SHA512 %s, '%s'; need %s\n" "$csum" "$2" "$1" 1>&2
 }
 
 tmpclone()
@@ -343,9 +325,8 @@ tmpclone()
 	( x_ git clone "$1" "$2" ) || return 1
 	( x_ git -C "$2" reset --hard "$3" ) || return 1
 
-	if [ ! -d "$4" ]; then
+	[ ! -d "$4" ] && \
 		return 0
-	fi
 
 	tmpclone_patchlist="`mktemp || err "Can't create tmp patch list"`" || \
 	    err "Can't create tmp patch list" "tmpclone" "$@"

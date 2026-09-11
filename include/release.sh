@@ -16,9 +16,8 @@ release()
 
 	while getopts m: option
 	do
-		if [ -z "$OPTARG" ]; then
+		[ -z "$OPTARG" ] && \
 			err "empty argument not allowed" "release" "$@"
-		fi
 
 		case "$option" in
 		m)
@@ -31,9 +30,8 @@ release()
 	done
 
 	reldest="$reldir/$version"
-	if [ -e "$reldest" ]; then
+	[ -e "$reldest" ] && \
 		err "already exists: \"$reldest\"" "release" "$@"
-	fi
 
 	vdir="`mktemp -d || err "can't make vdir"`" || \
 	    err "can't make tmp vdir" "release" "$@"
@@ -47,9 +45,9 @@ release()
 
 	prep_release src
 	prep_release tarball
-	if [ "$relmode" != "src" ]; then
+	[ "$relmode" != "src" ] && \
 		prep_release bin
-	fi
+
 	x_ rm -Rf "$rsrc"
 
 	x_ xbmkdir "$reldir"
@@ -64,9 +62,8 @@ prep_release()
 	(
 		if [ "$1" != "tarball" ]; then
 			x_ cd "$rsrc"
-			if [ ! -e "cache" ]; then
-				x_ ln -s "$XBMK_CACHE" "cache"
-			fi
+			[ ! -e "cache" ] && \
+				x_ ln -s "$XBMK_CACHE" "cache"; :
 		fi
 
 		prep_release_$1
@@ -93,7 +90,6 @@ nuke()
 
 	if [ -d "${r%/*}" ]; then
 		x_ cd "${r%/*}"
-
 		dx_ "x_ rm -Rf" "$rsrc/$1"
 	fi
 }

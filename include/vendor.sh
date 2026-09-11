@@ -51,9 +51,8 @@ eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
 
 download()
 {
-	if [ $# -lt 1 ]; then
+	[ $# -lt 1 ] && \
 		err "No argument given" "download" "$@"
-	fi
 
 	export PATH="$PATH:/sbin"
 	board="$1"
@@ -65,48 +64,38 @@ download()
 
 getfiles()
 {
-	if [ -n "$CONFIG_HAVE_ME_BIN" ];then
+	[ -n "$CONFIG_HAVE_ME_BIN" ] && \
 		fetch intel_me "$DL_url" "$DL_url_bkup" "$DL_hash" \
 		    "$CONFIG_ME_BIN_PATH" curl "$ME_bin_hash"
-	fi
-	if [ -n "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" ]; then
+	[ -n "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" ] && \
 		fetch sch5545ec "$SCH5545EC_DL_url" "$SCH5545EC_DL_url_bkup" \
 		    "$SCH5545EC_DL_hash" "$CONFIG_SMSC_SCH5545_EC_FW_FILE" \
 		    "curl" "$SCH5545EC_bin_hash"
-	fi
-	if [ -n "$CONFIG_KBC1126_FW1" ]; then
+	[ -n "$CONFIG_KBC1126_FW1" ] && \
 		fetch kbc1126ec "$EC_url" "$EC_url_bkup" "$EC_hash" \
 		    "$CONFIG_KBC1126_FW1" curl "$EC_FW1_hash"
-	fi
-	if [ -n "$CONFIG_KBC1126_FW2" ]; then
+	[ -n "$CONFIG_KBC1126_FW2" ] && \
 		fetch kbc1126ec "$EC_url" "$EC_url_bkup" "$EC_hash" \
 		    "$CONFIG_KBC1126_FW2" curl "$EC_FW2_hash"
-	fi
-	if [ -n "$CONFIG_VGA_BIOS_FILE" ]; then
+	[ -n "$CONFIG_VGA_BIOS_FILE" ] && \
 		fetch e6400vga "$E6400_VGA_DL_url" "$E6400_VGA_DL_url_bkup" \
 		    "$E6400_VGA_DL_hash" "$CONFIG_VGA_BIOS_FILE" "curl" \
 		    "$E6400_VGA_bin_hash"
-	fi
-	if [ -n "$CONFIG_HAVE_MRC" ]; then
+	[ -n "$CONFIG_HAVE_MRC" ] && \
 		fetch "mrc" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" \
 		    "$CONFIG_MRC_FILE" "curl" "$MRC_bin_hash"
-	fi
-	if [ -n "$CONFIG_REFCODE_BLOB_FILE" ]; then
+	[ -n "$CONFIG_REFCODE_BLOB_FILE" ] && \
 		fetch "refcode" "$MRC_url" "$MRC_url_bkup" "$MRC_hash" \
 		    "$CONFIG_REFCODE_BLOB_FILE" "curl" "$REF_bin_hash"
-	fi
-	if [ -n "$CONFIG_LENOVO_TBFW_BIN" ]; then
+	[ -n "$CONFIG_LENOVO_TBFW_BIN" ] && \
 		fetch "tbfw" "$TBFW_url" "$TBFW_url_bkup" "$TBFW_hash" \
 		    "$CONFIG_LENOVO_TBFW_BIN" "curl" "$TBFW_bin_hash"
-	fi
-	if [ -n "$CONFIG_FSP_M_FILE" ]; then
+	[ -n "$CONFIG_FSP_M_FILE" ] && \
 		fetch "fsp" "$CONFIG_FSP_FD_PATH" "$CONFIG_FSP_FD_PATH" \
 		    "$FSPFD_hash" "$CONFIG_FSP_M_FILE" "copy" "$FSPM_bin_hash"
-	fi
-	if [ -n "$CONFIG_FSP_S_FILE" ]; then
+	[ -n "$CONFIG_FSP_S_FILE" ] && \
 		fetch "fsp" "$CONFIG_FSP_FD_PATH" "$CONFIG_FSP_FD_PATH" \
-		    "$FSPFD_hash" "$CONFIG_FSP_S_FILE" "copy" "$FSPS_bin_hash"
-	fi
+		    "$FSPFD_hash" "$CONFIG_FSP_S_FILE" copy "$FSPS_bin_hash"; :
 }
 
 fetch()
@@ -120,16 +109,14 @@ fetch()
 	dlop="$6"
 	binsum="$7"
 
-	if [ -z "$binsum" ]; then
+	[ -z "$binsum" ] && \
 		err "binsum is empty (no checksum)" "fetch" "$@"
-	fi
 
 	_dl="$XBMK_CACHE/file/$dlsum" # internet file to extract from e.g. .exe
 	_dl_bin="$XBMK_CACHE/file/$binsum" # extracted file e.g. me.bin
 
-	if [ "$5" = "/dev/null" ]; then
+	[ "$5" = "/dev/null" ] && \
 		return 0
-	fi
 
 	# an extracted vendor file will be placed in pre_dest first, for
 	# verifying its checksum. if it matches, it is later moved to _dest
@@ -141,22 +128,18 @@ fetch()
 		dl="${dl##*../}"
 		_cdp="$dl"
 
-		if [ ! -f "$_cdp" ]; then
+		[ ! -f "$_cdp" ] && \
 			_cdp="$cbdir/$_cdp"
-		fi
-		if [ -f "$_cdp" ]; then
+		[ -f "$_cdp" ] && \
 			dl="$_cdp"
-		fi
 
 		dl_bkup="${dl_bkup##*../}"
 		_cdp="$dl_bkup"
 
-		if [ ! -f "$_cdp" ]; then
+		[ ! -f "$_cdp" ] && \
 			_cdp="$cbdir/$_cdp"
-		fi
-		if [ -f "$_cdp" ]; then
+		[ -f "$_cdp" ] && \
 			dl_bkup="$_cdp"; :
-		fi
 	fi
 
 	# download the file (from the internet) to extract from:
@@ -167,9 +150,8 @@ fetch()
 	# skip extraction if a cached extracted file exists:
 
 	( xbget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) || :
-	if [ -f "$_dest" ]; then
+	[ -f "$_dest" ] && \
 		return 0
-	fi
 
 	x_ xbmkdir "${_dest%/*}"
 
@@ -188,14 +170,12 @@ fetch()
 	( fx_ "mkdst $binsum" x_ find "${_pre_dest%/*}" -type f ) || :
 
 	if ! bad_checksum "$binsum" "$_dest"; then
-		if [ -f "$_dest" ]; then
-			return 0
-		fi
+		[ -f "$_dest" ] && \
+			return 0; :
 	fi
 
-	if [ -z "$binsum" ]; then
+	[ -z "$binsum" ] && \
 		printf "'%s': checksum undefined\n" "$_dest" 1>&2
-	fi
 
 	if [ -L "$_dest" ]; then
 		printf "WARNING: '%s' is a link!\n" "$_dest" 1>&2
@@ -233,12 +213,10 @@ extract_intel_me()
 
 	# maintain compatibility with older configs
 	# because in the past, shrink was assumed
-	if [ -z "$MEshrink" ]; then
+	[ -z "$MEshrink" ] && \
 		MEshrink="y"
-	fi
-	if [ "$MEshrink" != "y" ] && [ "$MEshrink" != "n" ]; then
+	[ "$MEshrink" != "y" ] && [ "$MEshrink" != "n" ] && \
 		err "MEshrink set badly on '$board' vendor config"
-	fi
 
 	if [ "$ME11bootguard" = "y" ]; then
 		if [ -z "$ME11delta" ] || [ -z "$ME11version" ] || \
@@ -268,13 +246,10 @@ extract_intel_me()
 # must be called inside a subshell.
 find_me()
 {
-	if [ -f "$_metmp" ]; then
-		# we found me.bin, so we stop searching
-
-		exit 1
-	elif [ -L "$1" ]; then
-		return 0
-	fi
+	[ -f "$_metmp" ] && \
+		exit 1 # me.bin found
+	[ -L "$1" ] && \
+		return 0 # symlinks disabled for security reasons
 
 	_7ztest="${_7ztest}a"
 
@@ -283,9 +258,8 @@ find_me()
 	_r="-r" # re-locate modules
 	_trunc="-t" # -t: truncate the ME size
 
-	if [ "$ME11bootguard" = "y" ]; then
+	[ "$ME11bootguard" = "y" ] && \
 		mfs="--whitelist MFS"
-	fi
 	if [ "$MEclean" = "n" ]; then
 		MEshrink="n"
 
@@ -301,40 +275,29 @@ find_me()
 		_r="" # don't re-locate ME modules
 		_trunc="" # don't shrink the me.bin file size
 	fi
-	if [ "$MEcheck" = "n" ]; then
+	[ "$MEcheck" = "n" ] && \
 		_pass="-p" # skip fptr check
-	fi
-	if [ -n "$mfs" ]; then
+	[ -n "$mfs" ] && \
 		_r="" # cannot re-locate modules if using --whitelist MFS
-	fi
 
 	if "$mecleaner" $mfs $_r $_keep $_pass $_trunc -O "$xbtmp/a" \
 	    -M "$_metmp" "$1" || [ -f "$_metmp" ]; then
-		# me.bin extracted from a full image with ifd, then shrunk
-		:
+		: # me.bin extracted from a full image with ifd, then shrunk
 	elif "$mecleaner" $mfs $_r $_pass $_keep $_trunc -O "$_metmp" "$1" || \
 	    [ -f "$_metmp" ]; then
-		# me.bin image already present, and we shrunk it
-		:
+		: # me.bin image already present, and we shrunk it
 	elif "$me7updateparser" $_keep -O "$_metmp" "$1"; then
-		# thinkpad sandybridge me.bin image e.g. x220/t420
-		:
+		: # thinkpad sandybridge me.bin image e.g. x220/t420
 	elif extract_archive "$1" "$_7ztest"; then
-		# scan newly extracted archive within extracted archive
-		:
+		: # scan newly extracted archive within extracted archive
 	else
-		# could not extract anything, so we'll try the next file
-		return 0
+		return 0 # can't extract, so try the next file
 	fi
 
-	if [ -f "$_metmp" ]; then
-		# we found me.bin, so we stop searching
+	[ -f "$_metmp" ] && \
+		exit 1 # me.bin found
 
-		exit 1
-	else
-		# if the subshell does exit 1, we found me.bin, so exit 1
-		( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; :
-	fi
+	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; : # 1==me found
 }
 
 apply_deguard_hack()
@@ -362,9 +325,8 @@ extract_archive()
 		return 1
 	fi
 
-	if [ -d "${_dl}_extracted" ]; then
-		x_ cp -R "${_dl}_extracted" "$2"
-	fi
+	[ -d "${_dl}_extracted" ] && \
+		x_ cp -R "${_dl}_extracted" "$2"; :
 }
 
 extract_kbc1126ec()
@@ -395,9 +357,8 @@ extract_kbc1126ec_dump()
 		err "!kbc1126 unar" "extract_kbc1126ec" "$@"
 	fi
 
-	if [ ! -f "ec.bin" ]; then
+	[ ! -f "ec.bin" ] && \
 		x_ mv Rom.bin ec.bin
-	fi
 
 	if x_ e ec.bin f; then
 		x_ "$kbc1126_ec_dump" ec.bin
@@ -442,9 +403,8 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	if [ -z "$TBFW_size" ]; then
+	[ -z "$TBFW_size" ] && \
 		err "$board: TBFW_size unset" "extract_tbfw" "$@"
-	fi
 
 	fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
@@ -474,11 +434,10 @@ setvfile()
 
 		eval "$vcmd && do_getvfile=\"y\""
 
-		if [ "$do_getvfile" = "y" ]; then
+		[ "$do_getvfile" = "y" ] && \
 			if getvfile "$@"; then
 				return 0
-			fi
-		fi
+			fi; :
 	done && return 1; :
 }
 
@@ -527,9 +486,8 @@ bootstrap()
 	x_ ./mk -b uefitool
 	x_ ./mk -b libarchive # for bsdtar and bsdunzip
 
-	if [ -d "${kbc1126_ec_dump%/*}" ]; then
+	[ -d "${kbc1126_ec_dump%/*}" ] && \
 		x_ make -C "$cbdir/util/kbc1126"
-	fi
 
 	if [ -n "$MRC_refcode_cbtree" ]; then
 		cbfstoolref="elf/coreboot/$MRC_refcode_cbtree/cbfstool"
@@ -543,17 +501,15 @@ prep()
 	_xromname="${1##*/}"
 	_xromnew="${_xrom%/*}/${_xromname#"$vfix"}"
 
-	if [ "$nuke" = "nuke" ]; then
+	[ "$nuke" = "nuke" ] && \
 		_xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
-	fi
 
 	if e "$_xrom" f missing; then
 		return 0
 	fi
 
-	if [ -z "${_xromname#"$vfix"}" ]; then
+	[ -z "${_xromname#"$vfix"}" ] && \
 		err "$_xromname / $vfix: name match" "prep" "$@"
-	fi
 
 	# Remove the prefix and 1-byte pad
 	if [ "${_xromname#"$vfix"}" != "$_xromname" ] \
@@ -570,10 +526,7 @@ prep()
 	fi
 
 	if ! add_vfiles "$_xrom"; then
-		# no need to insert files. we will later
-		# still process MAC addresses as required
-
-		return 1
+		return 1 # no need to insert files
 	fi
 
 	if [ "$nuke" = "nuke" ]; then
@@ -586,9 +539,8 @@ mksha512()
 {
 	build_sbase
 
-	if [ "${1%/*}" != "$1" ]; then
+	[ "${1%/*}" != "$1" ] && \
 		x_ cd "${1%/*}"
-	fi
 
 	x_ "$sha512sum" ./"${1##*/}" >> "$2" || \
 	    err "!sha512sum \"$1\" > \"$2\"" "mksha512" "$@"
@@ -600,47 +552,36 @@ add_vfiles()
 
 	if [ "$has_hashes" != "y" ] && [ "$nuke" != "nuke" ]; then
 		printf "'%s' has no hash file. Skipping.\n" "$archive" 1>&2
-
 		return 1
 	elif [ "$has_hashes" = "y" ] && [ "$nuke" = "nuke" ]; then
 		printf "'%s' has a hash file. Skipping nuke.\n" "$archive" 1>&2
-
 		return 1
 	fi
 
-	if [ -n "$CONFIG_HAVE_REFCODE_BLOB" ]; then
+	[ -n "$CONFIG_HAVE_REFCODE_BLOB" ] && \
 		vfile "fallback/refcode" "$CONFIG_REFCODE_BLOB_FILE" "stage"
-	fi
-	if [ "$CONFIG_HAVE_MRC" = "y" ]; then
+	[ "$CONFIG_HAVE_MRC" = "y" ] && \
 		vfile "mrc.bin" "$CONFIG_MRC_FILE" "mrc" "0xfffa0000"
-	fi
-	if [ "$CONFIG_HAVE_ME_BIN" = "y" ]; then
+	[ "$CONFIG_HAVE_ME_BIN" = "y" ] && \
 		vfile IFD "$CONFIG_ME_BIN_PATH" me
-	fi
-	if [ -n "$CONFIG_KBC1126_FW1" ]; then
+	[ -n "$CONFIG_KBC1126_FW1" ] && \
 		vfile ecfw1.bin "$CONFIG_KBC1126_FW1" raw \
 		    "$CONFIG_KBC1126_FW1_OFFSET"
-	fi
-	if [ -n "$CONFIG_KBC1126_FW2" ]; then
+	[ -n "$CONFIG_KBC1126_FW2" ] && \
 		vfile ecfw2.bin "$CONFIG_KBC1126_FW2" raw \
 		    "$CONFIG_KBC1126_FW2_OFFSET"
-	fi
-	if [ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ]; then
+	[ -n "$CONFIG_VGA_BIOS_FILE" ] && [ -n "$CONFIG_VGA_BIOS_ID" ] && \
 		vfile "pci$CONFIG_VGA_BIOS_ID.rom" "$CONFIG_VGA_BIOS_FILE" \
 		    optionrom
-	fi
-	if [ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
-	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ]; then
+	[ "$CONFIG_INCLUDE_SMSC_SCH5545_EC_FW" = "y" ] && \
+	    [ -n "$CONFIG_SMSC_SCH5545_EC_FW_FILE" ] && \
 		vfile sch5545_ecfw.bin "$CONFIG_SMSC_SCH5545_EC_FW_FILE" raw
-	fi
-	if [ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
-	    [ -n "$CONFIG_FSP_M_FILE" ]; then
+	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
+	    [ -n "$CONFIG_FSP_M_FILE" ] && \
 		vfile "$CONFIG_FSP_M_CBFS" "$CONFIG_FSP_M_FILE" fsp --xip
-	fi
-	if [ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
-	   [ -n "$CONFIG_FSP_S_FILE" ]; then
+	[ -z "$CONFIG_FSP_USE_REPO" ] && [ -z "$CONFIG_FSP_FULL_FD" ] && \
+	   [ -n "$CONFIG_FSP_S_FILE" ] && \
 		vfile "$CONFIG_FSP_S_CBFS" "$CONFIG_FSP_S_FILE" fsp
-	fi
 
 	xchanged="y"
 
@@ -649,9 +590,8 @@ add_vfiles()
 
 vfile()
 {
-	if [ "$2" = "/dev/null" ]; then
+	[ "$2" = "/dev/null" ] && \
 		return 0
-	fi
 
 	cbfsname="$1"
 	_dest="${2##*../}"
@@ -665,9 +605,8 @@ vfile()
 		err "$rom: offset given but empty (undefined)" "vfile" "$@"
 	fi
 
-	if [ "$nuke" != "nuke" ]; then
+	[ "$nuke" != "nuke" ] && \
 		x_ e "$_dest" f
-	fi
 
 	if [ "$cbfsname" = "IFD" ]; then
 		if [ "$nuke" = "nuke" ]; then

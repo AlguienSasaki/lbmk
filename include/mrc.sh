@@ -18,9 +18,8 @@ extract_refcode()
 	# and refcode is extracted from an image using the old scheme. we use
 	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16:
 
-	if [ -z "$cbfstoolref" ]; then
+	[ -z "$cbfstoolref" ] && \
 		err "cbfstoolref not set" "extract_refcode" "$@"
-	fi
 
 	x_ xbmkdir "${_pre_dest%/*}"
 
@@ -28,21 +27,19 @@ extract_refcode()
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
-	if [ -n "$MRC_refcode_gbe" ]; then
+	[ -n "$MRC_refcode_gbe" ] && \
 		x_ dd if="config/ifd/hp820g2/1.bin" of="$appdir/ref" bs=1 \
 		    seek=$MRC_refcode_gbe count=1 conv=notrunc; :
-	fi
 
 	x_ mv "$appdir/ref" "$_pre_dest"
 }
 
 extract_mrc()
 {
-	if [ -z "$MRC_board" ]; then
+	[ -z "$MRC_board" ] && \
 		err "MRC_board unset" "extract_mrc" "$@"
-	elif [ -z "$CONFIG_MRC_FILE" ]; then
+	[ -z "$CONFIG_MRC_FILE" ] && \
 		err "CONFIG_MRC_FILE unset" "extract_mrc" "$@"
-	fi
 
 	SHELLBALL="chromeos-firmwareupdate-$MRC_board"
 

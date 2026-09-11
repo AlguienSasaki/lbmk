@@ -18,9 +18,8 @@ inject()
 {
 	remkdir "$tmpromdel"
 
-	if [ $# -lt 1 ]; then
+	[ $# -lt 1 ] && \
 		err "No options specified" "inject" "$@"
-	fi
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
@@ -36,18 +35,16 @@ inject()
 	setmac)
 		if [ $# -gt 2 ]; then
 			new_mac="$3" && \
-			if [ -z "$new_mac" ]; then
-				err "Empty MAC address specified" "inject" "$@"
-			fi
+			[ -z "$new_mac" ] && \
+				err "Empty MAC address" "inject" "$@"; :
 		fi
 		;;
 	*)
 		err "Unrecognised inject mode: '$2'" "inject" "$@" ;;
 	esac
 
-	if [ "$new_mac" = "keep" ]; then
+	[ "$new_mac" = "keep" ] && \
 		new_mac=""
-	fi
 
 	check_release
 	if check_target; then
@@ -55,9 +52,8 @@ inject()
 			return 0
 		fi
 	fi
-	if [ "$xchanged" = "y" ]; then
+	[ "$xchanged" = "y" ] && \
 		remktar
-	fi
 
 	if [ "$xchanged" = "y" ]; then
 		printf "\n'%s' was modified\n" "$archive" 1>&2
@@ -70,9 +66,8 @@ inject()
 
 check_release()
 {
-	if [ -L "$archive" ]; then
+	[ -L "$archive" ] && \
 		err "'$archive' is a symlink" "check_release" "$@"
-	fi
 	if e "$archive" f missing; then
 		err "'$archive' missing" "check_release" "$@"
 	fi
@@ -80,9 +75,8 @@ check_release()
 	archivename="`basename "$archive" || err "Can't get '$archive' name"`" \
 	    || err "can't get '$archive' name" "check_release" "$@"
 
-	if [ -z "$archivename" ]; then
+	[ -z "$archivename" ] && \
 		err "Can't determine archive name" "check_release" "$@"
-	fi
 
 	case "$archivename" in
 	*_src.tar.xz)
@@ -102,9 +96,8 @@ check_release()
 
 check_target()
 {
-	if [ "$board" != "${board#serprog_}" ]; then
+	[ "$board" != "${board#serprog_}" ] && \
 		return 1
-	fi
 
 	boarddir="$cbcfgsdir/$board"
 
@@ -119,16 +112,14 @@ check_target()
 
 	ifdtool="elf/coreboot/$tree/ifdtool"
 
-	if [ -n "$IFD_platform" ]; then
-		ifdprefix="-p $IFD_platform"
-	fi
+	[ -n "$IFD_platform" ] && \
+		ifdprefix="-p $IFD_platform"; :
 }
 
 patch_release()
 {
-	if [ "$nuke" != "nuke" ]; then
+	[ "$nuke" != "nuke" ] && \
 		x_ ./mk download "$board"
-	fi
 
 	has_hashes="n"
 	tmpromdir="$tmpromdel/bin/$board"

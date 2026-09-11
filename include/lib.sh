@@ -40,9 +40,8 @@ version()
 
 xbmk_sanitize_version()
 {
-	if [ -z "$version" ]; then
+	[ -z "$version" ] && \
 		return 0
-	fi
 
 	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
 	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
@@ -52,19 +51,17 @@ xbmk_sanitize_version()
 
 	version="${version#-}"
 
-	if [ -z "$version" ]; then
+	[ -z "$version" ] && \
 		err "'version' empty after sanitization" \
-		    "xbmk_sanitize_version" "$@"
-	fi
+		    "xbmk_sanitize_version" "$@"; :
 }
 
 mktarball()
 {
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 
-	if [ "${2%/*}" != "$2" ]; then
+	[ "${2%/*}" != "$2" ] && \
 		x_ xbmkdir "${2%/*}"
-	fi
 
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || \
 	    err "can't make tarball '$1'" "mktarball" "$@"
@@ -73,10 +70,8 @@ mktarball()
 e()
 {
 	es_t="e"
-
-	if [ $# -gt 1 ]; then
+	[ $# -gt 1 ] && \
 		es_t="$2"
-	fi
 
 	es2="already exists"
 	estr="[ -$es_t \"\$1\" ] || return 1"
@@ -101,9 +96,8 @@ singletree()
 
 findpath()
 {
-	if [ $# -lt 1 ]; then
+	[ $# -lt 1 ] && \
 		err "findpath: No arguments provided" "findpath" "$@"
-	fi
 
 	while [ $# -gt 0 ]
 	do
@@ -136,9 +130,8 @@ unpad_one_byte()
 	xromsize="$(expr $(stat -c '%s' "$1") - 1)" || \
 	    err "can't increment file size" "unpad_one_byte" "$@"
 
-	if [ $xromsize -lt 524288 ]; then
+	[ $xromsize -lt 524288 ] && \
 		err "too small, $xromsize: $1" "unpad_one_byte" "$@"
-	fi
 
 	unpaddedfile="`mktemp || err "mktemp unpad_one_byte"`" || \
 	    err "can't make tmp file" "unpad_one_byte" "$@"
@@ -149,9 +142,8 @@ unpad_one_byte()
 
 build_sbase()
 {
-	if [ ! -f "$sha512sum" ]; then
-		x_ make -C "$xbmkpwd/util/sbase"
-	fi
+	[ ! -f "$sha512sum" ] && \
+		x_ make -C "$xbmkpwd/util/sbase"; :
 }
 
 remkdir()
@@ -162,11 +154,9 @@ remkdir()
 
 xbmkdir()
 {
-	while [ $# -gt 0 ]
-	do
-		if [ ! -d "$1" ]; then
+	while [ $# -gt 0 ]; do
+		[ ! -d "$1" ] && \
 			x_ mkdir -p "$1"
-		fi
 
 		shift 1
 	done
@@ -196,9 +186,8 @@ dx_()
 {
 	xchk dx_ "$@"
 
-	if [ ! -f "$2" ]; then
+	[ ! -f "$2" ] && \
 		return 0
-	fi
 
 	while read -r fx; do
 		$1 "$fx" || return 1; :
@@ -207,20 +196,19 @@ dx_()
 
 x_()
 {
-	if [ $# -lt 1 ]; then
+	[ $# -lt 1 ] && \
 		return 0
-	elif [ -z "$1" ]; then
+	[ -z "$1" ] && \
 		err "Empty first arg" "x_" "$@"
-	else
-		"$@" || err "Unhandled error" "x_" "$@"
-	fi
+
+	"$@" || err "Unhandled error" "x_" "$@"
 }
 
 xeq()
 {
-	if [ $# -lt 2 ]; then
+	[ $# -lt 2 ] && \
 		err "no args" xeq
-	fi
+
 	xbcmd="$1"
 	chk="$2"
 	shift 2
@@ -231,9 +219,8 @@ xeq()
 		;;
 	*)
 		for eq in "$@"; do
-			if [ "$chk" = "$eq" ]; then
-				return 0
-			fi
+			[ "$chk" = "$eq" ] && \
+				return 0; :
 		done
 		;;
 	esac
@@ -270,14 +257,12 @@ xprintf()
 	xprintfargs=0
 	while [ $# -gt 0 ]; do
 		printf "\"%s\"" "$1"
-		if [ $# -gt 1 ]; then
+		[ $# -gt 1 ] && \
 			printf " "
-		fi
 
 		xprintfargs=1
 		shift 1
 	done
-	if [ $xprintfargs -gt 0 ]; then
-		printf "\n"
-	fi
+	[ $xprintfargs -gt 0 ] && \
+		printf "\n"; :
 }
