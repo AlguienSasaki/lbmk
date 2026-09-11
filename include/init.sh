@@ -426,7 +426,8 @@ xbmk_git_init()
 
 	x_ git init 1>/dev/null 2>/dev/null
 	x_ git add -A . 1>/dev/null 2>/dev/null
-	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
+	GIT_COMMITTER_DATE="@$versiondate +0000" \
+	    x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
 	    commit -m "$projectname $version" --date "@$versiondate +0000" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
 	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
