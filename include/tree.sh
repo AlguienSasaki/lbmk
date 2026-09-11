@@ -55,11 +55,8 @@ trees()
 			if_dry_build=""
 			if_not_do_make=""
 			if_not_dry_build=":"
-			if [ "$flag" = "-F" ]; then
-				# don't skip git fetch/pull on cached src
-
-				forcepull="y"
-			fi
+			[ "$flag" = "-F" ] && \
+				forcepull="y"; : # never skip git fetch/pull
 			;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;

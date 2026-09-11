@@ -142,23 +142,12 @@ xbmk_set_env()
 	[ -n "${TMPDIR+x}" ] && \
 		is_child="y"
 
-	if [ "$is_child" = "y" ]
-	then
-		# child instance of xbmk, so we stop init after this point
-		# and execute the given user command upon return:
-
+	if [ "$is_child" = "y" ]; then
 		xbmk_child_set_env
-
-		return 1
+		return 1 # child instance. discontinue initialisation.
 	else
-		# parent instance of xbmk, so we continue initialising.
-		# a parent instance of xbmk never processes its own
-		# command directly; instead, it calls a child instance
-		# of xbmk, and exits with the corresponding return status.
-
 		xbmk_parent_set_env
-
-		return 0
+		return 0 # parent instance. continue initialisation.
 	fi
 }
 
@@ -188,7 +177,6 @@ xbmk_child_set_tmp()
 
 	if [ "$locktmp" != "$xbtmpchk" ]; then
 		badtmp="TMPDIR '$xbtmpchk' changed; was '$locktmp'"
-
 		printf "bad TMPDIR init, '%s': %s\n" "$TMPDIR" "$badtmp" 1>&2
 		err "'$xbmklock' present with bad tmpdir. is a build running?"
 	fi

@@ -31,9 +31,8 @@ mr_edk2tree="chromebook" # tree name in xbmk
 # mxlibreboot was here
 prep_mr_import()
 {
-	if [ -f "$xbmkpwd/CHANGELOG" ]; then
+	[ -f "$xbmkpwd/CHANGELOG" ] && \
 		err "Project import disabled on releases" "prep_mr_import" "$@"
-	fi
 
 	mr_tmpdir="`mktemp -d || err "can't make mrtmpdir"`" || \
 	    err "can't make mrtmpdir" "prep_mr_coreboot" "$@"

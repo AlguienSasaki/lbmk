@@ -368,8 +368,7 @@ add_uboot()
 		ubtree="x86_64"
 		ubtarget="amd64coreboot"
 
-		if [ "$payload_uboot" = "i386" ]
-		then
+		if [ "$payload_uboot" = "i386" ]; then
 			ubpath="u-boot" # 32-bit
 			ubtree="x86"
 			ubtarget="i386coreboot"; :
@@ -378,18 +377,13 @@ add_uboot()
 
 	ubdir="elf/u-boot/$ubtree/$ubtarget/$uboot_config"
 
-	# aarch64 targets:
-	ubootelf="$ubdir/u-boot.elf"
-	if [ ! -f "$ubootelf" ]; then
-		ubootelf="$ubdir/u-boot"
-	fi
-
-	# override for x86/x86_64 targets:
-	if [ "$payload_uboot" = "i386" ]; then
-		ubootelf="$ubdir/u-boot-dtb.bin"
-	elif [ "$payload_uboot" = "amd64" ]; then
-		ubootelf="$ubdir/u-boot-x86-with-spl.bin" # EFI-compatible
-	fi
+	ubootelf="$ubdir/u-boot.elf" # aarch64
+	[ ! -f "$ubootelf" ] && \
+		ubootelf="$ubdir/u-boot" # aarch64 (fallback)
+	[ "$payload_uboot" = "i386" ] && \
+		ubootelf="$ubdir/u-boot-dtb.bin" # x86 override
+	[ "$payload_uboot" = "amd64" ] && \
+		ubootelf="$ubdir/u-boot-x86-with-spl.bin" # x86_64 override
 
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
 	[ "$payload_seabios" != "y" ] && \

@@ -104,9 +104,8 @@ check_target()
 	. "$boarddir/target.cfg" || \
 	    err "Can't read '$boarddir/target.cfg'" "check_target" "$@"
 
-	if [ -z "$tree" ]; then
+	[ -z "$tree" ] && \
 		err "tree unset in '$boarddir/target.cfg'" "check_target" "$@"
-	fi
 
 	x_ ./mk -d coreboot "$tree"
 

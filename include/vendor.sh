@@ -123,8 +123,7 @@ fetch()
 	remkdir "${_pre_dest%/*}" "$appdir"
 
 	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
-	if [ "$dl_type" = "fsp" ]
-	then
+	if [ "$dl_type" = "fsp" ]; then
 		dl="${dl##*../}"
 		_cdp="$dl"
 
@@ -474,9 +473,8 @@ bootstrap()
 	rmodtool="elf/coreboot/$tree/rmodtool"
 
 	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
-	if [ "$XBMKmecleaner" = "y" ]; then
+	[ "$XBMKmecleaner" = "y" ] && \
 		mecleaner="$xbmkpwd/src/me_cleaner/me_cleaner.py"
-	fi
 
 	x_ ./mk -f coreboot "${cbdir##*/}"
 	x_ ./mk -f me_cleaner
