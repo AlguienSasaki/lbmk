@@ -424,19 +424,10 @@ xbmk_git_init()
 	[ -e ".git" ] && \
 		return 0
 
-	# GNU-specific extensions of date are used.
-	# TODO: that is a bug. fix it!
-
-	x_ date --version | grep "GNU coreutils" 1>/dev/null 2>/dev/null || \
-	    err "Non-GNU date implementation" "xbmk_git_init" "$@"
-
-	cdate="`x_ date -Rud @$versiondate || err "can't get date"`" || \
-	    err "can't get date" "xbmk_git_init" "$@"
-
 	x_ git init 1>/dev/null 2>/dev/null
 	x_ git add -A . 1>/dev/null 2>/dev/null
 	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
-	    commit -m "$projectname $version" --date "$cdate" \
+	    commit -m "$projectname $version" --date "@$versiondate +0000" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
 	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
 	    tag -a "$version" -m "$projectname $version" \
