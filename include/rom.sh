@@ -104,10 +104,7 @@ check_coreboot_util()
 	x_ make -C "$utilsrcdir" $utilmode -j$XBMK_THREADS $makeargs
 
 	if [ -n "$mode" ]; then
-		# TODO: is this rm command needed?
-
 		x_ rm -Rf "$utilelfdir"
-
 		return 0
 	elif [ -n "$mode" ] || [ -f "$utilelfdir/$1" ]; then
 		return 0
