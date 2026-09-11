@@ -8,12 +8,10 @@
 . "include/rom.sh"
 . "include/release.sh"
 . "include/get.sh"
-. "include/chromebook.sh"
 
 xbcommands=" \
 version \
 release \
 download \
 inject \
-prep_mr_import \
 "
