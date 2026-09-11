@@ -26,10 +26,6 @@ export LC_ALL="$utf_8"
 projectname="libreboot"
 projectsite="https://libreboot.org/"
 
-# TODO: consider just erroring here instead of hardcoding a default
-[ -z "${PATH+x}" ] && \
-	export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
-
 sha512sum="util/sbase/sha512sum"
 
 eval "`newvar aur_notice basetmp board checkvarschk checkvarsxbmk configdir \
