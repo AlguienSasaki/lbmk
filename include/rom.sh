@@ -234,8 +234,6 @@ mkcorebootbin_real()
 
 add_cbfs_option()
 {
-	# TODO: input sanitization (currently mitigated by careful config)
-
 	op_name="`printf "%s\n" "$1" | awk '{print $1}'`"
 	op_arg="`printf "%s\n" "$1" | awk '{print $2}'`"
 
