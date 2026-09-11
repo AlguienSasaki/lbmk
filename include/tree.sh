@@ -231,9 +231,6 @@ configure_project()
 	# override target/tree specific variables from per-target config:
 	while e "$_tcfg" f || [ "$cmd" != "build_project" ]
 	do
-		# TODO: detect infinine loops and throw err.
-		#	(currently mitigated by virtue of configuration)
-
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 		eval "`newvar rev tree`"
 
