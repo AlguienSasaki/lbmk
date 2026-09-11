@@ -13,45 +13,11 @@ if_dry_build=":"
 if_not_do_make=":"
 if_not_dry_build=""
 
-autoconfargs=""
-autogenargs=""
-badhash=""
-badtghash=""
-bootstrapargs=""
-build_depend=""
-buildtype=""
-cleanargs=""
-cmakedir=""
-cmd=""
-defconfig=""
-dest_dir=""
-elfdir=""
-forcepull=""
-gccdir=""
-gccfull=""
-gccver=""
-gnatdir=""
-gnatfull=""
-gnatver=""
-listfile=""
-makeargs=""
-mdir=""
-mkhelper=""
-mkhelpercfg=""
-mode=""
-postmake=""
-premake=""
-project=""
-release=""
-rev=""
-srcdir=""
-target=""
-target_dir=""
-targets=""
-tree=""
-xarch=""
-xgcctree=""
-xlang=""
+eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
+    build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
+    forcepull gccdir gccfull gccver gnatdir gnatfull gnatver listfile \
+    makeargs mdir mkhelper mkhelpercfg mode postmake premake project release \
+    rev srcdir target target_dir targets tree xarch xgcctree xlang`"
 
 trees()
 {
@@ -74,7 +40,7 @@ trees()
 			# a large number of operations will be
 			# skipped. these are "if_not_dry_build build" scenarios
 			# where only a subset of build tasks are done,
-			# and $if_not_dry_build is prefixed to skipped commands
+			 # and $if_not_dry_build is prefixed to skipped commands
 
 			if_dry_build=""
 			if_not_dry_build=":"
@@ -265,21 +231,9 @@ configure_project()
 {
 	_tcfg="$1/target.cfg"
 
-	autoconfargs=""
-	badhash=""
-	badtghash=""
-	bootstrapargs=""
-	build_depend=""
-	buildtype=""
-	cleanargs=""
-	makeargs=""
-	mkhelper=""
-	postmake=""
-	premake=""
-	release=""
-	xarch=""
-	xgcctree=""
-	xlang=""
+	eval "`newvar autoconfargs badhash badtghash bootstrapargs \
+	    build_depend buildtype cleanargs makeargs mkhelper postmake \
+	    premake release xarch xgcctree xlang`"
 
 	if [ ! -f "$_tcfg" ]; then
 		buildtype="auto"
@@ -306,8 +260,7 @@ configure_project()
 
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 
-		rev=""
-		tree=""
+		eval "`newvar rev tree`"
 
 		. "$_tcfg" || \
 		    err "Can't read '$_tcfg'" "configure_project" "$@"
@@ -425,8 +378,7 @@ delete_old_project_files()
 
 project_up_to_date()
 {
-	old_hash=""
-	hash=""
+	eval "`newvar hash old_hash`"
 
 	hashdir="$1"
 	hashname="$2"
@@ -523,12 +475,7 @@ check_gnu_path()
 		err "Host '$1' unavailable" "check_gnu_path" "$@"
 	fi
 
-	gccdir=""
-	gccfull=""
-	gccver=""
-	gnatdir=""
-	gnatfull=""
-	gnatver=""
+	eval "`newvar gccdir gccfull gccver gnatdir gnatfull gnatver`"
 
 	if host_gcc_gnat_match "$@"; then
 		return 0

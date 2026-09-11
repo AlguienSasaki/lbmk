@@ -8,6 +8,12 @@
 cbfstool="elf/coreboot/default/cbfstool"
 rmodtool="elf/coreboot/default/rmodtool"
 
+newvar()
+{
+	printf "%s\n" "$*" | \
+	    awk '{ for (i=1; i<=NF; i++) $i = $i "=;"; print }'; :
+}
+
 mkrom_tarball()
 {
 	update_xbmkver "$1"

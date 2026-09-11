@@ -33,25 +33,9 @@ fi
 
 sha512sum="util/sbase/sha512sum"
 
-aur_notice=""
-basetmp=""
-board=""
-checkvarschk=""
-checkvarsxbmk=""
-configdir=""
-datadir=""
-is_child=""
-python=""
-pyver=""
-reinstall=""
-relname=""
-version=""
-versiondate=""
-xbmklock=""
-xbmkpath=""
-xbmkpwd=""
-xbmkpwd=""
-xbtmp=""
+eval "`newvar aur_notice basetmp board checkvarschk checkvarsxbmk configdir \
+    datadir is_child python pyver reinstall relname version versiondate \
+    xbmklock xbmkpath xbmkpwd xbmkpwd xbtmp`"
 
 xbmk_init()
 {

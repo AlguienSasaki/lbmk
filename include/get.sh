@@ -3,16 +3,8 @@
 # Copyright (c) 2020-2021,2023-2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-url=""
-bkup_url=""
-
-depend=""
-loc=""
-subcurl=""
-subcurl_bkup=""
-subgit=""
-subgit_bkup=""
-subhash=""
+eval "`newvar url bkup_url depend loc subcurl subcurl_bkup subgit subgit_bkup \
+    subhash`"
 
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
