@@ -154,6 +154,11 @@ try_fetch_git()
 		return 1; :
 }
 
+try_fetch_copy()
+{
+	try_fetch_curl "$@" || return 1; :
+}
+
 try_fetch_curl()
 {
 	cached="file/$6"
