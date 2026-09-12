@@ -82,12 +82,7 @@ fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
 
-	st=""
-	subcurl=""
-	subcurl_bkup=""
-	subgit=""
-	subgit_bkup=""
-	subhash=""
+	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
 
 	if e "$mcfgdir/module.cfg" f missing; then
 		return 0
@@ -142,26 +137,13 @@ xbget()
 	for url in "$2" "$3"; do
 		[ -z "$url" ] && \
 			err "empty URL given in" "xbget" "$@"
-		try_fetch "$url" "$@" || \
+		try_fetch_$1 "$url" "$@" || \
 			continue
 		[ -e "$4" ] && \
 			return 0; : # successful download/copy
 	done
 
 	err "failed to download file/repository" "xbget" "$@"; :
-}
-
-try_fetch()
-{
-	if [ "$2" = "git" ]; then
-		if ! try_fetch_git "$@"; then
-			return 1
-		fi
-	else
-		if ! try_fetch_file "$@"; then
-			return 1
-		fi
-	fi
 }
 
 try_fetch_git()
@@ -193,7 +175,7 @@ try_fetch_git()
 		return 1; :
 }
 
-try_fetch_file()
+try_fetch_curl()
 {
 	cached="file/$6"
 	cached="$XBMK_CACHE/$cached"
