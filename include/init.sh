@@ -39,9 +39,8 @@ xbmk_init()
 		x_ xbmkdir "cache"
 
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
-		if ! xbmk_$init_cmd "$@"; then
-			break
-		fi
+		xbmk_$init_cmd "$@" || \
+			break; :
 	done
 }
 
@@ -147,9 +146,7 @@ xbmk_child_set_env()
 
 xbmk_child_set_tmp()
 {
-	badtmp=""
-	locktmp=""
-	xbtmpchk=""
+	eval "`newvar badtmp locktmp xbtmpchk`"
 
 	xbtmpchk="`findpath "$TMPDIR" || err "!findpath $TMPDIR"`" || \
 	    err "!findpath '$TMPDIR'" "xbmk_child_set_tmp" "$@"
@@ -281,14 +278,13 @@ xbmk_set_pyver()
 	pyver="2"
 	pyv="import sys; print(sys.version_info[:])"
 
-	if ! pybin python3 1>/dev/null; then
+	pybin python3 1>/dev/null || \
 		python="python"
-	fi
 	[ "$python" = "python3" ] && \
 		pyver="3"
-	if ! pybin "$python" 1>/dev/null; then
+	pybin "$python" 1>/dev/null || \
 		pyver=""
-	fi
+
 	[ -z "$pyver" ] || \
 		"`x_ pybin "$python"`" -c "$pyv" 1>/dev/null \
 		    2>/dev/null || \
@@ -321,44 +317,37 @@ pybin()
 	py="import sys; quit(1) if sys.prefix == sys.base_prefix else quit(0)"
 
 	venv=1
-	if ! command -v "$1" 1>/dev/null 2>/dev/null; then
+	command -v "$1" 1>/dev/null 2>/dev/null || \
 		venv=0
-	fi
-	[ $venv -gt 0 ] && \
-		if ! "$1" -c "$py" 1>/dev/null 2>/dev/null; then
+
+	[ $venv -lt 1 ] || \
+		"$1" -c "$py" 1>/dev/null 2>/dev/null || \
 			venv=0
-		fi
 
-	# ideally, don't rely on PATH or hardcoded paths if python venv.
-	# use the *real*, direct executable linked to by the venv symlink:
-
+	# try the direct path from PATH first. the binary specified by venv
+	# can be called directly, which then removes use of the venv
 	if [ $venv -gt 0 ] && [ -L "`command -v "$1" 2>/dev/null`" ]; then
 		pypath="$(findpath \
 		    "$(command -v "$1" 2>/dev/null)" 2>/dev/null || :)"
-
 		if [ -e "$pypath" ] && [ ! -d "$pypath" ] && \
 		    [ -x "$pypath" ]; then
-
 			printf "%s\n" "$pypath"
 			return 0
 		fi
 	fi
 
 	# if python venv: fall back to common PATH directories for checking:
-
 	[ $venv -gt 0 ] && for pypath in "/usr/local/bin" "/usr/bin"; do
 		if [ -e "$pypath/$1" ] && [ ! -d "$pypath/$1" ] && \
 		    [ -x "$pypath/$1" ]; then
-
 			printf "%s/%s\n" "$pypath" "$1"
 			return 0
 		fi
 	done && return 1
 
 	# Defer to normal command -v if not a venv
-	if ! command -v "$1" 2>/dev/null; then
-		return 1
-	fi
+	command -v "$1" 2>/dev/null || \
+		return 1; :
 }
 
 xbmk_set_mirror()
@@ -382,11 +371,9 @@ xbmk_git_init()
 	# the git identity check is only needed for: ./mk -b coreboot [args]
 	[ "${2-}" = "-b" ] && [ "${3-}" = "coreboot" ] && \
 	    for gitarg in "user.name" "user.email"; do
-		gitcmd="git config --includes $gitarg"
-		if ! $gitcmd 1>/dev/null 2>/dev/null; then
+		git config --includes $gitarg 1>/dev/null 2>/dev/null || \
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
-			    "xbmk_git_init" "$@"
-		fi
+			    "xbmk_git_init" "$@"; :
 	done
 
 	[ -L ".git" ] && \

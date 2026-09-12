@@ -168,10 +168,9 @@ fetch()
 	# the given hashsum. So, search for a matching file via bruteforce:
 	( fx_ "mkdst $binsum" x_ find "${_pre_dest%/*}" -type f ) || :
 
-	if ! bad_checksum "$binsum" "$_dest"; then
-		[ -f "$_dest" ] && \
+	bad_checksum "$binsum" "$_dest" || \
+		[ ! -f "$_dest" ] || \
 			return 0; :
-	fi
 
 	[ -z "$binsum" ] && \
 		printf "'%s': checksum undefined\n" "$_dest" 1>&2
@@ -266,11 +265,6 @@ find_me()
 		mfs="" # no MFS whitelist needed, due to -r:
 	fi
 	if [ "$MEclean" = "n" ] || [ "$MEshrink" != "y" ]; then
-		# MEclean can still be y, this just means don't shrink,
-		# so deleted modules would become padded space. this
-		# could also be used alongside --whitelist, if
-		# MEclean is otherwise enabled.
-
 		_r="" # don't re-locate ME modules
 		_trunc="" # don't shrink the me.bin file size
 	fi
@@ -523,9 +517,8 @@ prep()
 		( mksha512 "$_xrom" "vendorhashes" ) || err; :
 	fi
 
-	if ! add_vfiles "$_xrom"; then
+	add_vfiles "$_xrom" || \
 		return 1 # no need to insert files
-	fi
 
 	if [ "$nuke" = "nuke" ]; then
 		pad_one_byte "$_xrom"

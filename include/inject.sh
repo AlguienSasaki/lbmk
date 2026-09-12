@@ -48,9 +48,8 @@ inject()
 
 	check_release
 	if check_target; then
-		if ! patch_release; then
-			return 0
-		fi
+		patch_release || \
+			return 0; :
 	fi
 	[ "$xchanged" = "y" ] && \
 		remktar
@@ -135,17 +134,16 @@ patch_release()
 		fi
 	done
 
-	if ! readkconfig; then
+	readkconfig || \
 		return 1
-	elif [ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ]; then
-		modify_mac
-	fi
+
+	[ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ] && \
+		modify_mac; :
 }
 
 readkconfig()
 {
 	x_ rm -f "$xbtmp/cbcfg"
-
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 
 	if e "$xbtmp/cbcfg" f missing; then
@@ -155,9 +153,8 @@ readkconfig()
 	. "$xbtmp/cbcfg" || \
 	    err "Can't read '$xbtmp/cbcfg'" "readkconfig" "$@"
 
-	if ! setvfile "$@"; then
-		return 1
-	fi
+	setvfile "$@" || \
+		return 1; :
 }
 
 scankconfig()
@@ -195,10 +192,10 @@ newmac()
 remktar()
 {
 	(
-		x_ cd "${tmpromdir%"/bin/$board"}"
+	x_ cd "${tmpromdir%"/bin/$board"}"
 
-		printf "Re-building tar archive (please wait)\n"
-		mkrom_tarball "bin/$board" 1>/dev/null
+	printf "Re-building tar archive (please wait)\n"
+	mkrom_tarball "bin/$board" 1>/dev/null
 
 	) || err "Cannot re-generate '$archive'" "remktar" "$@"
 

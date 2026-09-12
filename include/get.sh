@@ -140,11 +140,10 @@ try_fetch_git()
 
 	x_ xbmkdir "${5%/*}" "${cached%/*}"
 
-	if ! try_$2 "$cached" "$@"; then
+	try_$2 "$cached" "$@" || \
 		return 1
-	elif [ ! -d "$cached" ]; then
+	[ ! -d "$cached" ] && \
 		return 1
-	fi
 
 	if [ ! -d "$5" ]; then
 		tmpclone "$cached" "$5" "$6" "$7" || \
@@ -166,10 +165,9 @@ try_fetch_curl()
 		x_ rm -f "$cached"
 	fi
 
-	[ ! -f "$cached" ] && \
-		if ! try_$2 "$cached" "$@"; then
+	[ -f "$cached" ] || \
+		try_$2 "$cached" "$@" || \
 			return 1
-		fi
 
 	[ -f "$5" ] && \
 		if bad_checksum "$6" "$5" 2>/dev/null; then
@@ -180,7 +178,6 @@ try_fetch_curl()
 		return 1
 	elif bad_checksum "$6" "$cached"; then
 		x_ rm -f "$cached"
-
 		return 1
 	fi
 

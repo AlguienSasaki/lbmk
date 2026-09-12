@@ -111,20 +111,18 @@ trees()
 
 build_project()
 {
-	if ! configure_project "$configdir"; then
+	configure_project "$configdir" || \
 		return 0
-	elif [ -f "$listfile" ]; then
-		if ! $if_not_dry_build elfcheck; then
+
+	[ ! -f "$listfile" ] || \
+		$if_not_dry_build elfcheck || \
 			return 0
-		fi
-	fi
 
 	[ "$mode" = "distclean" ] && \
 		mode="clean"
 
-	if ! run_make_command; then
+	run_make_command || \
 		return 0
-	fi
 
 	[ -z "$mode" ] && \
 		$if_not_dry_build \
@@ -168,9 +166,9 @@ handle_defconfig()
 
 	[ ! -f "CHANGELOG" ] && \
 		fetch_project "$project"
-	if ! configure_project "$target_dir"; then
+
+	configure_project "$target_dir" || \
 		return 0
-	fi
 
 	[ -z "$tree" ] && \
 		err "$configdir: 'tree' not set" "handle_defconfig" "$@"
@@ -304,10 +302,9 @@ build_dependencies()
 delete_old_project_files()
 {
 	# delete an entire source tree along with its builds:
-	if ! project_up_to_date hash "$tree" badhash "$datadir" \
-	    "$configdir/$tree" "$mdir"; then
+	project_up_to_date hash "$tree" badhash "$datadir" \
+	    "$configdir/$tree" "$mdir" || \
 		x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"
-	fi
 
 	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/hash/$project$tree"
 
@@ -320,10 +317,8 @@ delete_old_project_files()
 	# this is useful when only the target config changes, for
 	# example x200_8mb coreboot configs change, but not coreboot:
 
-	if ! project_up_to_date tghash "$target" badtghash "$configdir/$target"
-	then
+	project_up_to_date tghash "$target" badtghash "$configdir/$target" || \
 		x_ rm -Rf "elf/$project/$tree/$target"
-	fi
 
 	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/tghash/$project$target"
 }
@@ -414,9 +409,8 @@ check_cross_compiler()
 
 check_gnu_path()
 {
-	if ! command -v "$1" 1>/dev/null; then
+	command -v "$1" 1>/dev/null || \
 		err "Host '$1' unavailable" "check_gnu_path" "$@"
-	fi
 
 	eval "`newvar gccdir gccfull gccver gnatdir gnatfull gnatver`"
 
@@ -431,9 +425,8 @@ check_gnu_path()
 
 host_gcc_gnat_match()
 {
-	if ! gnu_setver "$1" "$1"; then
+	gnu_setver "$1" "$1" || \
 		err "Command '$1' unavailable." "check_gnu_path" "$@"
-	fi
 	gnu_setver "$2" "$2" || :
 
 	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
@@ -458,11 +451,10 @@ match_gcc_gnat_versions()
 		fi
 	done
 
-	if ! gnu_setver "$2" "$_gnudir/$2-$_gnuver"; then
+	gnu_setver "$2" "$_gnudir/$2-$_gnuver" || \
 		return 1
-	elif [ "$gnatfull" != "$gccfull" ]; then
+	[ "$gnatfull" != "$gccfull" ] && \
 		return 1
-	fi
 
 	( link_gcc_gnat_versions "$@" "$_gnudir" "$_gnuver" ) || \
 	    err "Can't link '$2-$_gnuver' '$_gnudir'" "check_gnu_path" "$@"; :
@@ -555,14 +547,13 @@ run_make_command()
 	[ -z "$mode" ] && \
 		x_ $premake
 
-	if $if_not_dry_build check_cmake "$srcdir"; then
+	$if_not_dry_build check_cmake "$srcdir" && \
 		[ -z "$mode" ] && \
 			$if_not_dry_build \
-				check_autoconf "$srcdir"; :
-	fi
-	if ! $if_not_dry_build check_makefile "$srcdir"; then
+				check_autoconf "$srcdir"
+
+	$if_not_dry_build check_makefile "$srcdir" || \
 		return 1
-	fi
 
 	$if_not_dry_build \
 		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
@@ -570,30 +561,29 @@ run_make_command()
 	[ -z "$mode" ] && \
 		x_ $mkhelper
 
-	if ! check_makefile "$srcdir"; then
+	check_makefile "$srcdir" || \
 		return 0
-	fi
 
-	if [ "$mode" = "clean" ]; then
-		$if_dry_build \
-			return 0
-		if ! make -C "$srcdir" $cleanargs distclean; then
-			x_ make -C "$srcdir" $cleanargs clean
-		fi
-	fi
+	[ "$mode" = "clean" ] || \
+		return 0
+	$if_dry_build \
+		return 0
+
+	make -C "$srcdir" $cleanargs distclean || \
+		x_ make -C "$srcdir" $cleanargs clean; :
 }
 
 check_cmake()
 {
 	$if_dry_build \
 		return 0
-	if [ ! -n "$cmakedir" ]; then
+	[ ! -n "$cmakedir" ] && \
 		return 0
-	elif ! check_makefile "$1"; then
-		if ! cmake -B "$1" "$1/$cmakedir"; then
+
+	check_makefile "$1" || \
+		cmake -B "$1" "$1/$cmakedir" || \
 			x_ check_makefile "$1"
-		fi
-	fi
+
 	x_ check_makefile "$1"; :
 }
 
