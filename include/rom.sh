@@ -41,8 +41,7 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	grub_modules=""
-	grub_install_modules=""
+	eval "`newvar grub_modules grub_install_modules`"
 
 	$if_dry_build \
 		return 0

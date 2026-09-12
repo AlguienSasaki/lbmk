@@ -1,32 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Copyright (c) 2023-2025 Leah Rowe <leah@libreboot.org>
+# Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
-reldest=""
-reldir=""
-relmode=""
-rsrc=""
-vdir=""
+eval "`newvar reldest reldir relmode rsrc vdir`"
 
 release()
 {
 	export XBMK_RELEASE="y"
-
 	reldir="release"
 
 	while getopts m: option
 	do
 		[ -z "$OPTARG" ] && \
 			err "empty argument not allowed" "release" "$@"
-
-		case "$option" in
-		m)
-			relmode="$OPTARG"
-			;;
-		*)
+		[ "$option" != "m" ] && \
 			err "invalid option '-$option'" "release" "$@"
-			;;
-		esac
+
+		relmode="$OPTARG"
 	done
 
 	reldest="$reldir/$version"
@@ -36,7 +26,6 @@ release()
 	vdir="`mktemp -d || err "can't make vdir"`" || \
 	    err "can't make tmp vdir" "release" "$@"
 	vdir="$vdir/$version"
-
 	rsrc="$vdir/${relname}_src"
 
 	remkdir "$vdir"

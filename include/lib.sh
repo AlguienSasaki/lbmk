@@ -82,7 +82,6 @@ e()
 	fi
 
 	eval "$estr"
-
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
@@ -109,7 +108,6 @@ findpath()
 		fi
 
 		printf "%s\n" "$found"
-
 		shift 1
 	done
 }
@@ -157,7 +155,6 @@ xbmkdir()
 	while [ $# -gt 0 ]; do
 		[ ! -d "$1" ] && \
 			x_ mkdir -p "$1"
-
 		shift 1
 	done
 }

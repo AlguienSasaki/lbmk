@@ -110,7 +110,6 @@ xbmk_get_version()
 xbmk_set_env()
 {
 	is_child="n"
-
 	xbmkpath="$PATH"
 
 	# unify all temporary files/directories in a single TMPDIR
@@ -126,10 +125,8 @@ xbmk_set_env()
 	if [ "$is_child" = "y" ]; then
 		xbmk_child_set_env
 		return 1 # child instance. discontinue initialisation.
-	else
-		xbmk_parent_set_env
-		return 0 # parent instance. continue initialisation.
 	fi
+	xbmk_parent_set_env
 }
 
 xbmk_child_set_env()
@@ -298,15 +295,12 @@ xbmk_set_pyver()
 		err "Bad python version (must by 3.x)" "xbmk_set_pyver" "$@"
 
 	# set up python in PATH (environmental variable):
-
 	(
 		x_ cd "$xbtmp/xbmkpath"
-
 		x_ ln -s "`x_ pybin "$python"`" python || \
 		    err "can't make symlink" "xbmk_set_pyver" "$@"
 
-	) || \
-	    err "Can't link Python in $xbtmp/xbmkpath" "xbmk_set_pyver" "$@"; :
+	) || err "Can't link Python in $xbtmp/xbmkpath" xbmk_set_pyver "$@"; :
 }
 
 # Use direct path, to prevent a hang if Python is using a virtual environment,
