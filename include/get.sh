@@ -44,12 +44,10 @@ fetch_project()
 
 clone_project()
 {
-	if ! singletree "$project"; then
+	singletree "$project" || \
 		return 0
-	fi
 
 	loc="src/$project"
-
 	[ -d "$loc" ] && \
 		return 0
 
@@ -81,7 +79,6 @@ git_prep()
 fetch_submodule()
 {
 	mcfgdir="$mdir/${1##*/}"
-
 	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
 
 	if e "$mcfgdir/module.cfg" f missing; then
@@ -90,39 +87,22 @@ fetch_submodule()
 	. "$mcfgdir/module.cfg" || \
 	    err "Can't read '$mcfgdir/module.cfg'" "fetch_submodules" "$@"
 
-	if [ -n "$subgit" ] || [ -n "$subgit_bkup" ]; then
-		st="$st git"
-	fi
-	if [ -n "$subcurl" ] || [ -n "$subcurl_bkup" ]; then
-		st="$st curl"
-	fi
-
-	st="${st# }"
-	[ "$st" = "git curl" ] && \
+	[ -n "$subgit" ] && [ -n "$subgit_bkup" ] && \
+		st="git"
+	[ -n "$subcurl" ] && [ -n "$subcurl_bkup" ] && \
+		st="curl$st"
+	[ "$st" = "curlgit" ] && \
 		err "$mdir: git+curl defined" "fetch_submodule" "$@"
-
 	[ -z "$st" ] && \
 		return 0
-
-	if [ "$st" = "curl" ]; then
-		if [ -z "$subcurl" ] || [ -z "$subcurl_bkup" ]; then
-			err "subcurl/subcurl_bkup not both set" \
-			    "fetch_submodule" "$@"
-		fi
-	elif [ -z "$subgit" ] || [ -z "$subgit_bkup" ]; then
-		err "subgit/subgit_bkup not both set" "fetch_submodule" "$@"
-	elif [ -z "$subhash" ]; then
+	[ -z "$subhash" ] && \
 		err "subhash not set" "fetch_submodule" "$@"
-	fi
 
-	if [ "$st" = "git" ]; then
+	[ "$st" = "git" ] && \
 		x_ rm -Rf "$tmpgit/$1"
-		xbget "$st" "$subgit" "$subgit_bkup" "$tmpgit/$1" \
-		    "$subhash" "$mdir/${1##*/}/patches"
-	else
-		xbget "$st" "$subcurl" "$subcurl_bkup" "$tmpgit/$1" \
-		    "$subhash" "$mdir/${1##*/}/patches"
-	fi
+
+	eval "xbget \"\$st\" \"\$sub$st\" \"\$sub${st}_bkup\" \"\$tmpgit/\$1\" \
+	    \"\$subhash\" \"\$mdir/\${1##*/}/patches\""
 }
 
 # TODO: in the following functions, argument numbers are used
