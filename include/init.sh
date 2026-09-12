@@ -406,6 +406,7 @@ xbmk_git_init()
 	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
 	    tag -a "$version" -m "$projectname $version" \
 	    1>/dev/null 2>/dev/null; :
+
 	) || err "Can't initialise workdir" xbmk_git_init "$@"; :
 }
 

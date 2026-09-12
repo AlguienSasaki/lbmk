@@ -60,13 +60,13 @@ release()
 prep_release()
 {
 	(
-		if [ "$1" != "tarball" ]; then
-			x_ cd "$rsrc"
-			[ ! -e "cache" ] && \
-				x_ ln -s "$XBMK_CACHE" "cache"; :
-		fi
+	if [ "$1" != "tarball" ]; then
+		x_ cd "$rsrc"
+		[ ! -e "cache" ] && \
+			x_ ln -s "$XBMK_CACHE" "cache"; :
+	fi
 
-		prep_release_$1
+	prep_release_$1
 
 	) || err "can't prep release $1" "prep_release" "$@"
 }
@@ -105,8 +105,8 @@ prep_release_tarball()
 	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase"
 
 	(
-		x_ cd "${rsrc%/*}"
-		x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
+	x_ cd "${rsrc%/*}"
+	x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
 
 	) || err "can't create src tarball" "prep_release_tarball" "$@"; :
 }

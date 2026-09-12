@@ -139,25 +139,13 @@ xbget()
 	[ "$1" != "curl" ] && [ "$1" != "copy" ] && [ "$1" != "git" ] && \
 		err "Bad dlop (arg 1)" "xbget" "$@"
 
-	for url in "$2" "$3"
-	do
-		if [ -z "$url" ]; then
+	for url in "$2" "$3"; do
+		[ -z "$url" ] && \
 			err "empty URL given in" "xbget" "$@"
-		elif ! try_fetch "$url" "$@"; then
+		try_fetch "$url" "$@" || \
 			continue
-		fi
-
-		case "$1" in
-		git)
-			[ ! -d "$4" ] && \
-				continue
-			;;
-		*)
-			[ ! -f "$4" ] && \
-				continue
-			;;
-		esac
-		return 0 # successful download/copy
+		[ -e "$4" ] && \
+			return 0; : # successful download/copy
 	done
 
 	err "failed to download file/repository" "xbget" "$@"; :
