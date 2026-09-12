@@ -5,24 +5,6 @@
 # Copyright (c) 2020-2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2025 Alper Nebi Yasak <alpernebiyasak@gmail.com>
 
-utf_8="C.UTF-8"
-
-export LANG="$utf_8"
-export LANGUAGE="$utf_8"
-export LC_CTYPE="$utf_8"
-export LC_NUMERIC="$utf_8"
-export LC_TIME="$utf_8"
-export LC_COLLATE="$utf_8"
-export LC_MONETARY="$utf_8"
-export LC_MESSAGES="$utf_8"
-export LC_PAPER="$utf_8"
-export LC_NAME="$utf_8"
-export LC_ADDRESS="$utf_8"
-export LC_TELEPHONE="$utf_8"
-export LC_MEASUREMENT="$utf_8"
-export LC_IDENTIFICATION="$utf_8"
-export LC_ALL="$utf_8"
-
 projectname="libreboot"
 projectsite="https://libreboot.org/"
 
