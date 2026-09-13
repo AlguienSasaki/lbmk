@@ -57,9 +57,8 @@ download()
 	export PATH="$PATH:/sbin"
 	board="$1"
 
-	if check_target; then
-		readkconfig download
-	fi
+	check_target || return 0
+	readkconfig download
 }
 
 getfiles()
@@ -251,22 +250,19 @@ find_me()
 
 	_7ztest="${_7ztest}a"
 
-	_keep="" # -k: keep fptr modules even if they can be removed
-	_pass="" # -p: skip fptr check
 	_r="-r" # re-locate modules
 	_trunc="-t" # -t: truncate the ME size
+	eval "`newvar _keep _pass`" # -k (keep fptr modules), -p (skip checks)
 
 	[ "$ME11bootguard" = "y" ] && \
 		mfs="--whitelist MFS"
 	if [ "$MEclean" = "n" ]; then
 		MEshrink="n"
-
 		_keep="-k" # keep ME modules, don't delete anything
 		mfs="" # no MFS whitelist needed, due to -r:
 	fi
 	if [ "$MEclean" = "n" ] || [ "$MEshrink" != "y" ]; then
-		_r="" # don't re-locate ME modules
-		_trunc="" # don't shrink the me.bin file size
+		eval "`newvar _r _trunc`"
 	fi
 	[ "$MEcheck" = "n" ] && \
 		_pass="-p" # skip fptr check
@@ -304,19 +300,12 @@ apply_deguard_hack()
 
 extract_archive()
 {
-	if innoextract "$1" -d "$2"; then
-		:
-	elif python "$pfs_extract" "$1" -e; then
-		:
-	elif 7z x "$1" -o"$2"; then
-		:
-	elif "$bsdtar" -C "$2" -xf "$1"; then
-		:
-	elif "$bsdunzip" "$1" -d "$2"; then
-		:
-	else
+	innoextract "$1" -d "$2" || \
+	    python "$pfs_extract" "$1" -e || \
+	    7z x "$1" -o"$2" || \
+	    "$bsdtar" -C "$2" -xf "$1" || \
+	    "$bsdunzip" "$1" -d "$2" || \
 		return 1
-	fi
 
 	[ -d "${_dl}_extracted" ] && \
 		x_ cp -R "${_dl}_extracted" "$2"; :
@@ -338,24 +327,17 @@ extract_kbc1126ec_dump()
 {
 	x_ cd "$appdir/"
 
-	if mv Rompaq/68*.BIN ec.bin; then
-		:
-	elif unar -D ROM.CAB Rom.bin; then
-		:
-	elif unar -D Rom.CAB Rom.bin; then
-		:
-	elif unar -D 68*.CAB Rom.bin; then
-		:
-	else
+	mv Rompaq/68*.BIN ec.bin || \
+	    unar -D ROM.CAB Rom.bin || \
+	    unar -D Rom.CAB Rom.bin || \
+	    unar -D 68*.CAB Rom.bin || \
 		err "!kbc1126 unar" "extract_kbc1126ec" "$@"
-	fi
 
 	[ ! -f "ec.bin" ] && \
 		x_ mv Rom.bin ec.bin
 
-	if x_ e ec.bin f; then
-		x_ "$kbc1126_ec_dump" ec.bin
-	fi
+	x_ e ec.bin f
+	x_ "$kbc1126_ec_dump" ec.bin
 }
 
 extract_e6400vga()
@@ -376,6 +358,8 @@ extract_e6400vga()
 	) || err "can't extract e6400 vga rom" "extract_e6400vga" "$@"
 
 	x_ cp "$appdir/$E6400_VGA_romname" "$_pre_dest"
+
+	set -u -e
 }
 
 extract_sch5545ec()
