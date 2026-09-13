@@ -35,8 +35,8 @@ xbmk_init()
 	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp" "cache"
 
-	eval "$(printf "get_ver set_env set_threads git_init child_exec \n" | \
-	    awk '{ for (i=1; i<=NF; i++) $i = $i " \"$@\" || return 0;"; print }')"
+	eval "$(printf "get_ver set_env set_threads git_init xchild\n" | awk \
+	    '{ for (i=1; i<=NF; i++) $i = $i " \"$@\" || return 0;"; print }')"
 }
 
 xbmkpkg()
@@ -188,11 +188,10 @@ xbmk_parent_check_tmp()
 	x_ touch "$xbmklist"
 
 	for xtmpdir in "$basetmp"/xbmk_*; do
-		if [ -e "$xtmpdir" ]; then
+		[ ! -e "$xtmpdir" ] || \
 			printf "%s\n" "$xtmpdir" >> "$xbmklist" || \
 			    err "can't write '$xtmpdir' to '$xbmklist'" \
 			    "xbmk_parent_check_tmp" "$@"; :
-		fi
 	done
 
 	# set up a unified temporary directory, for common deletion later:
@@ -381,7 +380,7 @@ git_init()
 	) || err "Can't initialise workdir" git_init "$@"; :
 }
 
-child_exec()
+xchild()
 {
 	xbmk_rval=0
 
