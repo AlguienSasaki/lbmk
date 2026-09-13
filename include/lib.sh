@@ -43,13 +43,8 @@ xbmk_sanitize_version()
 	[ -z "$version" ] && \
 		return 0
 
-	version="`printf "%s\n" "$version" | sed -e 's/\t//g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\ //g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\.\.//g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\.\///g'`"
-	version="`printf "%s\n" "$version" | sed -e 's/\//-/g'`"
-
-	version="${version#-}"
+	version="`printf '%s\n' "$version" | sed \
+	    's/[[:space:]]//g; s/\.\.//g; s/\.\///g; s/\//-/g; s/^-//'`"
 
 	[ -z "$version" ] && \
 		err "'version' empty after sanitization" \
