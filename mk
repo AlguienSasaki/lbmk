@@ -23,18 +23,26 @@ commandv="`readlink -f "$xbarg0" 2>/dev/null`"
 
 cd "${commandv%/*}" || exit 1
 
-. "include/common.sh"
+. "include/lib.sh"
+. "include/env/init.sh"
+. "include/env/get.sh"
 
-if xeq main "${1-}" \
-    $xbcommands; then
+. "include/fw/vendor.sh"
+. "include/fw/mrc.sh"
+. "include/fw/inject.sh"
+. "include/fw/rom.sh"
 
-	"$@" || exit 1
-	exit 0
-fi
+. "include/mk/release.sh"
+
+_f="${1-}"
+shift 1 2>/dev/null || :
+
+eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
+    i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
 . "include/mk/tree.sh"
 
-trees "$@" || exit 0
+trees "$_f" "$@" || exit 0
 
 x_ touch "$mkhelpercfg"
 

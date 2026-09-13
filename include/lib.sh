@@ -191,30 +191,6 @@ x_()
 	"$@" || err "Unhandled error" "x_" "$@"
 }
 
-xeq()
-{
-	[ $# -lt 2 ] && \
-		err "no args" xeq
-
-	xbcmd="$1"
-	chk="$2"
-	shift 2
-
-	case "$chk" in
-	-*)
-		return 1
-		;;
-	*)
-		for eq in "$@"; do
-			[ "$chk" = "$eq" ] && \
-				return 0; :
-		done
-		;;
-	esac
-
-	err "bad command" xeq "$xbcmd" "$chk" "$@"
-}
-
 xchk()
 {
 	if [ $# -lt 3 ]; then
