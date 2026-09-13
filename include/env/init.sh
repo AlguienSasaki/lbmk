@@ -35,8 +35,8 @@ xbmk_init()
 	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp" "cache"
 
-	eval "`printf "get_ver set_env set_threads git_init child_exec \n" | \
-	    sed 's, , "$@" || return 0; ,g'`"
+	eval "$(printf "get_ver set_env set_threads git_init child_exec \n" | \
+	    awk '{ for (i=1; i<=NF; i++) $i = $i " \"$@\" || return 0;"; print }')"
 }
 
 xbmkpkg()
