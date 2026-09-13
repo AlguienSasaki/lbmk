@@ -35,10 +35,8 @@ xbmk_init()
 	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp" "cache"
 
-	for init_cmd in get_version set_env set_threads git_init child_exec; do
-		xbmk_$init_cmd "$@" || \
-			break; :
-	done
+	eval "`printf "get_ver set_env set_threads git_init child_exec \n" | \
+	    sed 's, , "$@" || return 0; ,g'`"
 }
 
 xbmkpkg()
@@ -75,19 +73,19 @@ xbmkpkg()
 		printf "You need AUR packages: %s\n" "$aur_notice" 1>&2; :
 }
 
-xbmk_get_version()
+get_ver()
 {
 	[ ! -f ".version" ] || \
 		read -r version < ".version" || \
-		    err "can't read version file" "xbmk_get_version" "$@"
+		    err "can't read version file" "get_ver" "$@"
 	[ ! -f ".versiondate" ] || \
 		read -r versiondate < ".versiondate" || \
-		    err "can't read versiondate" xbmk_get_version "$@"
+		    err "can't read versiondate" get_ver "$@"
 
 	[ -f ".version" ] && [ -z "$version" ] && \
-		err "version not set" "xbmk_get_version" "$@"
+		err "version not set" "get_ver" "$@"
 	[ -f ".versiondate" ] && [ -z "$versiondate" ] && \
-		err "versiondate not set" "xbmk_get_version" "$@"
+		err "versiondate not set" "get_ver" "$@"
 
 	[ ! -e ".git" ] && [ ! -f ".version" ] && \
 		version="unknown"
@@ -103,7 +101,7 @@ xbmk_get_version()
 # a parent instance will cause this function to return 0.
 # a child instance will return 1, skipping further initialisation
 # after this function is called.
-xbmk_set_env()
+set_env()
 {
 	is_child="n"
 	xbmkpath="$PATH"
@@ -130,9 +128,9 @@ xbmk_child_set_env()
 	xbmk_child_set_tmp
 
 	[ -z "${XBMK_CACHE+x}" ] && \
-		err "XBMK_CACHE unset on child" "xbmk_set_env" "$@"
+		err "XBMK_CACHE unset on child" "set_env" "$@"
 	[ -z "${XBMK_THREADS+x}" ] && \
-		xbmk_set_threads
+		set_threads
 	[ -z "${XBMK_CACHE_MIRROR+x}" ] && \
 		xbmk_set_mirror; :
 }
@@ -162,7 +160,7 @@ xbmk_parent_set_env()
 	xbmk_parent_check_tmp
 
 	printf "%s\n" "$xbtmp" > "$xbmklock" || \
-	    err "cannot create '$xbmklock'" xbmk_set_env "$@"; :
+	    err "cannot create '$xbmklock'" set_env "$@"; :
 
 	# not really critical for security, but it's a barrier
 	# against the user to make them think twice before deleting it
@@ -233,7 +231,7 @@ xbmk_parent_set_export()
 		export XBMK_RELEASE="n"; :
 }
 
-xbmk_set_threads()
+set_threads()
 {
 	[ -z "${XBMK_THREADS+x}" ] && \
 		export XBMK_THREADS=1
@@ -352,18 +350,18 @@ xbmk_set_mirror()
 		export XBMK_CACHE_MIRROR="n"; :
 }
 
-xbmk_git_init()
+git_init()
 {
 	# the git identity check is only needed for: ./mk -b coreboot [args]
 	[ "${2-}" = "-b" ] && [ "${3-}" = "coreboot" ] && \
 	    for gitarg in "user.name" "user.email"; do
 		git config --includes $gitarg 1>/dev/null 2>/dev/null || \
 			err "Run this first: $gitcmd \"your ${gitcmd##*.}\"" \
-			    "xbmk_git_init" "$@"; :
+			    "git_init" "$@"; :
 	done
 
 	[ -L ".git" ] && \
-		err "'$xbmkpwd/.git' is a symlink" "xbmk_git_init" "$@"
+		err "'$xbmkpwd/.git' is a symlink" "git_init" "$@"
 	[ -e ".git" ] && \
 		return 0
 
@@ -380,10 +378,10 @@ xbmk_git_init()
 	    tag -a "$version" -m "$projectname $version" \
 	    1>/dev/null 2>/dev/null; :
 
-	) || err "Can't initialise workdir" xbmk_git_init "$@"; :
+	) || err "Can't initialise workdir" git_init "$@"; :
 }
 
-xbmk_child_exec()
+child_exec()
 {
 	xbmk_rval=0
 
