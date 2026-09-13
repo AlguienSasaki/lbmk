@@ -32,6 +32,7 @@ cd "${commandv%/*}" || exit 1
 . "include/fw/inject.sh"
 . "include/fw/rom.sh"
 
+. "include/mk/tree.sh"
 . "include/mk/release.sh"
 
 _f="${1-}"
@@ -40,12 +41,9 @@ shift 1 2>/dev/null || :
 eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
     i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
-. "include/mk/tree.sh"
-
 trees "$_f" "$@" || exit 0
-
 x_ touch "$mkhelpercfg"
-
 . "$mkhelpercfg"
 $cmd
+
 ) || exit 1; :
