@@ -64,8 +64,7 @@ xbmkpkg()
 		printf "Updating package use...\n"
 		printf "Writing into %s" "$pkg_use_file..."
 
-		[ ! -d "`dirname $pkg_use_file`" ] && \
-			x_ mkdir -p "`dirname $pkg_use_file`"
+		x_ mkdir -p "`dirname $pkg_use_file`"
 
 		printf "%s\n" "$pkg_use" >> "$pkg_use_file"
 	fi
