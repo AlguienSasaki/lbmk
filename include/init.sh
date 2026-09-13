@@ -259,10 +259,6 @@ xbmk_set_version()
 		versiondate="$(git show --no-patch --no-notes \
 		    --pretty='%ct' HEAD)" || versiondate="$versiondate_"
 
-	if [ -z "$version" ] || [ -z "$versiondate" ]; then
-		err "version and/or versiondate unset" "xbmk_set_version" "$@"
-	fi
-
 	update_xbmkver "."
 
 	relname="$projectname-$version"

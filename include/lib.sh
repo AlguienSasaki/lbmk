@@ -26,6 +26,9 @@ update_xbmkver()
 {
 	xbmk_sanitize_version
 
+	[ -z "${version-}${versiondate-}" ] && \
+		err "version and/or versiondate unset" "update_xbmkver" "$@"
+
 	printf "%s\n" "$version" > "$1/.version" || \
 	    err "can't write '$1'" "update_xbmkver" "$@"; :
 
