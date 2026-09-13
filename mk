@@ -32,7 +32,7 @@ if xeq main "${1-}" \
 	exit 0
 fi
 
-. "include/tree.sh"
+. "include/mk/tree.sh"
 
 trees "$@" || exit 0
 
