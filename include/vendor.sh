@@ -152,7 +152,7 @@ fetch()
 	[ -f "$_dest" ] && \
 		return 0
 
-	x_ xbmkdir "${_dest%/*}"
+	x_ mkdir -p "${_dest%/*}"
 
 	if [ "$dl_type" != "fsp" ]; then
 		extract_archive "$_dl" "$appdir" || \

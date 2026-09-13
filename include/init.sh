@@ -33,10 +33,7 @@ xbmk_init()
 		err "this command as root is not permitted" "xbmk_init" "$@"
 
 	export PWD="$xbmkpwd"
-	x_ xbmkdir "$basetmp"
-
-	[ ! -e "cache" ] && \
-		x_ xbmkdir "cache"
+	x_ mkdir -p "$basetmp" "cache"
 
 	for init_cmd in get_version set_env set_threads git_init child_exec; do
 		xbmk_$init_cmd "$@" || \

@@ -39,7 +39,7 @@ release()
 
 	x_ rm -Rf "$rsrc"
 
-	x_ xbmkdir "$reldir"
+	x_ mkdir -p "$reldir"
 	x_ mv "$vdir" "$reldir"
 	x_ rm -Rf "${vdir%"/$version"}"
 

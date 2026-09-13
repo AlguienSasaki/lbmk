@@ -19,7 +19,7 @@ buildser()
 		x_ make -C "$sersrc" BOARD=$2
 	fi
 
-	x_ xbmkdir "bin/serprog_$1"
+	x_ mkdir -p "bin/serprog_$1"
 	x_ mv "$serx" "bin/serprog_$1/serprog_$2.${serx##*.}"
 }
 
@@ -109,7 +109,7 @@ check_coreboot_util()
 		return 0
 	fi
 
-	x_ xbmkdir "$utilelfdir"
+	x_ mkdir -p "$utilelfdir"
 	x_ cp "$utilsrcdir/$1" "$utilelfdir"
 
 	[ "$1" = "cbfstool" ] && \
@@ -422,7 +422,7 @@ cprom()
 
 	printf "Creating new %s image: '%s'\n" "$projectname" "$newrom"
 
-	x_ xbmkdir "bin/$target"
+	x_ mkdir -p "bin/$target"
 	x_ $cpcmd "$irom" "$newrom"
 }
 

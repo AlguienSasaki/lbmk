@@ -17,7 +17,7 @@ extract_refcode()
 	[ -z "$cbfstoolref" ] && \
 		err "cbfstoolref not set" "extract_refcode" "$@"
 
-	x_ xbmkdir "${_pre_dest%/*}"
+	x_ mkdir -p "${_pre_dest%/*}"
 
 	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION

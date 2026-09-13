@@ -59,7 +59,7 @@ mktarball()
 	printf "Creating tar archive '%s' from directory '%s'\n" "$2" "$1"
 
 	[ "${2%/*}" != "$2" ] && \
-		x_ xbmkdir "${2%/*}"
+		x_ mkdir -p "${2%/*}"
 
 	x_ tar -c "$1" | xz -T$XBMK_THREADS -9e > "$2" || \
 	    err "can't make tarball '$1'" "mktarball" "$@"
@@ -145,16 +145,7 @@ build_sbase()
 remkdir()
 {
 	x_ rm -Rf "$@"
-	x_ xbmkdir "$@"
-}
-
-xbmkdir()
-{
-	while [ $# -gt 0 ]; do
-		[ ! -d "$1" ] && \
-			x_ mkdir -p "$1"
-		shift 1
-	done
+	x_ mkdir -p "$@"
 }
 
 fx_()

@@ -71,7 +71,7 @@ git_prep()
 	fi
 
 	[ "$_loc" != "${_loc%/*}" ] && \
-		x_ xbmkdir "${_loc%/*}"
+		x_ mkdir -p "${_loc%/*}"
 
 	x_ mv "$tmpgit" "$_loc"
 }
@@ -138,7 +138,7 @@ try_fetch_git()
 	cached="$cached/${1#*://}"
 	cached="$XBMK_CACHE/$cached"
 
-	x_ xbmkdir "${5%/*}" "${cached%/*}"
+	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
 	try_$2 "$cached" "$@" || \
 		return 1
@@ -164,7 +164,7 @@ try_fetch_curl()
 	cached="file/$6"
 	cached="$XBMK_CACHE/$cached"
 
-	x_ xbmkdir "${5%/*}" "${cached%/*}"
+	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
 	if bad_checksum "$6" "$cached" 2>/dev/null; then
 		x_ rm -f "$cached"
@@ -226,7 +226,7 @@ try_git()
 			( x_ git clone "$2" "$tmpgitcache" ) || return 1
 		fi
 
-		x_ xbmkdir "${gitdest%/*}"
+		x_ mkdir -p "${gitdest%/*}"
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 
