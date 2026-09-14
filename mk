@@ -74,7 +74,7 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
     forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
     premake project release rev srcdir target target_dir tree xarch xgcctree \
-    xlang`"
+    xlang gitclean gitcleanargs`"
 
 main()
 {
@@ -268,7 +268,7 @@ configure_project()
 
 	eval "`newvar autoconfargs badhash badtghash bootstrapargs \
 	    build_depend buildtype cleanargs makeargs mkhelper postmake \
-	    premake release xarch xgcctree xlang`"
+	    premake release xarch xgcctree xlang gitclean gitcleanargs`"
 
 	[ ! -f "$_tcfg" ] && \
 		buildtype="auto"
@@ -503,10 +503,11 @@ handle_makefile()
 		$if_not_dry_build \
 			x_ cp "$srcdir/$_copy" "$defconfig"; :
 
-	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
-	    [ "$mode" = "distclean" ] && \
-		$if_not_dry_build \
-			x_ git -C "$srcdir" clean -fdx; :
+	[ -e "$srcdir/.git" ] && [ "$gitclean" = "y" ] && \
+		if [ "$mode" = "distclean" ] || [ "$mode" = "clean" ]; then
+			$if_not_dry_build \
+				x_ git -C "$srcdir" clean $gitcleanargs; :
+		fi; :
 }
 
 run_make_command()
