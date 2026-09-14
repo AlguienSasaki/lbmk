@@ -506,7 +506,7 @@ handle_makefile()
 	[ -e "$srcdir/.git" ] && [ "$project" = "u-boot" ] && \
 	    [ "$mode" = "distclean" ] && \
 		$if_not_dry_build \
-			x_ git -C "$srcdir" $cleanargs clean -fdx; :
+			x_ git -C "$srcdir" clean -fdx; :
 }
 
 run_make_command()
