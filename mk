@@ -30,7 +30,7 @@ findpath()
 
 x_()
 {
-	[ $# -lt 1 ] || "$@" || err "Unhandled error" "x_" "$@"; :
+	[ $# -lt 1 ] || "$@" || err "UNHANDLED ERROR" "x_" "$@"; :
 }
 
 err()
