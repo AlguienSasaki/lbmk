@@ -16,21 +16,16 @@ eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
 
 findpath()
 {
-	[ $# -lt 1 ] && \
-		err "findpath: No arguments provided" "findpath" "$@"
-
-	while [ $# -gt 0 ]
-	do
+	[ $# -gt 0 ] && while [ $# -gt 0 ]; do
 		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
-
-		if [ -z "$found" ]; then
-			found="`realpath "$1" 2>/dev/null`" || \
-			    return 1
-		fi
+		[ -n "$found" ] || \
+			found="`realpath "$1" 2>/dev/null`" || return 1
 
 		printf "%s\n" "$found"
 		shift 1
-	done
+	done && return 0
+
+	err "findpath: No arguments provided" "findpath" "$@"
 }
 
 x_()
