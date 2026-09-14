@@ -436,7 +436,8 @@ getvfile()
 	else
 		# inject vendor files
 
-		fx_ prep x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+		fx_ prep x_ find "$tmpromdir" -mindepth 1 -maxdepth 1 \
+		    -type f -name "*.rom"
 		( check_vendor_hashes ) || \
 		    err "$archive: Can't verify hashes" "getvfile" "$@"; :
 	fi

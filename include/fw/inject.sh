@@ -175,7 +175,8 @@ modify_mac()
 		x_ "$nvmutil" "$xbtmp/gbe" setmac "$new_mac"
 	fi
 
-	fx_ newmac x_ find "$tmpromdir" -maxdepth 1 -type f -name "*.rom"
+	fx_ newmac x_ find "$tmpromdir" -mindepth 1 -maxdepth 1 \
+	    -type f -name "*.rom"
 
 	printf "\nThe following GbE NVM data will be written:\n"
 	x_ "$nvmutil" "$xbtmp/gbe" dump | grep -v "bytes read from file" || :

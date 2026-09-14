@@ -109,7 +109,8 @@ prep_release_bin()
 	x_ ./mk -b stm32-vserprog
 	x_ ./mk -b pcsx-redux
 
-	fx_ mkrom_tarball x_ find bin -maxdepth 1 -type d -name "serprog_*"
+	fx_ mkrom_tarball x_ find bin -mindepth 1 -maxdepth 1 \
+	    -type d -name "serprog_*"
 
 	x_ mv bin ../roms
 }
