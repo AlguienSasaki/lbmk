@@ -49,7 +49,7 @@ xbarg0="$0"
 [ "${xbarg0##*/}" = "$xbarg0" ] && \
     xbarg0="`command -v "$xbarg0"`"
 
-xbmkpwd="$(dirname "$(findpath "$xbarg0")")"
+xbmkpwd="$(x_ dirname "$(x_ findpath "$xbarg0")")" || exit 1
 
 x_ cd "$xbmkpwd"
 
