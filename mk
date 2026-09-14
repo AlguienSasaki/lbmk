@@ -15,17 +15,14 @@ eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
     awk '{ for (i=1; i<=NF; i++) $i = "export " $i "=C.UTF-8;"; print }'`"
 
 (
+. "include/lib.sh"
+
 xbarg0="$0"
 [ "${xbarg0##*/}" = "$xbarg0" ] && \
     xbarg0="`command -v "$xbarg0"`"
 
-commandv="`readlink -f "$xbarg0" 2>/dev/null`"
-[ -z "$commandv" ] && \
-    commandv="`realpath "$xbarg0" 2>/dev/null`"
+x_ cd "`findpath "$xbarg0"`"
 
-cd "${commandv%/*}" || exit 1
-
-. "include/lib.sh"
 . "include/env/init.sh"
 x_ xbmk_init "$@"
 
