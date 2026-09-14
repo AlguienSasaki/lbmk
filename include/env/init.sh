@@ -391,5 +391,3 @@ xchild()
 
 	exit $xbmk_rval
 }
-
-xbmk_init "$@"

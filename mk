@@ -27,6 +27,8 @@ cd "${commandv%/*}" || exit 1
 
 . "include/lib.sh"
 . "include/env/init.sh"
+xbmk_init "$@"
+
 . "include/env/get.sh"
 
 . "include/fw/vendor.sh"
@@ -433,6 +435,7 @@ check_cross_compiler()
 	[ -f "$xgccfile" ] && \
 		return 0 # build exists already, so skip building
 
+	                           # it sometimes fails for like, no reason
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
