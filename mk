@@ -57,7 +57,7 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     makeargs mdir mkhelper mkhelpercfg mode postmake premake project release \
     rev srcdir target target_dir tree xarch xgcctree xlang`"
 
-trees()
+main()
 {
 	flags="f:F:b:m:u:c:x:s:l:n:d:"
 
@@ -665,6 +665,6 @@ copy_elf()
 	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
 }
 
-x_ trees "$_f" "$@"
+x_ main "$_f" "$@"
 
 ) || exit 1; :
