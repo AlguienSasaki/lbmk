@@ -74,7 +74,11 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
     forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
     premake project release rev srcdir target target_dir tree xarch xgcctree \
-    xlang gitclean gitcleanargs`"
+    xlang`"
+
+# can be overridden in project mkhelper.cfg
+gitclean="y"
+gitcleanargs="-fdx"
 
 main()
 {
@@ -268,7 +272,8 @@ configure_project()
 
 	eval "`newvar autoconfargs badhash badtghash bootstrapargs \
 	    build_depend buildtype cleanargs makeargs mkhelper postmake \
-	    premake release xarch xgcctree xlang gitclean gitcleanargs`"
+	    premake release xarch xgcctree xlang`"
+	gitclean="y"
 
 	[ ! -f "$_tcfg" ] && \
 		buildtype="auto"
