@@ -436,7 +436,6 @@ check_cross_compiler()
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
-	remkdir "$xbtmp/gnupath" # reset hostcc
 }
 
 check_defconfig()
