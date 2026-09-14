@@ -92,25 +92,6 @@ singletree()
 	    -name "target.cfg" ) || return 1; :
 }
 
-findpath()
-{
-	[ $# -lt 1 ] && \
-		err "findpath: No arguments provided" "findpath" "$@"
-
-	while [ $# -gt 0 ]
-	do
-		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
-
-		if [ -z "$found" ]; then
-			found="`realpath "$1" 2>/dev/null`" || \
-			    return 1
-		fi
-
-		printf "%s\n" "$found"
-		shift 1
-	done
-}
-
 pad_one_byte()
 {
 	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
@@ -181,16 +162,6 @@ dx_()
 	done < "$2" || err "cannot read '$2'" "dx_" "$@"; :
 }
 
-x_()
-{
-	[ $# -lt 1 ] && \
-		return 0
-	[ -z "$1" ] && \
-		err "Empty first arg" "x_" "$@"
-
-	"$@" || err "Unhandled error" "x_" "$@"
-}
-
 xchk()
 {
 	if [ $# -lt 3 ]; then
@@ -198,34 +169,4 @@ xchk()
 	elif [ -z "$2" ] || [ -z "$3" ]; then
 		err "arguments must not be empty" "xchk" "$@"
 	fi
-}
-
-err()
-{
-	if [ $# -eq 1 ]; then
-		printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
-	elif [ $# -gt 1 ]; then
-		printf "ERROR %s: %s: in command with args: " "$0" "$1" 1>&2
-		shift 1
-		xprintf "$@" 1>&2
-	else
-		printf "ERROR, but no arguments provided to err\n" 1>&2
-	fi
-
-	exit 1
-}
-
-xprintf()
-{
-	xprintfargs=0
-	while [ $# -gt 0 ]; do
-		printf "\"%s\"" "$1"
-		[ $# -gt 1 ] && \
-			printf " "
-
-		xprintfargs=1
-		shift 1
-	done
-	[ $xprintfargs -gt 0 ] && \
-		printf "\n"; :
 }

@@ -14,9 +14,66 @@ eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
     LC_MEASUREMENT LC_IDENTIFICATION LC_ALL\n" | \
     awk '{ for (i=1; i<=NF; i++) $i = "export " $i "=C.UTF-8;"; print }'`"
 
-(
-. "include/lib.sh"
+findpath()
+{
+	[ $# -lt 1 ] && \
+		err "findpath: No arguments provided" "findpath" "$@"
 
+	while [ $# -gt 0 ]
+	do
+		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
+
+		if [ -z "$found" ]; then
+			found="`realpath "$1" 2>/dev/null`" || \
+			    return 1
+		fi
+
+		printf "%s\n" "$found"
+		shift 1
+	done
+}
+
+x_()
+{
+	[ $# -lt 1 ] && \
+		return 0
+	[ -z "$1" ] && \
+		err "Empty first arg" "x_" "$@"
+
+	"$@" || err "Unhandled error" "x_" "$@"
+}
+
+err()
+{
+	if [ $# -eq 1 ]; then
+		printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
+	elif [ $# -gt 1 ]; then
+		printf "ERROR %s: %s: in command with args: " "$0" "$1" 1>&2
+		shift 1
+		xprintf "$@" 1>&2
+	else
+		printf "ERROR, but no arguments provided to err\n" 1>&2
+	fi
+
+	exit 1
+}
+
+xprintf()
+{
+	xprintfargs=0
+	while [ $# -gt 0 ]; do
+		printf "\"%s\"" "$1"
+		[ $# -gt 1 ] && \
+			printf " "
+
+		xprintfargs=1
+		shift 1
+	done
+	[ $xprintfargs -gt 0 ] && \
+		printf "\n"; :
+}
+
+(
 xbarg0="$0"
 [ "${xbarg0##*/}" = "$xbarg0" ] && \
     xbarg0="`command -v "$xbarg0"`"
@@ -25,6 +82,7 @@ xbmkpwd="$(dirname "$(findpath "$xbarg0")")"
 
 x_ cd "$xbmkpwd"
 
+. "include/lib.sh"
 . "include/env/init.sh"
 x_ xbmk_init "$@"
 
