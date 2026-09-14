@@ -8,11 +8,9 @@
 projectname="libreboot"
 projectsite="https://libreboot.org/"
 
-sha512sum="util/sbase/sha512sum"
-
 eval "`newvar aur_notice basetmp board checkvarschk checkvarsxbmk configdir \
     datadir is_child python pyver reinstall relname version versiondate \
-    xbmklock xbmkpath xbtmp`"
+    xbmklock xbmkpath xbtmp sha512sum`"
 
 xbmk_init()
 {
