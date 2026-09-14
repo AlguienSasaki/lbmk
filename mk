@@ -16,16 +16,8 @@ eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
 
 findpath()
 {
-	[ $# -gt 0 ] && while [ $# -gt 0 ]; do
-		found="`readlink -f "$1" 2>/dev/null`" || return 1; :
-		[ -n "$found" ] || \
-			found="`realpath "$1" 2>/dev/null`" || return 1
-
-		printf "%s\n" "$found"
-		shift 1
-	done && return 0
-
-	err "findpath: No arguments provided" "findpath" "$@"
+	eval "$(printf '%s\n' "$@" | awk '{printf \
+	    "readlink -f \"%s\" || realpath \"%s\" || return 1;\n", $0, $0}')"
 }
 
 x_()
