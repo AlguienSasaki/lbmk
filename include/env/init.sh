@@ -12,11 +12,10 @@ sha512sum="util/sbase/sha512sum"
 
 eval "`newvar aur_notice basetmp board checkvarschk checkvarsxbmk configdir \
     datadir is_child python pyver reinstall relname version versiondate \
-    xbmklock xbmkpath xbmkpwd xbmkpwd xbtmp`"
+    xbmklock xbmkpath xbtmp`"
 
 xbmk_init()
 {
-	xbmkpwd="`pwd || err "Cannot generate PWD"`" || err "!" xbmk_init "$@"
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 	sha512sum="$xbmkpwd/util/sbase/sha512sum"

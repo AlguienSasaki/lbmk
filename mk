@@ -21,7 +21,9 @@ xbarg0="$0"
 [ "${xbarg0##*/}" = "$xbarg0" ] && \
     xbarg0="`command -v "$xbarg0"`"
 
-x_ cd "`findpath "$xbarg0"`"
+xbmkpwd="$(dirname "$(findpath "$xbarg0")")"
+
+x_ cd "$xbmkpwd"
 
 . "include/env/init.sh"
 x_ xbmk_init "$@"
