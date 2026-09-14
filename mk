@@ -35,26 +35,16 @@ findpath()
 
 x_()
 {
-	[ $# -lt 1 ] && \
-		return 0
-	[ -z "$1" ] && \
-		err "Empty first arg" "x_" "$@"
-
-	"$@" || err "Unhandled error" "x_" "$@"
+	[ $# -lt 1 ] || "$@" || \
+	    err "Unhandled error" "x_" "$@"; :
 }
 
 err()
 {
-	if [ $# -eq 1 ]; then
-		printf "ERROR %s: %s\n" "$0" "$1" 1>&2 || :
-	elif [ $# -gt 1 ]; then
-		printf "ERROR %s: %s: in command with args: " "$0" "$1" 1>&2
-		shift 1
-		printf '%s\n' "$@" | awk '{printf "\"%s\" ", $0}'
-		printf "\n"
-	else
-		printf "ERROR, but no arguments provided to err\n" 1>&2
-	fi
+	printf "ERROR %s: %s: " "${0-}" "${1-}" 1>&2
+	shift 1 2>/dev/null || :
+	printf '%s\n' "$@" | awk '{printf "\"%s\" ", $0}'
+	printf "\n"
 
 	exit 1
 }
