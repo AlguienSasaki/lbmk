@@ -17,7 +17,7 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
     forcepull gccdir gccfull gccver gnatdir gnatfull gnatver listfile \
     makeargs mdir mkhelper mkhelpercfg mode postmake premake project release \
-    rev srcdir target target_dir targets tree xarch xgcctree xlang`"
+    rev srcdir target target_dir tree xarch xgcctree xlang`"
 
 trees()
 {
@@ -79,7 +79,7 @@ trees()
 		err "missing flag ($flags)" "trees" "$@"
 	elif [ -z "$project" ]; then
 		fx_ "x_ ./mk $flag" x_ ls -1 config/git
-		return 1
+		return 0
 	elif [ ! -f "config/git/$project/pkg.cfg" ]; then
 		err "config/git/$project/pkg.cfg missing" "trees" "$@"
 	fi
@@ -100,13 +100,15 @@ trees()
 		x_ touch "$mkhelpercfg"
 	fi
 
-	targets="$*"
-	cmd="build_targets $targets"
-	if singletree "$project"; then
-		cmd="build_project"
-	fi
+	cmd="build_project"
+	singletree "$project" || \
+		cmd="build_targets"
 
 	remkdir "${tmpgit%/*}"
+	x_ touch "$mkhelpercfg"
+
+	. "$mkhelpercfg"
+	$cmd "$@"
 }
 
 build_project()
@@ -131,14 +133,12 @@ build_project()
 
 build_targets()
 {
-	if [ ! -d "$configdir" ]; then
+	[ ! -d "$configdir" ] && \
 		err "directory '$configdir' doesn't exist" "build_targets" "$@"
-	elif [ $# -lt 1 ]; then
-		targets="$(ls -1 "$configdir")" || \
-		    err "'$configdir': can't list targets" "build_targets" "$@"
-	fi
-
-	for x in $targets
+	[ $# -lt 1 ] && \
+		fx_ build_targets find "$configdir" \
+		    -mindepth 1 -maxdepth 1 -type d
+	[ $# -gt 0 ] && for x in "$@"
 	do
 		unset CROSS_COMPILE
 		export PATH="$xbmkpath"
@@ -151,7 +151,7 @@ build_targets()
 
 		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$x"
 
-		target="$x"
+		target="${x##*/}"
 
 		x_ handle_defconfig
 

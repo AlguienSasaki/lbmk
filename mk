@@ -41,9 +41,6 @@ shift 1 2>/dev/null || :
 eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
     i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
-trees "$_f" "$@" || exit 0
-x_ touch "$mkhelpercfg"
-. "$mkhelpercfg"
-$cmd
+x_ trees "$_f" "$@"
 
 ) || exit 1; :
