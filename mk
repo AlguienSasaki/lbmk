@@ -27,7 +27,7 @@ cd "${commandv%/*}" || exit 1
 
 . "include/lib.sh"
 . "include/env/init.sh"
-xbmk_init "$@"
+x_ xbmk_init "$@"
 
 . "include/env/get.sh"
 
