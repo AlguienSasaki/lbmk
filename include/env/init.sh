@@ -171,7 +171,7 @@ xbmk_parent_set_env()
 	xbmk_parent_set_export
 	xbmk_set_version
 
-	remkdir "$xbtmp" "$xbtmp/gnupath" "$xbtmp/xbmkpath"
+	remkdir "$xbtmp" "$xbtmp/xbmkpath"
 
 	xbmk_set_pyver
 	xbmk_set_mirror
@@ -216,7 +216,7 @@ xbmk_parent_set_export()
 		err "cachedir '$XBMK_CACHE' is a file" \
 		    "xbmk_parent_set_export" "$@"
 
-	export PATH="$xbtmp/xbmkpath:$xbtmp/gnupath:$PATH"
+	export PATH="$xbtmp/xbmkpath:$PATH"
 	xbmkpath="$PATH"
 
 	# if "y": a coreboot target won't be built if target.cfg says release=n

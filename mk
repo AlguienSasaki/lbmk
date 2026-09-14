@@ -53,9 +53,9 @@ if_not_dry_build=""
 
 eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
-    forcepull gccdir gccfull gccver gnatdir gnatfull gnatver listfile \
-    makeargs mdir mkhelper mkhelpercfg mode postmake premake project release \
-    rev srcdir target target_dir tree xarch xgcctree xlang`"
+    forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
+    premake project release rev srcdir target target_dir tree xarch xgcctree \
+    xlang`"
 
 main()
 {
@@ -433,100 +433,10 @@ check_cross_compiler()
 	[ -f "$xgccfile" ] && \
 		return 0 # build exists already, so skip building
 
-	check_gnu_path gcc gnat || x_ check_gnu_path gnat gcc
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
 	remkdir "$xbtmp/gnupath" # reset hostcc
-}
-
-# fix mismatching gcc/gnat versions on debian trixie/sid. as of december 2024,
-# trixie/sid had gnat-13 as gnat and gcc-14 as gcc, but has gnat-14 in apt. in
-# some cases, gcc 13+14 and gnat-13 are present; or gnat-14 and gcc-14, but
-# gnat in PATH never resolves to gnat-14, because gnat-14 was "experimental"
-
-check_gnu_path()
-{
-	command -v "$1" 1>/dev/null || \
-		err "Host '$1' unavailable" "check_gnu_path" "$@"
-
-	eval "`newvar gccdir gccfull gccver gnatdir gnatfull gnatver`"
-
-	if host_gcc_gnat_match "$@"; then
-		return 0
-	elif ! match_gcc_gnat_versions "$@"; then
-		return 1
-	fi
-}
-
-# check if gcc/gnat versions already match:
-
-host_gcc_gnat_match()
-{
-	gnu_setver "$1" "$1" || \
-		err "Command '$1' unavailable." "check_gnu_path" "$@"
-	gnu_setver "$2" "$2" || :
-
-	eval "[ -z \"\$$1ver\" ] && err \"Cannot detect host '$1' version\""
-
-	[ "$gnatfull" != "$gccfull" ] && \
-		return 1; : # mismatched gcc/gnat versions
-}
-
-# find all gcc/gnat versions, matching them up in PATH:
-
-match_gcc_gnat_versions()
-{
-	eval "$1dir=\"$(dirname "$(command -v "$1")")\""
-	eval "_gnudir=\"\$$1dir\""
-	eval "_gnuver=\"\$$1ver\""
-
-	for _bin in "$_gnudir/$2-"*; do
-		if [ "${_bin#"$_gnudir/$2-"}" = "$_gnuver" ] && [ -x "$_bin" ]
-		then
-			_gnuver="${_bin#"$_gnudir/$2-"}"
-			break
-		fi
-	done
-
-	gnu_setver "$2" "$_gnudir/$2-$_gnuver" || \
-		return 1
-	[ "$gnatfull" != "$gccfull" ] && \
-		return 1
-
-	( link_gcc_gnat_versions "$@" "$_gnudir" "$_gnuver" ) || \
-	    err "Can't link '$2-$_gnuver' '$_gnudir'" "check_gnu_path" "$@"; :
-}
-
-# create symlinks in PATH, so that the GCC/GNAT versions match:
-
-link_gcc_gnat_versions()
-{
-	_gnudir="$3"
-	_gnuver="$4"
-
-	remkdir "$xbtmp/gnupath"
-
-	x_ cd "$xbtmp/gnupath"
-
-	for _gnubin in "$_gnudir/$2"*"-$_gnuver"
-	do
-		_gnuutil="${_gnubin##*/}"
-		[ -e "$_gnubin" ] && \
-			x_ ln -s "$_gnubin" "${_gnuutil%"-$_gnuver"}"; :
-	done
-}
-
-# get the gcc/gnat version
-# fail: return 1 if util not found
-gnu_setver()
-{
-	eval "$2 --version 1>/dev/null 2>/dev/null || return 1"
-
-	eval "$1ver=\"`"$2" --version 2>/dev/null | head -n1`\""
-	eval "$1ver=\"\${$1ver##* }\""
-	eval "$1full=\"\$$1ver\""
-	eval "$1ver=\"\${$1ver%%.*}\""; :
 }
 
 check_defconfig()
