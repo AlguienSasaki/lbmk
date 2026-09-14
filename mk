@@ -30,16 +30,13 @@ findpath()
 
 x_()
 {
-	[ $# -lt 1 ] || "$@" || \
-	    err "Unhandled error" "x_" "$@"; :
+	[ $# -lt 1 ] || "$@" || err "Unhandled error" "x_" "$@"; :
 }
 
 err()
 {
-	printf "ERROR %s: %s: " "${0-}" "${1-}" 1>&2
-	shift 1 2>/dev/null || :
 	printf '%s\n' "$@" | awk '{printf "\"%s\" ", $0}'
-	printf "\n"
+	printf "ERROR!\n"
 
 	exit 1
 }
