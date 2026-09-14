@@ -50,27 +50,13 @@ err()
 	elif [ $# -gt 1 ]; then
 		printf "ERROR %s: %s: in command with args: " "$0" "$1" 1>&2
 		shift 1
-		xprintf "$@" 1>&2
+		printf '%s\n' "$@" | awk '{printf "\"%s\" ", $0}'
+		printf "\n"
 	else
 		printf "ERROR, but no arguments provided to err\n" 1>&2
 	fi
 
 	exit 1
-}
-
-xprintf()
-{
-	xprintfargs=0
-	while [ $# -gt 0 ]; do
-		printf "\"%s\"" "$1"
-		[ $# -gt 1 ] && \
-			printf " "
-
-		xprintfargs=1
-		shift 1
-	done
-	[ $xprintfargs -gt 0 ] && \
-		printf "\n"; :
 }
 
 (
