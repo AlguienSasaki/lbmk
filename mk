@@ -16,8 +16,8 @@ eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
 
 findpath()
 {
-	eval "$(printf '%s\n' "$@" | awk '{printf \
-	    "readlink -f \"%s\" || realpath \"%s\" || return 1;\n", $0, $0}')"
+	eval "$(printf '%s\n' "$@" | awk '{printf "readlink -f \"%s\" \
+	    2>/dev/null || realpath \"%s\" 2>/dev/null || return 1;",$0,$0}')"
 }
 
 x_()
