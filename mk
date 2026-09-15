@@ -68,8 +68,6 @@ flag=""
 # : means false
 if_do_make=""
 if_not_do_make=":"
-if_make_clean=":"
-if_not_make_clean=""
 if_make_config=":"
 if_not_make_config=""
 if_build=":" # can be false even if make is true
@@ -84,10 +82,6 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
     premake project release rev srcdir target target_dir tree xarch xgcctree \
     xlang`"
-
-# can be overridden in project mkhelper.cfg
-gitclean="y"
-gitcleanargs="-fdx"
 
 main()
 {
@@ -117,8 +111,6 @@ main()
 		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
-		-c) mode="clean" ;;
-		-x) mode="crossgcc-clean" ;;
 		-f|-F) # download source code for a project
 			# macros. colon means false.
 			if_do_make=":"
@@ -142,11 +134,6 @@ main()
 		if [ "${mode%config}" != "$mode" ]; then
 			if_make_config=""
 			if_not_make_config=":"
-		fi
-
-		if [ "${mode%clean}" != "$mode" ]; then
-			if_make_clean=""
-			if_not_make_clean=":"
 		fi
 
 		if [ -z "${OPTARG+x}" ]; then
@@ -259,11 +246,8 @@ handle_defconfig()
 		err "$configdir: 'tree' not set" "handle_defconfig" "$@"
 
 	srcdir="src/$project/$tree"
-	[ ! -d "$srcdir" ] && \
-		$if_not_make_clean \
-			return 0
 
-	for y in "$target_dir/config"/*
+	[ -d "$srcdir" ] && for y in "$target_dir/config"/*
 	do
 		[ ! -f "$y" ] && \
 			$if_not_dry_build \
@@ -296,7 +280,6 @@ configure_project()
 	eval "`newvar autoconfargs badhash badtghash bootstrapargs \
 	    build_depend buildtype cleanargs makeargs mkhelper postmake \
 	    premake release xarch xgcctree xlang`"
-	gitclean="y"
 
 	[ ! -f "$_tcfg" ] && \
 		buildtype="auto"
@@ -516,7 +499,7 @@ handle_makefile()
 {
 	if $if_not_dry_build check_makefile "$srcdir"; then
 		$if_not_dry_build \
-			x_ make -C "$srcdir" $cleanargs clean
+			x_ make -C "$srcdir" clean $cleanargs
 	fi
 
 	[ -f "$defconfig" ] && \
@@ -533,11 +516,6 @@ handle_makefile()
 	$if_make_config \
 		$if_not_dry_build \
 			x_ cp "$srcdir/$_copy" "$defconfig"; :
-
-	[ -e "$srcdir/.git" ] && [ "$gitclean" = "y" ] && \
-		$if_make_clean \
-			$if_not_dry_build \
-				x_ git -C "$srcdir" clean $gitcleanargs; :
 }
 
 run_make_command()
@@ -615,7 +593,7 @@ copy_elf()
 		    "cannot read '$listfile'" "copy_elf" "$@"; :
 	fi
 
-	( x_ make clean -C "$srcdir" $cleanargs ) || \
+	( x_ make -C "$srcdir" clean $cleanargs ) || \
 	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
 }
 
