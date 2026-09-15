@@ -572,8 +572,6 @@ run_make_command()
 
 	$if_not_make_clean \
 		return 0
-	$if_dry_build \
-		return 0
 
 	make -C "$srcdir" $cleanargs distclean || \
 		x_ make -C "$srcdir" $cleanargs clean; :
