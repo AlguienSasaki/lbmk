@@ -104,6 +104,8 @@ main()
 			if_not_dry_build=":"
 			;;
 		-f|-F) # download source code for a project
+			if_do_make=":"
+			if_not_do_make=""
 			if_dry_build=""
 			if_not_dry_build=":"
 			[ "$flag" = "-F" ] && \
@@ -124,10 +126,6 @@ main()
 		if [ "${mode%config}" != "$mode" ]; then
 			if_make_config=""
 			if_not_make_config=":"
-		fi
-		if [ "$flag" = "-F" ] || [ "$flag" = "-f" ]; then
-			if_do_make=":"
-			if_not_do_make=""
 		fi
 
 		if [ -z "${OPTARG+x}" ]; then
