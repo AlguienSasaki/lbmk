@@ -117,7 +117,7 @@ main()
 		-b) : ;;
 		-u) mode="oldconfig" ;;
 		-m) mode="menuconfig" ;;
-		-c) mode="distclean" ;;
+		-c) mode="clean" ;;
 		-x) mode="crossgcc-clean" ;;
 		-f|-F) # download source code for a project
 			# macros. colon means false.
@@ -208,9 +208,6 @@ single_tree_build()
 		$if_not_dry_build elfcheck || \
 			return 0
 
-	$if_make_clean \
-		eval mode="clean"
-
 	run_make_command || \
 		return 0
 
@@ -262,7 +259,6 @@ handle_defconfig()
 		err "$configdir: 'tree' not set" "handle_defconfig" "$@"
 
 	srcdir="src/$project/$tree"
-
 	[ ! -d "$srcdir" ] && \
 		$if_not_make_clean \
 			return 0
@@ -281,11 +277,7 @@ handle_defconfig()
 			    continue; :
 
 		for _xarch in $xarch; do
-			$if_not_build \
-				break
-			$if_dry_build \
-				break
-			[ -n "$_xarch" ] && \
+			[ -n "$_xarch" ] && $if_not_build $if_dry_build \
 				check_cross_compiler "$_xarch"; :
 		done; :
 
