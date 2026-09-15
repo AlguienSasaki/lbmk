@@ -436,15 +436,17 @@ check_cross_compiler()
 	[ -n "$xgcctree" ] && \
 		cbdir="src/coreboot/$xgcctree"
 
+	cbelfdir="elf${cbdir#src}"
+
 	xfix="${1%-*}"
 	[ "$xfix" = "x86_64" ] && \
 		xfix="x64"
 
-	xgccfile="elf/coreboot/$tree/xgcc_${xfix}_was_compiled"
+	xgccfile="$cbelfdir/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
-	x_ mkdir -p "elf/coreboot/$tree" # TODO: is this needed?
+	x_ mkdir -p "$cbelfdir"
 
 	# tell build systems what cross-compiler to use
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
