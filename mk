@@ -250,7 +250,7 @@ handle_defconfig()
 			    continue; :
 
 		for _xarch in $xarch; do
-			[ -n "$_xarch" ] && $if_not_build $if_dry_build \
+			[ -n "$_xarch" ] && $if_build $if_not_dry_build \
 				check_cross_compiler "$_xarch"; :
 		done; :
 
