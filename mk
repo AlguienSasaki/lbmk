@@ -554,8 +554,9 @@ run_make_command()
 	$if_build \
 		check_autoconf "$srcdir"
 
-	check_makefile "$srcdir" && \
-		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
+	check_makefile "$srcdir" || return 1
+
+	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
 	) || err "run_make_file" "$@"
 
