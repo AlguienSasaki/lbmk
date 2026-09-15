@@ -65,10 +65,19 @@ eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
 flag=""
 
 # macros, overridden depending on the flag
+# : means false
 if_do_make=""
-if_dry_build=":"
 if_not_do_make=":"
+if_make_clean=":"
+if_not_make_clean=""
+if_make_config=":"
+if_not_make_config=""
+if_build=":" # can be false even if make is true
+if_not_build=""
+if_dry_build=":"
 if_not_dry_build=""
+
+if_single_tree=":"
 
 eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
@@ -125,6 +134,21 @@ main()
 		*) err "invalid option '-$option'" "trees" "$@" ;;
 		esac
 
+		if [ -z "$mode" ]; then
+			if_build=""
+			if_not_build=":"
+		fi
+
+		if [ "${mode%config}" != "$mode" ]; then
+			if_make_config=""
+			if_not_make_config=":"
+		fi
+
+		if [ "${mode%clean}" != "$mode" ]; then
+			if_make_clean=""
+			if_not_make_clean=":"
+		fi
+
 		if [ -z "${OPTARG+x}" ]; then
 			shift 1
 			break
@@ -161,9 +185,12 @@ main()
 		x_ touch "$mkhelpercfg"
 	fi
 
-	cmd="build_project"
-	singletree "$project" || \
-		cmd="build_targets"
+	if singletree "$project"; then
+		cmd="single_tree_build"
+		if_single_tree=""
+	else
+		cmd="multi_tree_build"
+	fi
 
 	remkdir "${tmpgit%/*}"
 	x_ touch "$mkhelpercfg"
@@ -172,7 +199,7 @@ main()
 	$cmd "$@"
 }
 
-build_project()
+single_tree_build()
 {
 	configure_project "$configdir" || \
 		return 0
@@ -181,23 +208,23 @@ build_project()
 		$if_not_dry_build elfcheck || \
 			return 0
 
-	[ "$mode" = "distclean" ] && \
-		mode="clean"
+	$if_make_clean \
+		eval mode="clean"
 
 	run_make_command || \
 		return 0
 
-	[ -z "$mode" ] && \
+	$if_build \
 		$if_not_dry_build \
 			copy_elf; :
 }
 
-build_targets()
+multi_tree_build()
 {
 	[ ! -d "$configdir" ] && \
-		err "directory '$configdir' doesn't exist" "build_targets" "$@"
+		err "directory '$configdir' doesn't exist" "multi_tree_build" "$@"
 	[ $# -lt 1 ] && \
-		fx_ build_targets find "$configdir" \
+		fx_ multi_tree_build find "$configdir" \
 		    -mindepth 1 -maxdepth 1 -type d
 	[ $# -gt 0 ] && for x in "$@"
 	do
@@ -216,7 +243,7 @@ build_targets()
 
 		x_ handle_defconfig
 
-		[ -z "$mode" ] && \
+		$if_build \
 			x_ $postmake; :
 	done; :
 }
@@ -226,7 +253,7 @@ handle_defconfig()
 	target_dir="$configdir/$target"
 
 	[ ! -f "CHANGELOG" ] && \
-		fetch_project "$project"
+		single_tree_fetch "$project"
 
 	configure_project "$target_dir" || \
 		return 0
@@ -236,31 +263,35 @@ handle_defconfig()
 
 	srcdir="src/$project/$tree"
 
-	[ "$mode" = "${mode%clean}" ] && [ ! -d "$srcdir" ] && \
-		return 0
+	[ ! -d "$srcdir" ] && \
+		$if_not_make_clean \
+			return 0
 
 	for y in "$target_dir/config"/*
 	do
-		[ "$flag" != "-d" ] && [ ! -f "$y" ] && \
-			continue
-		[ "$flag" != "-d" ] && \
-			defconfig="$y"
+		[ ! -f "$y" ] && \
+			$if_not_dry_build \
+				continue
 
-		if [ -z "$mode" ]; then
-			check_defconfig || continue; :
-		fi
+		$if_not_dry_build \
+			eval defconfig="$y"
 
-		[ -z "$mode" ] && \
-			for _xarch in $xarch; do
-				$if_dry_build \
-					break
-				[ -n "$_xarch" ] && \
-					check_cross_compiler "$_xarch"; :
-			done; :
+		$if_build \
+			check_defconfig || \
+			    continue; :
+
+		for _xarch in $xarch; do
+			$if_not_build \
+				break
+			$if_dry_build \
+				break
+			[ -n "$_xarch" ] && \
+				check_cross_compiler "$_xarch"; :
+		done; :
 
 		handle_makefile
 
-		[ -z "$mode" ] && \
+		$if_build \
 			$if_not_dry_build \
 				copy_elf; :
 	done; :
@@ -286,7 +317,7 @@ configure_project()
 	fi
 
 	# override target/tree specific variables from per-target config:
-	while e "$_tcfg" f || [ "$cmd" != "build_project" ]
+	while e "$_tcfg" f || [ "$cmd" != "single_tree_build" ]
 	do
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 		eval "`newvar rev tree`"
@@ -294,11 +325,11 @@ configure_project()
 		. "$_tcfg" || \
 		    err "Can't read '$_tcfg'" "configure_project" "$@"
 
-		[ "$flag" = "-d" ] && \
-			build_depend="" # dry run
+		$if_dry_build \
+			eval build_depend=""
 
-		[ "$cmd" = "build_project" ] && \
-			break # single-tree, so targeting is unnecessary
+		$if_single_tree \
+			break
 		$if_do_make \
 			break
 		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
@@ -309,10 +340,11 @@ configure_project()
 
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 1
-	[ -n "$buildtype" ] && [ "${mode%config}" != "$mode" ] && \
-		return 1
+	[ -n "$buildtype" ] && \
+		$if_make_config \
+			return 1
 
-	[ -z "$mode" ] && \
+	$if_build \
 		$if_not_dry_build \
 			build_dependencies
 
@@ -323,7 +355,7 @@ configure_project()
 	if [ ! -f "CHANGELOG" ]; then
 		delete_old_project_files
 		$if_not_do_make \
-			fetch_${cmd#build_}
+			${cmd%_build}_fetch
 	fi
 	$if_not_do_make \
 		return 1
@@ -506,24 +538,23 @@ handle_makefile()
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
 
-	[ "${mode%config}" != "$mode" ] && \
+	$if_make_config \
 		$if_not_dry_build \
 			x_ cp "$srcdir/$_copy" "$defconfig"; :
 
 	[ -e "$srcdir/.git" ] && [ "$gitclean" = "y" ] && \
-		if [ "$mode" = "distclean" ] || [ "$mode" = "clean" ]; then
+		$if_make_clean \
 			$if_not_dry_build \
 				x_ git -C "$srcdir" clean $gitcleanargs; :
-		fi; :
 }
 
 run_make_command()
 {
-	[ -z "$mode" ] && \
+	$if_build \
 		x_ $premake
 
 	$if_not_dry_build check_cmake "$srcdir" && \
-		[ -z "$mode" ] && \
+		$if_build \
 			$if_not_dry_build \
 				check_autoconf "$srcdir"
 
@@ -533,13 +564,13 @@ run_make_command()
 	$if_not_dry_build \
 		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
-	[ -z "$mode" ] && \
+	$if_build \
 		x_ $mkhelper
 
 	check_makefile "$srcdir" || \
 		return 0
 
-	[ "$mode" = "clean" ] || \
+	$if_not_make_clean \
 		return 0
 	$if_dry_build \
 		return 0

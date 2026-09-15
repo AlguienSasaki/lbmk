@@ -9,7 +9,7 @@ eval "`newvar url bkup_url depend loc subcurl subcurl_bkup subgit subgit_bkup \
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
 
-fetch_targets()
+multi_tree_fetch()
 {
 	[ -d "src/$project/$tree" ] && \
 		return 0
@@ -18,17 +18,17 @@ fetch_targets()
 	    "src/$project/$tree" "submod"
 }
 
-fetch_project()
+single_tree_fetch()
 {
 	xgcctree=""
 
 	. "config/git/$project/pkg.cfg" || \
 	    err "Can't read config 'config/git/$project/pkg.cfg'" \
-	    "fetch_project" "@"
+	    "single_tree_fetch" "@"
 
 	if [ -z "$url" ] || [ -z "$bkup_url" ]; then
 		err "url/bkup_url not both set 'config/git/$project/pkg.cfg'" \
-		    "fetch_project" "$@"
+		    "single_tree_fetch" "$@"
 	fi
 
 	[ -n "$xgcctree" ] && \
