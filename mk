@@ -195,12 +195,9 @@ single_tree_build()
 		$if_not_dry_build elfcheck || \
 			return 0
 
-	run_make_command || \
-		return 0
-
-	$if_build \
-		$if_not_dry_build \
-			copy_elf; :
+	run_make_command && \
+	    $if_build $if_not_dry_build \
+		copy_elf; :
 }
 
 multi_tree_build()
