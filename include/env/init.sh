@@ -357,7 +357,8 @@ git_init()
 	done
 
 	git_init_src .
-	fx_ git_init_src x_ find src -maxdepth 1 -mindepth 1 -type d
+	[ -d "src" ] && \
+		fx_ git_init_src x_ find src -maxdepth 1 -mindepth 1 -type d; :
 }
 
 git_init_src()
