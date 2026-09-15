@@ -356,50 +356,21 @@ git_init()
 			    "git_init" "$@"; :
 	done
 
-	git_init_src .
-	[ -d "src" ] && \
-		fx_ git_init_src x_ find src -maxdepth 1 -mindepth 1 -type d; :
-}
-
-git_init_src()
-{
-	gitdir="${1-}"
-
-	[ -z "$gitdir" ] && \
-		err "Invalid argument" git_init_src "$@"
-	[ -L "$gitdir/.git" ] && \
+	[ -L ".git" ] && \
 		err "'$xbmkpwd/.git' is a symlink" "git_init" "$@"
-	[ -e "$gitdir/.git" ] && \
+	[ -e ".git" ] && \
 		return 0
-
-	git_projectname="${gitdir#*/}"
-	git_treename="${git_projectname#*/}"
-	[ "$git_projectname" = "${git_projectname#*/}" ] && \
-		git_treename=""
-
-	git_projectname="${git_projectname%%/*}"
-	git_treename="${git_treename%%*/}"
-
-	if ! singletree "$git_projectname"; then
-		if [ -z "$git_treename" ]; then
-			fx_ git_init_src x_ find "$gitdir" -maxdepth 1 \
-			    -mindepth 1 -type d
-			return 0
-		fi
-	fi
 
 	(
 	export GIT_COMMITTER_DATE="@$versiondate +0000"
 	export GIT_AUTHOR_DATE="@$versiondate +0000"
 
-	x_ git -C "$gitdir" init 1>/dev/null 2>/dev/null
-	x_ git -C "$gitdir" add -A . 1>/dev/null 2>/dev/null
-	x_ git -C "$gitdir" -c user.name="xbmk" \
-	    -c user.email="xbmk@example.com" \
-	    commit -m "$projectname $version $gitdir" \
+	x_ git init 1>/dev/null 2>/dev/null
+	x_ git add -A . 1>/dev/null 2>/dev/null
+	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
+	    commit -m "$projectname $version" \
 	    --author="xbmk <xbmk@example.com>" 1>/dev/null 2>/dev/null
-	x_ git -C "$gitdir" -c user.name="xbmk" \
-	    -c user.email="xbmk@example.com" \
+	x_ git -c user.name="xbmk" -c user.email="xbmk@example.com" \
 	    tag -a "$version" -m "$projectname $version" \
 	    1>/dev/null 2>/dev/null; :
 
