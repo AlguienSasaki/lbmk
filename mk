@@ -85,7 +85,7 @@ eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
 
 main()
 {
-	flags="f:F:b:m:u:c:x:s:l:n:d:"
+	flags="f:F:b:m:u:s:l:n:d:"
 
 	while getopts $flags option
 	do
@@ -98,28 +98,19 @@ main()
 		# ./mk -m coreboot does: make menuconfig -C src/coreboot/tree
 
 		case "$flag" in
-		-d)
-			# -d is similar to -b, except that
-			# a large number of operations will be
-			# skipped. these are "if_not_dry_build build" scenarios
-			# where only a subset of build tasks are done,
-			 # and $if_not_dry_build is prefixed to skipped commands
-
+		-b) : ;; # build a source tree
+		-d) # dry builds. -d is like -b but skips many build steps
 			if_dry_build=""
 			if_not_dry_build=":"
 			;;
-		-b) : ;;
-		-u) mode="oldconfig" ;;
-		-m) mode="menuconfig" ;;
 		-f|-F) # download source code for a project
-			# macros. colon means false.
-			if_do_make=":"
 			if_dry_build=""
-			if_not_do_make=""
 			if_not_dry_build=":"
 			[ "$flag" = "-F" ] && \
 				forcepull="y"; : # never skip git fetch/pull
 			;;
+		-u) mode="oldconfig" ;;
+		-m) mode="menuconfig" ;;
 		-s) mode="savedefconfig" ;;
 		-l) mode="olddefconfig" ;;
 		-n) mode="nconfig" ;;
@@ -130,10 +121,13 @@ main()
 			if_build=""
 			if_not_build=":"
 		fi
-
 		if [ "${mode%config}" != "$mode" ]; then
 			if_make_config=""
 			if_not_make_config=":"
+		fi
+		if [ "$flag" = "-F" ] || [ "$flag" = "-f" ]; then
+			if_do_make=":"
+			if_not_do_make=""
 		fi
 
 		if [ -z "${OPTARG+x}" ]; then
@@ -533,7 +527,7 @@ run_make_command()
 
 	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
-	) || err "run_make_file" "$@"
+	) || err "run_make_command" "$@"
 
 	$if_build \
 		x_ $mkhelper; :
