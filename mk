@@ -514,9 +514,16 @@ run_make_command()
 	$if_build \
 		x_ $premake
 
-	(
+	run_make_command_real || return 1
+
+	$if_build \
+		x_ $mkhelper; :
+}
+
+run_make_command_real()
+{
 	$if_dry_build \
-		exit 0
+		return 0
 
 	x_ check_cmake "$srcdir"
 
@@ -526,11 +533,6 @@ run_make_command()
 	check_makefile "$srcdir" || return 1
 
 	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
-
-	) || err "run_make_command" "$@"
-
-	$if_build \
-		x_ $mkhelper; :
 }
 
 check_cmake()
