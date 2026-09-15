@@ -553,33 +553,30 @@ run_make_command()
 	$if_build \
 		x_ $premake
 
-	$if_not_dry_build check_cmake "$srcdir" && \
-		$if_build \
-			$if_not_dry_build \
-				check_autoconf "$srcdir"
+	(
+	$if_dry_build \
+		exit 0
 
-	$if_not_dry_build check_makefile "$srcdir" || \
-		return 1
-
-	$if_not_dry_build \
-		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
+	x_ check_cmake "$srcdir"
 
 	$if_build \
-		x_ $mkhelper
+		check_autoconf "$srcdir"
 
-	check_makefile "$srcdir" || \
-		return 0
+	check_makefile "$srcdir" && \
+		x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 
-	$if_make_clean \
-		make -C "$srcdir" $cleanargs distclean || \
-		    x_ make -C "$srcdir" $cleanargs clean; :
+	) || err "run_make_file" "$@"
+
+	$if_build \
+		x_ $mkhelper; :
 }
 
 check_cmake()
 {
 	$if_dry_build \
 		return 0
-	[ ! -n "$cmakedir" ] && \
+
+	[ -z "$cmakedir" ] && \
 		return 0
 
 	check_makefile "$1" || \
