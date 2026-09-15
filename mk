@@ -567,14 +567,12 @@ run_make_command()
 	$if_build \
 		x_ $mkhelper
 
-	$if_not_make_clean \
-		return 0
-
 	check_makefile "$srcdir" || \
 		return 0
 
-	make -C "$srcdir" $cleanargs distclean || \
-		x_ make -C "$srcdir" $cleanargs clean; :
+	$if_make_clean \
+		make -C "$srcdir" $cleanargs distclean || \
+		    x_ make -C "$srcdir" $cleanargs clean; :
 }
 
 check_cmake()
