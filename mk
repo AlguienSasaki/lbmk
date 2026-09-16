@@ -522,8 +522,8 @@ run_make_command()
 
 run_make_command_real()
 {
-	$if_not_dry_build
-		x_ check_cmake "$srcdir"
+	[ -z "$cmakedir" ] || \
+		x_ cmake -B "$srcdir" "$srcdir/$cmakedir"
 
 	$if_build \
 		check_autoconf "$srcdir"
@@ -531,18 +531,6 @@ run_make_command_real()
 	check_makefile "$srcdir" || return 1
 
 	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
-}
-
-check_cmake()
-{
-	[ -z "$cmakedir" ] && \
-		return 0
-
-	check_makefile "$1" || \
-		cmake -B "$1" "$1/$cmakedir" || \
-			x_ check_makefile "$1"
-
-	x_ check_makefile "$1"; :
 }
 
 check_autoconf()
