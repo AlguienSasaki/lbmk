@@ -419,7 +419,16 @@ project_up_to_date()
 	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
 
-check_cross_compiler()
+prep_multi_tree_build()
+{
+	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
+
+	$if_not_dry_build elfcheck || return 1 # skip if a build exists
+	$if_not_dry_build eval "$(printf '%s\n' "$xarch" | awk \
+	    '{ for (i=1; i<=NF; i++) $i = "check_xgcc \""$i"\";"; print }')"
+}
+
+check_xgcc()
 {
 	cbdir="src/coreboot/$tree"
 
@@ -457,19 +466,6 @@ check_cross_compiler()
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
 }
 
-prep_multi_tree_build()
-{
-	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
-
-	$if_not_dry_build elfcheck || \
-		return 1 # skip if a build exists
-
-	for _xarch in $xarch; do
-		[ -n "$_xarch" ] && $if_not_dry_build \
-			check_cross_compiler "$_xarch"; :
-	done; :
-}
-
 elfcheck()
 {
 	# TODO: *STILL* very hacky check. do it properly (based on build.list)
@@ -479,25 +475,21 @@ elfcheck()
 
 handle_makefile()
 {
-	if $if_not_dry_build check_makefile "$srcdir"; then
+	check_makefile "$srcdir" && \
 		$if_not_dry_build \
 			x_ make -C "$srcdir" clean $cleanargs
-	fi
 
 	[ -f "$defconfig" ] && \
 		x_ cp "$defconfig" "$srcdir/.config"
 
-	run_make_command || \
-	    err "no makefile!" "handle_makefile" "$@"
+	run_make_command || err "no makefile!" "handle_makefile" "$@"
 
 	_copy=".config"
-
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
 
 	$if_make_config \
-		$if_not_dry_build \
-			x_ cp "$srcdir/$_copy" "$defconfig"; :
+		x_ cp "$srcdir/$_copy" "$defconfig"; :
 }
 
 run_make_command()
