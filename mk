@@ -196,7 +196,7 @@ single_tree_build()
 multi_tree_build()
 {
 	[ ! -d "$configdir" ] && \
-		err "directory '$configdir' doesn't exist" "multi_tree_build" "$@"
+		err "dir '$configdir' doesn't exist" multi_tree_build "$@"
 	[ $# -lt 1 ] && \
 		fx_ multi_tree_build find "$configdir" \
 		    -mindepth 1 -maxdepth 1 -type d
@@ -464,10 +464,6 @@ check_cross_compiler()
 
 check_defconfig()
 {
-	[ ! -f "$defconfig" ] && \
-		$if_not_dry_build \
-			err "$project/$target: no config" check_defconfig "$@"
-
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
 	# skip build if a previous one exists:
@@ -512,10 +508,8 @@ run_make_command()
 {
 	$if_build \
 		x_ $premake
-
 	$if_not_dry_build \
 		run_make_command_real || return 1
-
 	$if_build \
 		x_ $mkhelper; :
 }
@@ -524,12 +518,10 @@ run_make_command_real()
 {
 	[ -z "$cmakedir" ] || \
 		x_ cmake -B "$srcdir" "$srcdir/$cmakedir"
-
 	$if_build \
 		check_autoconf "$srcdir"
 
 	check_makefile "$srcdir" || return 1
-
 	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 }
 
