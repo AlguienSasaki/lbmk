@@ -522,7 +522,8 @@ run_make_command()
 
 run_make_command_real()
 {
-	x_ check_cmake "$srcdir"
+	$if_not_dry_build
+		x_ check_cmake "$srcdir"
 
 	$if_build \
 		check_autoconf "$srcdir"
@@ -534,9 +535,6 @@ run_make_command_real()
 
 check_cmake()
 {
-	$if_dry_build \
-		return 0
-
 	[ -z "$cmakedir" ] && \
 		return 0
 
