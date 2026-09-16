@@ -80,7 +80,7 @@ corebootpremake()
 cook_coreboot_config()
 {
 	if [ -z "$mode" ] && [ -f "$srcdir/.config" ]; then
-		printf "CONFIG_CCACHE=y\n" >> "$srcdir/.config" || \
+		printf "CONFIG_CCACHE=n\n" >> "$srcdir/.config" || \
 		    err "can't cook '$srcdir'" "cook_coreboot_config" "$@"
 	fi
 }
