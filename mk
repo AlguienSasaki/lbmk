@@ -216,7 +216,6 @@ multi_tree_build()
 		target="${x##*/}"
 
 		x_ handle_defconfig
-
 		$if_build \
 			x_ $postmake; :
 	done; :
@@ -337,8 +336,10 @@ build_dependencies()
 			$if_not_dry_build \
 				err "$project/$tree: !bd '$bd'" \
 				    "build_dependencies" "$@"
+
 		[ "${bd##*/}" = "$bd" ] && \
 			bd_tree=""
+
 		[ -n "$bd_project" ] && \
 			$if_not_dry_build \
 				x_ "$mk" -b $bd_project $bd_tree; :
@@ -525,7 +526,7 @@ check_autoconf()
 	[ -f "configure" ] && \
 		x_ ./configure $configureargs; :
 
-	) || err "can't bootstrap project: $1" "check_autoconf" "$@"; :
+	) || err "can't bootstrap project: $1" check_autoconf "$@"; :
 }
 
 check_makefile()

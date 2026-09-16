@@ -44,13 +44,9 @@ version()
 
 xbmk_sanitize_version()
 {
-	[ -z "$version" ] && \
-		return 0
-
-	version="`printf '%s\n' "$version" | sed \
-	    's/[[:space:]]//g; s/\.\.//g; s/\.\///g; s/\//-/g; s/^-//'`"
-
-	[ -z "$version" ] && \
+	[ -n "$version" ] && version="`printf '%s\n' "$version" | sed \
+		's/[[:space:]]//g; s/\.\.//g; s/\.\///g; s/\//-/g; s/^-//'`" \
+	&& [ -z "$version" ] && \
 		err "'version' empty after sanitization" \
 		    "xbmk_sanitize_version" "$@"; :
 }
