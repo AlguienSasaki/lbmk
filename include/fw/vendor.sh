@@ -222,7 +222,7 @@ extract_intel_me()
 			    "extract_intel_me" "$@"
 		fi
 
-		x_ ./mk -f deguard
+		x_ "$mk" -f deguard
 	fi
 
 	set +u +e
@@ -455,20 +455,20 @@ bootstrap()
 	[ "$XBMKmecleaner" = "y" ] && \
 		mecleaner="$xbmkpwd/src/me_cleaner/me_cleaner.py"
 
-	x_ ./mk -f coreboot "${cbdir##*/}"
-	x_ ./mk -f me_cleaner
+	x_ "$mk" -f coreboot "${cbdir##*/}"
+	x_ "$mk" -f me_cleaner
 
-	x_ ./mk -b bios_extract
-	x_ ./mk -b biosutilities
-	x_ ./mk -b uefitool
-	x_ ./mk -b libarchive # for bsdtar and bsdunzip
+	x_ "$mk" -b bios_extract
+	x_ "$mk" -b biosutilities
+	x_ "$mk" -b uefitool
+	x_ "$mk" -b libarchive # for bsdtar and bsdunzip
 
 	[ -d "${kbc1126_ec_dump%/*}" ] && \
 		x_ make -C "$cbdir/util/kbc1126"
 
 	if [ -n "$MRC_refcode_cbtree" ]; then
 		cbfstoolref="elf/coreboot/$MRC_refcode_cbtree/cbfstool"
-		x_ ./mk -d coreboot "$MRC_refcode_cbtree"; :
+		x_ "$mk" -d coreboot "$MRC_refcode_cbtree"; :
 	fi
 }
 

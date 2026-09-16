@@ -74,7 +74,7 @@ corebootpremake()
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
-		x_ ./mk download "$target"; :
+		x_ "$mk" download "$target"; :
 }
 
 cook_coreboot_config()
@@ -455,5 +455,5 @@ mkcoreboottar()
 	fi
 
 	mkrom_tarball "bin/$target"
-	x_ ./mk inject "bin/${relname}_${target}.tar.xz" nuke
+	x_ "$mk" inject "bin/${relname}_${target}.tar.xz" nuke
 }

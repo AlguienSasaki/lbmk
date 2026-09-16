@@ -34,11 +34,12 @@ err()
 }
 
 (
-xbarg0="$0"
-[ "${xbarg0##*/}" = "$xbarg0" ] && \
-    xbarg0="`command -v "$xbarg0"`"
+mk="$0"
+[ "${mk##*/}" = "$mk" ] && \
+    mk="`command -v "$mk"`"
 
-xbmkpwd="$(x_ dirname "$(x_ findpath "$xbarg0")")" || exit 1
+mk="$(x_ findpath "$mk")" || exit 1
+xbmkpwd="$(x_ dirname "$mk")" || exit 1
 
 x_ cd "$xbmkpwd"
 
@@ -61,7 +62,7 @@ shift 1 2>/dev/null || :
 eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
     i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
-# flag e.g. ./mk -b <-- mkflag would be "b"
+# flag e.g. "$mk" -b <-- mkflag would be "b"
 flag=""
 
 # macros, overridden depending on the flag
@@ -95,7 +96,7 @@ main()
 		flag="$1"
 
 		# the "mode" variable is affixed to a make command, example:
-		# ./mk -m coreboot does: make menuconfig -C src/coreboot/tree
+		# "$mk" -m coreboot does: make menuconfig -C src/coreboot/tree
 
 		case "$flag" in
 		-b) : ;; # build a source tree
@@ -142,7 +143,7 @@ main()
 	if [ -z "$flag" ]; then
 		err "missing flag ($flags)" "trees" "$@"
 	elif [ -z "$project" ]; then
-		fx_ "x_ ./mk $flag" x_ ls -1 config/git
+		fx_ "x_ "$mk" $flag" x_ ls -1 config/git
 		return 0
 	elif [ ! -f "config/git/$project/pkg.cfg" ]; then
 		err "config/git/$project/pkg.cfg missing" "trees" "$@"
@@ -324,7 +325,7 @@ configure_project()
 	$if_not_do_make \
 		return 1
 
-	x_ ./mk -f "$project" "$target"
+	x_ "$mk" -f "$project" "$target"
 }
 
 # projects can specify which other projects
@@ -345,7 +346,7 @@ build_dependencies()
 			bd_tree=""
 		[ -n "$bd_project" ] && \
 			$if_not_dry_build \
-				x_ ./mk -b $bd_project $bd_tree; :
+				x_ "$mk" -b $bd_project $bd_tree; :
 	done; :
 }
 
@@ -441,7 +442,7 @@ check_cross_compiler()
 	xgccfile="$cbelfdir/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
-	x_ ./mk -f coreboot "${cbdir#src/coreboot/}"
+	x_ "$mk" -f coreboot "${cbdir#src/coreboot/}"
 	x_ mkdir -p "$cbelfdir"
 
 	# tell build systems what cross-compiler to use
@@ -512,7 +513,8 @@ run_make_command()
 	$if_build \
 		x_ $premake
 
-	run_make_command_real || return 1
+	$if_not_dry_build \
+		run_make_command_real || return 1
 
 	$if_build \
 		x_ $mkhelper; :
@@ -520,9 +522,6 @@ run_make_command()
 
 run_make_command_real()
 {
-	$if_dry_build \
-		return 0
-
 	x_ check_cmake "$srcdir"
 
 	$if_build \

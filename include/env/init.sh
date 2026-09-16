@@ -348,7 +348,7 @@ xbmk_set_mirror()
 
 git_init()
 {
-	# the git identity check is only needed for: ./mk -b coreboot [args]
+	# the git identity check is only needed for: "$mk" -b coreboot [args]
 	[ "${2-}" = "-b" ] && [ "${3-}" = "coreboot" ] && \
 	    for gitarg in "user.name" "user.email"; do
 		git config --includes $gitarg 1>/dev/null 2>/dev/null || \
@@ -381,7 +381,7 @@ xchild()
 {
 	xbmk_rval=0
 
-	( x_ ./mk "$@" ) || xbmk_rval=1
+	( x_ "$mk" "$@" ) || xbmk_rval=1
 
 	( x_ rm -Rf "$xbtmp" ) || xbmk_rval=1
 	( x_ rm -f "$xbmklock" ) || xbmk_rval=1

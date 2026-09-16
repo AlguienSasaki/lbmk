@@ -106,7 +106,7 @@ check_target()
 	[ -z "$tree" ] && \
 		err "tree unset in '$boarddir/target.cfg'" "check_target" "$@"
 
-	x_ ./mk -d coreboot "$tree"
+	x_ "$mk" -d coreboot "$tree"
 
 	ifdtool="elf/coreboot/$tree/ifdtool"
 
@@ -117,7 +117,7 @@ check_target()
 patch_release()
 {
 	[ "$nuke" != "nuke" ] && \
-		x_ ./mk download "$board"
+		x_ "$mk" download "$board"
 
 	has_hashes="n"
 	tmpromdir="$tmpromdel/bin/$board"

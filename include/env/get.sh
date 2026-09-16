@@ -32,11 +32,11 @@ single_tree_fetch()
 	fi
 
 	[ -n "$xgcctree" ] && \
-		x_ ./mk -f coreboot "$xgcctree"
+		x_ "$mk" -f coreboot "$xgcctree"
 
 	[ -n "$depend" ] && \
 		for d in $depend ; do
-			x_ ./mk -f $d
+			x_ "$mk" -f $d
 		done
 
 	clone_project
