@@ -78,7 +78,7 @@ if_not_dry_build=""
 
 if_single_tree=":"
 
-eval "`newvar autoconfargs autogenargs badhash badtghash bootstrapargs \
+eval "`newvar configureargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
     forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
     premake project release rev srcdir target target_dir tree xarch xgcctree \
@@ -262,7 +262,7 @@ configure_project()
 {
 	_tcfg="$1/target.cfg"
 
-	eval "`newvar autoconfargs badhash badtghash bootstrapargs \
+	eval "`newvar configureargs badhash badtghash bootstrapargs \
 	    build_depend buildtype cleanargs makeargs mkhelper postmake \
 	    premake release xarch xgcctree xlang`"
 
@@ -523,7 +523,7 @@ check_autoconf()
 	[ -f "autogen.sh" ] && \
 		x_ ./autogen.sh $autogenargs
 	[ -f "configure" ] && \
-		x_ ./configure $autoconfargs; :
+		x_ ./configure $configureargs; :
 
 	) || err "can't bootstrap project: $1" "check_autoconf" "$@"; :
 }
