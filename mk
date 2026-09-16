@@ -247,13 +247,8 @@ handle_defconfig()
 			eval defconfig="$y"
 
 		$if_build \
-			check_defconfig || \
-			    continue; :
-
-		for _xarch in $xarch; do
-			[ -n "$_xarch" ] && $if_build $if_not_dry_build \
-				check_cross_compiler "$_xarch"; :
-		done; :
+			prep_multi_tree_build || \
+			    continue
 
 		handle_makefile
 
@@ -462,16 +457,17 @@ check_cross_compiler()
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
 }
 
-check_defconfig()
+prep_multi_tree_build()
 {
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
-	# skip build if a previous one exists:
+	$if_not_dry_build elfcheck || \
+		return 1 # skip if a build exists
 
-	$if_dry_build \
-		return 0
-	elfcheck || \
-		return 1; :
+	for _xarch in $xarch; do
+		[ -n "$_xarch" ] && $if_not_dry_build \
+			check_cross_compiler "$_xarch"; :
+	done; :
 }
 
 elfcheck()
