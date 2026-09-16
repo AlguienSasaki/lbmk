@@ -35,8 +35,8 @@ err()
 
 (
 mk="$0"
-[ "${mk##*/}" = "$mk" ] && \
-    mk="`command -v "$mk"`"
+[ "${mk##*/}" != "$mk" ] || \
+    mk="$(x_ command -v "$mk")" || exit 1
 
 mk="$(x_ findpath "$mk")" || exit 1
 xbmkpwd="$(x_ dirname "$mk")" || exit 1
