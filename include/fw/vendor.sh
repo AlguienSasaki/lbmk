@@ -122,42 +122,31 @@ fetch()
 	remkdir "${_pre_dest%/*}" "$appdir"
 
 	# HACK: if grabbing fsp from coreboot, fix the path for lbmk
-	if [ "$dl_type" = "fsp" ]; then
-		dl="${dl##*../}"
-		_cdp="$dl"
+	[ "$dl_type" = "fsp" ] && for bkup in "" "_bkup"; do
+		eval "dl$bkup=\"\${dl$bkup##*../}\""
+		eval "_cdp=\"\$dl$bkup\""
 
 		[ ! -f "$_cdp" ] && \
 			_cdp="$cbdir/$_cdp"
 		[ -f "$_cdp" ] && \
-			dl="$_cdp"
-
-		dl_bkup="${dl_bkup##*../}"
-		_cdp="$dl_bkup"
-
-		[ ! -f "$_cdp" ] && \
-			_cdp="$cbdir/$_cdp"
-		[ -f "$_cdp" ] && \
-			dl_bkup="$_cdp"; :
-	fi
+			eval "dl$bkup=\"\$_cdp\""; :
+	done; :
 
 	# download the file (from the internet) to extract from:
-
 	xbget "$dlop" "$dl" "$dl_bkup" "$_dl" "$dlsum"
 	x_ rm -Rf "${_dl}_extracted"
 
 	# skip extraction if a cached extracted file exists:
-
 	( xbget copy "$_dl_bin" "$_dl_bin" "$_dest" "$binsum" 2>/dev/null ) || :
 	[ -f "$_dest" ] && \
 		return 0
 
 	x_ mkdir -p "${_dest%/*}"
 
-	if [ "$dl_type" != "fsp" ]; then
+	[ "$dl_type" = "fsp" ] || \
 		extract_archive "$_dl" "$appdir" || \
 		    [ "$dl_type" = "e6400vga" ] || \
 		    err "$_dest $dl_type: !extract" "fetch" "$@"
-	fi
 
 	x_ extract_$dl_type "$_dl" "$appdir"
 	set -u -e
@@ -172,13 +161,9 @@ fetch()
 			return 0; :
 
 	[ -z "$binsum" ] && \
-		printf "'%s': checksum undefined\n" "$_dest" 1>&2
+		printf "WARNING: %s: checksum undefined\n" "$_dest" 1>&2
 
-	if [ -L "$_dest" ]; then
-		printf "WARNING: '%s' is a link!\n" "$_dest" 1>&2
-	else
-		x_ rm -f "$_dest"
-	fi
+	x_ rm -f "$_dest"
 
 	err "Can't safely extract '$_dest', for board '$board'" "fetch" "$@"
 }
