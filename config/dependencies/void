@@ -8,5 +8,5 @@ freetype freetype-devel fuse gawk gcc-ada gdb gettext gettext-devel git \
 gnutls-devel help2man innoextract libftdi1 libpciaccess libusb libuuid-devel \
 nasm ncurses ncurses-devel openssl openssl-devel 7zip parted pciutils perl \
 perl-LWP python python3 python3-devel python3-setuptools rsync sharutils \
-subversion swig texinfo unar unzip wget xz zlib ccache \
+subversion swig texinfo unar unzip wget xz zlib \
 "
