@@ -15,11 +15,9 @@ findpath()
 	    x_ realpath \"%s\" 2>/dev/null' "$@"
 }
 
-# WARNING: relies on -o option in grep.
-# gnu, busybox, openbsd, netbsd and freebsd all have it
+printf "%s\n" "%s" | grep -o "%s" 1>/dev/null || exit 1 # safety (-o check)
 forx()
 {
-
 	awkarg="{printf \"${1-};\""
 	shift 1 2>/dev/null || :
 
