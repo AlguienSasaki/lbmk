@@ -8,7 +8,7 @@
 cbfstool="elf/coreboot/default/cbfstool"
 rmodtool="elf/coreboot/default/rmodtool"
 
-build_sbase="[ ! -f \"\$sha512sum\" ] && x_ make -C util/sbase" # macro!
+build_sbase="[ ! -f \"\$sha512sum\" ] && x_ make -C util/sbase"
 
 newvar()
 {

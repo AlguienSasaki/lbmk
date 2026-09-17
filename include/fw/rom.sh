@@ -25,9 +25,6 @@ buildser()
 
 copyps1bios()
 {
-	$if_dry_build \
-		return 0
-
 	remkdir "bin/playstation"
 	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
 
