@@ -27,7 +27,10 @@ forx()
 		scount="$(expr $scount - 1 || :)"
 	done
 
-	eval "$(printf '%s\n' "$@" | awk "$awkarg}")"
+	while [ $# -gt 0 ]; do
+		eval "$(printf '%s\n' "$1" | awk "$awkarg}")"
+		shift 1
+	done
 }
 
 x_()
