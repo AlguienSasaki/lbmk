@@ -153,8 +153,7 @@ fetch()
 	( fx_ "mkdst $binsum" x_ find "${_pre_dest%/*}" -type f ) || :
 
 	bad_checksum "$binsum" "$_dest" || \
-		[ ! -f "$_dest" ] || \
-			return 0; :
+		[ ! -f "$_dest" ] || return 0; :
 
 	x_ rm -f "$_dest"
 
@@ -380,17 +379,15 @@ setvfile()
 		eval "$vcmd && do_getvfile=\"y\""
 
 		[ "$do_getvfile" = "y" ] && \
-			if getvfile "$@"; then
-				return 0
-			fi; :
+			getvfile "$@" && \
+				return 0; :
 	done && return 1; :
 }
 
 getvfile()
 {
-	if e "config/vendor/$vcfg/pkg.cfg" f missing; then
+	e "config/vendor/$vcfg/pkg.cfg" f missing && \
 		return 1
-	fi
 
 	. "config/vendor/$vcfg/pkg.cfg" || \
 	    err "Can't read 'config/vendor/$vcfg/pkg.cfg'" "getvfile" "$@"
@@ -442,9 +439,8 @@ prep()
 	[ "$nuke" = "nuke" ] && \
 		_xromnew="${_xrom%/*}/$vfix${_xrom##*/}"
 
-	if e "$_xrom" f missing; then
+	e "$_xrom" f missing && \
 		return 0
-	fi
 
 	[ -z "${_xromname#"$vfix"}" ] && \
 		err "$_xromname / $vfix: name match" "prep" "$@"

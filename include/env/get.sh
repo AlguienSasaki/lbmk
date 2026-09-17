@@ -11,8 +11,7 @@ tmpgitcache="$xbtmp/tmpgit"
 
 multi_tree_fetch()
 {
-	[ -d "src/$project/$tree" ] && \
-		return 0
+	[ -d "src/$project/$tree" ] && return 0
 
 	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
 	    "src/$project/$tree" "submod"
@@ -46,8 +45,7 @@ single_tree_fetch()
 clone_project()
 {
 	loc="src/$project"
-	[ -d "$loc" ] && \
-		return 0
+	[ -d "$loc" ] && return 0
 
 	remkdir "${tmpgit%/*}"
 	git_prep "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"
@@ -79,9 +77,7 @@ fetch_submodule()
 	mcfgdir="$mdir/${1##*/}"
 	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
 
-	if e "$mcfgdir/module.cfg" f missing; then
-		return 0
-	fi
+	e "$mcfgdir/module.cfg" f missing && return 0
 	. "$mcfgdir/module.cfg" || \
 	    err "Can't read '$mcfgdir/module.cfg'" "fetch_submodules" "$@"
 
@@ -117,8 +113,7 @@ xbget()
 			err "empty URL given in" "xbget" "$@"
 		try_fetch_$1 "$url" "$@" || \
 			continue
-		[ -e "$4" ] && \
-			return 0; : # successful download/copy
+		[ -e "$4" ] && return 0; : # successful download/copy
 	done
 
 	err "failed to download file/repository" "xbget" "$@"; :

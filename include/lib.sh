@@ -144,8 +144,7 @@ dx_()
 {
 	xchk dx_ "$@"
 
-	[ ! -f "$2" ] && \
-		return 0
+	[ ! -f "$2" ] && return 0
 
 	while read -r fx; do
 		$1 "$fx" || return 1; :

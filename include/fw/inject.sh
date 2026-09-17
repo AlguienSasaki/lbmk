@@ -44,8 +44,7 @@ inject()
 
 	check_release
 	if check_target; then
-		patch_release || \
-			return 0; :
+		patch_release || return 0
 	fi
 	[ "$xchanged" = "y" ] && \
 		remktar
@@ -84,8 +83,7 @@ check_release()
 
 check_target()
 {
-	[ "$board" != "${board#serprog_}" ] && \
-		return 1
+	[ "$board" = "${board#serprog_}" ] || return 1
 
 	boarddir="$cbcfgsdir/$board"
 

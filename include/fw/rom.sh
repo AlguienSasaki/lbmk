@@ -72,9 +72,8 @@ check_coreboot_util()
 {
 	[ "$badhash" = "y" ] && \
 		x_ rm -f "elf/coreboot/$tree/$1"
-	if e "elf/coreboot/$tree/$1" f; then
+	e "elf/coreboot/$tree/$1" f && \
 		return 0
-	fi
 
 	utilelfdir="elf/coreboot/$tree"
 	utilsrcdir="src/coreboot/$tree/util/$1"
@@ -124,8 +123,7 @@ mkcorebootbin()
 
 mkcorebootbin_real()
 {
-	[ "$target" = "$tree" ] && \
-		return 0
+	[ "$target" = "$tree" ] && return 0
 
 	tmprom="$xbtmp/coreboot.rom"
 
