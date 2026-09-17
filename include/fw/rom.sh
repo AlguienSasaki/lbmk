@@ -65,9 +65,6 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	$if_not_dry_build \
-		cook_coreboot_config
-
 	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
@@ -75,14 +72,6 @@ corebootpremake()
 
 	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
-}
-
-cook_coreboot_config()
-{
-	if [ -z "$mode" ] && [ -f "$srcdir/.config" ]; then
-		printf "CONFIG_CCACHE=n\n" >> "$srcdir/.config" || \
-		    err "can't cook '$srcdir'" "cook_coreboot_config" "$@"
-	fi
 }
 
 check_coreboot_util()
