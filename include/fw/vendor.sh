@@ -51,14 +51,12 @@ eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
 
 download()
 {
-	[ $# -lt 1 ] && \
-		err "No argument given" "download" "$@"
+	[ $# -lt 1 ] && err "No argument given" "download" "$@"
 
 	export PATH="$PATH:/sbin"
 	board="$1"
 
-	check_target || return 0
-	readkconfig download
+	check_target && readkconfig download; :
 }
 
 getfiles()
@@ -108,14 +106,12 @@ fetch()
 	dlop="$6"
 	binsum="$7"
 
-	[ -z "$binsum" ] && \
-		err "binsum is empty (no checksum)" "fetch" "$@"
+	[ -z "$binsum" ] && err "binsum is empty (no checksum)" "fetch" "$@"
 
 	_dl="$XBMK_CACHE/file/$dlsum" # internet file to extract from e.g. .exe
 	_dl_bin="$XBMK_CACHE/file/$binsum" # extracted file e.g. me.bin
 
-	[ "$5" = "/dev/null" ] && \
-		return 0
+	[ "$5" = "/dev/null" ] && return 0 # fetch/extract disabled
 
 	# an extracted vendor file will be placed in pre_dest first, for
 	# verifying its checksum. if it matches, it is later moved to _dest
@@ -160,32 +156,24 @@ fetch()
 		[ ! -f "$_dest" ] || \
 			return 0; :
 
-	[ -z "$binsum" ] && \
-		printf "WARNING: %s: checksum undefined\n" "$_dest" 1>&2
-
 	x_ rm -f "$_dest"
 
+	[ -z "$binsum" ] && printf "WARNING: %s: no checksum\n" "$_dest" 1>&2
 	err "Can't safely extract '$_dest', for board '$board'" "fetch" "$@"
 }
 
 mkdst()
 {
-	if bad_checksum "$1" "$2" 2>/dev/null; then
-		x_ rm -f "$2"
-	else
+	if ! bad_checksum "$1" "$2" 2>/dev/null; then
 		x_ mv "$2" "$_dl_bin"
 		x_ cp "$_dl_bin" "$_dest"
-
 		exit 1
 	fi
+	x_ rm -f "$2"
 }
 
 extract_intel_me()
 {
-	if e "$mecleaner" f missing; then
-		err "$cbdir: me_cleaner missing" "extract_intel_me" "$@"
-	fi
-
 	mfs=""
 	_7ztest="$xbtmp/metmp/a"
 	_metmp="$xbtmp/me.bin"
@@ -228,10 +216,8 @@ extract_intel_me()
 # must be called inside a subshell.
 find_me()
 {
-	[ -f "$_metmp" ] && \
-		exit 1 # me.bin found
-	[ -L "$1" ] && \
-		return 0 # symlinks disabled for security reasons
+	[ -f "$_metmp" ] && exit 1 # me.bin found
+	[ -L "$1" ] && return 0 # symlinks disabled for security reasons
 
 	_7ztest="${_7ztest}a"
 
@@ -268,8 +254,7 @@ find_me()
 		return 0 # can't extract, so try the next file
 	fi
 
-	[ -f "$_metmp" ] && \
-		exit 1 # me.bin found
+	[ -f "$_metmp" ] && exit 1 # me.bin found
 
 	( fx_ find_me x_ find "$_7ztest" -type f ) || exit 1; : # 1==me found
 }
@@ -318,8 +303,7 @@ extract_kbc1126ec_dump()
 	    unar -D 68*.CAB Rom.bin || \
 		err "!kbc1126 unar" "extract_kbc1126ec" "$@"
 
-	[ ! -f "ec.bin" ] && \
-		x_ mv Rom.bin ec.bin
+	[ -f "ec.bin" ] || x_ mv Rom.bin ec.bin
 
 	x_ e ec.bin f
 	x_ "$kbc1126_ec_dump" ec.bin
@@ -365,8 +349,7 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
-	[ -z "$TBFW_size" ] && \
-		err "$board: TBFW_size unset" "extract_tbfw" "$@"
+	[ -z "$TBFW_size" ] && err "$board: TBFW_size unset" extract_tbfw "$@"
 
 	fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
 }
@@ -415,12 +398,8 @@ getvfile()
 	bootstrap
 
 	if [ $# -gt 0 ]; then
-		# download vendor files
-
-		getfiles
-	else
-		# inject vendor files
-
+		getfiles # ./mk download
+	else # ./mk inject
 		fx_ prep x_ find "$tmpromdir" -mindepth 1 -maxdepth 1 \
 		    -type f -name "*.rom"
 		( check_vendor_hashes ) || \
@@ -484,8 +463,7 @@ prep()
 		( mksha512 "$_xrom" "vendorhashes" ) || err; :
 	fi
 
-	add_vfiles "$_xrom" || \
-		return 1 # no need to insert files
+	add_vfiles "$_xrom" || return 1 # no need to insert files
 
 	if [ "$nuke" = "nuke" ]; then
 		pad_one_byte "$_xrom"
@@ -548,8 +526,7 @@ add_vfiles()
 
 vfile()
 {
-	[ "$2" = "/dev/null" ] && \
-		return 0
+	[ "$2" = "/dev/null" ] && return 0
 
 	cbfsname="$1"
 	_dest="${2##*../}"

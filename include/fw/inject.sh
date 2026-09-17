@@ -18,8 +18,7 @@ inject()
 {
 	remkdir "$tmpromdel"
 
-	[ $# -lt 1 ] && \
-		err "No options specified" "inject" "$@"
+	[ $# -lt 1 ] && err "No options specified" "inject" "$@"
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
@@ -58,9 +57,8 @@ check_release()
 {
 	[ -L "$archive" ] && \
 		err "'$archive' is a symlink" "check_release" "$@"
-	if e "$archive" f missing; then
+	e "$archive" f missing && \
 		err "'$archive' missing" "check_release" "$@"
-	fi
 
 	archivename="`basename "$archive" || err "Can't get '$archive' name"`" \
 	    || err "can't get '$archive' name" "check_release" "$@"
@@ -100,7 +98,6 @@ check_target()
 	x_ "$mk" -d coreboot "$tree"
 
 	ifdtool="elf/coreboot/$tree/ifdtool"
-
 	[ -n "$IFD_platform" ] && \
 		ifdprefix="-p $IFD_platform"; :
 }
@@ -125,8 +122,7 @@ patch_release()
 		fi
 	done
 
-	readkconfig || \
-		return 1
+	readkconfig || return 1
 
 	[ -n "$new_mac" ] && [ -n "$CONFIG_GBE_BIN_PATH" ] && \
 		modify_mac; :
@@ -137,15 +133,13 @@ readkconfig()
 	x_ rm -f "$xbtmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 
-	if e "$xbtmp/cbcfg" f missing; then
+	e "$xbtmp/cbcfg" f missing && \
 		return 1
-	fi
 
 	. "$xbtmp/cbcfg" || \
 	    err "Can't read '$xbtmp/cbcfg'" "readkconfig" "$@"
 
-	setvfile "$@" || \
-		return 1; :
+	setvfile "$@" || return 1; :
 }
 
 scankconfig()
@@ -173,10 +167,9 @@ modify_mac()
 
 newmac()
 {
-	if e "$1" f; then
-		xchanged="y"
-		x_ "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"
-	fi
+	e "$1" f || return 0
+	xchanged="y"
+	x_ "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"
 }
 
 remktar()
@@ -190,6 +183,5 @@ remktar()
 	) || err "Cannot re-generate '$archive'" "remktar" "$@"
 
 	mv "${tmpromdir%"/bin/$board"}/bin/${relname}_${board}.tar.xz" \
-	    "$archive" || \
-	    err "'$archive' -> Can't overwrite" "remktar" "$@"; :
+	    "$archive" || err "'$archive' -> Can't overwrite" "remktar" "$@"; :
 }

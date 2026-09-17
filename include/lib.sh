@@ -80,8 +80,6 @@ e()
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
-# return 0 if project is single-tree, otherwise 1
-# e.g. coreboot is multi-tree, so 1
 singletree()
 {
 	( fx_ "eval exit 1 && err" find "config/$1/"*/ -type f \
@@ -116,8 +114,7 @@ unpad_one_byte()
 
 build_sbase()
 {
-	[ ! -f "$sha512sum" ] && \
-		x_ make -C "$xbmkpwd/util/sbase"; :
+	[ ! -f "$sha512sum" ] && x_ make -C "$xbmkpwd/util/sbase"; :
 }
 
 remkdir()

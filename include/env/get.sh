@@ -39,14 +39,12 @@ single_tree_fetch()
 			x_ "$mk" -f $d
 		done
 
-	clone_project
+	$if_single_tree \
+		clone_project; :
 }
 
 clone_project()
 {
-	singletree "$project" || \
-		return 0
-
 	loc="src/$project"
 	[ -d "$loc" ] && \
 		return 0
@@ -174,10 +172,8 @@ try_fetch_curl()
 		try_$2 "$cached" "$@" || \
 			return 1
 
-	[ -f "$5" ] && \
-		if bad_checksum "$6" "$5" 2>/dev/null; then
-			x_ cp "$cached" "$5"
-		fi
+	[ -f "$5" ] && bad_checksum "$6" "$5" 2>/dev/null && \
+		x_ cp "$cached" "$5"
 
 	if [ ! -f "$cached" ]; then
 		return 1
@@ -202,8 +198,7 @@ try_curl()
 	ua="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
 
 	( x_ curl --location --retry 3 -A "$ua" "$2" -o "$1" ) \
-	    || ( x_ wget --tries 3 -U "$ua" "$2" -O "$1" ) \
-	    || return 1; :
+	    || ( x_ wget --tries 3 -U "$ua" "$2" -O "$1" ) || return 1; :
 }
 
 try_copy()
@@ -230,15 +225,9 @@ try_git()
 		x_ mv "$tmpgitcache" "$gitdest"
 	fi
 
-	if git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null && \
-	    [ "$forcepull" != "y" ]; then
-		# don't try to pull the latest changes if the given target
-		# revision already exists locally. this saves a lot of time
-		# during release builds, and reduces the chance that we will
-		# interact with grub.git or gnulib.git overall during runtime
-
-		return 0
-	fi
+	git -C "$gitdest" show "$7" 1>/dev/null 2>/dev/null && \
+	    [ "$forcepull" != "y" ] && \
+		return 0 # don't pull changes if target rev exists locally
 
 	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
 		( x_ git -C "$gitdest" fetch ) || :; :
@@ -250,9 +239,8 @@ try_git()
 
 bad_checksum()
 {
-	if e "$2" f missing; then
+	e "$2" f missing && \
 		return 0
-	fi
 
 	build_sbase
 	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \

@@ -165,13 +165,11 @@ xbmk_parent_set_env()
 
 	x_ chmod -w "$xbmklock"
 
-	xbmk_parent_set_export
-	xbmk_set_version
+	forx 'xbmk_%s' parent_set_export set_version
 
 	remkdir "$xbtmp" "$xbtmp/xbmkpath"
 
-	xbmk_set_pyver
-	xbmk_set_mirror
+	forx 'xbmk_set_%s' pyver mirror
 }
 
 xbmk_parent_check_tmp()

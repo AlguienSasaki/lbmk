@@ -76,25 +76,17 @@ shift 1 2>/dev/null || :
 eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
     i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
-# flag e.g. "$mk" -b <-- mkflag would be "b"
-flag=""
-
 # macros, overridden depending on the flag
-# : means false
-if_do_make=""
-if_not_do_make=":"
+if_not_do_make=":" # : means false
 if_make_config=":"
-if_not_make_config=""
 if_build=":" # can be false even if make is true
-if_not_build=""
 if_dry_build=":"
-if_not_dry_build=""
-
 if_single_tree=":"
+eval "`newvar if_do_make if_not_make_config if_not_build if_not_dry_build`"
 
 eval "`newvar configureargs autogenargs badhash badtghash bootstrapargs \
     build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
-    forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
+    flag forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
     premake project release rev srcdir target target_dir tree xarch xgcctree \
     xlang`"
 
@@ -119,9 +111,8 @@ main()
 			if_not_dry_build=":"
 			;;
 		-f|-F) # download source code for a project
+			eval "`newvar if_not_do_make if_dry_build`"
 			if_do_make=":"
-			if_not_do_make=""
-			if_dry_build=""
 			if_not_dry_build=":"
 			[ "$flag" = "-F" ] && \
 				forcepull="y"; : # never skip git fetch/pull
@@ -180,10 +171,10 @@ main()
 	fi
 
 	if singletree "$project"; then
-		cmd="single_tree_build"
+		cmd="mk_single_tree"
 		if_single_tree=""
 	else
-		cmd="multi_tree_build"
+		cmd="mk_multi_tree"
 	fi
 
 	remkdir "${tmpgit%/*}"
@@ -193,27 +184,24 @@ main()
 	$cmd "$@"
 }
 
-single_tree_build()
+mk_single_tree()
 {
 	configure_project "$configdir" || \
 		return 0
 
-	[ ! -f "$listfile" ] || \
-		$if_not_dry_build elfcheck || \
-			return 0
+	[ ! -f "$listfile" ] || $if_not_dry_build \
+		elfcheck || return 0
 
-	run_make_command && \
-	    $if_build $if_not_dry_build \
+	run_make_command && $if_build $if_not_dry_build \
 		copy_elf; :
 }
 
-multi_tree_build()
+mk_multi_tree()
 {
-	[ ! -d "$configdir" ] && \
-		err "dir '$configdir' doesn't exist" multi_tree_build "$@"
-	[ $# -lt 1 ] && \
-		fx_ multi_tree_build find "$configdir" \
+	[ ! -d "$configdir" ] && err "missing '$configdir'" mk_multi_tree "$@"
+	[ $# -lt 1 ] && fx_ mk_multi_tree find "$configdir" \
 		    -mindepth 1 -maxdepth 1 -type d
+
 	[ $# -gt 0 ] && for x in "$@"
 	do
 		unset CROSS_COMPILE
@@ -245,8 +233,7 @@ handle_defconfig()
 	configure_project "$target_dir" || \
 		return 0
 
-	[ -z "$tree" ] && \
-		err "$configdir: 'tree' not set" "handle_defconfig" "$@"
+	[ -z "$tree" ] && err "$configdir: 'tree' unset" handle_defconfig "$@"
 
 	srcdir="src/$project/$tree"
 
@@ -256,18 +243,16 @@ handle_defconfig()
 			$if_not_dry_build \
 				continue
 
-		$if_not_dry_build \
-			eval defconfig="$y"
+		$if_not_dry_build eval \
+			defconfig="$y"
 
 		$if_build \
-			prep_multi_tree_build || \
-			    continue
+			prep_mk_multi_tree || continue
 
 		handle_makefile
 
-		$if_build \
-			$if_not_dry_build \
-				copy_elf; :
+		$if_build $if_not_dry_build \
+			copy_elf; :
 	done; :
 }
 
@@ -279,8 +264,7 @@ configure_project()
 	    build_depend buildtype cleanargs makeargs mkhelper postmake \
 	    premake release xarch xgcctree xlang`"
 
-	[ ! -f "$_tcfg" ] && \
-		buildtype="auto"
+	[ ! -f "$_tcfg" ] && buildtype="auto"
 
 	# globally initialise all variables for a source tree / target:
 	if e "$datadir/mkhelper.cfg" f; then
@@ -290,16 +274,15 @@ configure_project()
 	fi
 
 	# override target/tree specific variables from per-target config:
-	while e "$_tcfg" f || [ "$cmd" != "single_tree_build" ]
+	while e "$_tcfg" f || [ "$cmd" != "mk_single_tree" ]
 	do
 		printf "Loading %s config: %s\n" "$project" "$_tcfg"
 		eval "`newvar rev tree`"
 
-		. "$_tcfg" || \
-		    err "Can't read '$_tcfg'" "configure_project" "$@"
+		. "$_tcfg" || err "Can't read '$_tcfg'" configure_project "$@"
 
-		$if_dry_build \
-			eval build_depend=""
+		$if_dry_build eval \
+			build_depend=""
 
 		$if_single_tree \
 			break
@@ -313,22 +296,19 @@ configure_project()
 
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 1
-	[ -n "$buildtype" ] && \
-		$if_make_config \
-			return 1
+	[ -n "$buildtype" ] && $if_make_config \
+		return 1
 
-	$if_build \
-		$if_not_dry_build \
-			build_dependencies
+	$if_build $if_not_dry_build \
+		build_dependencies
 
 	mdir="$xbmkpwd/config/submodule/$project"
-	[ -n "$tree" ] && \
-		mdir="$mdir/$tree"
+	[ -n "$tree" ] && mdir="$mdir/$tree"
 
 	if [ ! -f "CHANGELOG" ]; then
 		delete_old_project_files
 		$if_not_do_make \
-			${cmd%_build}_fetch
+			${cmd#mk_}_fetch
 	fi
 	$if_not_do_make \
 		return 1
@@ -434,7 +414,7 @@ project_up_to_date()
 	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
 }
 
-prep_multi_tree_build()
+prep_mk_multi_tree()
 {
 	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
 
@@ -455,8 +435,7 @@ check_xgcc()
 	cbelfdir="elf${cbdir#src}"
 
 	xfix="${1%-*}"
-	[ "$xfix" = "x86_64" ] && \
-		xfix="x64"
+	[ "$xfix" = "x86_64" ] && xfix="x64"
 
 	xgccfile="$cbelfdir/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
@@ -472,10 +451,8 @@ check_xgcc()
 	[ -n "$xlang" ] && \
 		export BUILD_LANGUAGES="$xlang"
 
-	[ -f "$xgccfile" ] && \
-		return 0 # build exists already, so skip building
+	[ -f "$xgccfile" ] && return 0 # skip (build already exists)
 
-	                           # it sometimes fails for like, no reason
 	make -C "$cbdir" $xgccargs || x_ make -C "$cbdir" $xgccargs
 
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
@@ -484,15 +461,13 @@ check_xgcc()
 elfcheck()
 {
 	# TODO: *STILL* very hacky check. do it properly (based on build.list)
-
 	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1; :
 }
 
 handle_makefile()
 {
-	check_makefile "$srcdir" && \
-		$if_not_dry_build \
-			x_ make -C "$srcdir" clean $cleanargs
+	check_makefile "$srcdir" && $if_not_dry_build \
+		x_ make -C "$srcdir" clean $cleanargs
 
 	[ -f "$defconfig" ] && \
 		x_ cp "$defconfig" "$srcdir/.config"
@@ -546,8 +521,7 @@ check_autoconf()
 check_makefile()
 {
 	[ ! -f "$1/Makefile" ] && [ ! -f "$1/makefile" ] && \
-	    [ ! -f "$1/GNUmakefile" ] && \
-		return 1; :
+	    [ ! -f "$1/GNUmakefile" ] && return 1; :
 }
 
 copy_elf()
