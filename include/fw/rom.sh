@@ -207,7 +207,8 @@ mkcorebootbin_real()
 		fi
 		if [ "$payload_uboot" = "arm64" ]; then
 			pname="uboot"
-			add_uboot
+			add_uboot "" fallback/payload default \
+			    "$target" u-boot.elf
 		fi
 	else
 		pname="custom"
@@ -242,8 +243,9 @@ add_cbfs_option()
 add_seabios()
 {
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ] && \
+	    [ "$displaymode" != "txtmode" ] && [ "$initmode" != "normal" ] && \
 		$if_not_dry_build \
-			add_uboot # add u-boot first, due to fixed cbfs offset
+			add_uboot_x86 # u-boot first, due to fixed cbfs offset
 
 	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
 	[ "$initmode" = "fspgop" ] && \
@@ -323,53 +325,28 @@ mkseagrub()
 	fx_ cprom x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
+add_uboot_x86()
+{
+	[ "$payload_uboot" = "amd64" ] && \
+		add_uboot "-l 0x1110000 -e 0x1110000" "img/u-boot" \
+		    "x86_64" "amd64coreboot" "u-boot-x86-with-spl.bin"
+	[ "$payload_uboot" = "i386" ] && \
+		add_uboot "-l 0x1110000 -e 0x1110000" "u-boot" "x86" \
+		    "i386coreboot" "u-boot-dtb.bin"; :
+}
+
 add_uboot()
 {
-	if [ "$displaymode" = "txtmode" ] || [ "$initmode" = "normal" ]; then
-		return 0
-	fi
-
-	# TODO: re-work to allow each coreboot target to say which ub tree
-	# instead of hardcoding as in the current logic below:
-
-	# aarch64 targets:
-	ubcbfsargs=""
-	ubpath="fallback/payload"
-	ubtree="default"
-	ubtarget="$target"
-	ubootelf="u-boot.elf"
-
-	# override for x86/x86_64 targets:
-	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
-		ubcbfsargs="-l 0x1110000 -e 0x1110000" # 64-bit and 32-bit
-			# on 64-bit, 0x1120000 is the SPL, with a stub that
-			# loads it, located at 0x1110000
-
-		ubpath="img/u-boot" # 64-bit
-		ubtree="x86_64"
-		ubtarget="amd64coreboot"
-		ubootelf="u-boot-x86-with-spl.bin"
-
-		if [ "$payload_uboot" = "i386" ]; then
-			ubpath="u-boot" # 32-bit
-			ubtree="x86"
-			ubtarget="i386coreboot"; :
-			ubootelf="u-boot-dtb.bin"
-		fi
-	fi
-
-	ubootelf="elf/u-boot/$ubtree/$ubtarget/$uboot_config/$ubootelf"
-
+	ubootelf="elf/u-boot/$3/$4/$uboot_config/$5"
 	[ ! -f "$ubootelf" ] && \
-		ubootelf="${ubootelf%.elf}"
+		ubootelf="${ubootelf%.elf}" # hack (fix arm64 build)
 
-	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
+	cbfs "$tmprom" "$ubootelf" "$2" $1
 	[ "$payload_seabios" != "y" ] && \
 		cprom; :
 }
 
 # prepare the final image in bin/ for user installation:
-
 cprom()
 {
 	cpcmd="cp"
