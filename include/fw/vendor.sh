@@ -443,10 +443,7 @@ bootstrap()
 	x_ "$mk" -f coreboot "${cbdir##*/}"
 	x_ "$mk" -f me_cleaner
 
-	x_ "$mk" -b bios_extract
-	x_ "$mk" -b biosutilities
-	x_ "$mk" -b uefitool
-	x_ "$mk" -b libarchive # for bsdtar and bsdunzip
+	forx 'x_ \"$mk\" -b %s' bios_extract biosutilities uefitool libarchive
 
 	[ -d "${kbc1126_ec_dump%/*}" ] && \
 		x_ make -C "$cbdir/util/kbc1126"

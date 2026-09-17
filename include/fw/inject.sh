@@ -24,8 +24,7 @@ inject()
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
 
-	nuke=""
-	xchanged=""
+	eval "`newvar nuke xchanged`"
 
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
@@ -169,9 +168,7 @@ modify_mac()
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbtmp/gbe"
 
 	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
-		x_ make -C util/nvmutil clean
-		x_ make -C util/nvmutil
-
+		forx 'x_ make -C util/nvmutil %s' clean nvmutil
 		x_ "$nvmutil" "$xbtmp/gbe" setmac "$new_mac"
 	fi
 

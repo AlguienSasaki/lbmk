@@ -22,9 +22,7 @@ release()
 	x_ git clone . "$rsrc"
 	update_xbmkver "$rsrc"
 
-	prep_release src
-	prep_release tarball
-	prep_release bin
+	forx 'prep_release %s' src tarball bin
 
 	x_ rm -Rf "$rsrc"
 
@@ -55,8 +53,7 @@ prep_release_src()
 
 	x_ ./mk -f
 
-	fx_ "x_ rm -Rf" x_ find . -name ".git"
-	fx_ "x_ rm -Rf" x_ find . -name ".gitmodules"
+	forx 'fx_ \"x_ rm -Rf\" x_ find . -name \".%s\"' git gitmodules
 
 	( fx_ nuke x_ find config -type f -name "nuke.list" ) || \
 	    err "can't prune project files" "prep_release_src" "$@"; :
@@ -93,10 +90,7 @@ prep_release_bin()
 {
 	x_ ./mk -d coreboot
 
-	x_ ./mk -b coreboot
-	x_ ./mk -b pico-serprog
-	x_ ./mk -b stm32-vserprog
-	x_ ./mk -b pcsx-redux
+	forx 'x_ ./mk -b' coreboot pico-serprog stm32-vserprog pcsx-redux
 
 	fx_ mkrom_tarball x_ find bin -mindepth 1 -maxdepth 1 \
 	    -type d -name "serprog_*"

@@ -9,15 +9,27 @@
 
 set -u -e
 
-eval "`printf "LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
-    LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE \
-    LC_MEASUREMENT LC_IDENTIFICATION LC_ALL\n" | \
-    awk '{ for (i=1; i<=NF; i++) $i = "export " $i "=C.UTF-8;"; print }'`"
-
 findpath()
 {
-	eval "$(printf '%s\n' "$@" | awk '{printf "readlink -f \"%s\" \
-	    2>/dev/null || realpath \"%s\" 2>/dev/null || return 1;",$0,$0}')"
+	forx 'readlink -f \"%s\" 2>/dev/null || \
+	    x_ realpath \"%s\" 2>/dev/null' "$@"
+}
+
+# WARNING: relies on -o option in grep.
+# gnu, busybox, openbsd, netbsd and freebsd all have it
+forx()
+{
+
+	awkarg="{printf \"${1-};\""
+	shift 1 2>/dev/null || :
+
+	scount="$(printf "%s\n" "$awkarg" | grep -o "%s" | wc -l)"
+	while [ $scount -gt 0 ]; do
+		awkarg="$awkarg,\$0"
+		scount="$(expr $scount - 1 || :)"
+	done
+
+	eval "$(printf '%s\n' "$@" | awk "$awkarg}")"
 }
 
 x_()
@@ -32,6 +44,10 @@ err()
 
 	exit 1
 }
+
+forx 'export %s=\"C.UTF-8\"' LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME \
+    LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
+    LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL
 
 (
 mk="$0"

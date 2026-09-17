@@ -131,10 +131,7 @@ mkcorebootbin()
 		return 0
 
 	$if_not_dry_build \
-		check_coreboot_util cbfstool
-
-	$if_not_dry_build \
-		check_coreboot_util ifdtool
+		forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	for y in "$target_dir/config"/*; do
 		defconfig="$y"
