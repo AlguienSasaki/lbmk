@@ -12,7 +12,7 @@ ifdtool="elf/coreboot/default/ifdtool"
 checkvars="CONFIG_GBE_BIN_PATH ${checkvarsxbmk-} ${checkvarschk-}"
 
 eval "`newvar archive board boarddir IFD_platform ifdprefix \
-    new_mac tmpromdir tree xchanged $checkvars`"
+    new_mac nuke tmpromdir tree xchanged $checkvars`"
 
 inject()
 {
@@ -23,8 +23,6 @@ inject()
 
 	archive="$1";
 	new_mac="xx:xx:xx:xx:xx:xx"
-
-	eval "`newvar nuke xchanged`"
 
 	[ $# -gt 1 ] && case "$2" in
 	nuke)
@@ -52,12 +50,6 @@ inject()
 	fi
 	[ "$xchanged" = "y" ] && \
 		remktar
-
-	if [ "$xchanged" = "y" ]; then
-		printf "\n'%s' was modified\n" "$archive" 1>&2
-	else
-		printf "\n'%s' was NOT modified\n" "$archive" 1>&2
-	fi
 
 	x_ rm -Rf "$tmpromdel"
 }
