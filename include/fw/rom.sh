@@ -336,12 +336,7 @@ mkseagrub()
 
 add_uboot()
 {
-	if [ "$displaymode" = "txtmode" ]; then
-		printf "cb/%s: Can't use U-Boot in text mode\n" "$target" 1>&2
-		return 0
-	elif [ "$initmode" = "normal" ]; then
-		printf "cb/%s: Can't use U-Boot in normal initmode\n" \
-		    "$target" 1>&2
+	if [ "$displaymode" = "txtmode" ] || [ "$initmode" = "normal" ]; then
 		return 0
 	fi
 
@@ -353,6 +348,7 @@ add_uboot()
 	ubpath="fallback/payload"
 	ubtree="default"
 	ubtarget="$target"
+	ubootelf="u-boot.elf"
 
 	# override for x86/x86_64 targets:
 	if [ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ]; then
@@ -363,23 +359,20 @@ add_uboot()
 		ubpath="img/u-boot" # 64-bit
 		ubtree="x86_64"
 		ubtarget="amd64coreboot"
+		ubootelf="u-boot-x86-with-spl.bin"
 
 		if [ "$payload_uboot" = "i386" ]; then
 			ubpath="u-boot" # 32-bit
 			ubtree="x86"
 			ubtarget="i386coreboot"; :
+			ubootelf="u-boot-dtb.bin"
 		fi
 	fi
 
-	ubdir="elf/u-boot/$ubtree/$ubtarget/$uboot_config"
+	ubootelf="elf/u-boot/$ubtree/$ubtarget/$uboot_config/$ubootelf"
 
-	ubootelf="$ubdir/u-boot.elf" # aarch64
 	[ ! -f "$ubootelf" ] && \
-		ubootelf="$ubdir/u-boot" # aarch64 (fallback)
-	[ "$payload_uboot" = "i386" ] && \
-		ubootelf="$ubdir/u-boot-dtb.bin" # x86 override
-	[ "$payload_uboot" = "amd64" ] && \
-		ubootelf="$ubdir/u-boot-x86-with-spl.bin" # x86_64 override
+		ubootelf="${ubootelf%.elf}"
 
 	cbfs "$tmprom" "$ubootelf" "$ubpath" $ubcbfsargs
 	[ "$payload_seabios" != "y" ] && \
