@@ -64,7 +64,7 @@ corebootpremake()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
-	[ -z "$mode" ] && [ "$target" != "$tree" ] && \
+	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
 }
 
