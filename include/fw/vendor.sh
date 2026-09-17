@@ -473,7 +473,7 @@ prep()
 
 mksha512()
 {
-	build_sbase
+	eval "$build_sbase"
 
 	[ "${1%/*}" != "$1" ] && \
 		x_ cd "${1%/*}"
@@ -571,7 +571,7 @@ vfile()
 # must be called from a subshell
 check_vendor_hashes()
 {
-	build_sbase
+	eval "$build_sbase"
 
 	x_ cd "$tmpromdir"
 

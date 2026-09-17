@@ -242,7 +242,7 @@ bad_checksum()
 	e "$2" f missing && \
 		return 0
 
-	build_sbase
+	eval "$build_sbase"
 	csum="$(x_ "$sha512sum" "$2" | awk '{print $1}')" || \
 	    err "!sha512 '$2' $1" bad_checksum "$@"
 

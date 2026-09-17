@@ -8,6 +8,8 @@
 cbfstool="elf/coreboot/default/cbfstool"
 rmodtool="elf/coreboot/default/rmodtool"
 
+build_sbase="[ ! -f \"\$sha512sum\" ] && x_ make -C util/sbase" # macro!
+
 newvar()
 {
 	printf "%s\n" "$*" | \
@@ -110,11 +112,6 @@ unpad_one_byte()
 
 	x_ dd if="$1" of="$unpaddedfile" bs=$xromsize count=1
 	x_ mv "$unpaddedfile" "$1"
-}
-
-build_sbase()
-{
-	[ ! -f "$sha512sum" ] && x_ make -C "$xbmkpwd/util/sbase"; :
 }
 
 remkdir()
