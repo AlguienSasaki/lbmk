@@ -40,9 +40,6 @@ mkpayload_grub()
 {
 	eval "`newvar grub_modules grub_install_modules`"
 
-	$if_dry_build \
-		return 0
-
 	. "$grubdata/module/$tree" || \
 	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"
 
