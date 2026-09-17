@@ -2,22 +2,12 @@
 
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
-eval "`newvar reldest reldir relmode rsrc vdir`"
+eval "`newvar reldest reldir rsrc vdir`"
 
 release()
 {
 	export XBMK_RELEASE="y"
 	reldir="release"
-
-	while getopts m: option
-	do
-		[ -z "$OPTARG" ] && \
-			err "empty argument not allowed" "release" "$@"
-		[ "$option" != "m" ] && \
-			err "invalid option '-$option'" "release" "$@"
-
-		relmode="$OPTARG"
-	done
 
 	reldest="$reldir/$version"
 	[ -e "$reldest" ] && \
@@ -34,8 +24,7 @@ release()
 
 	prep_release src
 	prep_release tarball
-	[ "$relmode" != "src" ] && \
-		prep_release bin
+	prep_release bin
 
 	x_ rm -Rf "$rsrc"
 
