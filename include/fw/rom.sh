@@ -104,8 +104,7 @@ coreboot_pad_one_byte()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	$if_not_dry_build \
-		pad_one_byte "$srcdir/build/coreboot.rom"
+	pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 mkcorebootbin()
@@ -113,8 +112,7 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	$if_not_dry_build \
-		forx 'check_coreboot_util %s' cbfstool ifdtool
+	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	for y in "$target_dir/config"/*; do
 		defconfig="$y"
@@ -149,11 +147,8 @@ mkcorebootbin_real()
 		elfrom="${elfrom}_$displaymode"
 	elfrom="$elfrom/coreboot.rom"
 
-	$if_not_dry_build \
-		x_ cp "$elfrom" "$tmprom"
-
-	$if_not_dry_build \
-		unpad_one_byte "$tmprom"
+	x_ cp "$elfrom" "$tmprom"
+	unpad_one_byte "$tmprom"
 
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
 	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ] \
@@ -168,9 +163,8 @@ mkcorebootbin_real()
 	[ "$payload_grub" = "y" ] && \
 		payload_seabios="y"
 	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ] && \
-		$if_not_dry_build \
-			err "$target: U-Boot arm / SeaBIOS/GRUB both enabled" \
-			    "mkcorebootbin_real" "$@"
+		err "$target: U-Boot arm / SeaBIOS/GRUB both enabled" \
+		    "mkcorebootbin_real" "$@"
 
 	[ -z "$grub_scan_disk" ] && \
 		grub_scan_disk="nvme ahci ata"
@@ -187,9 +181,6 @@ mkcorebootbin_real()
 		payload_grubsea="n"
 	[ "$payload_grub" != "y" ] && \
 		payload_grubsea="n"
-
-	$if_dry_build \
-		return 0
 
 	[ -f "$cbfscfg" ] && \
 		dx_ add_cbfs_option "$cbfscfg"
@@ -238,8 +229,7 @@ add_seabios()
 {
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ] && \
 	    [ "$displaymode" != "txtmode" ] && [ "$initmode" != "normal" ] && \
-		$if_not_dry_build \
-			add_uboot_x86 # u-boot first, due to fixed cbfs offset
+		add_uboot_x86 # u-boot first, due to fixed cbfs offset
 
 	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
 	[ "$initmode" = "fspgop" ] && \
@@ -396,9 +386,6 @@ cbfs()
 
 mkcoreboottar()
 {
-	$if_dry_build \
-		return 0
-
 	if [ "$target" = "$tree" ] || [ "$XBMK_RELEASE" != "y" ] || \
 	    [ "$release" = "n" ]; then
 		return 0
