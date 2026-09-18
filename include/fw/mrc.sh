@@ -24,7 +24,7 @@ extract_refcode()
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe
 	[ -n "$MRC_refcode_gbe" ] && \
-		x_ dd if="config/ifd/hp820g2/1.bin" of="$appdir/ref" bs=1 \
+		x_ dd if="config/snippet/1" of="$appdir/ref" bs=1 \
 		    seek=$MRC_refcode_gbe count=1 conv=notrunc; :
 
 	x_ mv "$appdir/ref" "$_pre_dest"

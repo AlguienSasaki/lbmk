@@ -3,52 +3,83 @@
 # Copyright (c) 2020-2021,2023-2026 Leah Rowe <leah@libreboot.org>
 # Copyright (c) 2022 Caleb La Grange <thonkpeasant@protonmail.com>
 
-eval "`newvar url bkup_url depend loc subcurl subcurl_bkup subgit subgit_bkup \
-    subhash`"
+eval "`newvar url bkup_url fetch_depend loc subcurl subcurl_bkup subgit \
+    subgit_bkup subhash badhash badtghash`"
 
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
 
-multi_tree_fetch()
+# delete a source tree and corresponding builds if metadata changed
+# inside config/ - this is done by hashing a concatenation of hashes
+# from all metadata, checked against a previously calculated hash
+
+delete_old_project_files()
+{
+	# delete an entire source tree along with its builds:
+	same_pjhash mhash "$tree" badhash "$datadir" \
+	    "$configdir/$tree" "$mdir" || \
+		x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"
+
+	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mhash/$project$tree"
+
+	if [ -n "$target" ] && [ "$target" != "$tree" ]; then
+		# delete only target builds, if only the target changed
+		same_pjhash mtghash "$target" badtghash "$configdir/$target" \
+		    || x_ rm -Rf "elf/$project/$tree/$target"
+
+		x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mtghash/$project$target"
+	fi
+}
+
+same_pjhash()
+{
+	eval "`newvar hash old_hash`"
+
+	hashdir="$1"
+	hashname="$2"
+	badhashvar="$3"
+
+	shift 3
+
+	x_ mkdir -p "$XBMK_CACHE/$hashdir"
+
+	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
+		read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" \
+		    || err \
+		    "$hashdir: err '$XBMK_CACHE/$hashdir/$project$hashname'" \
+		    same_pjhash "$hashdir" "$hashname" "$badhashvar" "$@"
+	fi
+
+	eval "$build_sbase"
+	fx_ "x_ util/sbase/sha512sum" find "$@" -type f -not -path \
+	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
+	    err "!h $project $hashdir" \
+	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
+
+	hash="$(x_ "$sha512sum" "$xbtmp/tmp.hash" | awk '{print $1}' || \
+	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'" \
+	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
+
+	if [ "$hash" != "$old_hash" ] || \
+	    [ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
+		eval "$badhashvar=\"y\""
+	fi
+
+	printf "%s\n" "$hash" > "$xbtmp/new.hash" || \
+	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)" \
+	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
+
+	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
+}
+
+fetch_trees()
 {
 	[ -d "src/$project/$tree" ] && return 0
 
+	mk_dependencies -f $fetch_depend
+
 	git_prep "$url" "$bkup_url" "$xbmkpwd/$configdir/$tree/patches" \
-	    "src/$project/$tree" "submod"
-}
-
-single_tree_fetch()
-{
-	xgcctree=""
-
-	. "config/git/$project/pkg.cfg" || \
-	    err "Can't read config 'config/git/$project/pkg.cfg'" \
-	    "single_tree_fetch" "@"
-
-	if [ -z "$url" ] || [ -z "$bkup_url" ]; then
-		err "url/bkup_url not both set 'config/git/$project/pkg.cfg'" \
-		    "single_tree_fetch" "$@"
-	fi
-
-	[ -n "$xgcctree" ] && \
-		x_ "$mk" -f coreboot "$xgcctree"
-
-	[ -n "$depend" ] && \
-		for d in $depend ; do
-			x_ "$mk" -f $d
-		done
-
-	$if_single_tree \
-		clone_project; :
-}
-
-clone_project()
-{
-	loc="src/$project"
-	[ -d "$loc" ] && return 0
-
-	remkdir "${tmpgit%/*}"
-	git_prep "$url" "$bkup_url" "$xbmkpwd/config/$project/patches" "$loc"
+	    "src/$project/$tree"
 }
 
 git_prep()
@@ -59,12 +90,10 @@ git_prep()
 	_loc="$4" # $1 and $2 are gitrepo and gitrepo_backup
 
 	[ -z "$rev" ] && \
-		err "$project/$tree: rev not set" "git_prep" "$@"
+		err "$project/$tree: rev unset" "git_prep" "$@"
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
-	if singletree "$project" || [ $# -gt 4 ]; then
-		dx_ fetch_submodule "$mdir/module.list"
-	fi
+	dx_ fetch_submodule "$mdir/module.list"
 
 	[ "$_loc" != "${_loc%/*}" ] && \
 		x_ mkdir -p "${_loc%/*}"

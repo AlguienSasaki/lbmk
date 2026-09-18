@@ -55,13 +55,13 @@ prep_release_src()
 
 	forx 'fx_ \"x_ rm -Rf\" x_ find . -name \".%s\"' git gitmodules
 
-	( fx_ nuke x_ find config -type f -name "nuke.list" ) || \
+	( fx_ nuke x_ find config/module -type f -name "nuke.list" ) || \
 	    err "can't prune project files" "prep_release_src" "$@"; :
 }
 
 nuke()
 {
-	r="$rsrc/src/${1#config/}"
+	r="$rsrc/src/${1#config/module/}"
 
 	if [ -d "${r%/*}" ]; then
 		x_ cd "${r%/*}"

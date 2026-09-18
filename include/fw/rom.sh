@@ -26,7 +26,8 @@ buildser()
 copyps1bios()
 {
 	remkdir "bin/playstation"
-	x_ cp src/pcsx-redux/src/mips/openbios/openbios.bin bin/playstation
+	x_ cp src/pcsx-redux/default/src/mips/openbios/openbios.bin \
+	    bin/playstation
 
 	printf "MIT License\n\nCopyright (c) 2019-2025 PCSX-Redux authors\n\n" \
 	    > bin/playstation/COPYING.txt || \
@@ -59,7 +60,7 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	fx_ check_coreboot_util printf "cbfstool\nifdtool\n"
+	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
@@ -70,8 +71,6 @@ corebootpremake()
 
 check_coreboot_util()
 {
-	[ "$badhash" = "y" ] && \
-		x_ rm -f "elf/coreboot/$tree/$1"
 	e "elf/coreboot/$tree/$1" f && \
 		return 0
 
@@ -111,10 +110,8 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	forx 'check_coreboot_util %s' cbfstool ifdtool
-
-	for y in "$target_dir/config"/*; do
-		defconfig="$y"
+	for y in "$defscan"/*; do
+		buildcfg="$y"
 		mkcorebootbin_real
 	done
 
@@ -127,7 +124,7 @@ mkcorebootbin_real()
 
 	tmprom="$xbtmp/coreboot.rom"
 
-	initmode="${defconfig##*/}"
+	initmode="${buildcfg##*/}"
 	displaymode="${initmode##*_}"
 	if [ "$displaymode" = "$initmode" ]; then
 		# blank it for "normal" or "fspgop" configs:
@@ -138,7 +135,7 @@ mkcorebootbin_real()
 	cbfstool="elf/coreboot/$tree/cbfstool"
 
 	# cbfstool option backends, if they exist
-	cbfscfg="config/coreboot/$target/cbfs.cfg"
+	cbfscfg="config/module/coreboot/$target/cbfs.cfg"
 
 	elfrom="elf/coreboot/$tree/$target/$initmode"
 	[ -n "$displaymode" ] && \
@@ -183,7 +180,7 @@ mkcorebootbin_real()
 	[ -f "$cbfscfg" ] && \
 		dx_ add_cbfs_option "$cbfscfg"
 
-	if grep "CONFIG_PAYLOAD_NONE=y" "$defconfig"; then
+	if grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
 			add_seabios
@@ -252,7 +249,9 @@ add_seabios()
 	fi
 
 	[ "$payload_memtest" = "y" ] && \
-		cbfs "$tmprom" "elf/memtest86plus/memtest.bin" img/memtest
+		cbfs "$tmprom" \
+		    "elf/memtest86plus/default/default/noconfig/memtest.bin" \
+		    img/memtest
 
 	[ "$payload_grub" = "y" ] && \
 		add_grub
@@ -377,6 +376,9 @@ cbfs()
 		lzma="-c lzma -l 0x1110000 -e 0x1110000"
 	fi
 
+	if [ $# -lt 2 ]; then
+		echo TEST
+	fi
 	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
 }
 

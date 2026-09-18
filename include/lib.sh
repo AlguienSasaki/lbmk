@@ -82,18 +82,12 @@ e()
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
-singletree()
-{
-	( fx_ "eval exit 1 && err" find "config/$1/"*/ -type f \
-	    -name "target.cfg" ) || return 1; :
-}
-
 pad_one_byte()
 {
 	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
 	    err "can't make tmp file" "pad_one_byte" "$@"
 
-	x_ cat "$1" config/data/coreboot/0 > "$paddedfile" || \
+	x_ cat "$1" "config/snippet/0" > "$paddedfile" || \
 	    err "could not pad file '$paddedfile'" "pad_one_byte" "$1"; :
 
 	x_ mv "$paddedfile" "$1"

@@ -4,7 +4,7 @@
 # Copyright (c) 2022 Ferass El Hafidi <vitali64pmemail@protonmail.com>
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
-cbcfgsdir="config/coreboot"
+cbcfgsdir="config/module/coreboot"
 tmpromdel="$XBMK_CACHE/DO_NOT_FLASH"
 nvmutil="util/nvmutil/nvmutil"
 ifdtool="elf/coreboot/default/ifdtool"

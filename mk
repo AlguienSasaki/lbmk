@@ -80,18 +80,22 @@ eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
     i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
 
 # macros, overridden depending on the flag
-if_not_do_make=":" # : means false
 if_make_config=":"
 if_build=":" # can be false even if make is true
 if_dry_build=":"
-if_single_tree=":"
-eval "`newvar if_do_make if_not_make_config if_not_build if_not_dry_build`"
+eval "`newvar if_not_make_config if_not_build if_not_dry_build`"
 
-eval "`newvar configureargs autogenargs badhash badtghash bootstrapargs \
-    build_depend buildtype cleanargs cmakedir cmd defconfig dest_dir elfdir \
-    flag forcepull listfile makeargs mdir mkhelper mkhelpercfg mode postmake \
-    premake project release rev srcdir target target_dir tree xarch xgcctree \
-    xlang`"
+# these variables will also be initialised in configure_target
+cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
+    build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
+    premake release rev tree xarch xgcctree xlang cfgname defscan"
+
+eval "`newvar buildcfg dest_dir elfdir flag forcepull listfile mdir \
+    mkhelpercfg mode project srcdir target target_dir _tcfg \
+    $cfgvars`"
+
+# when saved to e.g. coreboot src. can be overridden by projects
+cfgname_default=".config" # e.g. src/coreboot/default/.config
 
 main()
 {
@@ -114,8 +118,7 @@ main()
 			if_not_dry_build=":"
 			;;
 		-f|-F) # download source code for a project
-			eval "`newvar if_not_do_make if_dry_build`"
-			if_do_make=":"
+			if_dry_build=""
 			if_not_dry_build=":"
 			[ "$flag" = "-F" ] && \
 				forcepull="y"; : # never skip git fetch/pull
@@ -142,287 +145,174 @@ main()
 			break
 		fi
 
+		# user can type e.g. ./mk -f src/flashprog
 		project="${OPTARG#src/}"
-		project="${project#config/git/}"
+		project="${project#config/module/}"
 
 		shift 2
 	done
 
-	if [ -z "$flag" ]; then
-		err "missing flag ($flags)" "trees" "$@"
-	elif [ -z "$project" ]; then
-		fx_ "x_ "$mk" $flag" x_ ls -1 config/git
-		return 0
-	elif [ ! -f "config/git/$project/pkg.cfg" ]; then
-		err "config/git/$project/pkg.cfg missing" "trees" "$@"
-	fi
+	[ -z "$flag" ] && err "missing flag ($flags)" "trees" "$@"
+	[ -z "$project" ] && \
+		x_ fx_ "x_ "$mk" $flag" x_ find "config/module" \
+		    -mindepth 1 -maxdepth 1 -type d && return 0
+	[ ! -d "config/module/$project" ] && \
+		err "module '$project' not found" main "$flag" "" "$@"
 
-	elfdir="elf/$project"
 	datadir="config/data/$project"
-	configdir="config/$project"
-	srcdir="src/$project"
-	dest_dir="$elfdir"
+	configdir="config/module/$project"
+	[ "${1-}" = "list" ] && \
+		x_ ls -1 "$configdir" && \
+		return 0
 
 	listfile="$datadir/build.list"
 	[ ! -f "$listfile" ] && \
-		listfile="" # build.list is optional on all projects
+		listfile="" # TODO: override listfile per-tree
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
-	if e "$mkhelpercfg" f missing; then
+	e "$mkhelpercfg" f missing && \
 		mkhelpercfg="$xbtmp/mkhelper.cfg"
-		x_ touch "$mkhelpercfg"
-	fi
-
-	if singletree "$project"; then
-		cmd="mk_single_tree"
-		if_single_tree=""
-	else
-		cmd="mk_multi_tree"
-	fi
+	x_ touch "$mkhelpercfg"
 
 	remkdir "${tmpgit%/*}"
 	x_ touch "$mkhelpercfg"
 
-	. "$mkhelpercfg"
-	$cmd "$@"
-}
-
-mk_single_tree()
-{
-	configure_project "$configdir" || \
-		return 0
-
-	[ ! -f "$listfile" ] || $if_not_dry_build \
-		elfcheck || return 0
-
-	run_make_command && $if_build $if_not_dry_build \
-		copy_elf; :
-}
-
-mk_multi_tree()
-{
-	[ ! -d "$configdir" ] && err "missing '$configdir'" mk_multi_tree "$@"
-	[ $# -lt 1 ] && fx_ mk_multi_tree find "$configdir" \
+	[ ! -d "$configdir" ] && err "missing '$configdir'" handle_target "$@"
+	[ $# -lt 1 ] && fx_ handle_target find "$configdir" \
 		    -mindepth 1 -maxdepth 1 -type d
 
-	[ $# -gt 0 ] && for x in "$@"
-	do
-		unset CROSS_COMPILE
-		export PATH="$xbmkpath"
-
-		if [ "$x" = "list" ]; then
-			x_ ls -1 "config/$project"
-			listfile=""
-			break
-		fi
-
-		printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$x"
-
-		target="${x##*/}"
-
-		x_ handle_defconfig
-		$if_build \
-			x_ $postmake; :
-	done; :
+	while [ $# -gt 0 ]; do
+		handle_target "$1"
+		shift 1
+	done
 }
 
-handle_defconfig()
+handle_target()
 {
+	unset CROSS_COMPILE
+	export PATH="$xbmkpath"
+
+	printf "'make %s', '%s', '%s'\n" "$mode" "$project" "$1"
+
+	target="${1##*/}"
 	target_dir="$configdir/$target"
 
-	[ ! -f "CHANGELOG" ] && \
-		single_tree_fetch "$project"
+	configure_target "$target_dir" && \
+		x_ handle_buildcfg
 
-	configure_project "$target_dir" || \
-		return 0
+	$if_build \
+		x_ $postmake; :
+}
 
-	[ -z "$tree" ] && err "$configdir: 'tree' unset" handle_defconfig "$@"
+configure_target()
+{
+	_tcfg="$1/target.cfg"
+
+	eval "`newvar $cfgvars`"
+
+	. "$mkhelpercfg" # mkhelper reinitialisation
+
+	# override target/tree specific variables from per-target config:
+	while [ -z "$rev" ] && try_target_config; do :; done
+	[ -z "$tree" ] && \
+		err "$project/$target: tree unset" configure_target "$@"
+
+	$if_build $if_not_dry_build \
+		mk_dependencies -b $build_depend
 
 	srcdir="src/$project/$tree"
 
-	[ -d "$srcdir" ] && for y in "$target_dir/config"/*
+	# specify directory containing e.g. coreboot defconfigs
+	x_ mkdir -p "$xbtmp/noconfig/config"
+	x_ touch "$xbtmp/noconfig/config/noconfig"
+	[ "$noconfig" = "y" ] && \
+		defscan="$xbtmp/noconfig/config" # no configs on this project
+	( fx_ "eval exit 1 && err" find "$target_dir/config" -type f ) || \
+		[ -n "$defscan" ] || defscan="$target_dir/config"
+
+	# filename in srcdir when copying e.g. coreboot defconfig -> .config
+	[ -z "$cfgname" ] && cfgname="$cfgname_default" # e.g. $srcdir/.config
+
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 1
+	[ "$noconfig" = "y" ] && $if_make_config \
+		return 1
+
+	mdir="$xbmkpwd/config/submodule/$project/$tree"
+
+	[ -f "CHANGELOG" ] && return 0 # disable fetching on release archives
+
+	delete_old_project_files
+	[ ! -f "CHANGELOG" ] && x_ fetch_trees; :
+}
+
+try_target_config()
+{
+	printf "Try %s/%s config: %s\n" "$project" "$_tcfg" "$target"
+	eval "`newvar rev tree`"
+
+	. "$_tcfg" || err "Can't read '$_tcfg'" configure_target "$@"
+	if [ -n "$rev" ] && [ -z "$tree" ]; then
+		# this makes setting tree= optional on configless projects
+		tree="${_tcfg%/target.cfg}"
+		tree="${tree##*/}"
+	elif [ -z "$tree" ]; then
+		err "$project/$target: tree unset" try_target_config "$@"
+	fi
+
+	[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] && \
+		return 1 # target and tree matching was successful
+
+	_ncfg="${_tcfg%/*/target.cfg}/$tree/target.cfg"
+	[ "$_ncfg" = "$_tcfg" ] && \
+		err "$project/$target: can't determine tree" "$@" # no change
+
+	_tcfg="$_ncfg" # try next
+}
+
+# projects can specify which other projects
+# to build first, as declared dependencies:
+# TODO: detect infinite loops
+mk_dependencies()
+{
+	bdf="${1-}"
+	shift 1 2>/dev/null || :
+	while [ $# -gt 0 ]; do
+		bd_tree="${1##*/}"
+		[ "${1%%/*}" = "$1" ] && bd_tree="" # build all trees
+
+		[ -z "${1%%/*}" ] && \
+			err "$project/$tree: !bd '$1'" mk_dependencies "$@"
+
+		x_ "$mk" $bdf ${1%%/*} $bd_tree; :
+		shift 1
+	done; :
+}
+
+handle_buildcfg()
+{
+	[ ! -d "$srcdir" ] || for y in "$defscan"/*
 	do
-		[ ! -f "$y" ] && \
-			$if_not_dry_build \
-				continue
+		buildcfg="$y"
+		dest_dir="elf/$project/$tree/$target/${y##*/}"
 
-		$if_not_dry_build eval \
-			defconfig="$y"
+		$if_build $if_not_dry_build \
+			check_build_environment "$y" || continue
 
-		$if_build \
-			prep_mk_multi_tree || continue
-
-		handle_makefile
+		handle_makefile # also supports non-build operations
 
 		$if_build $if_not_dry_build \
 			copy_elf; :
 	done; :
 }
 
-configure_project()
+check_build_environment()
 {
-	_tcfg="$1/target.cfg"
+	[ ! -f "$1" ] && return 1
 
-	eval "`newvar configureargs badhash badtghash bootstrapargs \
-	    build_depend buildtype cleanargs makeargs mkhelper postmake \
-	    premake release xarch xgcctree xlang`"
+	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1
 
-	[ ! -f "$_tcfg" ] && buildtype="auto"
-
-	# globally initialise all variables for a source tree / target:
-	if e "$datadir/mkhelper.cfg" f; then
-		. "$datadir/mkhelper.cfg" || \
-		    err "Can't read '$datadir/mkhelper.cfg'" \
-		    "configure_project" "$@"
-	fi
-
-	# override target/tree specific variables from per-target config:
-	while e "$_tcfg" f || [ "$cmd" != "mk_single_tree" ]
-	do
-		printf "Loading %s config: %s\n" "$project" "$_tcfg"
-		eval "`newvar rev tree`"
-
-		. "$_tcfg" || err "Can't read '$_tcfg'" configure_project "$@"
-
-		$if_dry_build eval \
-			build_depend=""
-
-		$if_single_tree \
-			break
-		$if_do_make \
-			break
-		[ "${_tcfg%/*/target.cfg}" = "${_tcfg%"/$tree/target.cfg"}" ] \
-			&& break # target and tree matching was successful
-
-		_tcfg="${_tcfg%/*/target.cfg}/$tree/target.cfg" # try next
-	done
-
-	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
-		return 1
-	[ -n "$buildtype" ] && $if_make_config \
-		return 1
-
-	$if_build $if_not_dry_build \
-		build_dependencies
-
-	mdir="$xbmkpwd/config/submodule/$project"
-	[ -n "$tree" ] && mdir="$mdir/$tree"
-
-	if [ ! -f "CHANGELOG" ]; then
-		delete_old_project_files
-		$if_not_do_make \
-			${cmd#mk_}_fetch
-	fi
-	$if_not_do_make \
-		return 1
-
-	x_ "$mk" -f "$project" "$target"
-}
-
-# projects can specify which other projects
-# to build first, as declared dependencies:
-
-build_dependencies()
-{
-	for bd in $build_depend
-	do
-		bd_project="${bd%%/*}"
-		bd_tree="${bd##*/}"
-
-		[ -z "$bd_project" ] && \
-			$if_not_dry_build \
-				err "$project/$tree: !bd '$bd'" \
-				    "build_dependencies" "$@"
-
-		[ "${bd##*/}" = "$bd" ] && \
-			bd_tree=""
-
-		[ -n "$bd_project" ] && \
-			$if_not_dry_build \
-				x_ "$mk" -b $bd_project $bd_tree; :
-	done; :
-}
-
-# delete_old_project_files along with project_up_to_date,
-# concatenates the sha512sum hashes of all files related to
-# a project, tree or target, then gets the sha512sum of that
-# concatenation. this is checked against any existing
-# calculation previously cached; if the result differs, or
-# nothing was previously stored, we know to delete resources
-# such as builds, project sources and so on, for auto-rebuild:
-
-delete_old_project_files()
-{
-	# delete an entire source tree along with its builds:
-	project_up_to_date hash "$tree" badhash "$datadir" \
-	    "$configdir/$tree" "$mdir" || \
-		x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"
-
-	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/hash/$project$tree"
-
-	if singletree "$project" || [ -z "$target" ] || [ "$target" = "$tree" ]
-	then
-		return 0
-	fi
-
-	# delete only the builds of a given target, but not src.
-	# this is useful when only the target config changes, for
-	# example x200_8mb coreboot configs change, but not coreboot:
-
-	project_up_to_date tghash "$target" badtghash "$configdir/$target" || \
-		x_ rm -Rf "elf/$project/$tree/$target"
-
-	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/tghash/$project$target"
-}
-
-project_up_to_date()
-{
-	eval "`newvar hash old_hash`"
-
-	hashdir="$1"
-	hashname="$2"
-	badhashvar="$3"
-
-	shift 3
-
-	x_ mkdir -p "$XBMK_CACHE/$hashdir"
-
-	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
-		read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" \
-		    || err \
-		    "$hashdir: err '$XBMK_CACHE/$hashdir/$project$hashname'" \
-		    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" \
-		    "$@"
-	fi
-
-	eval "$build_sbase"
-	fx_ "x_ util/sbase/sha512sum" find "$@" -type f -not -path \
-	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
-	    err "!h $project $hashdir" \
-	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
-
-	hash="$(x_ "$sha512sum" "$xbtmp/tmp.hash" | awk '{print $1}' || \
-	    err)" || err "$hashname: Can't read sha512 of '$xbtmp/tmp.hash'" \
-	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
-
-	if [ "$hash" != "$old_hash" ] || \
-	    [ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
-		eval "$badhashvar=\"y\""
-	fi
-
-	printf "%s\n" "$hash" > "$xbtmp/new.hash" || \
-	    err "!mkhash $xbtmp/new.hash ($hashdir $hashname $badhashvar)" \
-	    "project_up_to_date" "$hashdir" "$hashname" "$badhashvar" "$@"
-
-	eval "[ \"\$$badhashvar\" = \"y\" ] && return 1"; :
-}
-
-prep_mk_multi_tree()
-{
-	dest_dir="$elfdir/$tree/$target/${defconfig#"$target_dir/config/"}"
-
-	$if_not_dry_build elfcheck || return 1 # skip if a build exists
-	$if_not_dry_build eval "$(printf '%s\n' "$xarch" | awk \
+	eval "$(printf '%s\n' "$xarch" | awk \
 	    '{ for (i=1; i<=NF; i++) $i = "check_xgcc \""$i"\";"; print }')"
 }
 
@@ -461,49 +351,38 @@ check_xgcc()
 	x_ touch "$xgccfile" # prevent unnecessary re-build operations
 }
 
-elfcheck()
-{
-	# TODO: *STILL* very hacky check. do it properly (based on build.list)
-	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1; :
-}
-
 handle_makefile()
 {
 	check_makefile "$srcdir" && $if_not_dry_build \
 		x_ make -C "$srcdir" clean $cleanargs
 
-	[ -f "$defconfig" ] && \
-		x_ cp "$defconfig" "$srcdir/.config"
+	[ -f "$buildcfg" ] && \
+		x_ cp "$buildcfg" "$srcdir/$cfgname"
 
-	run_make_command || err "no makefile!" "handle_makefile" "$@"
+	$if_build \
+		x_ $premake
+	$if_not_dry_build \
+		run_make_command
+	$if_build \
+		x_ $mkhelper; :
 
-	_copy=".config"
+	_copy="$cfgname"
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
 
 	$if_make_config \
-		x_ cp "$srcdir/$_copy" "$defconfig"; :
+		x_ cp "$srcdir/$_copy" "$buildcfg"; :
 }
 
 run_make_command()
-{
-	$if_build \
-		x_ $premake
-	$if_not_dry_build \
-		run_make_command_real || return 1
-	$if_build \
-		x_ $mkhelper; :
-}
-
-run_make_command_real()
 {
 	[ -z "$cmakedir" ] || \
 		x_ cmake -B "$srcdir" "$srcdir/$cmakedir"
 	$if_build \
 		check_autoconf "$srcdir"
 
-	check_makefile "$srcdir" || return 1
-	x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
+	check_makefile "$srcdir" && \
+	    x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
 }
 
 check_autoconf()
@@ -541,6 +420,7 @@ copy_elf()
 		    "cannot read '$listfile'" "copy_elf" "$@"; :
 	fi
 
+	check_makefile "$srcdir" || return 1
 	( x_ make -C "$srcdir" clean $cleanargs ) || \
 	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
 }

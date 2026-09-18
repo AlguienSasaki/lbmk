@@ -13,12 +13,12 @@
 # with inject.sh concatenated onto vendor.sh; they are inexorably intertwined.
 # The main "mk" script sources vendor.sh first, and then inject.sh, in lbmk.
 
-e6400_unpack="$xbmkpwd/src/bios_extract/dell_inspiron_1100_unpacker.py"
+e6400_unpack="$xbmkpwd/src/bios_extract/default/dell_inspiron_1100_unpacker.py"
 me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
-pfs_extract="$xbmkpwd/src/biosutilities/Dell_PFS_Extract.py"
-uefiextract="$xbmkpwd/elf/uefitool/uefiextract"
-bsdtar="$xbmkpwd/elf/libarchive/bsdtar"
-bsdunzip="$xbmkpwd/elf/libarchive/bsdunzip"
+pfs_extract="$xbmkpwd/src/biosutilities/default/Dell_PFS_Extract.py"
+uefiextract="$xbmkpwd/elf/uefitool/default/default/noconfig/uefiextract"
+bsdtar="$xbmkpwd/elf/libarchive/default/default/noconfig/bsdtar"
+bsdunzip="$xbmkpwd/elf/libarchive/default/default/noconfig/bsdunzip"
 vendir="vendorfiles"
 appdir="$vendir/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
@@ -260,7 +260,7 @@ find_me()
 
 apply_deguard_hack()
 {
-	x_ cd src/deguard
+	x_ cd src/deguard/default
 
 	x_ ./finalimage.py --delta "data/delta/$ME11delta" \
 	     --version "$ME11version" --pch "$ME11pch" --sku "$ME11sku" \
@@ -414,7 +414,7 @@ bootstrap()
 
 	mecleaner="$xbmkpwd/$cbdir/util/me_cleaner/me_cleaner.py"
 	[ "$XBMKmecleaner" = "y" ] && \
-		mecleaner="$xbmkpwd/src/me_cleaner/me_cleaner.py"
+		mecleaner="$xbmkpwd/src/me_cleaner/default/me_cleaner.py"
 
 	x_ "$mk" -f coreboot "${cbdir##*/}"
 	x_ "$mk" -f me_cleaner
