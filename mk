@@ -307,7 +307,14 @@ handle_buildcfg()
 		$if_build $if_not_dry_build \
 			check_build_environment "$y" || continue
 
-		handle_makefile # also supports non-build operations
+		$if_build \
+			x_ $premake
+
+		$if_not_skip_build \
+			handle_makefile # also supports non-build operations
+
+		$if_build \
+			x_ $mkhelper; :
 
 		$if_build $if_not_dry_build $if_not_skip_build \
 			copy_elf; :
@@ -366,12 +373,8 @@ handle_makefile()
 	[ -f "$buildcfg" ] && \
 		x_ cp "$buildcfg" "$srcdir/$cfgname"
 
-	$if_build \
-		x_ $premake
 	$if_not_skip_build $if_not_dry_build \
 		run_make_command
-	$if_build \
-		x_ $mkhelper; :
 
 	_copy="$cfgname"
 	[ "$mode" = "savedefconfig" ] && \
