@@ -102,7 +102,7 @@ coreboot_pad_one_byte()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	pad_one_byte "$srcdir/build/coreboot.rom"
+	$if_not_skip_build pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 mkcorebootbin()
@@ -112,10 +112,10 @@ mkcorebootbin()
 
 	for y in "$defscan"/*; do
 		buildcfg="$y"
-		mkcorebootbin_real
+		$if_not_skip_build mkcorebootbin_real
 	done
 
-	mkcoreboottar
+	$if_not_skip_build mkcoreboottar
 }
 
 mkcorebootbin_real()
@@ -142,8 +142,8 @@ mkcorebootbin_real()
 		elfrom="${elfrom}_$displaymode"
 	elfrom="$elfrom/coreboot.rom"
 
-	x_ cp "$elfrom" "$tmprom"
-	unpad_one_byte "$tmprom"
+	$if_not_skip_build x_ cp "$elfrom" "$tmprom"
+	$if_not_skip_build unpad_one_byte "$tmprom"
 
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
 	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ] \
@@ -178,21 +178,21 @@ mkcorebootbin_real()
 		payload_grubsea="n"
 
 	[ -f "$cbfscfg" ] && \
-		dx_ add_cbfs_option "$cbfscfg"
+		$if_not_skip_build dx_ add_cbfs_option "$cbfscfg"
 
 	if grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
-			add_seabios
+			$if_not_skip_build add_seabios
 		fi
 		if [ "$payload_uboot" = "arm64" ]; then
 			pname="uboot"
-			add_uboot "" fallback/payload default \
-			    "$target" u-boot.elf
+			$if_not_skip_build add_uboot "" fallback/payload \
+			    default "$target" u-boot.elf
 		fi
 	else
 		pname="custom"
-		cprom
+		$if_not_skip_build cprom
 	fi; :
 }
 

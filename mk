@@ -88,7 +88,8 @@ eval "`newvar if_not_make_config if_not_build if_not_dry_build if_not_fetch`"
 # these variables will also be initialised in configure_target
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
-    premake release rev tree xarch xgcctree xlang cfgname defscan"
+    premake release rev tree xarch xgcctree xlang cfgname defscan \
+    if_not_skip_build"
 
 eval "`newvar buildcfg dest_dir elfdir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
@@ -234,6 +235,13 @@ configure_target()
 	# filename in srcdir when copying e.g. coreboot defconfig -> .config
 	[ -z "$cfgname" ] && cfgname="$cfgname_default" # e.g. $srcdir/.config
 
+	# if noconfig isn't set, there needs to be a config dir in xbmk.
+	# coreboot needs a .config or it will behave unpredictably. we will
+	# use the do_build macro to disable builds in this situation. this
+	# does not disable mkhelpers or dry builds.
+	[ ! -d "$target_dir/config" ] && [ "$noconfig" != "y" ] && \
+		if_not_skip_build=":" # skip make on e.g. ./mk -b coreboot default
+
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 1
 
@@ -300,7 +308,7 @@ handle_buildcfg()
 
 		handle_makefile # also supports non-build operations
 
-		$if_build $if_not_dry_build \
+		$if_build $if_not_dry_build $if_not_skip_build \
 			copy_elf; :
 	done; :
 }
@@ -359,7 +367,7 @@ handle_makefile()
 
 	$if_build \
 		x_ $premake
-	$if_not_dry_build \
+	$if_not_skip_build $if_not_dry_build \
 		run_make_command
 	$if_build \
 		x_ $mkhelper; :
@@ -368,7 +376,7 @@ handle_makefile()
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
 
-	$if_make_config \
+	$if_make_config $if_not_skip_build \
 		x_ cp "$srcdir/$_copy" "$buildcfg"; :
 }
 
