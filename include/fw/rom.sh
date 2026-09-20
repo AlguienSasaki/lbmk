@@ -51,7 +51,7 @@ mkpayload_grub()
 	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="$grub_modules" \
 	    --install-modules="$grub_install_modules" \
-	    "/boot/grub/grub_default.cfg=${srcdir}/.config" \
+	    "/boot/grub/grub_default.cfg=$grubdata/cfg/$tree.config" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 
@@ -156,7 +156,7 @@ mkcorebootbin_real()
 		grub_scan_disk="nvme ahci ata"
 	[ -z "$grubtree" ] && \
 		grubtree="default"
-	grubelf="elf/grub/$grubtree/$grubtree/payload/grub.elf"
+	grubelf="elf/grub/$grubtree/$grubtree/noconfig/grub.elf"
 
 	[ "$payload_memtest" != "y" ] && \
 		payload_memtest="n"

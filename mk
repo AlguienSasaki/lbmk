@@ -204,6 +204,10 @@ handle_target()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
+	# if using configs, we never build from the master target
+	[ "$noconfig" != "y" ] && [ "$tree" = "$target" ] && \
+		return 0
+
 	$if_build $if_not_fetch \
 		x_ $postmake; :
 }
@@ -247,6 +251,9 @@ configure_target()
 
 	delete_old_project_files
 	[ ! -f "CHANGELOG" ] && x_ fetch_trees; :
+
+	[ "$noconfig" != "y" ] && [ "$tree" = "$target" ] && \
+		return 1; :
 }
 
 try_target_config()
