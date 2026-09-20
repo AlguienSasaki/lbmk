@@ -83,7 +83,7 @@ eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
 if_make_config=":"
 if_build=":" # can be false even if make is true
 if_dry_build=":"
-eval "`newvar if_not_make_config if_not_build if_not_dry_build`"
+eval "`newvar if_not_make_config if_not_build if_not_dry_build if_not_fetch`"
 
 # these variables will also be initialised in configure_target
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
@@ -118,6 +118,7 @@ main()
 			if_not_dry_build=":"
 			;;
 		-f|-F) # download source code for a project
+			if_not_fetch=":"
 			if_dry_build=""
 			if_not_dry_build=":"
 			[ "$flag" = "-F" ] && \
@@ -198,9 +199,9 @@ handle_target()
 	target_dir="$configdir/$target"
 
 	configure_target "$target_dir" && \
-		x_ handle_buildcfg
+		$if_not_fetch x_ handle_buildcfg
 
-	$if_build \
+	$if_build $if_not_fetch \
 		x_ $postmake; :
 }
 
@@ -217,7 +218,7 @@ configure_target()
 	[ -z "$tree" ] && \
 		err "$project/$target: tree unset" configure_target "$@"
 
-	$if_build $if_not_dry_build \
+	$if_build $if_not_dry_build $if_not_fetch \
 		mk_dependencies -b $build_depend
 
 	srcdir="src/$project/$tree"
