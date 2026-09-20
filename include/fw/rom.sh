@@ -376,9 +376,6 @@ cbfs()
 		lzma="-c lzma -l 0x1110000 -e 0x1110000"
 	fi
 
-	if [ $# -lt 2 ]; then
-		echo TEST
-	fi
 	x_ "$cbfstool" "$1" $ccmd -f "$2" -n "$3" $lzma
 }
 
