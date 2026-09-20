@@ -363,8 +363,7 @@ check_xgcc()
 
 handle_makefile()
 {
-	check_makefile "$srcdir" && $if_not_dry_build \
-		x_ make -C "$srcdir" clean $cleanargs
+	clean_src
 
 	[ -f "$buildcfg" ] && \
 		x_ cp "$buildcfg" "$srcdir/$cfgname"
@@ -430,9 +429,16 @@ copy_elf()
 		    "cannot read '$listfile'" "copy_elf" "$@"; :
 	fi
 
-	check_makefile "$srcdir" || return 1
-	( x_ make -C "$srcdir" clean $cleanargs ) || \
-	    err "can't make-clean '$srcdir'" "copy_elf" "$@"; :
+	clean_src
+}
+
+clean_src()
+{
+	check_makefile "$srcdir" || return 0
+	$if_dry_build return 0
+
+	make -C "$srcdir" distclean $cleanargs || \
+	    x_ make -C "$srcdir" clean $cleanargs
 }
 
 x_ main "$_f" "$@"
