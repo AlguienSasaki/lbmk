@@ -241,9 +241,6 @@ configure_target()
 	# filename in srcdir when copying e.g. coreboot defconfig -> .config
 	[ -z "$cfgname" ] && cfgname="$cfgname_default" # e.g. $srcdir/.config
 
-	[ "$noconfig" = "y" ] && $if_make_config \
-		return 1
-
 	mdir="$xbmkpwd/config/submodule/$project/$tree"
 
 	[ -f "CHANGELOG" ] && return 0 # disable fetching on release archives
