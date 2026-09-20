@@ -198,6 +198,7 @@ handle_target()
 
 	target="${1##*/}"
 	target_dir="$configdir/$target"
+	defscan="$target_dir/config"
 
 	configure_target "$target_dir" && \
 		$if_not_fetch x_ handle_buildcfg
