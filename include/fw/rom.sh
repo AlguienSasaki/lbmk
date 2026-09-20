@@ -57,6 +57,9 @@ mkpayload_grub()
 
 corebootpremake()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 0
+
 	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
@@ -96,11 +99,17 @@ check_coreboot_util()
 
 coreboot_pad_one_byte()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 0
+
 	pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 mkcorebootbin()
 {
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 0
+
 	for y in "$defscan"/*; do
 		buildcfg="$y"
 		mkcorebootbin_real
@@ -374,6 +383,11 @@ cbfs()
 
 mkcoreboottar()
 {
+	if [ "$target" = "$tree" ] || [ "$XBMK_RELEASE" != "y" ] || \
+	    [ "$release" = "n" ]; then
+		return 0
+	fi
+
 	mkrom_tarball "bin/$target"
 	x_ "$mk" inject "bin/${relname}_${target}.tar.xz" nuke
 }
