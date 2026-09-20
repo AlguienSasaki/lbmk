@@ -226,9 +226,9 @@ add_seabios()
 	    [ "$displaymode" != "txtmode" ] && [ "$initmode" != "normal" ] && \
 		add_uboot_x86 # u-boot first, due to fixed cbfs offset
 
-	_seabioself="elf/seabios/default/default/$initmode/bios.bin.elf"
+	_seabioself="elf/seabios/default/build/$initmode/bios.bin.elf"
 	[ "$initmode" = "fspgop" ] && \
-	    _seabioself="elf/seabios/default/default/libgfxinit/bios.bin.elf"
+	    _seabioself="elf/seabios/default/build/libgfxinit/bios.bin.elf"
 
 	_seaname="fallback/payload"
 	[ "$payload_grubsea" = "y" ] && \
