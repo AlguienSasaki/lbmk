@@ -297,6 +297,9 @@ mk_dependencies()
 
 handle_buildcfg()
 {
+	[ "$noconfig" != "y" ] && [ "$tree" = "$target" ] && \
+		return 0
+
 	[ ! -d "$srcdir" ] || for y in "$defscan"/*
 	do
 		buildcfg="$y"
