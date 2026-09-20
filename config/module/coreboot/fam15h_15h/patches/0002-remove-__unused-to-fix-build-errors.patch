@@ -1,0 +1,340 @@
+From ee89092838a2adb6ab51f1ac8fe68b3e1bbf0464 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 20 Sep 2026 20:32:17 +0100
+Subject: [PATCH 2/7] remove __unused to fix build errors
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/arch/riscv/sbi.c                      |  2 +-
+ src/commonlib/include/commonlib/helpers.h |  4 ----
+ src/commonlib/region.c                    | 11 ++++++++---
+ src/drivers/spi/spi_sdcard.c              |  2 +-
+ src/ec/google/chromeec/ec.c               |  2 +-
+ src/soc/intel/broadwell/smi.c             |  4 ++--
+ src/soc/intel/fsp_broadwell_de/smi.c      |  2 +-
+ src/southbridge/intel/bd82x6x/me.c        |  8 ++++----
+ src/southbridge/intel/bd82x6x/me_8.x.c    | 10 +++++-----
+ src/southbridge/intel/ibexpeak/me.c       |  4 ++--
+ src/southbridge/intel/lynxpoint/me_9.x.c  | 10 +++++-----
+ src/southbridge/intel/lynxpoint/smi.c     |  4 ++--
+ util/sconfig/main.c                       |  2 +-
+ 13 files changed, 33 insertions(+), 32 deletions(-)
+
+diff --git a/src/arch/riscv/sbi.c b/src/arch/riscv/sbi.c
+index e0d7c60e5f..0e890e9f0d 100644
+--- a/src/arch/riscv/sbi.c
++++ b/src/arch/riscv/sbi.c
+@@ -74,7 +74,7 @@ void handle_sbi(trapframe *tf)
+ {
+ 	uintptr_t ret = 0;
+ 	uintptr_t arg0 = tf->gpr[10];
+-	__unused uintptr_t arg1 = tf->gpr[11];
++	uintptr_t arg1 = tf->gpr[11];
+ 	uintptr_t which = tf->gpr[17];
+ 
+ 	switch (which) {
+diff --git a/src/commonlib/include/commonlib/helpers.h b/src/commonlib/include/commonlib/helpers.h
+index ca3b3c58f9..e28b5c4c37 100644
+--- a/src/commonlib/include/commonlib/helpers.h
++++ b/src/commonlib/include/commonlib/helpers.h
+@@ -133,10 +133,6 @@
+ /* Calculate size of structure member. */
+ #define member_size(type, member)	(sizeof(((type *)0)->member))
+ 
+-#ifndef __unused
+-#define __unused __attribute__((unused))
+-#endif
+-
+ #ifndef alloca
+ #define alloca(x) __builtin_alloca(x)
+ #endif
+diff --git a/src/commonlib/region.c b/src/commonlib/region.c
+index 4a7e285747..65fc9eed1f 100644
+--- a/src/commonlib/region.c
++++ b/src/commonlib/region.c
+@@ -229,18 +229,23 @@ void xlate_region_device_rw_init(struct xlate_region_device *xdev,
+ }
+ 
+ static void *mdev_mmap(const struct region_device *rd, size_t offset,
+-			size_t size __unused)
++			size_t size)
+ {
+ 	const struct mem_region_device *mdev;
+ 
++	(void) size;
++
+ 	mdev = container_of(rd, __typeof__(*mdev), rdev);
+ 
+ 	return &mdev->base[offset];
+ }
+ 
+-static int mdev_munmap(const struct region_device *rd __unused,
+-			void *mapping __unused)
++static int mdev_munmap(const struct region_device *rd,
++			void *mapping)
+ {
++	(void) rd;
++	(void) mapping;
++
+ 	return 0;
+ }
+ 
+diff --git a/src/drivers/spi/spi_sdcard.c b/src/drivers/spi/spi_sdcard.c
+index c2f8da6ff4..6eae2b5857 100644
+--- a/src/drivers/spi/spi_sdcard.c
++++ b/src/drivers/spi/spi_sdcard.c
+@@ -223,7 +223,7 @@ static int lookup_response_length(int response_type)
+ static int response_resolve(int response_type, uint8_t *response,
+ 	uint32_t *out_register)
+ {
+-	__unused static const char * const sd_err[] = {
++	static const char * const sd_err[] = {
+ 		"Card is locked",
+ 		"wp erase skip | lock/unlok cmd failed",
+ 		"error",
+diff --git a/src/ec/google/chromeec/ec.c b/src/ec/google/chromeec/ec.c
+index a9921467f4..466090e27c 100644
+--- a/src/ec/google/chromeec/ec.c
++++ b/src/ec/google/chromeec/ec.c
+@@ -271,7 +271,7 @@ static int google_chromeec_clear_mask(uint8_t type, uint64_t mask)
+ 						EC_HOST_EVENT_CLEAR, &mask);
+ }
+ 
+-static int __unused google_chromeec_set_mask(uint8_t type, uint64_t mask)
++static int google_chromeec_set_mask(uint8_t type, uint64_t mask)
+ {
+ 	if (google_chromeec_is_uhepi_supported())
+ 		return google_chromeec_uhepi_cmd(type,
+diff --git a/src/soc/intel/broadwell/smi.c b/src/soc/intel/broadwell/smi.c
+index 17196da438..fb82ba70ba 100644
+--- a/src/soc/intel/broadwell/smi.c
++++ b/src/soc/intel/broadwell/smi.c
+@@ -66,7 +66,7 @@ void smm_southbridge_enable_smi(void)
+ 	enable_smi(APMC_EN | SLP_SMI_EN | GBL_SMI_EN | EOS);
+ }
+ 
+-static void __unused southbridge_trigger_smi(void)
++static void southbridge_trigger_smi(void)
+ {
+ 	/**
+ 	 * There are several methods of raising a controlled SMI# via
+@@ -86,7 +86,7 @@ static void __unused southbridge_trigger_smi(void)
+ 	outb(0x00, 0xb2);
+ }
+ 
+-static void __unused southbridge_clear_smi_status(void)
++static void southbridge_clear_smi_status(void)
+ {
+ 	/* Clear SMI status */
+ 	clear_smi_status();
+diff --git a/src/soc/intel/fsp_broadwell_de/smi.c b/src/soc/intel/fsp_broadwell_de/smi.c
+index 299ba531c5..eb102bd5bd 100644
+--- a/src/soc/intel/fsp_broadwell_de/smi.c
++++ b/src/soc/intel/fsp_broadwell_de/smi.c
+@@ -57,7 +57,7 @@ void smm_southbridge_enable_smi(void)
+ 	enable_smi(EOS | GBL_SMI_EN);
+ }
+ 
+-static void  __unused southbridge_trigger_smi(void)
++static void  southbridge_trigger_smi(void)
+ {
+ 	/*
+ 	 * There are several methods of raising a controlled SMI# via
+diff --git a/src/southbridge/intel/bd82x6x/me.c b/src/southbridge/intel/bd82x6x/me.c
+index 15f99cdf78..2cfcc2f6b0 100644
+--- a/src/southbridge/intel/bd82x6x/me.c
++++ b/src/southbridge/intel/bd82x6x/me.c
+@@ -43,7 +43,7 @@
+ #endif
+ 
+ /* Path that the BIOS should take based on ME state */
+-static const char *me_bios_path_values[] __unused = {
++static const char *me_bios_path_values[] = {
+ 	[ME_NORMAL_BIOS_PATH]		= "Normal",
+ 	[ME_S3WAKE_BIOS_PATH]		= "S3 Wake",
+ 	[ME_ERROR_BIOS_PATH]		= "Error",
+@@ -342,7 +342,7 @@ static inline int mei_sendrecv(struct mei_header *mei, struct mkhi_header *mkhi,
+ }
+ 
+ /* Send END OF POST message to the ME */
+-static int __unused mkhi_end_of_post(void)
++static int mkhi_end_of_post(void)
+ {
+ 	struct mkhi_header mkhi = {
+ 		.group_id	= MKHI_GROUP_ID_GEN,
+@@ -366,7 +366,7 @@ static int __unused mkhi_end_of_post(void)
+ }
+ 
+ /* Get ME firmware version */
+-static int __unused mkhi_get_fw_version(void)
++static int mkhi_get_fw_version(void)
+ {
+ 	struct me_fw_version version;
+ 	struct mkhi_header mkhi = {
+@@ -403,7 +403,7 @@ static inline void print_cap(const char *name, int state)
+ }
+ 
+ /* Get ME Firmware Capabilities */
+-static int __unused mkhi_get_fwcaps(void)
++static int mkhi_get_fwcaps(void)
+ {
+ 	u32 rule_id = 0;
+ 	struct me_fwcaps cap;
+diff --git a/src/southbridge/intel/bd82x6x/me_8.x.c b/src/southbridge/intel/bd82x6x/me_8.x.c
+index f13ced939a..c2e5d14764 100644
+--- a/src/southbridge/intel/bd82x6x/me_8.x.c
++++ b/src/southbridge/intel/bd82x6x/me_8.x.c
+@@ -44,7 +44,7 @@
+ #endif
+ 
+ /* Path that the BIOS should take based on ME state */
+-static const char *me_bios_path_values[] __unused  = {
++static const char *me_bios_path_values[]  = {
+ 	[ME_NORMAL_BIOS_PATH]		= "Normal",
+ 	[ME_S3WAKE_BIOS_PATH]		= "S3 Wake",
+ 	[ME_ERROR_BIOS_PATH]		= "Error",
+@@ -351,7 +351,7 @@ static inline void print_cap(const char *name, int state)
+ 	       name, state ? " en" : "dis");
+ }
+ 
+-static void __unused me_print_fw_version(mbp_fw_version_name *vers_name)
++static void me_print_fw_version(mbp_fw_version_name *vers_name)
+ {
+ 	if (!vers_name->major_version) {
+ 		printk(BIOS_ERR, "ME: mbp missing version report\n");
+@@ -389,7 +389,7 @@ static int mkhi_get_fwcaps(mefwcaps_sku *cap)
+ }
+ 
+ /* Get ME Firmware Capabilities */
+-static void __unused me_print_fwcaps(mbp_fw_caps *caps_section)
++static void me_print_fwcaps(mbp_fw_caps *caps_section)
+ {
+ 	mefwcaps_sku *cap = &caps_section->fw_capabilities;
+ 	if (!caps_section->available) {
+@@ -449,7 +449,7 @@ static int mkhi_global_reset(void)
+ #endif
+ 
+ /* Send END OF POST message to the ME */
+-static int __unused mkhi_end_of_post(void)
++static int mkhi_end_of_post(void)
+ {
+ 	struct mkhi_header mkhi = {
+ 		.group_id	= MKHI_GROUP_ID_GEN,
+@@ -780,7 +780,7 @@ static u32 host_to_me_words_room(void)
+  * mbp seems to be following its own flow, let's retrieve it in a dedicated
+  * function.
+  */
+-static int __unused intel_me_read_mbp(me_bios_payload *mbp_data)
++static int intel_me_read_mbp(me_bios_payload *mbp_data)
+ {
+ 	mbp_header mbp_hdr;
+ 	mbp_item_header	mbp_item_hdr;
+diff --git a/src/southbridge/intel/ibexpeak/me.c b/src/southbridge/intel/ibexpeak/me.c
+index 63dff6ace8..f73014c5ee 100644
+--- a/src/southbridge/intel/ibexpeak/me.c
++++ b/src/southbridge/intel/ibexpeak/me.c
+@@ -42,7 +42,7 @@
+ #endif
+ 
+ /* Path that the BIOS should take based on ME state */
+-static const char *me_bios_path_values[] __unused = {
++static const char *me_bios_path_values[] = {
+ 	[ME_NORMAL_BIOS_PATH]		= "Normal",
+ 	[ME_S3WAKE_BIOS_PATH]		= "S3 Wake",
+ 	[ME_ERROR_BIOS_PATH]		= "Error",
+@@ -342,7 +342,7 @@ static inline int mei_sendrecv(struct mei_header *mei, struct mkhi_header *mkhi,
+ }
+ 
+ /* Send END OF POST message to the ME */
+-static int __unused mkhi_end_of_post(void)
++static int mkhi_end_of_post(void)
+ {
+ 	struct mkhi_header mkhi = {
+ 		.group_id	= MKHI_GROUP_ID_GEN,
+diff --git a/src/southbridge/intel/lynxpoint/me_9.x.c b/src/southbridge/intel/lynxpoint/me_9.x.c
+index 2df03c9cdc..82b472790e 100644
+--- a/src/southbridge/intel/lynxpoint/me_9.x.c
++++ b/src/southbridge/intel/lynxpoint/me_9.x.c
+@@ -46,7 +46,7 @@
+ #endif
+ 
+ /* Path that the BIOS should take based on ME state */
+-static const char *me_bios_path_values[] __unused = {
++static const char *me_bios_path_values[] = {
+ 	[ME_NORMAL_BIOS_PATH]		= "Normal",
+ 	[ME_S3WAKE_BIOS_PATH]		= "S3 Wake",
+ 	[ME_ERROR_BIOS_PATH]		= "Error",
+@@ -464,7 +464,7 @@ void intel_me_mbp_clear(struct device *dev)
+ 	}
+ }
+ 
+-static void __unused me_print_fw_version(mbp_fw_version_name *vers_name)
++static void me_print_fw_version(mbp_fw_version_name *vers_name)
+ {
+ 	if (!vers_name) {
+ 		printk(BIOS_ERR, "ME: mbp missing version report\n");
+@@ -503,7 +503,7 @@ static int mkhi_get_fwcaps(mbp_mefwcaps *cap)
+ }
+ 
+ /* Get ME Firmware Capabilities */
+-static void __unused me_print_fwcaps(mbp_mefwcaps *cap)
++static void me_print_fwcaps(mbp_mefwcaps *cap)
+ {
+ 	mbp_mefwcaps local_caps;
+ 	if (!cap) {
+@@ -556,7 +556,7 @@ static int mkhi_global_reset(void)
+ #endif
+ 
+ /* Send END OF POST message to the ME */
+-static int __unused mkhi_end_of_post(void)
++static int mkhi_end_of_post(void)
+ {
+ 	struct mkhi_header mkhi = {
+ 		.group_id	= MKHI_GROUP_ID_GEN,
+@@ -938,7 +938,7 @@ struct mbp_payload {
+  * mbp seems to be following its own flow, let's retrieve it in a dedicated
+  * function.
+  */
+-static int __unused intel_me_read_mbp(me_bios_payload *mbp_data, struct device *dev)
++static int intel_me_read_mbp(me_bios_payload *mbp_data, struct device *dev)
+ {
+ 	mbp_header mbp_hdr;
+ 	u32 me2host_pending;
+diff --git a/src/southbridge/intel/lynxpoint/smi.c b/src/southbridge/intel/lynxpoint/smi.c
+index e5c390ef50..abf6ff2f3e 100644
+--- a/src/southbridge/intel/lynxpoint/smi.c
++++ b/src/southbridge/intel/lynxpoint/smi.c
+@@ -69,7 +69,7 @@ void smm_southbridge_enable_smi(void)
+ 	enable_smi(APMC_EN | SLP_SMI_EN | GBL_SMI_EN | EOS);
+ }
+ 
+-static void  __unused southbridge_trigger_smi(void)
++static void  southbridge_trigger_smi(void)
+ {
+ 	/**
+ 	 * There are several methods of raising a controlled SMI# via
+@@ -89,7 +89,7 @@ static void  __unused southbridge_trigger_smi(void)
+ 	outb(0x00, 0xb2);
+ }
+ 
+-static void __unused southbridge_clear_smi_status(void)
++static void southbridge_clear_smi_status(void)
+ {
+ 	/* Clear SMI status */
+ 	clear_smi_status();
+diff --git a/util/sconfig/main.c b/util/sconfig/main.c
+index 5c2333309b..625063eee7 100644
+--- a/util/sconfig/main.c
++++ b/util/sconfig/main.c
+@@ -987,7 +987,7 @@ static void emit_chips(FILE *fil)
+ 
+ 	emit_chip_headers(fil, chip);
+ 
+-	fprintf(fil, "\n#define STORAGE static __unused DEVTREE_CONST\n\n");
++	fprintf(fil, "\n#define STORAGE static DEVTREE_CONST\n\n");
+ 
+ 	for (; chip; chip = chip->next) {
+ 		if (!chip->chiph_exists)
+-- 
+2.47.3
+

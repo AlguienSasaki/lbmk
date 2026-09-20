@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# TODO: find out what imagemagick is needed for in 15h.org dependencies:
+# https://15h.org/index.php/Coreboot-15h
+# probably the coreboot splash screen option, which we don't use in lbmk
+
 pkg_add="apt-get install --no-install-recommends $reinstall"
 pkglist=" \
 acpica-tools autoconf autogen automake autopoint autotools-dev bc \

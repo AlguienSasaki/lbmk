@@ -1,0 +1,9 @@
+3rdparty/blobs
+3rdparty/vboot
+util/crossgcc/tarballs/acpica-unix2-20190703.tar.gz
+util/crossgcc/tarballs/binutils-2.32.tar.xz
+util/crossgcc/tarballs/gcc-8.3.0.tar.xz
+util/crossgcc/tarballs/gmp-6.1.2.tar.xz
+util/crossgcc/tarballs/mpc-1.1.0.tar.gz
+util/crossgcc/tarballs/mpfr-4.0.2.tar.xz
+util/crossgcc/tarballs/nasm-2.16.03.tar.bz2
