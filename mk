@@ -201,6 +201,9 @@ handle_target()
 	configure_target "$target_dir" && \
 		$if_not_fetch x_ handle_buildcfg
 
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 0
+
 	$if_build $if_not_fetch \
 		x_ $postmake; :
 }
@@ -215,6 +218,10 @@ configure_target()
 
 	# override target/tree specific variables from per-target config:
 	while [ -z "$rev" ] && try_target_config; do :; done
+
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 1
+
 	[ -z "$tree" ] && \
 		err "$project/$target: tree unset" configure_target "$@"
 
@@ -234,8 +241,6 @@ configure_target()
 	# filename in srcdir when copying e.g. coreboot defconfig -> .config
 	[ -z "$cfgname" ] && cfgname="$cfgname_default" # e.g. $srcdir/.config
 
-	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
-		return 1
 	[ "$noconfig" = "y" ] && $if_make_config \
 		return 1
 
