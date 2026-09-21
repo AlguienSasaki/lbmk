@@ -419,7 +419,8 @@ bootstrap()
 	x_ "$mk" -f coreboot "${cbdir##*/}"
 	x_ "$mk" -f me_cleaner
 
-	forx 'x_ \"$mk\" -b %s' bios_extract biosutilities uefitool libarchive
+	forx 'x_ \"$mk\" -b %s' biosutilities uefitool libarchive
+	x_ "$mk" -f bios_extract # C util not needed. only python scripts.
 
 	[ -d "${kbc1126_ec_dump%/*}" ] && \
 		x_ make -C "$cbdir/util/kbc1126"
