@@ -1,0 +1,293 @@
+From 10a5674e30c17caba1a5aafd174f15a97815c448 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 10:38:54 +0100
+Subject: [PATCH 1/1] never treat warnings as errors
+
+just nuke this option, surgically, from the build system
+of coreboot, so that we never again see build -Werrors
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile.inc                                                  | 3 ---
+ ...ig.asus_crosshair-v-formula-z_seabios_ucode_vga-oproms_8mb | 1 -
+ ...onfig.asus_f2a85-m-le_seabios_ucode_xhci-fw_vga-oproms_8mb | 1 -
+ ...nfig.asus_f2a85-m-pro_seabios_ucode_xhci-fw_vga-oproms_8mb | 1 -
+ .../config.asus_f2a85-m_seabios_ucode_xhci-fw_vga-oproms_8mb  | 1 -
+ configs/config.asus_kcma-d8_seabios_no-ucode_no-oproms_2mb    | 1 -
+ ...ig.asus_kcma-d8_seabios_ucode_ast2050-oprom_vga-oproms_2mb | 1 -
+ configs/config.asus_kcma-d8_seabios_ucode_no-oproms_2mb       | 1 -
+ configs/config.asus_kgpe-d16_seabios_no-ucode_no-oproms_2mb   | 1 -
+ ...g.asus_kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_2mb | 1 -
+ configs/config.asus_kgpe-d16_seabios_ucode_no-oproms_2mb      | 1 -
+ ...onfig.asus_raptor-kgpe-d16_seabios_no-ucode_no-oproms_16mb | 1 -
+ ...aptor-kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_16mb | 1 -
+ .../config.asus_raptor-kgpe-d16_seabios_ucode_no-oproms_16mb  | 1 -
+ ...nfig.asus_sabertooth-990fx-r2_seabios_ucode_vga-oproms_8mb | 1 -
+ ...fig.supermicro_h8dg6_seabios_ucode_matrox-oprom_vga-oproms | 1 -
+ ...fig.supermicro_h8qg6_seabios_ucode_matrox-oprom_vga-oproms | 1 -
+ ...fig.supermicro_h8scm_seabios_ucode_matrox-oprom_vga-oproms | 1 -
+ ...fig.supermicro_h8sgl_seabios_ucode_matrox-oprom_vga-oproms | 1 -
+ ...fig.supermicro_h8sml_seabios_ucode_matrox-oprom_vga-oproms | 1 -
+ src/Kconfig                                                   | 4 ----
+ 21 files changed, 26 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index e264c70aca..709199b6fd 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -560,9 +560,6 @@ ADAFLAGS_common += -gnatyN
+ 
+ LDFLAGS_common := --gc-sections -nostdlib --nmagic -static --emit-relocs
+ 
+-ifeq ($(CONFIG_WARNINGS_ARE_ERRORS),y)
+-CFLAGS_common += -Werror
+-endif
+ ifneq ($(GDB_DEBUG),)
+ CFLAGS_common += -Og
+ ADAFLAGS_common += -Og
+diff --git a/configs/config.asus_crosshair-v-formula-z_seabios_ucode_vga-oproms_8mb b/configs/config.asus_crosshair-v-formula-z_seabios_ucode_vga-oproms_8mb
+index ae70444310..4b510d4631 100644
+--- a/configs/config.asus_crosshair-v-formula-z_seabios_ucode_vga-oproms_8mb
++++ b/configs/config.asus_crosshair-v-formula-z_seabios_ucode_vga-oproms_8mb
+@@ -699,7 +699,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_f2a85-m-le_seabios_ucode_xhci-fw_vga-oproms_8mb b/configs/config.asus_f2a85-m-le_seabios_ucode_xhci-fw_vga-oproms_8mb
+index fe113d7383..2df7341a84 100644
+--- a/configs/config.asus_f2a85-m-le_seabios_ucode_xhci-fw_vga-oproms_8mb
++++ b/configs/config.asus_f2a85-m-le_seabios_ucode_xhci-fw_vga-oproms_8mb
+@@ -685,7 +685,6 @@ CONFIG_COMPRESS_SECONDARY_PAYLOAD=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_f2a85-m-pro_seabios_ucode_xhci-fw_vga-oproms_8mb b/configs/config.asus_f2a85-m-pro_seabios_ucode_xhci-fw_vga-oproms_8mb
+index 88b4fb5cd1..4919018c25 100644
+--- a/configs/config.asus_f2a85-m-pro_seabios_ucode_xhci-fw_vga-oproms_8mb
++++ b/configs/config.asus_f2a85-m-pro_seabios_ucode_xhci-fw_vga-oproms_8mb
+@@ -681,7 +681,6 @@ CONFIG_COMPRESS_SECONDARY_PAYLOAD=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_f2a85-m_seabios_ucode_xhci-fw_vga-oproms_8mb b/configs/config.asus_f2a85-m_seabios_ucode_xhci-fw_vga-oproms_8mb
+index 2dbfc8c338..03ccaea7d1 100644
+--- a/configs/config.asus_f2a85-m_seabios_ucode_xhci-fw_vga-oproms_8mb
++++ b/configs/config.asus_f2a85-m_seabios_ucode_xhci-fw_vga-oproms_8mb
+@@ -685,7 +685,6 @@ CONFIG_COMPRESS_SECONDARY_PAYLOAD=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kcma-d8_seabios_no-ucode_no-oproms_2mb b/configs/config.asus_kcma-d8_seabios_no-ucode_no-oproms_2mb
+index e4dbf7b6a1..59c158ec3f 100644
+--- a/configs/config.asus_kcma-d8_seabios_no-ucode_no-oproms_2mb
++++ b/configs/config.asus_kcma-d8_seabios_no-ucode_no-oproms_2mb
+@@ -691,7 +691,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kcma-d8_seabios_ucode_ast2050-oprom_vga-oproms_2mb b/configs/config.asus_kcma-d8_seabios_ucode_ast2050-oprom_vga-oproms_2mb
+index 38d1f5352a..70b8229aa5 100644
+--- a/configs/config.asus_kcma-d8_seabios_ucode_ast2050-oprom_vga-oproms_2mb
++++ b/configs/config.asus_kcma-d8_seabios_ucode_ast2050-oprom_vga-oproms_2mb
+@@ -705,7 +705,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kcma-d8_seabios_ucode_no-oproms_2mb b/configs/config.asus_kcma-d8_seabios_ucode_no-oproms_2mb
+index f34f45879b..d9d5824474 100644
+--- a/configs/config.asus_kcma-d8_seabios_ucode_no-oproms_2mb
++++ b/configs/config.asus_kcma-d8_seabios_ucode_no-oproms_2mb
+@@ -691,7 +691,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kgpe-d16_seabios_no-ucode_no-oproms_2mb b/configs/config.asus_kgpe-d16_seabios_no-ucode_no-oproms_2mb
+index 0d145b438f..5ece5f0804 100644
+--- a/configs/config.asus_kgpe-d16_seabios_no-ucode_no-oproms_2mb
++++ b/configs/config.asus_kgpe-d16_seabios_no-ucode_no-oproms_2mb
+@@ -700,7 +700,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_2mb b/configs/config.asus_kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_2mb
+index 9491e76b06..3e8adffbd4 100644
+--- a/configs/config.asus_kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_2mb
++++ b/configs/config.asus_kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_2mb
+@@ -714,7 +714,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_kgpe-d16_seabios_ucode_no-oproms_2mb b/configs/config.asus_kgpe-d16_seabios_ucode_no-oproms_2mb
+index ec964e9fda..7a99c8a518 100644
+--- a/configs/config.asus_kgpe-d16_seabios_ucode_no-oproms_2mb
++++ b/configs/config.asus_kgpe-d16_seabios_ucode_no-oproms_2mb
+@@ -700,7 +700,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_raptor-kgpe-d16_seabios_no-ucode_no-oproms_16mb b/configs/config.asus_raptor-kgpe-d16_seabios_no-ucode_no-oproms_16mb
+index 0f6d097494..b261cec983 100644
+--- a/configs/config.asus_raptor-kgpe-d16_seabios_no-ucode_no-oproms_16mb
++++ b/configs/config.asus_raptor-kgpe-d16_seabios_no-ucode_no-oproms_16mb
+@@ -712,7 +712,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_ENABLE_APIC_EXT_ID=y
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_raptor-kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_16mb b/configs/config.asus_raptor-kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_16mb
+index 020225ed86..7964d4b689 100644
+--- a/configs/config.asus_raptor-kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_16mb
++++ b/configs/config.asus_raptor-kgpe-d16_seabios_ucode_ast2050-oprom_vga-oproms_16mb
+@@ -727,7 +727,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_ENABLE_APIC_EXT_ID=y
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_raptor-kgpe-d16_seabios_ucode_no-oproms_16mb b/configs/config.asus_raptor-kgpe-d16_seabios_ucode_no-oproms_16mb
+index 5df35d3d88..e783143c40 100644
+--- a/configs/config.asus_raptor-kgpe-d16_seabios_ucode_no-oproms_16mb
++++ b/configs/config.asus_raptor-kgpe-d16_seabios_ucode_no-oproms_16mb
+@@ -713,7 +713,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_DEBUG_ADA_CODE is not set
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_ENABLE_APIC_EXT_ID=y
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.asus_sabertooth-990fx-r2_seabios_ucode_vga-oproms_8mb b/configs/config.asus_sabertooth-990fx-r2_seabios_ucode_vga-oproms_8mb
+index 6107e09b60..4af0624754 100644
+--- a/configs/config.asus_sabertooth-990fx-r2_seabios_ucode_vga-oproms_8mb
++++ b/configs/config.asus_sabertooth-990fx-r2_seabios_ucode_vga-oproms_8mb
+@@ -713,7 +713,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.supermicro_h8dg6_seabios_ucode_matrox-oprom_vga-oproms b/configs/config.supermicro_h8dg6_seabios_ucode_matrox-oprom_vga-oproms
+index 6a9111a262..df95beae91 100644
+--- a/configs/config.supermicro_h8dg6_seabios_ucode_matrox-oprom_vga-oproms
++++ b/configs/config.supermicro_h8dg6_seabios_ucode_matrox-oprom_vga-oproms
+@@ -685,7 +685,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.supermicro_h8qg6_seabios_ucode_matrox-oprom_vga-oproms b/configs/config.supermicro_h8qg6_seabios_ucode_matrox-oprom_vga-oproms
+index 5f7d093b27..e0f8558dae 100644
+--- a/configs/config.supermicro_h8qg6_seabios_ucode_matrox-oprom_vga-oproms
++++ b/configs/config.supermicro_h8qg6_seabios_ucode_matrox-oprom_vga-oproms
+@@ -685,7 +685,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.supermicro_h8scm_seabios_ucode_matrox-oprom_vga-oproms b/configs/config.supermicro_h8scm_seabios_ucode_matrox-oprom_vga-oproms
+index 349f24d43e..15ac6290bf 100644
+--- a/configs/config.supermicro_h8scm_seabios_ucode_matrox-oprom_vga-oproms
++++ b/configs/config.supermicro_h8scm_seabios_ucode_matrox-oprom_vga-oproms
+@@ -676,7 +676,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.supermicro_h8sgl_seabios_ucode_matrox-oprom_vga-oproms b/configs/config.supermicro_h8sgl_seabios_ucode_matrox-oprom_vga-oproms
+index 79e249f0f1..33e4c8faed 100644
+--- a/configs/config.supermicro_h8sgl_seabios_ucode_matrox-oprom_vga-oproms
++++ b/configs/config.supermicro_h8sgl_seabios_ucode_matrox-oprom_vga-oproms
+@@ -685,7 +685,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/configs/config.supermicro_h8sml_seabios_ucode_matrox-oprom_vga-oproms b/configs/config.supermicro_h8sml_seabios_ucode_matrox-oprom_vga-oproms
+index 97a7a8d395..5ab2ba9024 100644
+--- a/configs/config.supermicro_h8sml_seabios_ucode_matrox-oprom_vga-oproms
++++ b/configs/config.supermicro_h8sml_seabios_ucode_matrox-oprom_vga-oproms
+@@ -685,7 +685,6 @@ CONFIG_HAVE_DEBUG_SMBUS=y
+ # CONFIG_HAVE_EM100_SUPPORT is not set
+ CONFIG_NO_EDID_FILL_FB=y
+ # CONFIG_ENABLE_APIC_EXT_ID is not set
+-CONFIG_WARNINGS_ARE_ERRORS=y
+ # CONFIG_POWER_BUTTON_DEFAULT_ENABLE is not set
+ # CONFIG_POWER_BUTTON_DEFAULT_DISABLE is not set
+ # CONFIG_POWER_BUTTON_FORCE_ENABLE is not set
+diff --git a/src/Kconfig b/src/Kconfig
+index 4cb530318a..c4ac0b8a1e 100644
+--- a/src/Kconfig
++++ b/src/Kconfig
+@@ -1201,10 +1201,6 @@ config ENABLE_APIC_EXT_ID
+ 	bool
+ 	default n
+ 
+-config WARNINGS_ARE_ERRORS
+-	bool
+-	default y
+-
+ # The four POWER_BUTTON_DEFAULT_ENABLE, POWER_BUTTON_DEFAULT_DISABLE,
+ # POWER_BUTTON_FORCE_ENABLE and POWER_BUTTON_FORCE_DISABLE options are
+ # mutually exclusive. One of these options must be selected in the
+-- 
+2.47.3
+
