@@ -1,7 +1,8 @@
-From 24856e5e383b1b9aa078b879064b8c2b99f4494c Mon Sep 17 00:00:00 2001
+From 514f637be0f766d077a09a734832c0c9bfb376e1 Mon Sep 17 00:00:00 2001
 From: Todd Baker <todd_baker@student.uml.edu>
 Date: Thu, 12 Mar 2026 13:12:04 -0400
-Subject: [PATCH] mb/dell: Add OptiPlex 3040 Micro port (upstream-compatible)
+Subject: [PATCH 50/50] mb/dell: Add OptiPlex 3040 Micro port
+ (upstream-compatible)
 
 Based on the OptiPlex 3050 Micro (same Skylake H110 PCH-H platform).
 Key differences from 3050:
@@ -58,7 +59,7 @@ Signed-off-by: Todd Baker <todd_baker@student.uml.edu>
 
 diff --git a/src/mainboard/dell/optiplex_3040/Kconfig b/src/mainboard/dell/optiplex_3040/Kconfig
 new file mode 100644
-index 0000000000..eab8e7d814
+index 000000000000..eab8e7d814de
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Kconfig
 @@ -0,0 +1,37 @@
@@ -101,7 +102,7 @@ index 0000000000..eab8e7d814
 +endif
 diff --git a/src/mainboard/dell/optiplex_3040/Kconfig.name b/src/mainboard/dell/optiplex_3040/Kconfig.name
 new file mode 100644
-index 0000000000..e06da5010a
+index 000000000000..e06da5010ad3
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Kconfig.name
 @@ -0,0 +1,4 @@
@@ -111,7 +112,7 @@ index 0000000000..e06da5010a
 +	bool "Dell OptiPlex 3040 Micro"
 diff --git a/src/mainboard/dell/optiplex_3040/Makefile.mk b/src/mainboard/dell/optiplex_3040/Makefile.mk
 new file mode 100644
-index 0000000000..0bd72fe691
+index 000000000000..0bd72fe691a4
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Makefile.mk
 @@ -0,0 +1,12 @@
@@ -129,7 +130,7 @@ index 0000000000..0bd72fe691
 +ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
 diff --git a/src/mainboard/dell/optiplex_3040/acpi/ec.asl b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
 new file mode 100644
-index 0000000000..16990d45f4
+index 000000000000..16990d45f428
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
 @@ -0,0 +1,3 @@
@@ -138,7 +139,7 @@ index 0000000000..16990d45f4
 +/* Please update the license if adding licensable material. */
 diff --git a/src/mainboard/dell/optiplex_3040/acpi/superio.asl b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
 new file mode 100644
-index 0000000000..16990d45f4
+index 000000000000..16990d45f428
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
 @@ -0,0 +1,3 @@
@@ -147,7 +148,7 @@ index 0000000000..16990d45f4
 +/* Please update the license if adding licensable material. */
 diff --git a/src/mainboard/dell/optiplex_3040/board_info.txt b/src/mainboard/dell/optiplex_3040/board_info.txt
 new file mode 100644
-index 0000000000..e43a925ec3
+index 000000000000..e43a925ec3c8
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/board_info.txt
 @@ -0,0 +1,7 @@
@@ -160,7 +161,7 @@ index 0000000000..e43a925ec3
 +Release year: 2016
 diff --git a/src/mainboard/dell/optiplex_3040/bootblock.c b/src/mainboard/dell/optiplex_3040/bootblock.c
 new file mode 100644
-index 0000000000..10689c42a1
+index 000000000000..10689c42a1a9
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/bootblock.c
 @@ -0,0 +1,107 @@
@@ -273,7 +274,7 @@ index 0000000000..10689c42a1
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/cmos.default b/src/mainboard/dell/optiplex_3040/cmos.default
 new file mode 100644
-index 0000000000..79961f43d8
+index 000000000000..79961f43d82c
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/cmos.default
 @@ -0,0 +1,5 @@
@@ -284,7 +285,7 @@ index 0000000000..79961f43d8
 +power_on_after_fail=Disable
 diff --git a/src/mainboard/dell/optiplex_3040/cmos.layout b/src/mainboard/dell/optiplex_3040/cmos.layout
 new file mode 100644
-index 0000000000..54a5147b7d
+index 000000000000..54a5147b7d50
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/cmos.layout
 @@ -0,0 +1,54 @@
@@ -347,39 +348,40 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..b503dfc20277775982256a4bdc9108c2ad96f856
 GIT binary patch
 literal 4300
-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
+zcmeHJU2GIp6h1SvzjtP~vs09^U_BzjZlPs%m0GmOY<DRwEwT%>uF-@o*+oezEo~tM
+ze;7keND#9RYS0kU#1~Uvni!wdNMej6_=85_(Y}}{(ZmFdFTi^4%(PpVU{|7163*n@
+z^D}3@x%b>Ncg~9bjy~Mc^F(j5XA`<q00TbPF41^Bb#!mru``|QOYZFG-InUXui;KO
+zsa?AWP!NPAO59i%@7_CB9E@&{VNXXd_VWjjyAK!%Ot<0I&Q8q5<7+U}v7sxywHu?G
+zIy3PY*{KcbOx!jT+)R_1u+96)q@V=io{piR(J?IU9oRKkEL=akg*>UD;e#W4o_=Nw
+zqp27s48v$n81XpTQ^wTL$Z!iL2M2LGj~T`7#nIx(fnuRWWhw(W4FQh;g5ZTZ3k0~D
+zfV>GA6VfIa2rE3W$OFSB6inzd;Q@p(vwA)ni0cH=1F&-b9VCO`B@zKJfty4KAb8-L
+zJZM_r&?0VUz7+txAMU3C1SFjZiA^|fN4;W4&0Gio&?_L|M*&4r>?lVetW$OrKoG#k
+z@A(Y@`Kui)<cg-jw2LKkn@BY0MIkxn2<No<O0~Dzc4Di&)pjLHqUByW<k){2LxKUj
+zgN?9Rio%#A!i!QHEccv&KoDVdP=iN^v&3h;489}&p7<x?OT<@+{XPa^;-$p*5w9g)
+zPn;s&O8hwS0I_dBTq%nd`0ck_f-A$01kD4l#=tu1`cJz4;IDiqXnS2LyV7>nFqF%F
+zKU^z+*#PBoU<03lNeGk+A?+e{xw6-ml9X}nK9amda;{x22lHem==wKC$wp>pc_BMg
+zF5l{!QV(0`OOgWZ6CSYqZJu@zKRK>SFb*tCADK(KVkdgmTyzS25y$Yi&pNB+e|aau
+zkAkH?i|70d&iOA3N9+He8qb-wz%`rKuuHS{ZFxHb^E0rl3(g0v63*PE1@g<CJB>Hz
+zx%(-qNijeNg97yLhpzeWnbQLxcG2J5339x)D^1T-h+H1~pI>nyLLL7=|AL|ssDsh!
+z0Bec}Aodza4>KHK`Y2;BFnpWo?=$u>!ylObJ7a>3t7Lt>%u+J$k@e?f_Oguc%KAq#
+z`%K1PWW6l2pn_`^J*luB1@|fX5rrLB@I6KURAFB!_?x2pRTft9K~?Wo*$x#Cs`@dN
+zy{_U1s{Vz_E~t1_)$2lRNeDNF^lXSd8B&{cuO-e1RybrgI)M>|&Yqm8*z&TVk@VKB
+zqQBhro6>rinl8Rt1*M$0Fv4UVLOiz&qZairoElpXi(uze;m7&H2!$nJCSj$~aJ1Dy
+zXlOkw+5H*qxfeVfp`CiB8?VA>f)iOVOk=p-L7+L%gIrg}y^)#_#xWbwOl=;5Q1bo_
+zgm>1C&txMj&D@E~9E6hH^C_lpx`sJ)Z8VKt(+Sf&T|w|U9gx!RttFGY@9Ce)LZi`H
+za`%E~vSj}|X)3kk;rW)*WIobp8tCo?Wztik=9MyO`D<B4wB4E<p1zk5n)p+8J$OrY
+zpQ229Cu*pNw_=m$vJ=aV%$tkn5G1f$W6ESL2u726CO=Uy8nRA5$ZJxfVj{ZPnzRvA
+z2f>Rqtm0w>CNsF$P>fV%6(#x}?M$}W^}vh###JpoWHsz-Yc_MumA#PYEaC`sjQJM+
+zE@CF+EvV0HT9`j&?}bF?DUs6Knc0~c*jpTYbl}<It!Wg~ndY&f=Kjq|zM=(b^-JK}
+zqOF45)Rr^UssHmM%T1N5NUWkYcfgTOnrSz6?vFtR3b00a1AdfRrU8!5(Ji6=0mD|k
+A9{>OV
 
 literal 0
 HcmV?d00001
 
 diff --git a/src/mainboard/dell/optiplex_3040/devicetree.cb b/src/mainboard/dell/optiplex_3040/devicetree.cb
 new file mode 100644
-index 0000000000..f1c919fbc7
+index 000000000000..f1c919fbc799
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/devicetree.cb
 @@ -0,0 +1,100 @@
@@ -485,7 +487,7 @@ index 0000000000..f1c919fbc7
 +end
 diff --git a/src/mainboard/dell/optiplex_3040/dsdt.asl b/src/mainboard/dell/optiplex_3040/dsdt.asl
 new file mode 100644
-index 0000000000..9762f6ff74
+index 000000000000..9762f6ff74c6
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/dsdt.asl
 @@ -0,0 +1,27 @@
@@ -518,7 +520,7 @@ index 0000000000..9762f6ff74
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/gma-mainboard.ads b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
 new file mode 100644
-index 0000000000..cb4c22f285
+index 000000000000..cb4c22f2859e
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
 @@ -0,0 +1,19 @@
@@ -543,7 +545,7 @@ index 0000000000..cb4c22f285
 +end GMA.Mainboard;
 diff --git a/src/mainboard/dell/optiplex_3040/hda_verb.c b/src/mainboard/dell/optiplex_3040/hda_verb.c
 new file mode 100644
-index 0000000000..5a1db019c7
+index 000000000000..5a1db019c7cc
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/hda_verb.c
 @@ -0,0 +1,90 @@
@@ -639,7 +641,7 @@ index 0000000000..5a1db019c7
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/dell/optiplex_3040/include/early_gpio.h b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
 new file mode 100644
-index 0000000000..fdf1a64c7c
+index 000000000000..fdf1a64c7cf6
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
 @@ -0,0 +1,11 @@
@@ -656,7 +658,7 @@ index 0000000000..fdf1a64c7c
 +#endif
 diff --git a/src/mainboard/dell/optiplex_3040/include/gpio.h b/src/mainboard/dell/optiplex_3040/include/gpio.h
 new file mode 100644
-index 0000000000..29da4b11d4
+index 000000000000..29da4b11d4b6
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/include/gpio.h
 @@ -0,0 +1,241 @@
@@ -903,7 +905,7 @@ index 0000000000..29da4b11d4
 +#endif
 diff --git a/src/mainboard/dell/optiplex_3040/ramstage.c b/src/mainboard/dell/optiplex_3040/ramstage.c
 new file mode 100644
-index 0000000000..c391e4ac6d
+index 000000000000..c391e4ac6d45
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/ramstage.c
 @@ -0,0 +1,512 @@
@@ -1421,7 +1423,7 @@ index 0000000000..c391e4ac6d
 +BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
 diff --git a/src/mainboard/dell/optiplex_3040/romstage.c b/src/mainboard/dell/optiplex_3040/romstage.c
 new file mode 100644
-index 0000000000..c2ce2369a4
+index 000000000000..c2ce2369a4dc
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/romstage.c
 @@ -0,0 +1,22 @@
@@ -1449,7 +1451,7 @@ index 0000000000..c2ce2369a4
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.c b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
 new file mode 100644
-index 0000000000..1df5026531
+index 000000000000..1df5026531c6
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
 @@ -0,0 +1,54 @@
@@ -1509,7 +1511,7 @@ index 0000000000..1df5026531
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.h b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
 new file mode 100644
-index 0000000000..9d262d5787
+index 000000000000..9d262d578764
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
 @@ -0,0 +1,10 @@
@@ -1524,5 +1526,5 @@ index 0000000000..9d262d5787
 +
 +#endif
 -- 
-2.53.0
+2.47.3
 

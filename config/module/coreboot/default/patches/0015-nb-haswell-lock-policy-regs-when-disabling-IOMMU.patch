@@ -1,7 +1,7 @@
-From 18216387e5c40ec3c80c63ec25e9b0c55a009cff Mon Sep 17 00:00:00 2001
+From ff87dbf28f565a6d227e98d2c71e99e47a34f261 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 4 May 2024 02:00:53 +0100
-Subject: [PATCH 15/48] nb/haswell: lock policy regs when disabling IOMMU
+Subject: [PATCH 15/50] nb/haswell: lock policy regs when disabling IOMMU
 
 Angel Pons told me I should do it. See comments here:
 https://review.coreboot.org/c/coreboot/+/81016
@@ -22,10 +22,10 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 7 insertions(+), 8 deletions(-)
 
 diff --git a/src/northbridge/intel/haswell/early_init.c b/src/northbridge/intel/haswell/early_init.c
-index 1a7e0b1076..e9506ee830 100644
+index 5f07fa0b1731..e0007f72eea2 100644
 --- a/src/northbridge/intel/haswell/early_init.c
 +++ b/src/northbridge/intel/haswell/early_init.c
-@@ -160,17 +160,16 @@ static void haswell_setup_iommu(void)
+@@ -83,17 +83,16 @@ static void northbridge_setup_iommu(void)
  	const u32 capid0_a = pci_read_config32(HOST_BRIDGE, CAPID0_A);
  	u8 enable_iommu = get_uint_option("iommu", 1);
  
@@ -48,8 +48,8 @@ index 1a7e0b1076..e9506ee830 100644
 +		mchbar_write32(VTVC0BAR + 0, VTVC0_BASE_ADDRESS | 1);
 +	}
  
- 	/* Set L3HIT2PEND_DIS, lock GFXVTBAR policy config registers */
- 	u32 reg32;
+ 	if (cpu_is_haswell()) {
+ 		/*
 -- 
 2.47.3
 

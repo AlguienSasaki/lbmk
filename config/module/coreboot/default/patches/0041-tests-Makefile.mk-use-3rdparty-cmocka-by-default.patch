@@ -1,7 +1,7 @@
-From 5b7bbc6fcc6f737f259906f1919c1e28b6628a7e Mon Sep 17 00:00:00 2001
+From 5b01b298e9743a53617543ff5a32ed3b7f31db2e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 20 Dec 2025 22:36:18 +0100
-Subject: [PATCH 41/48] tests/Makefile.mk: use 3rdparty/cmocka by default
+Subject: [PATCH 41/50] tests/Makefile.mk: use 3rdparty/cmocka by default
 
 (tests)
 
@@ -11,7 +11,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/tests/Makefile.mk b/tests/Makefile.mk
-index 9e3f86a138..a5a518cd35 100644
+index ab302634ecaa..7e6f260b27c5 100644
 --- a/tests/Makefile.mk
 +++ b/tests/Makefile.mk
 @@ -25,7 +25,9 @@ TEST_LDFLAGS += --coverage
@@ -23,8 +23,8 @@ index 9e3f86a138..a5a518cd35 100644
 +#             if you wish; upstream sets this to 1 by default, but we do 0
 +USE_SYSTEM_CMOCKA ?= 0
  ifeq ($(USE_SYSTEM_CMOCKA),1)
- ifeq ($(shell $(HOSTPKG_CONFIG) --exists cmocka || echo 1),1)
- $(warning No system cmocka, build from 3rdparty instead...)
+ # Only probe for Cmocka (and possibly warn that it will be built from 3rdparty)
+ # when the requested goals actually build or run unit tests. Otherwise every
 -- 
 2.47.3
 

@@ -1,7 +1,7 @@
-From 6a4a79d82df982c2fca859101040e407623f519c Mon Sep 17 00:00:00 2001
+From f377d9ef7ae5118fdde83bafe327a876b728732e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Oct 2025 04:47:06 +0100
-Subject: [PATCH 37/48] soc/alderlake: disable stack overflow debug option
+Subject: [PATCH 37/50] soc/alderlake: disable stack overflow debug option
 
 same as on other boards. based on this commit:
 
@@ -22,10 +22,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 9 insertions(+)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index 3402c1e3d5..06b9199e84 100644
+index 2535454862ee..6236def814fe 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
-@@ -331,6 +331,15 @@ config SOC_INTEL_UFS_CLK_FREQ_HZ
+@@ -336,6 +336,15 @@ config SOC_INTEL_UFS_CLK_FREQ_HZ
  	int
  	default 19200000
  

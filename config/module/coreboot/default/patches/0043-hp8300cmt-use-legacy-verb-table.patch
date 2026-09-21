@@ -1,7 +1,7 @@
-From 962bfe1366598145a93cf6a7ed0f78393e5e9ff7 Mon Sep 17 00:00:00 2001
+From 7db4edf21c389134eeb1d573a50119468d585983 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 23 Dec 2025 18:46:45 +0100
-Subject: [PATCH 43/48] hp8300cmt: use legacy verb table
+Subject: [PATCH 43/50] hp8300cmt: use legacy verb table
 
 same as for the 780 optiplex patch
 
@@ -14,7 +14,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
-index d2bfd35dc4..30be7fb3fe 100644
+index d2bfd35dc48e..30be7fb3fea9 100644
 --- a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
 @@ -2,6 +2,7 @@ if BOARD_HP_COMPAQ_ELITE_8300_CMT

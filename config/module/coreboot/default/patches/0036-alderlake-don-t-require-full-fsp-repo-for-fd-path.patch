@@ -1,7 +1,7 @@
-From abd26006eff71c9570bc90fdbce3a76f8f559cea Mon Sep 17 00:00:00 2001
+From 04de5bd11352af80bae4d365d6fc476cd4e2a439 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 4 Oct 2025 22:20:11 +0100
-Subject: [PATCH 36/48] alderlake: don't require full fsp repo for fd path
+Subject: [PATCH 36/50] alderlake: don't require full fsp repo for fd path
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,10 +9,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index a2e7cff6f6..3402c1e3d5 100644
+index 550da178d7b8..2535454862ee 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
-@@ -430,7 +430,14 @@ config FSP_HEADER_PATH
+@@ -435,7 +435,14 @@ config FSP_HEADER_PATH
  
  config FSP_FD_PATH
  	string

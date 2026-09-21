@@ -1,7 +1,7 @@
-From 3ebe9e03ec563e5adb43337340fe973aa66a984a Mon Sep 17 00:00:00 2001
+From 9431db28b0631106b8ea1de6fcfe915938ca1724 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 12 May 2023 19:55:15 -0600
-Subject: [PATCH 07/48] Remove warning for coreboot images built without a
+Subject: [PATCH 07/50] Remove warning for coreboot images built without a
  payload
 
 I added this in upstream to prevent people from accidentally flashing
@@ -13,7 +13,7 @@ up. This has caused confusion and concern so just patch it out.
  1 file changed, 1 insertion(+), 12 deletions(-)
 
 diff --git a/payloads/Makefile.mk b/payloads/Makefile.mk
-index 5f988dac1b..516133880f 100644
+index 5f988dac1bbb..516133880f9b 100644
 --- a/payloads/Makefile.mk
 +++ b/payloads/Makefile.mk
 @@ -50,16 +50,5 @@ distclean-payloads:

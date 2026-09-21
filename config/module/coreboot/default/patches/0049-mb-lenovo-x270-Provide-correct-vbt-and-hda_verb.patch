@@ -1,7 +1,7 @@
-From 9d39437b9447ab6e6164440bddf459111bd4903f Mon Sep 17 00:00:00 2001
+From 44a66dba9b69cfff2f70477bd6078dca8859ba3e Mon Sep 17 00:00:00 2001
 From: Kat Inskip <kat@inskip.me>
 Date: Sat, 21 Feb 2026 19:48:17 +0000
-Subject: [PATCH] mb/lenovo/x270: Provide correct vbt and hda_verb
+Subject: [PATCH 49/50] mb/lenovo/x270: Provide correct vbt and hda_verb
 
 ---
  .../sklkbl_thinkpad/variants/x270/data.vbt    | Bin 6144 -> 4449 bytes
@@ -12,40 +12,37 @@ diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/data.vbt b/src/m
 index bfb312850e0ab4ea834c535df35edb45834ed248..c6561a9c57e4e600bc0adb5f6679f2f5d6b6c640 100644
 GIT binary patch
 delta 1043
-zcmZoLc&Ic%f;Calfx%$%L?+>h1_E+-8N?V21pmEaU`SzPl;klqFfjDYD@o1K2+~vt
-z_MVtzqhMg55a6s}XrgCqqM%@?Z)B)%WMF8jpkQcVWoTw)YB_PgJ|n}#S5l0olUW%J
-zmH8bQ7#aQ=F)(m2Ft9K%I51!UfyozHMC%0@m~0uDSQr@8IT+X^kQH$;FffDp4h#xl
-z8bl~CurORpU|?Wi|HJ{}Gcd3-Ft9R!tPx;TV1x)UFbFU>fRs5fu(NPN#30UK;9yW-
-zRA7P#ft0y`jTR8#5QD0NNii@mDnP7fU|>*S5CDk_2ry`1Q#Lt(Nn)}ATY5b+BLl;q
-zDh37ys6!YT7(sx6fsfIEA&*mz!Jk=!p@x}>p^e#sL5t-Cg8-)jgE6N7gBzy+LnNmF
-z!(~=3hP$j>49{7)7(TLcG5lubVqj(CV&G@vVvuCxVo+w|V$fydVlZdpVsK>RV(@0;
-zVhCm9Vu)wsV#s9k=3-zgW%%=-sR0x!3=9knjO-wHGc*W7Xa)fmhCWS(hB;92IZ$!V
-z4=iAHTu_?(1IuJZHeH|p|Jm6Y{{25E!SMe-hb_othYu_u&oR0{ReC^aA27|#8~~;n
-z7(yWG7$Ttj|Nl2@GH+mFWY~O*Rg<|MY#YO>RjXDpFlbI;V0PwG$m9~L=HhDQQdrF;
-zw3mzPIG4g(E}{QiT%6nr`rJZ}++5z=3WeN4&D>nQ+zOkyg^qG_o#$5g$}Pms!zIY0
-zV9q1t$-@=Qqfp5s)Xl>+l}BMWkI-2juIoGse|d!XdATHc73_J10(rTjc@?x9d4(qP
-za?RycILs?_m6z*2uL3KdkT@TgBA<dgpHL(pS27>3mJn+L(*wrIjyy_}&vV92KFDLv
-zD6u(}E1HG>1Or3FDlZ6mhk<$WLq5C7@A-r#%kwKri!pS#F)%QAGH@}3G6XQBFz7H&
-kV|c;Lpl851c_M$+Bmr(DBv}6+5)=${r;WiWnGIq+0Ot0jSpWb4
+zcmcgq-Afcv6hC)nXFtw-?CgzfEwH0L<XY;iA6b&MqFA;<TNWfjpGpWJ1oe;wyAeeY
+zMcY(Q_7B)gu#XWD5&2>gQ9&f-Qz1ka^prZC-JMFP=YHJZ{oQls$2s?7a?V`MjktC+
+zmIBAkE35L3T{R08;KY{a0fvRBG?I>!>>E2ha<Xn;f(Fw0W827aDAP^J*2b1rqGVGu
+z4=35iOQ$2bxub1s{!x>F{QO$c=4v8Y8%=?LrDlLIKmZ^Gf5CQN1XgElP&$RejtyZ5
+z##fpUKrO{7px=4oVy};I82ZMAiwFT|EMc$(iBg6qn;Wt%1))HsoGWjGZ6rwfW9y;f
+z+P1?LzVFv3072#UoFOjAux+UOm(9&6an}i+$f~@7#c_7}8xbIi0I-AuW05M@qt?NB
+zRe{Uu7N`$QfgK@eiP+G~9Av)K5N4SlnO~Vdm|74a%B*D8G8>rf%r0h{d4PGCIT}nO
+z1kb>tr{s#a!pI3<V`T+90M`?coAC1!em=6m55PcQ^@V_29c<|Lyif?1z2|Z8yl`i+
+za*7>%9?|1Fclp|1QdQ0P@qX6gB^>l)&nqO<`-*_VTP>kxOWk0S0g$)_YB$m-%5#X9
+zknW*;i1-ZYGfEFJqEnMDyL3$JbV`>Ob-boiL6=W;oYCpKE<*;!3~D!IpMe7goi*fD
+z18*Djz>w1hzA<RYkWmvWP1<3~y(SKswDE!|T@&w`^u&~}Onh&WX2~@cR$H{wl7ki=
+zx6FE}<&+P??J{cInaCmcvC%H#g%KPIM5p**le^3FJ5b#@YrFf!lJ5Fw^|}hU(#yx|
+p1AZCEz%XnQci@u>jgD~h(eazMzGB3(Uim8EziUhBPY#yb{{-gtq*(v}
 
 delta 808
-zcmaE;)L<|{f|X04kilTGBa`q%0|BLr3}Oto`2W3PU`SzPl;klqFf;bdD@o1K2+~vt
-z_V&^DcA6MxqiANV5a6s}XrgCqqM%@4sBdVdZ)9L-si0tBY-MU@WoSNem;S_eVvL59
-zSs4xM*_{{|8U7kE@Nlqra5!jiC`fP!xUe{=uqcSI2n09?BseG-C<yqlIOwn_$Z!Z4
-zC<sJ22t)`t2rw|2GBU9+FsN}b9IIe}0tE(x>s$;B%pfk41A_vHW&l$x4A&AE92giP
-zgh70R>+B2+tPBhcP7Le<j0%ikbs*IaP-R(AWgH9)EFejC1x5uX5Cd!&m?0p*Q3Fyn
-zS&>OpPyu8rNLWCCp${g?0TZ2U$Rsz}l1X5)C6gG8t_NAi%*ep-r;34r0pbFX0T9f`
-zXuz<9Lk_}$k_pTw7~D7%7&18o7-~2K82UK`7&uwE7=&557-U(w7}Qz07z|mt7_3>j
-z7+hJo82nke7$RA@7?N4J7;;&;7|L0>7#dl*7`j=x7^bqaaWTwi<zm?UnRx>frvL*3
-zg8+j7gW=>2Y~q^_vvD!kgT2kLYSpS$3=Eo67?>+L73OmaZRF(I&8hH^Q|L1%*I!Nr
-zWiBC8E-rg6g;Xw~axSh$E`{Y>LOZ#*4s$8I<P!SL#l_04pv^60%gyD^t&qztRL{-T
-z$*r)STj(G+*J*BrkK97cJY2jy3dTG_t~^}+JPM^eLhU?U6L}PrxAO>{<l(x^qwteQ
-zh?|#7lvlx;SIC!_E1XxMmRG2smun{P<b19U?gn-XmIgsS1{-FB$p^Tkh5XGL78F=0
-zIT+cjV-T4mz`!86S)V(ag<n9OA!3!+2?h{(kC|oiMt+OQ`}rj%zvNex5@qOgV_;zL
-yWZ+^5We8wMVbEcm#_)n!Zv(^RK!MiD2L!|>9}tk){DbW~<0kg^a6CDHNgDv8%8_CK
+zcmX|<OGp)A6vxjzu6O3ljQ8{Nk(S9(BbCHE<JFt5XtK0?gjPgG5JI{rvIi7a80sQQ
+zg6uLC1c5Drz(r|y5!E6?2%}X52`vJ5*`f#+6=ig;dixJQ&i|b6%=hA3C>e2Y=7&(6
+z1vl8CW+z-x@(%LgW907_fIdYjust^(YddwW|77|83Odly8SQ9J9BnF&$EbTJc{NqB
+z8Y0(=dhuwr>(#T5HPpr%yse4n(Ztt0#S21;HymyT1(vJ9HuOD)Uv5yoA$IBhCY^G0
+z(d~;~pIj21x?ibNp&{7!_@YPn0@PYX)d4me@cII*iNKvl04<fOJ`e{MF*<zc1s|X%
+zJC(chVSo^qn;|R|QrNAw`D<+_*4m8JpR6z`q^3-IP5>c{p;T8;tmbA>dO!%ck**r)
+zYT&6wLA@%NymTDqLC|>RKbP37?tsmjG8Gpd7)9xHCH87_(8_ZjHv|kZ<BS<X$YwS&
+zWsJu(GA&FObC@~C3^0StD07{;9m+tMV3S<Zrc_h#0)js;n95j}oXtROc;(nI$pWaj
+z1=>ZECQLbP;tP`&Ou1y@vPq>VYZ132^`jg_97TGF@)_bR(jv;=h#`x%SaO?%yDb{9
+z<gkTf7CpA)D+}LR^xcx0jgCz*TejHPWz%_EUbQh{Q|VJ%zOnJWO}}huIhgBEqa*h^
+zc*vp4jvROJt`nTbYt~4(P9Mq2geJ`mW^jY-ijUksQ&-|wH$8%!dwj5hWYjvMM?@L)
+zOt#PQ3z%&Gr0KzQq%L?F$qyDI#p`ontd(z|4G<1OH}pZJatA(ZRZ|e`6IX&6k;fD!
+Re`fqpo`k>sC+JqU`~#!PkzxP<
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
-index 089e605eaf..60289355f8 100644
+index 089e605eafe4..60289355f869 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 @@ -3,10 +3,10 @@
@@ -128,5 +125,5 @@ index 089e605eaf..60289355f8 100644
  };
  
 -- 
-2.52.0
+2.47.3
 

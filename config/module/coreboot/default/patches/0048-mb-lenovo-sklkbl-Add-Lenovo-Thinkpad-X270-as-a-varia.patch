@@ -1,7 +1,7 @@
-From f5f73c2539e05cf85bf5eec795e4f91da50838ba Mon Sep 17 00:00:00 2001
+From abcbe7f3f81024721832bb54e08f56452cba59d4 Mon Sep 17 00:00:00 2001
 From: Kat Inskip <kat@inskip.me>
 Date: Tue, 17 Feb 2026 16:18:15 -0800
-Subject: [PATCH 48/48] mb/lenovo/sklkbl: Add Lenovo Thinkpad X270 as a variant
+Subject: [PATCH 48/50] mb/lenovo/sklkbl: Add Lenovo Thinkpad X270 as a variant
 
 This machine is somewhat dissimilar from the X280 in the PCIe allocations in the overridetree. It also lacks soldered RAM, having a single SODIMM slot.
 
@@ -28,10 +28,10 @@ An untested variety allowing for a Skylake CPU (for 20K5 and 20K6) has been incl
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-index b7cc705699..5945fe7b99 100644
+index 25c8ec6959c5..2a9cfba7f5d8 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-@@ -58,6 +58,16 @@ config BOARD_LENOVO_X280
+@@ -62,6 +62,16 @@ config BOARD_LENOVO_X380_YOGA
  	select SOC_INTEL_KABYLAKE
  	select HAVE_SPD_IN_CBFS
  
@@ -48,32 +48,32 @@ index b7cc705699..5945fe7b99 100644
  if BOARD_LENOVO_SKLKBL_THINKPAD_COMMON
  
  config MAINBOARD_DIR
-@@ -69,6 +79,8 @@ config VARIANT_DIR
- 	default "t480s" if BOARD_LENOVO_T480S
+@@ -74,6 +84,8 @@ config VARIANT_DIR
  	default "t580" if BOARD_LENOVO_T580
  	default "x280" if BOARD_LENOVO_X280
+ 	default "x380_yoga" if BOARD_LENOVO_X380_YOGA
 +	default "x270" if BOARD_LENOVO_X270_20HM
 +	default "x270" if BOARD_LENOVO_X270_20K6
  
  config OVERRIDE_DEVICETREE
  	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
-@@ -79,6 +91,8 @@ config MAINBOARD_PART_NUMBER
- 	default "T480s" if BOARD_LENOVO_T480S
+@@ -85,6 +97,8 @@ config MAINBOARD_PART_NUMBER
  	default "T580" if BOARD_LENOVO_T580
  	default "X280" if BOARD_LENOVO_X280
+ 	default "X380 Yoga" if BOARD_LENOVO_X380_YOGA
 +	default "X270" if BOARD_LENOVO_X270_20HM
 +	default "X270" if BOARD_LENOVO_X270_20K6
  
  config CBFS_SIZE
  	default 0x900000
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
-index 1d2888840f..43f9296bc5 100644
+index 96feb3169543..6fb68f44dd7d 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
-@@ -14,3 +14,6 @@ config BOARD_LENOVO_T580
+@@ -17,3 +17,6 @@ config BOARD_LENOVO_X280
  
- config BOARD_LENOVO_X280
- 	bool "ThinkPad X280"
+ config BOARD_LENOVO_X380_YOGA
+ 	bool "ThinkPad X380 Yoga"
 +
 +config BOARD_LENOVO_X270_20HM
 +	bool "ThinkPad X270"
@@ -116,7 +116,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
 new file mode 100644
-index 0000000000..fcfbd75a92
+index 000000000000..fcfbd75a9261
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
 @@ -0,0 +1,19 @@
@@ -141,7 +141,7 @@ index 0000000000..fcfbd75a92
 +end GMA.Mainboard;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
 new file mode 100644
-index 0000000000..ec5db9c53c
+index 000000000000..ec5db9c53c77
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
 @@ -0,0 +1,200 @@
@@ -347,7 +347,7 @@ index 0000000000..ec5db9c53c
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 new file mode 100644
-index 0000000000..089e605eaf
+index 000000000000..089e605eafe4
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 @@ -0,0 +1,124 @@
@@ -477,7 +477,7 @@ index 0000000000..089e605eaf
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
 new file mode 100644
-index 0000000000..a2317c026d
+index 000000000000..a2317c026dd1
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
 @@ -0,0 +1,19 @@
@@ -502,7 +502,7 @@ index 0000000000..a2317c026d
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 new file mode 100644
-index 0000000000..3191cdfac5
+index 000000000000..3191cdfac59e
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 @@ -0,0 +1,89 @@

@@ -1,7 +1,7 @@
-From 669ef0d2c72326134f64a4fe70f67220ec690c5e Mon Sep 17 00:00:00 2001
+From c54181a491e1f90649cfae2dff2adcc81e5c31ea Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 31 Dec 2024 14:42:24 +0000
-Subject: [PATCH 22/48] Disable compression on refcode insertion
+Subject: [PATCH 22/50] Disable compression on refcode insertion
 
 Compression is not reliably reproducible. In an lbmk release
 context, this means we cannot rely on vendorfile insertion.
@@ -14,10 +14,10 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile.mk b/Makefile.mk
-index 5fccb4a52d..c40e06c453 100644
+index 7a208d041df4..688ba99c14ad 100644
 --- a/Makefile.mk
 +++ b/Makefile.mk
-@@ -1414,7 +1414,7 @@ endif
+@@ -1457,7 +1457,7 @@ endif
  cbfs-files-$(CONFIG_HAVE_REFCODE_BLOB) += $(CONFIG_CBFS_PREFIX)/refcode
  $(CONFIG_CBFS_PREFIX)/refcode-file := $(REFCODE_BLOB)
  $(CONFIG_CBFS_PREFIX)/refcode-type := stage

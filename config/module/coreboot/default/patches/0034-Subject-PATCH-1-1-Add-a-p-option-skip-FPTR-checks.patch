@@ -1,7 +1,7 @@
-From e2e070ab1f080c0ae59c43131faa57f3499fd813 Mon Sep 17 00:00:00 2001
+From 77d8ff6f0033c9fcb7994058cd30aab685335600 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 28 Sep 2025 03:17:50 +0100
-Subject: [PATCH 34/48] Subject: [PATCH 1/1] Add a -p option (skip FPTR checks)
+Subject: [PATCH 34/50] Subject: [PATCH 1/1] Add a -p option (skip FPTR checks)
 
 if you pass -k (keep fptr modules), don't use -r, don't
 use -t, you can essentially just use me_cleaner to
@@ -29,7 +29,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 10 insertions(+), 4 deletions(-)
 
 diff --git a/util/me_cleaner/me_cleaner.py b/util/me_cleaner/me_cleaner.py
-index fae5e56732..228bac899f 100755
+index fae5e567322f..228bac899f6d 100755
 --- a/util/me_cleaner/me_cleaner.py
 +++ b/util/me_cleaner/me_cleaner.py
 @@ -246,8 +246,10 @@ def check_partition_signature(f, offset):

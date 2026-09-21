@@ -1,7 +1,7 @@
-From bb286d13cb7702e9396deab04023cc58dcc01a15 Mon Sep 17 00:00:00 2001
+From 5363b3620b56a7b61a8d679c80349c7ebd72dae3 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Sun, 11 May 2025 15:41:22 -0600
-Subject: [PATCH 38/48] ec/dell/mec5035: Add command to disable EC-initiated
+Subject: [PATCH 38/50] ec/dell/mec5035: Add command to disable EC-initiated
  thermal shutdown
 
 If command 0xBF isn't sent, the EC shuts down the system without warning
@@ -39,7 +39,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  2 files changed, 21 insertions(+)
 
 diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
-index c5067c16f6..b316fa4989 100644
+index c5067c16f65d..b316fa498906 100644
 --- a/src/ec/dell/mec5035/mec5035.c
 +++ b/src/ec/dell/mec5035/mec5035.c
 @@ -114,6 +114,25 @@ void mec5035_sleep_enable(void)
@@ -69,7 +69,7 @@ index c5067c16f6..b316fa4989 100644
  {
  	/* If this isn't sent the EC shuts down the system after about 15
 diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
-index 5cd907bf71..71d1a71075 100644
+index 5cd907bf71d5..71d1a710753c 100644
 --- a/src/ec/dell/mec5035/mec5035.h
 +++ b/src/ec/dell/mec5035/mec5035.h
 @@ -14,6 +14,7 @@ enum mec5035_cmd {
