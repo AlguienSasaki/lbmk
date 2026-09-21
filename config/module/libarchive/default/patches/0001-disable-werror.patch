@@ -1,0 +1,52 @@
+From 3af0047fecd12909d2dcef81a12623a5e00c678e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 12:21:13 +0100
+Subject: [PATCH 1/1] disable werror
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ CMakeLists.txt | 7 -------
+ configure.ac   | 2 +-
+ 2 files changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4c1f8770..7913d66a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -118,9 +118,6 @@ IF (CMAKE_C_COMPILER_ID MATCHES "^GNU$" OR
+   #################################################################
+   # Set compile flags for all build types.
+   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wformat -Wformat-security")
+-  if (ENABLE_WERROR)
+-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+-  endif ()
+   #################################################################
+   # Set compile flags for debug build.
+   # This is added into CMAKE_C_FLAGS when CMAKE_BUILD_TYPE is "Debug"
+@@ -168,10 +165,6 @@ IF (CMAKE_C_COMPILER_ID MATCHES "^XL$")
+   SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -qinfo=pro:use")
+ ENDIF(CMAKE_C_COMPILER_ID MATCHES "^XL$")
+ IF (MSVC)
+-  if (ENABLE_WERROR)
+-    # /WX option is the same as gcc's -Werror option.
+-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /WX")
+-  endif ()
+   #################################################################
+   # Set compile flags for debug build.
+   # This is added into CMAKE_C_FLAGS when CMAKE_BUILD_TYPE is "Debug"
+diff --git a/configure.ac b/configure.ac
+index d8d85eda..25042b66 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1401,7 +1401,7 @@ esac
+ 
+ dnl Visibility annotations...
+ saved_CFLAGS="$CFLAGS"
+-CFLAGS="$CFLAGS -fvisibility=hidden -Werror"
++CFLAGS="$CFLAGS -fvisibility=hidden"
+ AC_MSG_CHECKING(whether compiler supports visibility annotations)
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([
+                  int foo( void ) __attribute__((visibility("default")));
+-- 
+2.47.3
+
