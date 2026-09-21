@@ -225,7 +225,7 @@ find_me()
 	eval "`newvar _keep _pass`" # -k (keep fptr modules), -p (skip checks)
 
 	[ "$ME11bootguard" = "y" ] && \
-		mfs="--whitelist MFS"
+		mfs="-w MFS"
 	if [ "$MEclean" = "n" ]; then
 		MEshrink="n"
 		_keep="-k" # keep ME modules, don't delete anything
