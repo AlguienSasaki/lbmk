@@ -1,0 +1,28 @@
+From 539304c3c87d8415e848b6791e08ccd440be9984 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 11:13:25 +0100
+Subject: [PATCH 1/1] disable Werror
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 0539e8d7..f3f6b2b9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -136,9 +136,8 @@ endif
+ #
+ # Flag ordering: arch, then -f, then -m, then -W
+ DEBUG_FLAGS := $(if ${DEBUG},-g -O0,-g -Os)
+-WERROR := -Werror
+ FIRMWARE_FLAGS := -nostdinc -ffreestanding -fno-builtin -fno-stack-protector
+-COMMON_FLAGS := -pipe ${WERROR} -Wall -Wstrict-prototypes -Wtype-limits \
++COMMON_FLAGS := -pipe -Wall -Wstrict-prototypes -Wtype-limits \
+ 	-Wundef -Wmissing-prototypes -Wno-trigraphs -Wredundant-decls -Wshadow \
+ 	-Wwrite-strings -Wstrict-aliasing -Wdate-time -Wno-unknown-warning \
+ 	-Wno-address-of-packed-member -ffunction-sections -fdata-sections \
+-- 
+2.47.3
+

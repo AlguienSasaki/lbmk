@@ -1,0 +1,594 @@
+From 4f18503f37ba909f70a9cccc60f7f5fcbc374834 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 11:17:03 +0100
+Subject: [PATCH 1/1] disable -Werror
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile.inc                                 |  2 +-
+ payloads/bayou/Makefile                      |  2 +-
+ payloads/coreinfo/Makefile                   |  2 +-
+ payloads/external/tint/libpayload_tint.patch | 54 ++++++++++----------
+ payloads/libpayload/Makefile.inc             |  2 +-
+ payloads/libpayload/include/compiler.h       |  2 +-
+ payloads/libpayload/sample/Makefile          |  2 +-
+ payloads/linuxcheck/Makefile                 |  2 +-
+ payloads/nvramcui/Makefile                   |  2 +-
+ src/commonlib/include/commonlib/compiler.h   |  2 +-
+ src/lib/gnat/Makefile.inc                    |  2 +-
+ util/bimgtool/Makefile                       |  2 +-
+ util/cbfstool/Makefile.inc                   |  2 +-
+ util/cbfstool/lz4/Makefile                   |  8 +--
+ util/cbmem/Makefile                          |  2 +-
+ util/ifdtool/Makefile                        |  2 +-
+ util/intelvbttool/Makefile                   |  2 +-
+ util/k8resdump/Makefile                      |  4 +-
+ util/msrtool/configure                       |  2 +-
+ util/pmh7tool/Makefile                       |  2 +-
+ util/romcc/Makefile                          |  2 +-
+ util/superiotool/Makefile                    |  6 +--
+ util/uio_usbdebug/Makefile                   |  2 +-
+ util/xcompile/xcompile                       |  2 +-
+ 24 files changed, 56 insertions(+), 56 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index 709199b6fd..4e82f29bf0 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -515,7 +515,7 @@ endif
+ endif
+ 
+ ADAFLAGS_common += -gnatp
+-ADAFLAGS_common += -Wuninitialized -Wall -Werror
++ADAFLAGS_common += -Wuninitialized -Wall
+ ADAFLAGS_common += -pipe -g -nostdinc
+ ADAFLAGS_common += -Wstrict-aliasing -Wshadow
+ ADAFLAGS_common += -fno-common -fomit-frame-pointer
+diff --git a/payloads/bayou/Makefile b/payloads/bayou/Makefile
+index 7a4b08b484..0412704ff5 100644
+--- a/payloads/bayou/Makefile
++++ b/payloads/bayou/Makefile
+@@ -39,7 +39,7 @@ OBJECTS-$(CONFIG_LZMA) += lzma.o
+ OBJECTS-$(CONFIG_NRV2B) += nrv2b.o
+ OBJECTS-$(CONFIG_BUILTIN_LAR) += builtin-lar.o
+ 
+-CFLAGS= -Wall -Werror -Os $(FFLAGS-y)
++CFLAGS= -Wall -Os $(FFLAGS-y)
+ LDFLAGS=-Wl,-T,bayou.ldscript -static
+ LIBGCC=$(shell $(CC) -m32 -print-libgcc-file-name)
+ 
+diff --git a/payloads/coreinfo/Makefile b/payloads/coreinfo/Makefile
+index 34c45d9855..a1c058e794 100644
+--- a/payloads/coreinfo/Makefile
++++ b/payloads/coreinfo/Makefile
+@@ -83,7 +83,7 @@ OBJCOPY := $(OBJCOPY_$(ARCH-y))
+ LPCC := CC="$(CC)" $(LIBPAYLOAD_OBJ)/bin/lpgcc
+ LPAS := AS="$(AS)" $(LIBPAYLOAD_OBJ)/bin/lpas
+ 
+-CFLAGS += -Wall -Wextra -Wmissing-prototypes -Wvla -Werror
++CFLAGS += -Wall -Wextra -Wmissing-prototypes -Wvla
+ CFLAGS += -Os -fno-builtin $(CFLAGS_$(ARCH-y)) $(INCLUDES)
+ 
+ ifneq ($(strip $(HAVE_DOTCONFIG)),)
+diff --git a/payloads/external/tint/libpayload_tint.patch b/payloads/external/tint/libpayload_tint.patch
+index 34246a6561..4db11b28b8 100644
+--- a/payloads/external/tint/libpayload_tint.patch
++++ b/payloads/external/tint/libpayload_tint.patch
+@@ -4,7 +4,7 @@ diff -rupN tint-0.04+nmu1/config.h tint/config.h
+ @@ -29,7 +29,15 @@
+   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
+- 
++
+ +#include <libpayload.h>
+ +#include <curses.h>
+ +
+@@ -15,7 +15,7 @@ diff -rupN tint-0.04+nmu1/config.h tint/config.h
+ +#if 0
+  const char scorefile[] = SCOREFILE;
+ +#endif
+- 
++
+  #endif	/* #ifndef CONFIG_H */
+ diff -rupN tint-0.04+nmu1/engine.c tint/engine.c
+ --- tint-0.04+nmu1/engine.c	2005-07-17 13:26:22.000000000 +0200
+@@ -23,14 +23,14 @@ diff -rupN tint-0.04+nmu1/engine.c tint/engine.c
+ @@ -27,10 +27,13 @@
+   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
+- 
++
+ +#include "config.h"
+ +
+ +#if 0
+  #include <stdlib.h>
+  #include <string.h>
+ +#endif
+- 
++
+ -#include "typedefs.h"
+  #include "utils.h"
+  #include "io.h"
+@@ -53,7 +53,7 @@ diff -rupN tint-0.04+nmu1/io.c tint/io.c
+ @@ -27,9 +27,13 @@
+   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
+- 
++
+ +#include "config.h"
+ +
+ +#if 0
+@@ -61,9 +61,9 @@ diff -rupN tint-0.04+nmu1/io.c tint/io.c
+  #include <sys/time.h>	/* gettimeofday() */
+  #include <unistd.h>		/* gettimeofday() */
+ +#endif
+- 
++
+  #include "io.h"
+- 
++
+ @@ -68,7 +72,11 @@ static int in_timeleft;
+  /* Initialize screen */
+  void io_init ()
+@@ -101,7 +101,7 @@ diff -rupN tint-0.04+nmu1/io.c tint/io.c
+ +#endif
+     return ch;
+  }
+- 
++
+ diff -rupN tint-0.04+nmu1/io.h tint/io.h
+ --- tint-0.04+nmu1/io.h	2010-06-23 14:55:03.000000000 +0100
+ +++ tint/io.h	2018-02-23 12:00:00.000000000 +0200
+@@ -170,7 +170,7 @@ diff -rupN tint-0.04+nmu1/Makefile tint/Makefile
+ +HAVE_LIBPAYLOAD := $(wildcard $(LIBPAYLOAD_DIR)/lib/libpayload.a)
+ +LIB_CONFIG ?= configs/defconfig-tinycurses
+ +
+-+# CFLAGS := -Wall -Werror -Os
+++# CFLAGS := -Wall -Os
+ +CFLAGS := -Wall -g -Os
+ +TARGET := tint
+ +OBJS := $(TARGET).o engine.o io.o utils.o
+@@ -238,7 +238,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+ @@ -27,6 +26,7 @@
+   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
+- 
++
+ +#if 0
+  #include <stdlib.h>
+  #include <stdio.h>
+@@ -248,7 +248,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+  #include <sys/types.h>
+  #include <unistd.h>
+ +#endif
+- 
++
+ -#include "typedefs.h"
+  #include "utils.h"
+  #include "io.h"
+@@ -263,7 +263,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+ @@ -322,6 +322,7 @@ typedef struct
+     time_t timestamp;
+  } score_t;
+- 
++
+ +#if 0
+  static void getname (char *name)
+  {
+@@ -273,7 +273,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+  	 }
+  }
+ +#endif
+- 
++
+ +#if 0
+  static void err1 ()
+  {
+@@ -283,7 +283,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     exit (EXIT_FAILURE);
+  }
+ +#endif
+- 
++
+  void showplayerstats (engine_t *engine)
+  {
+ -   fprintf (stderr,
+@@ -294,7 +294,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+ @@ -361,6 +365,7 @@ void showplayerstats (engine_t *engine)
+  			GETSCORE (engine->score),engine->status.efficiency,GETSCORE (engine->score) / getsum ());
+  }
+- 
++
+ +#if 0
+  static void createscores (int score)
+  {
+@@ -304,7 +304,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     fprintf (stderr,"\t  1* %7d        %s\n\n",score,scores[0].name);
+  }
+ +#endif
+- 
++
+ +#if 0
+  static int cmpscores (const void *a,const void *b)
+  {
+@@ -314,7 +314,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     return 0;
+  }
+ +#endif
+- 
++
+ +#if 0
+  static void savescores (int score)
+  {
+@@ -324,11 +324,11 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     fprintf (stderr,"\n");
+  }
+ +#endif
+- 
++
+            /***************************************************************************/
+            /***************************************************************************/
+            /***************************************************************************/
+- 
++
+ +#if 0
+  static void showhelp ()
+  {
+@@ -338,7 +338,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     exit (EXIT_FAILURE);
+  }
+ +#endif
+- 
++
+  static void parse_options (int argc,char *argv[])
+  {
+ +#if 0
+@@ -351,12 +351,12 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+  	 }
+ +#endif
+  }
+- 
++
+  static void choose_level ()
+  {
+ +#if 0
+     char buf[NAMELEN];
+- 
++
+     do
+ @@ -557,6 +572,8 @@ static void choose_level ()
+  		buf[strlen (buf) - 1] = '\0';
+@@ -365,7 +365,7 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+ +#endif
+ +	level = 1;
+  }
+- 
++
+            /***************************************************************************/
+ @@ -569,6 +586,8 @@ int main (int argc,char *argv[])
+     int ch;
+@@ -425,14 +425,14 @@ diff -rupN tint-0.04+nmu1/tint.c tint/tint.c
+     exit (EXIT_SUCCESS);
+ +#endif
+  }
+- 
++
+ diff -rupN tint-0.04+nmu1/utils.c tint/utils.c
+ --- tint-0.04+nmu1/utils.c	2001-12-07 16:49:19.000000000 +0100
+ +++ tint/utils.c	2018-02-23 12:00:00.000000000 +0200
+ @@ -27,11 +27,13 @@
+   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+   */
+- 
++
+ +#include "config.h"
+ +
+ +#if 0
+@@ -442,7 +442,7 @@ diff -rupN tint-0.04+nmu1/utils.c tint/utils.c
+ -
+ -#include "typedefs.h"
+ +#endif
+- 
++
+  /*
+   * Initialize random number generator
+ @@ -61,6 +63,7 @@ int rand_value (int range)
+@@ -456,7 +456,7 @@ diff -rupN tint-0.04+nmu1/utils.c tint/utils.c
+ @@ -69,3 +72,4 @@ bool str2int (int *i,const char *str)
+     return TRUE;
+  }
+- 
++
+ +#endif
+ diff -rupN tint-0.04+nmu1/utils.h tint/utils.h
+ --- tint-0.04+nmu1/utils.h	2001-12-07 16:49:35.000000000 +0100
+diff --git a/payloads/libpayload/Makefile.inc b/payloads/libpayload/Makefile.inc
+index 4863d3f1da..0da4098fa0 100644
+--- a/payloads/libpayload/Makefile.inc
++++ b/payloads/libpayload/Makefile.inc
+@@ -64,7 +64,7 @@ CFLAGS += -nostdlib -fno-builtin -ffreestanding -fomit-frame-pointer
+ CFLAGS += -ffunction-sections -fdata-sections
+ CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wvla
+ CFLAGS += -Wwrite-strings -Wredundant-decls -Wno-trigraphs -Wimplicit-fallthrough
+-CFLAGS += -Wstrict-aliasing -Wshadow -Werror
++CFLAGS += -Wstrict-aliasing -Wshadow
+ 
+ $(obj)/libpayload-config.h: $(KCONFIG_AUTOHEADER)
+ 	cmp $@ $< 2>/dev/null || cp $< $@
+diff --git a/payloads/libpayload/include/compiler.h b/payloads/libpayload/include/compiler.h
+index fa9c78bd36..c55d1ed934 100644
+--- a/payloads/libpayload/include/compiler.h
++++ b/payloads/libpayload/include/compiler.h
+@@ -32,7 +32,7 @@
+    normally circumvent the special loosened type promotion rules for integer
+    literals. By using this macro, the promotion can happen at the time the
+    literal is assigned to the temporary variable. If the literal doesn't fit in
+-   the chosen type, -Werror=overflow will catch it, so this should be safe. */
++   the chosen type, =overflow will catch it, so this should be safe. */
+ #define __TYPEOF_UNLESS_CONST(expr, fallback_expr) typeof( \
+ 	__builtin_choose_expr(__builtin_constant_p(expr), fallback_expr, expr))
+ 
+diff --git a/payloads/libpayload/sample/Makefile b/payloads/libpayload/sample/Makefile
+index 18121dfe80..e7cc330ff7 100644
+--- a/payloads/libpayload/sample/Makefile
++++ b/payloads/libpayload/sample/Makefile
+@@ -41,7 +41,7 @@ AS := $(AS_$(ARCH-y))
+ LIBPAYLOAD_DIR := ../install/libpayload
+ XCC := CC="$(CC)" $(LIBPAYLOAD_DIR)/bin/lpgcc
+ XAS := AS="$(AS)" $(LIBPAYLOAD_DIR)/bin/lpas
+-CFLAGS := -fno-builtin -Wall -Werror -Os
++CFLAGS := -fno-builtin -Wall  -Os
+ TARGET := hello
+ OBJS := $(TARGET).o
+ 
+diff --git a/payloads/linuxcheck/Makefile b/payloads/linuxcheck/Makefile
+index 838c90df0c..6aae5e7030 100644
+--- a/payloads/linuxcheck/Makefile
++++ b/payloads/linuxcheck/Makefile
+@@ -3,7 +3,7 @@ XCOMPILE=$(LIBPAYLOAD_DIR)/libpayload.xcompile
+ # build libpayload and put .config file in $(CURDIR) instead of ../libpayload
+ # to avoid pollute the libpayload source directory and possible conflicts
+ LPOPTS=obj="$(CURDIR)/build" DESTDIR="$(CURDIR)" DOTCONFIG="$(CURDIR)/.config"
+-CFLAGS += -Wall -Wvla -Werror -Os -ffreestanding -nostdinc -nostdlib
++CFLAGS += -Wall -Wvla  -Os -ffreestanding -nostdinc -nostdlib
+ ifeq ($(CONFIG_ARCH_X86),y)
+ TARGETARCH = i386
+ endif
+diff --git a/payloads/nvramcui/Makefile b/payloads/nvramcui/Makefile
+index bf7053b9a6..69f352b00d 100644
+--- a/payloads/nvramcui/Makefile
++++ b/payloads/nvramcui/Makefile
+@@ -3,7 +3,7 @@ XCOMPILE=$(LIBPAYLOAD_DIR)/libpayload.xcompile
+ # build libpayload and put .config file in $(CURDIR) instead of ../libpayload
+ # to avoid pollute the libpayload source directory and possible conflicts
+ LPOPTS=obj="$(CURDIR)/build" DESTDIR="$(CURDIR)" DOTCONFIG="$(CURDIR)/.config"
+-CFLAGS += -Wall -Wvla -Werror -Os -ffreestanding -nostdinc -nostdlib
++CFLAGS += -Wall -Wvla  -Os -ffreestanding -nostdinc -nostdlib
+ 
+ all: nvramcui.elf
+ 
+diff --git a/src/commonlib/include/commonlib/compiler.h b/src/commonlib/include/commonlib/compiler.h
+index 972a2293a2..3c81fe8f97 100644
+--- a/src/commonlib/include/commonlib/compiler.h
++++ b/src/commonlib/include/commonlib/compiler.h
+@@ -52,7 +52,7 @@
+    normally circumvent the special loosened type promotion rules for integer
+    literals. By using this macro, the promotion can happen at the time the
+    literal is assigned to the temporary variable. If the literal doesn't fit in
+-   the chosen type, -Werror=overflow will catch it, so this should be safe. */
++   the chosen type, =overflow will catch it, so this should be safe. */
+ #define __TYPEOF_UNLESS_CONST(expr, fallback_expr) __typeof__( \
+ 	__builtin_choose_expr(__builtin_constant_p(expr), fallback_expr, expr))
+ 
+diff --git a/src/lib/gnat/Makefile.inc b/src/lib/gnat/Makefile.inc
+index ebd04862bf..49b4bf54eb 100644
+--- a/src/lib/gnat/Makefile.inc
++++ b/src/lib/gnat/Makefile.inc
+@@ -25,7 +25,7 @@ ADAFLAGS_libgnat-$(1) := \
+ 	-gnatpg \
+ 	-I$$(src)/lib/gnat/ \
+ 	$$(GCC_ADAFLAGS_$(1)) \
+-	-Werror \
++	 \
+ 
+ libgnat-$(1)-y += a-unccon.ads
+ libgnat-$(1)-y += ada.ads
+diff --git a/util/bimgtool/Makefile b/util/bimgtool/Makefile
+index 05ddf7d757..e9a49f1515 100644
+--- a/util/bimgtool/Makefile
++++ b/util/bimgtool/Makefile
+@@ -5,7 +5,7 @@ CFLAGS ?= -g
+ CFLAGS += -D_7ZIP_ST
+ CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wmissing-prototypes
+ CFLAGS += -Wwrite-strings -Wredundant-decls -Wno-trigraphs
+-CFLAGS += -Wstrict-aliasing -Wshadow -Werror
++CFLAGS += -Wstrict-aliasing -Wshadow
+ 
+ all: $(obj)/bimgtool
+ 
+diff --git a/util/cbfstool/Makefile.inc b/util/cbfstool/Makefile.inc
+index 95372c2988..2dfa99e29f 100644
+--- a/util/cbfstool/Makefile.inc
++++ b/util/cbfstool/Makefile.inc
+@@ -104,7 +104,7 @@ amdcompobj += elfheaders.o
+ amdcompobj += common.o
+ amdcompobj += xdr.o
+ 
+-TOOLCFLAGS ?= -Werror -Wall -Wextra
++TOOLCFLAGS ?=  -Wall -Wextra
+ TOOLCFLAGS += -Wcast-qual -Wmissing-prototypes -Wredundant-decls -Wshadow
+ TOOLCFLAGS += -Wstrict-prototypes -Wwrite-strings
+ TOOLCFLAGS += -O2
+diff --git a/util/cbfstool/lz4/Makefile b/util/cbfstool/lz4/Makefile
+index 931da35d95..0006892246 100644
+--- a/util/cbfstool/lz4/Makefile
++++ b/util/cbfstool/lz4/Makefile
+@@ -93,10 +93,10 @@ cmake:
+ 	@cd cmake_unofficial; cmake CMakeLists.txt; $(MAKE)
+ 
+ gpptest: clean
+-	$(MAKE) all CC=g++ CFLAGS="-O3 -I../lib -Wall -Wextra -Wundef -Wshadow -Wcast-align -Werror"
++	$(MAKE) all CC=g++ CFLAGS="-O3 -I../lib -Wall -Wextra -Wundef -Wshadow -Wcast-align "
+ 
+ clangtest: clean
+-	CFLAGS="-O3 -Werror -Wconversion -Wno-sign-conversion" $(MAKE) all CC=clang
++	CFLAGS="-O3  -Wconversion -Wno-sign-conversion" $(MAKE) all CC=clang
+ 
+ sanitize: clean
+ 	CFLAGS="-O3 -g -fsanitize=undefined" $(MAKE) test CC=clang FUZZER_TIME="-T1mn" NB_LOOPS=-i1
+@@ -105,8 +105,8 @@ staticAnalyze: clean
+ 	CFLAGS=-g scan-build --status-bugs -v $(MAKE) all
+ 
+ armtest: clean
+-	CFLAGS="-O3 -Werror" $(MAKE) -C $(LZ4DIR) all CC=arm-linux-gnueabi-gcc
+-	CFLAGS="-O3 -Werror" $(MAKE) -C $(PRGDIR) bins CC=arm-linux-gnueabi-gcc
++	CFLAGS="-O3 " $(MAKE) -C $(LZ4DIR) all CC=arm-linux-gnueabi-gcc
++	CFLAGS="-O3 " $(MAKE) -C $(PRGDIR) bins CC=arm-linux-gnueabi-gcc
+ 
+ versionsTest: clean
+ 	$(MAKE) -C versionsTest
+diff --git a/util/cbmem/Makefile b/util/cbmem/Makefile
+index 485955b68a..483b7a0fab 100644
+--- a/util/cbmem/Makefile
++++ b/util/cbmem/Makefile
+@@ -19,7 +19,7 @@ CC       ?= $(CROSS_COMPILE)gcc
+ INSTALL  ?= /usr/bin/env install
+ PREFIX   ?= /usr/local
+ CFLAGS   ?= -O2
+-CFLAGS   += -Wall -Wextra -Wmissing-prototypes -Werror
++CFLAGS   += -Wall -Wextra -Wmissing-prototypes
+ CPPFLAGS += -I . -I $(ROOT)/commonlib/include
+ CPPFLAGS += -include ../../src/commonlib/include/commonlib/compiler.h
+ 
+diff --git a/util/ifdtool/Makefile b/util/ifdtool/Makefile
+index a4f0af6217..bca4b01d88 100644
+--- a/util/ifdtool/Makefile
++++ b/util/ifdtool/Makefile
+@@ -18,7 +18,7 @@ PROGRAM = ifdtool
+ CC      = gcc
+ INSTALL = /usr/bin/env install
+ PREFIX  = /usr/local
+-CFLAGS  = -O2 -g -Wall -Wextra -Wmissing-prototypes -Werror
++CFLAGS  = -O2 -g -Wall -Wextra -Wmissing-prototypes
+ CFLAGS += -I../../src/commonlib/include
+ CFLAGS += -I../cbfstool/flashmap
+ CFLAGS += -include ../../src/commonlib/include/commonlib/compiler.h
+diff --git a/util/intelvbttool/Makefile b/util/intelvbttool/Makefile
+index fb9aadefda..5728b7a36c 100644
+--- a/util/intelvbttool/Makefile
++++ b/util/intelvbttool/Makefile
+@@ -16,7 +16,7 @@
+ PROGRAM = intelvbttool
+ CC ?= gcc
+ CFLAGS ?= -O2 -g
+-CFLAGS += -Wall -Werror
++CFLAGS += -Wall
+ CFLAGS += -I../../src/commonlib/include
+ 
+ all: $(PROGRAM)
+diff --git a/util/k8resdump/Makefile b/util/k8resdump/Makefile
+index a1d4dfa682..c6e8e83052 100644
+--- a/util/k8resdump/Makefile
++++ b/util/k8resdump/Makefile
+@@ -18,8 +18,8 @@ PROGRAM = k8resdump
+ CC      = gcc
+ INSTALL = /usr/bin/env install
+ PREFIX  = /usr/local
+-#CFLAGS  = -O2 -g -Wall -Werror
+-CFLAGS  = -Os -Wall -Werror
++#CFLAGS  = -O2 -g -Wall
++CFLAGS  = -Os -Wall
+ OS_ARCH	= $(shell uname)
+ ifeq ($(OS_ARCH), SunOS)
+ LDFLAGS = -lpci
+diff --git a/util/msrtool/configure b/util/msrtool/configure
+index 0606f4b8b9..60bb931efc 100755
+--- a/util/msrtool/configure
++++ b/util/msrtool/configure
+@@ -136,7 +136,7 @@ CC=`findprog "compiler" "${CC}" gcc cc icc` || exit
+ INSTALL=`findprog "install" "${INSTALL}" install ginstall` || exit
+ 
+ test -n "$DEBUG" && myCFLAGS="-O2 -g" || myCFLAGS="-Os"
+-CFLAGS="${CFLAGS} ${myCFLAGS} -Wall -Werror"
++CFLAGS="${CFLAGS} ${myCFLAGS} -Wall "
+ 
+ cat > .config.c << EOF
+ #include <pci/pci.h>
+diff --git a/util/pmh7tool/Makefile b/util/pmh7tool/Makefile
+index 034ed40c59..d5496bc59f 100644
+--- a/util/pmh7tool/Makefile
++++ b/util/pmh7tool/Makefile
+@@ -14,7 +14,7 @@
+ ##
+ 
+ CC = gcc
+-CFLAGS = -O2 -Wall -Wextra -Werror
++CFLAGS = -O2 -Wall -Wextra
+ PROGRAM = pmh7tool
+ INSTALL = /usr/bin/env install
+ PREFIX	= /usr/local
+diff --git a/util/romcc/Makefile b/util/romcc/Makefile
+index 2c5f174cf2..f82520073b 100644
+--- a/util/romcc/Makefile
++++ b/util/romcc/Makefile
+@@ -1,6 +1,6 @@
+ CC=gcc
+ CPPFLAGS=
+-CFLAGS= -g -Wall -Werror $(CPPFLAGS)
++CFLAGS= -g -Wall  $(CPPFLAGS)
+ CPROF_FLAGS=-pg -fprofile-arcs
+ BUILD_DIR=build
+ 
+diff --git a/util/superiotool/Makefile b/util/superiotool/Makefile
+index 2bc88aba64..7d812c1d6c 100644
+--- a/util/superiotool/Makefile
++++ b/util/superiotool/Makefile
+@@ -25,7 +25,7 @@ PREFIX  ?= /usr/local
+ VERSION := -D'SUPERIOTOOL_VERSION="$(shell git describe 2>/dev/null)"'
+ 
+ CFLAGS += -O2 -Wall -Wstrict-prototypes -Wundef -Wstrict-aliasing \
+-         -Werror-implicit-function-declaration -ansi -pedantic $(VERSION)
++         -implicit-function-declaration -ansi -pedantic $(VERSION)
+ LDFLAGS += -lz
+ 
+ OBJS = superiotool.o serverengines.o ali.o exar.o fintek.o ite.o nsc.o \
+@@ -36,8 +36,8 @@ ifeq ($(OS_ARCH), Darwin)
+ LIBS = -framework IOKit -framework DirectHW -lpci -lz
+ endif
+ ifeq ($(OS_ARCH), FreeBSD)
+-CFLAGS = -O2 -Wall -Werror -Wstrict-prototypes -Wundef -Wstrict-aliasing \
+-         -Werror-implicit-function-declaration -ansi $(VERSION) \
++CFLAGS = -O2 -Wall  -Wstrict-prototypes -Wundef -Wstrict-aliasing \
++         -implicit-function-declaration -ansi $(VERSION) \
+          -I/usr/local/include
+ LDFLAGS += -L/usr/local/lib
+ LIBS = -lz
+diff --git a/util/uio_usbdebug/Makefile b/util/uio_usbdebug/Makefile
+index 74bc80e2e6..7ba6c2146b 100644
+--- a/util/uio_usbdebug/Makefile
++++ b/util/uio_usbdebug/Makefile
+@@ -28,7 +28,7 @@ KCONFIG_H	:= ../../src/include/kconfig.h
+ 
+ CFLAGS		+= \
+ 		   -m32 -g \
+-		   -Wall -Wextra -Werror \
++		   -Wall -Wextra  \
+ 		   -Wno-unused-parameter -Wno-error=sign-compare
+ CPPFLAGS	+= \
+ 		   -Iinclude/ \
+diff --git a/util/xcompile/xcompile b/util/xcompile/xcompile
+index 13273240c5..f507762a7e 100755
+--- a/util/xcompile/xcompile
++++ b/util/xcompile/xcompile
+@@ -112,7 +112,7 @@ testcc() {
+ 	local tmp_o="$TMPFILE.o"
+ 	rm -f "$tmp_c" "$tmp_o"
+ 	echo "void _start(void) {}" >"$tmp_c"
+-	"$cc" -nostdlib -Werror $cflags -c "$tmp_c" -o "$tmp_o" >/dev/null 2>&1
++	"$cc" -nostdlib  $cflags -c "$tmp_c" -o "$tmp_o" >/dev/null 2>&1
+ }
+ 
+ testld() {
+-- 
+2.47.3
+

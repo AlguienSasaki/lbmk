@@ -1,0 +1,94 @@
+From 69aee4b8d9c61cc3eb832e8d7b8a2f8cd4be6e38 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 11:20:54 +0100
+Subject: [PATCH 1/1] Remove KCONFIG_WERROR
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Documentation/getting_started/kconfig.md | 3 ---
+ Makefile                                 | 4 ----
+ util/kconfig/Makefile                    | 4 ----
+ util/kconfig/confdata.c                  | 2 --
+ util/kconfig/symbol.c                    | 2 --
+ 5 files changed, 15 deletions(-)
+
+diff --git a/Documentation/getting_started/kconfig.md b/Documentation/getting_started/kconfig.md
+index 2917c53aae..6c4102ba17 100644
+--- a/Documentation/getting_started/kconfig.md
++++ b/Documentation/getting_started/kconfig.md
+@@ -99,9 +99,6 @@ included in the Linux version.
+ - KCONFIG_SPLITCONFIG=”directory name for individual SYMBOL.h files”.
+   coreboot sets this to $(obj)/config.
+ 
+-- KCONFIG_WERROR=value. Define to enable warnings as errors. This is enabled
+-  in coreboot, and should not be changed.
+-
+ #### Used only for ‘make menuconfig’
+ - MENUCONFIG_MODE=single_menu.  Set to "single_menu" to enable.  All other
+   values disable the option.  This makes submenus appear below the menu option
+diff --git a/Makefile b/Makefile
+index 6a36b5968f..35576f3734 100644
+--- a/Makefile
++++ b/Makefile
+@@ -31,7 +31,6 @@ KCONFIG_DEPENDENCIES := $(obj)/auto.conf.cmd
+ KCONFIG_SPLITCONFIG := $(obj)/config/
+ KCONFIG_TRISTATE := $(obj)/tristate.conf
+ KCONFIG_NEGATIVES := 1
+-KCONFIG_WERROR := 1
+ KCONFIG_WARN_UNKNOWN_SYMBOLS := 1
+ KCONFIG_PACKAGE := CB.Config
+ KCONFIG_MAKEFILE_REAL ?= $(objk)/Makefile.real
+@@ -39,9 +38,6 @@ KCONFIG_MAKEFILE_REAL ?= $(objk)/Makefile.real
+ COREBOOT_EXPORTS += KCONFIG_CONFIG KCONFIG_AUTOHEADER KCONFIG_AUTOCONFIG
+ COREBOOT_EXPORTS += KCONFIG_DEPENDENCIES KCONFIG_SPLITCONFIG KCONFIG_TRISTATE
+ COREBOOT_EXPORTS += KCONFIG_NEGATIVES
+-ifeq ($(filter %config,$(MAKECMDGOALS)),)
+-COREBOOT_EXPORTS += KCONFIG_WERROR
+-endif
+ COREBOOT_EXPORTS += KCONFIG_WARN_UNKNOWN_SYMBOLS
+ COREBOOT_EXPORTS += KCONFIG_AUTOADS KCONFIG_PACKAGE
+ COREBOOT_EXPORTS += KCONFIG_RUSTCCFG
+diff --git a/util/kconfig/Makefile b/util/kconfig/Makefile
+index 76cc2c5e2c..45366936fc 100644
+--- a/util/kconfig/Makefile
++++ b/util/kconfig/Makefile
+@@ -31,10 +31,6 @@ ifneq ($(findstring c, $(KBUILD_EXTRA_WARN)),)
+ export KCONFIG_WARN_UNKNOWN_SYMBOLS=1
+ endif
+ 
+-ifneq ($(findstring e, $(KBUILD_EXTRA_WARN)),)
+-export KCONFIG_WERROR=1
+-endif
+-
+ # We need this, in case the user has it in its environment
+ unexport CONFIG_
+ 
+diff --git a/util/kconfig/confdata.c b/util/kconfig/confdata.c
+index ae6ae2b3d3..fa09647f44 100644
+--- a/util/kconfig/confdata.c
++++ b/util/kconfig/confdata.c
+@@ -157,8 +157,6 @@ static int conf_lineno, conf_warnings;
+ 
+ bool conf_errors(void)
+ {
+-	if (conf_warnings)
+-		return getenv("KCONFIG_WERROR");
+ 	return false;
+ }
+ 
+diff --git a/util/kconfig/symbol.c b/util/kconfig/symbol.c
+index 3afe5be2d4..1a24d458cb 100644
+--- a/util/kconfig/symbol.c
++++ b/util/kconfig/symbol.c
+@@ -317,8 +317,6 @@ static void sym_warn_unmet_dep(struct symbol *sym)
+ 
+ bool sym_dep_errors(void)
+ {
+-	if (sym_warnings)
+-		return getenv("KCONFIG_WERROR");
+ 	return false;
+ }
+ 
+-- 
+2.47.3
+

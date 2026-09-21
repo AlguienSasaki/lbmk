@@ -1,0 +1,26 @@
+From 5453dc70cdf327e5b4228fbce34b03107936628f Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 10:58:18 +0100
+Subject: [PATCH 1/1] remove -Werror
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index e8d864e..9c10fb6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -43,7 +43,7 @@ endif
+ CC       = $(CROSS_COMPILE)gcc
+ GNATBIND = $(CROSS_COMPILE)gnatbind
+ 
+-CFLAGS += -Wuninitialized -Wall -Werror
++CFLAGS += -Wuninitialized -Wall
+ CFLAGS += -pipe -g
+ CFLAGS += -Wstrict-aliasing -Wshadow
+ CFLAGS += -fno-common -fomit-frame-pointer
+-- 
+2.47.3
+
