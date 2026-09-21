@@ -163,7 +163,7 @@ fetch()
 
 mkdst()
 {
-	if ! bad_checksum "$1" "$2" 2>/dev/null; then
+	if ! bad_checksum "$1" "$2"; then
 		x_ mv "$2" "$_dl_bin"
 		x_ cp "$_dl_bin" "$_dest"
 		exit 1
