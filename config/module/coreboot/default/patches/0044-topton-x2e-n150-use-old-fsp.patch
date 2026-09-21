@@ -1,7 +1,7 @@
-From b46defe612d1ab51081863bc1c3bdfa7f9e0a0bc Mon Sep 17 00:00:00 2001
+From 0ba99e4d9c4bdc15063a314db9fc8e73e36637bc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 6 Jan 2026 21:42:21 +0000
-Subject: [PATCH 44/50] topton x2e n150: use old fsp
+Subject: [PATCH 44/56] topton x2e n150: use old fsp
 
 i added the old fsp back, so that we didn't have to
 mess around with vendor files in lbmk, because coreboot
@@ -18,7 +18,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/src/soc/intel/alderlake/Kconfig b/src/soc/intel/alderlake/Kconfig
-index 6236def814fe..919acd020e1e 100644
+index 6236def814..919acd020e 100644
 --- a/src/soc/intel/alderlake/Kconfig
 +++ b/src/soc/intel/alderlake/Kconfig
 @@ -456,6 +456,7 @@ config FSP_FD_PATH

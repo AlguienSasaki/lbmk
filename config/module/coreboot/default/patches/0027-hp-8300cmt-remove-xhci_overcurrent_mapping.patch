@@ -1,7 +1,7 @@
-From 652d51e6c125d6bc6d56f60da7ace1558be14493 Mon Sep 17 00:00:00 2001
+From 4007d60d44e646bd5081827b4679c0ddf4bb99ca Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 22 Apr 2025 10:21:59 +0100
-Subject: [PATCH 27/50] hp/8300cmt: remove xhci_overcurrent_mapping
+Subject: [PATCH 27/56] hp/8300cmt: remove xhci_overcurrent_mapping
 
 No longer needed, as per the following commit:
 
@@ -26,7 +26,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 deletion(-)
 
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
-index 3d21739b7275..3a0b6d5c59e2 100644
+index 3d21739b72..3a0b6d5c59 100644
 --- a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
 @@ -25,7 +25,6 @@ chip northbridge/intel/sandybridge

@@ -1,7 +1,7 @@
-From 317b1b82965679561420ea2e367488f5943c2e63 Mon Sep 17 00:00:00 2001
+From 773efa2c4c42b949480f86db02ef2643ddece59d Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Tue, 23 Dec 2025 18:41:27 +0100
-Subject: [PATCH 42/50] mb/dell/optiplex_780: use legacy HDA verb table
+Subject: [PATCH 42/56] mb/dell/optiplex_780: use legacy HDA verb table
 
 See:
 
@@ -35,7 +35,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/src/mainboard/dell/optiplex_780/Kconfig b/src/mainboard/dell/optiplex_780/Kconfig
-index fc649e35d5e7..172bb2fa87a7 100644
+index fc649e35d5..172bb2fa87 100644
 --- a/src/mainboard/dell/optiplex_780/Kconfig
 +++ b/src/mainboard/dell/optiplex_780/Kconfig
 @@ -2,6 +2,7 @@

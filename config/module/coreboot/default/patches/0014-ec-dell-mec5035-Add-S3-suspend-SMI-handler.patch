@@ -1,7 +1,7 @@
-From 9147383e561bfa65dbb5b0de31d00b4b4c68118d Mon Sep 17 00:00:00 2001
+From 8112eb9d74628c12daa136f1b7d91f51eacc08a5 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 3 May 2024 11:03:32 -0600
-Subject: [PATCH 14/50] ec/dell/mec5035: Add S3 suspend SMI handler
+Subject: [PATCH 14/56] ec/dell/mec5035: Add S3 suspend SMI handler
 
 This is necessary for S3 resume to work on SNB and newer Dell Latitude
 laptops. If a command isn't sent, the EC cuts power to the DIMMs,
@@ -35,7 +35,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  create mode 100644 src/ec/dell/mec5035/smihandler.c
 
 diff --git a/src/ec/dell/mec5035/Makefile.mk b/src/ec/dell/mec5035/Makefile.mk
-index 4ebdd811f9a7..be557e4599ac 100644
+index 4ebdd811f9..be557e4599 100644
 --- a/src/ec/dell/mec5035/Makefile.mk
 +++ b/src/ec/dell/mec5035/Makefile.mk
 @@ -5,5 +5,6 @@ ifeq ($(CONFIG_EC_DELL_MEC5035),y)
@@ -46,7 +46,7 @@ index 4ebdd811f9a7..be557e4599ac 100644
  
  endif
 diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
-index 17ac2c1dab1f..c5067c16f65d 100644
+index 17ac2c1dab..c5067c16f6 100644
 --- a/src/ec/dell/mec5035/mec5035.c
 +++ b/src/ec/dell/mec5035/mec5035.c
 @@ -100,6 +100,19 @@ static void mec5035_power_button_route(enum ec_power_button_route target)
@@ -70,7 +70,7 @@ index 17ac2c1dab1f..c5067c16f65d 100644
  void mec5035_early_init(void)
  {
 diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
-index 5fdf56631b14..5cd907bf71d5 100644
+index 5fdf56631b..5cd907bf71 100644
 --- a/src/ec/dell/mec5035/mec5035.h
 +++ b/src/ec/dell/mec5035/mec5035.h
 @@ -4,6 +4,7 @@
@@ -121,7 +121,7 @@ index 5fdf56631b14..5cd907bf71d5 100644
  #endif /* _EC_DELL_MEC5035_H_ */
 diff --git a/src/ec/dell/mec5035/smihandler.c b/src/ec/dell/mec5035/smihandler.c
 new file mode 100644
-index 000000000000..958733bf9758
+index 0000000000..958733bf97
 --- /dev/null
 +++ b/src/ec/dell/mec5035/smihandler.c
 @@ -0,0 +1,17 @@

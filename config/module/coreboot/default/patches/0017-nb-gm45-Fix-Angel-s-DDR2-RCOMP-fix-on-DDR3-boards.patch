@@ -1,7 +1,7 @@
-From a9253c251232469644efe2794ec599de8bbbed9c Mon Sep 17 00:00:00 2001
+From 8206e34eb1e3f4270a81d642f317471c11c5886a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Tue, 6 Aug 2024 00:50:24 +0100
-Subject: [PATCH 17/50] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
+Subject: [PATCH 17/56] nb/gm45: Fix Angel's DDR2 RCOMP fix on DDR3 boards
 
 We add this patch:
 
@@ -32,7 +32,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  2 files changed, 88 insertions(+), 82 deletions(-)
 
 diff --git a/src/northbridge/intel/gm45/raminit.c b/src/northbridge/intel/gm45/raminit.c
-index 7b091cc5673f..478898564a70 100644
+index 7b091cc567..478898564a 100644
 --- a/src/northbridge/intel/gm45/raminit.c
 +++ b/src/northbridge/intel/gm45/raminit.c
 @@ -1117,7 +1117,10 @@ static void dram_program_timings(const int spd_type, const timings_t *const timi
@@ -211,7 +211,7 @@ index 7b091cc5673f..478898564a70 100644
  	igd_compute_ggc(sysinfo);
  
 diff --git a/src/northbridge/intel/gm45/raminit_rcomp_calibration.c b/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
-index b74765fd9c33..5d4505e0631f 100644
+index b74765fd9c..5d4505e063 100644
 --- a/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
 +++ b/src/northbridge/intel/gm45/raminit_rcomp_calibration.c
 @@ -198,7 +198,7 @@ void raminit_rcomp_calibration(int ddr_type, const stepping_t stepping) {

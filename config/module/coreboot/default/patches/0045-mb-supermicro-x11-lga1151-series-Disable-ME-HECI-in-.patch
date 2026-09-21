@@ -1,7 +1,7 @@
-From 3dad4d4456a2f8ddf9161a24bf2724370c1b629e Mon Sep 17 00:00:00 2001
+From fe0e2fbff811e023d2cda01c8358c10bb1689a5e Mon Sep 17 00:00:00 2001
 From: Ron Nazarov <ron@noisytoot.org>
 Date: Sat, 14 Feb 2026 20:13:01 +0000
-Subject: [PATCH 45/50] mb/supermicro/x11-lga1151-series: Disable ME HECI in
+Subject: [PATCH 45/56] mb/supermicro/x11-lga1151-series: Disable ME HECI in
  devicetree
 
 Since we always use me_cleaner, this speeds up boot time by preventing
@@ -14,7 +14,7 @@ Signed-off-by: Ron Nazarov <ron@noisytoot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb b/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
-index d25288420f48..edbb485969a3 100644
+index d25288420f..edbb485969 100644
 --- a/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
 +++ b/src/mainboard/supermicro/x11-lga1151-series/devicetree.cb
 @@ -15,7 +15,7 @@ chip soc/intel/skylake

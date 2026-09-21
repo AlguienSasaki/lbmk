@@ -1,7 +1,7 @@
-From c6915f8753e297fc8cced223e128353796230627 Mon Sep 17 00:00:00 2001
+From 3ef3cc9f7089e85571480a6b7b171a7fa66cb33e Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 11 Dec 2024 01:06:01 +0000
-Subject: [PATCH 28/50] dell/3050micro: disable nvme hotplug
+Subject: [PATCH 28/56] dell/3050micro: disable nvme hotplug
 
 in my testing, when running my 3050micro for a few days,
 the nvme would sometimes randomly rename.
@@ -30,7 +30,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_3050/overridetree.cb b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_3050/overridetree.cb
-index c5f1749b2c61..ff48a8121ad5 100644
+index c5f1749b2c..ff48a8121a 100644
 --- a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_3050/overridetree.cb
 +++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_3050/overridetree.cb
 @@ -46,7 +46,7 @@ chip soc/intel/skylake

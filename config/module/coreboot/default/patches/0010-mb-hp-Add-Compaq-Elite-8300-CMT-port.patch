@@ -1,7 +1,7 @@
-From 682c2cb444b0d12cf15b5a82fa733be1b4aa9db0 Mon Sep 17 00:00:00 2001
+From 3fd2da0978e53ce6801cc3520788d5dcd52b6b0a Mon Sep 17 00:00:00 2001
 From: Riku Viitanen <riku.viitanen@protonmail.com>
 Date: Sat, 23 Dec 2023 19:02:10 +0200
-Subject: [PATCH 10/50] mb/hp: Add Compaq Elite 8300 CMT port
+Subject: [PATCH 10/56] mb/hp: Add Compaq Elite 8300 CMT port
 
 Based on autoport and Z220 SuperIO code.
 
@@ -70,7 +70,7 @@ Signed-off-by: Riku Viitanen <riku.viitanen@protonmail.com>
 
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
 new file mode 100644
-index 000000000000..d2bfd35dc48e
+index 0000000000..d2bfd35dc4
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig
 @@ -0,0 +1,39 @@
@@ -115,7 +115,7 @@ index 000000000000..d2bfd35dc48e
 +endif
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig.name b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig.name
 new file mode 100644
-index 000000000000..bd399b1e7695
+index 0000000000..bd399b1e76
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/Kconfig.name
 @@ -0,0 +1,2 @@
@@ -123,7 +123,7 @@ index 000000000000..bd399b1e7695
 +	bool "Compaq Elite 8300 CMT"
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/Makefile.mk b/src/mainboard/hp/compaq_elite_8300_cmt/Makefile.mk
 new file mode 100644
-index 000000000000..fb492d358372
+index 0000000000..fb492d3583
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/Makefile.mk
 @@ -0,0 +1,7 @@
@@ -136,14 +136,14 @@ index 000000000000..fb492d358372
 +ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/acpi/ec.asl b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/ec.asl
 new file mode 100644
-index 000000000000..73fa78ef14ea
+index 0000000000..73fa78ef14
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/ec.asl
 @@ -0,0 +1 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/acpi/platform.asl b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/platform.asl
 new file mode 100644
-index 000000000000..aff432b6f47a
+index 0000000000..aff432b6f4
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/platform.asl
 @@ -0,0 +1,10 @@
@@ -159,7 +159,7 @@ index 000000000000..aff432b6f47a
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/acpi/superio.asl b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/superio.asl
 new file mode 100644
-index 000000000000..54f8e3fe9585
+index 0000000000..54f8e3fe95
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/acpi/superio.asl
 @@ -0,0 +1,29 @@
@@ -194,7 +194,7 @@ index 000000000000..54f8e3fe9585
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/acpi_tables.c b/src/mainboard/hp/compaq_elite_8300_cmt/acpi_tables.c
 new file mode 100644
-index 000000000000..8f4f83b826ee
+index 0000000000..8f4f83b826
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/acpi_tables.c
 @@ -0,0 +1,12 @@
@@ -212,7 +212,7 @@ index 000000000000..8f4f83b826ee
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/board_info.txt b/src/mainboard/hp/compaq_elite_8300_cmt/board_info.txt
 new file mode 100644
-index 000000000000..16c29e82d837
+index 0000000000..16c29e82d8
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/board_info.txt
 @@ -0,0 +1,5 @@
@@ -223,7 +223,7 @@ index 000000000000..16c29e82d837
 +Release year: 2012
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/cmos.default b/src/mainboard/hp/compaq_elite_8300_cmt/cmos.default
 new file mode 100644
-index 000000000000..6d27a79c66b4
+index 0000000000..6d27a79c66
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/cmos.default
 @@ -0,0 +1,7 @@
@@ -236,7 +236,7 @@ index 000000000000..6d27a79c66b4
 +psu_fan_lvl=3
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/cmos.layout b/src/mainboard/hp/compaq_elite_8300_cmt/cmos.layout
 new file mode 100644
-index 000000000000..1fc83b1a55e3
+index 0000000000..1fc83b1a55
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/cmos.layout
 @@ -0,0 +1,74 @@
@@ -353,7 +353,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
 new file mode 100644
-index 000000000000..3d21739b7275
+index 0000000000..3d21739b72
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/devicetree.cb
 @@ -0,0 +1,177 @@
@@ -536,7 +536,7 @@ index 000000000000..3d21739b7275
 +end
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/dsdt.asl b/src/mainboard/hp/compaq_elite_8300_cmt/dsdt.asl
 new file mode 100644
-index 000000000000..e8e2b3a3e560
+index 0000000000..e8e2b3a3e5
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/dsdt.asl
 @@ -0,0 +1,26 @@
@@ -568,7 +568,7 @@ index 000000000000..e8e2b3a3e560
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c b/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c
 new file mode 100644
-index 000000000000..8d10c6317ca0
+index 0000000000..8d10c6317c
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/early_init.c
 @@ -0,0 +1,14 @@
@@ -588,7 +588,7 @@ index 000000000000..8d10c6317ca0
 +}
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/gma-mainboard.ads b/src/mainboard/hp/compaq_elite_8300_cmt/gma-mainboard.ads
 new file mode 100644
-index 000000000000..686f7d44db26
+index 0000000000..686f7d44db
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/gma-mainboard.ads
 @@ -0,0 +1,17 @@
@@ -611,7 +611,7 @@ index 000000000000..686f7d44db26
 +end GMA.Mainboard;
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/gpio.c b/src/mainboard/hp/compaq_elite_8300_cmt/gpio.c
 new file mode 100644
-index 000000000000..2ae852ae5126
+index 0000000000..2ae852ae51
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/gpio.c
 @@ -0,0 +1,191 @@
@@ -808,7 +808,7 @@ index 000000000000..2ae852ae5126
 +};
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/hda_verb.c b/src/mainboard/hp/compaq_elite_8300_cmt/hda_verb.c
 new file mode 100644
-index 000000000000..a1eafcda68ae
+index 0000000000..a1eafcda68
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/hda_verb.c
 @@ -0,0 +1,33 @@
@@ -847,7 +847,7 @@ index 000000000000..a1eafcda68ae
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/hp/compaq_elite_8300_cmt/mainboard.c b/src/mainboard/hp/compaq_elite_8300_cmt/mainboard.c
 new file mode 100644
-index 000000000000..8dbd95ef961d
+index 0000000000..8dbd95ef96
 --- /dev/null
 +++ b/src/mainboard/hp/compaq_elite_8300_cmt/mainboard.c
 @@ -0,0 +1,16 @@

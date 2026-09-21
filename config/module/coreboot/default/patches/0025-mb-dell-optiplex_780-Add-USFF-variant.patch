@@ -1,7 +1,7 @@
-From 6df7d79ac7496d1074f0a953008ba2ca96bc59d5 Mon Sep 17 00:00:00 2001
+From bbab84fdcd02f2dac8b9c8a731f8ae9615074b0f Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Wed, 30 Oct 2024 20:55:25 -0600
-Subject: [PATCH 25/50] mb/dell/optiplex_780: Add USFF variant
+Subject: [PATCH 25/56] mb/dell/optiplex_780: Add USFF variant
 
 Change-Id: I3aa21c743749f4a11a2501f4c121316bd2f1a103
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -21,7 +21,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  create mode 100644 src/mainboard/dell/optiplex_780/variants/780_usff/overridetree.cb
 
 diff --git a/src/mainboard/dell/optiplex_780/Kconfig b/src/mainboard/dell/optiplex_780/Kconfig
-index 2d06c75c9a52..fc649e35d5e7 100644
+index 2d06c75c9a..fc649e35d5 100644
 --- a/src/mainboard/dell/optiplex_780/Kconfig
 +++ b/src/mainboard/dell/optiplex_780/Kconfig
 @@ -20,6 +20,9 @@ config BOARD_DELL_OPTIPLEX_780_COMMON
@@ -49,7 +49,7 @@ index 2d06c75c9a52..fc649e35d5e7 100644
  
  endif # BOARD_DELL_OPTIPLEX_780_COMMON
 diff --git a/src/mainboard/dell/optiplex_780/Kconfig.name b/src/mainboard/dell/optiplex_780/Kconfig.name
-index db7f2e8fe3a0..bc84c82a7918 100644
+index db7f2e8fe3..bc84c82a79 100644
 --- a/src/mainboard/dell/optiplex_780/Kconfig.name
 +++ b/src/mainboard/dell/optiplex_780/Kconfig.name
 @@ -2,3 +2,6 @@
@@ -88,7 +88,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/dell/optiplex_780/variants/780_usff/early_init.c b/src/mainboard/dell/optiplex_780/variants/780_usff/early_init.c
 new file mode 100644
-index 000000000000..2a55fc3a6e42
+index 0000000000..2a55fc3a6e
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_780/variants/780_usff/early_init.c
 @@ -0,0 +1,9 @@
@@ -103,7 +103,7 @@ index 000000000000..2a55fc3a6e42
 +}
 diff --git a/src/mainboard/dell/optiplex_780/variants/780_usff/gpio.c b/src/mainboard/dell/optiplex_780/variants/780_usff/gpio.c
 new file mode 100644
-index 000000000000..389f4077d7b0
+index 0000000000..389f4077d7
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_780/variants/780_usff/gpio.c
 @@ -0,0 +1,166 @@
@@ -275,7 +275,7 @@ index 000000000000..389f4077d7b0
 +};
 diff --git a/src/mainboard/dell/optiplex_780/variants/780_usff/hda_verb.c b/src/mainboard/dell/optiplex_780/variants/780_usff/hda_verb.c
 new file mode 100644
-index 000000000000..c94e06b1569b
+index 0000000000..c94e06b156
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_780/variants/780_usff/hda_verb.c
 @@ -0,0 +1,26 @@
@@ -307,7 +307,7 @@ index 000000000000..c94e06b1569b
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/dell/optiplex_780/variants/780_usff/overridetree.cb b/src/mainboard/dell/optiplex_780/variants/780_usff/overridetree.cb
 new file mode 100644
-index 000000000000..555b1c1f5c8a
+index 0000000000..555b1c1f5c
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_780/variants/780_usff/overridetree.cb
 @@ -0,0 +1,10 @@

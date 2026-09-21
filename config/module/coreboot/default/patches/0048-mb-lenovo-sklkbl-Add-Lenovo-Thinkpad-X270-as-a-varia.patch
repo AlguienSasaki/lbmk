@@ -1,7 +1,7 @@
-From abcbe7f3f81024721832bb54e08f56452cba59d4 Mon Sep 17 00:00:00 2001
+From 8b45c226090d4fef2303c3b3c16a3a167aa56fba Mon Sep 17 00:00:00 2001
 From: Kat Inskip <kat@inskip.me>
 Date: Tue, 17 Feb 2026 16:18:15 -0800
-Subject: [PATCH 48/50] mb/lenovo/sklkbl: Add Lenovo Thinkpad X270 as a variant
+Subject: [PATCH 48/56] mb/lenovo/sklkbl: Add Lenovo Thinkpad X270 as a variant
 
 This machine is somewhat dissimilar from the X280 in the PCIe allocations in the overridetree. It also lacks soldered RAM, having a single SODIMM slot.
 
@@ -28,7 +28,7 @@ An untested variety allowing for a Skylake CPU (for 20K5 and 20K6) has been incl
  create mode 100644 src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
-index 25c8ec6959c5..2a9cfba7f5d8 100644
+index 25c8ec6959..2a9cfba7f5 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig
 @@ -62,6 +62,16 @@ config BOARD_LENOVO_X380_YOGA
@@ -67,7 +67,7 @@ index 25c8ec6959c5..2a9cfba7f5d8 100644
  config CBFS_SIZE
  	default 0x900000
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
-index 96feb3169543..6fb68f44dd7d 100644
+index 96feb31695..6fb68f44dd 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/Kconfig.name
 @@ -17,3 +17,6 @@ config BOARD_LENOVO_X280
@@ -116,7 +116,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
 new file mode 100644
-index 000000000000..fcfbd75a9261
+index 0000000000..fcfbd75a92
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gma-mainboard.ads
 @@ -0,0 +1,19 @@
@@ -141,7 +141,7 @@ index 000000000000..fcfbd75a9261
 +end GMA.Mainboard;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
 new file mode 100644
-index 000000000000..ec5db9c53c77
+index 0000000000..ec5db9c53c
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/gpio.c
 @@ -0,0 +1,200 @@
@@ -347,7 +347,7 @@ index 000000000000..ec5db9c53c77
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 new file mode 100644
-index 000000000000..089e605eafe4
+index 0000000000..089e605eaf
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 @@ -0,0 +1,124 @@
@@ -477,7 +477,7 @@ index 000000000000..089e605eafe4
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
 new file mode 100644
-index 000000000000..a2317c026dd1
+index 0000000000..a2317c026d
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/memory_init_params.c
 @@ -0,0 +1,19 @@
@@ -502,7 +502,7 @@ index 000000000000..a2317c026dd1
 +}
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 new file mode 100644
-index 000000000000..3191cdfac59e
+index 0000000000..3191cdfac5
 --- /dev/null
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/overridetree.cb
 @@ -0,0 +1,89 @@

@@ -1,0 +1,28 @@
+From bc353bd6ea7daf10f5b5883894bed1af1d056725 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sun, 21 Dec 2025 17:29:16 +0000
+Subject: [PATCH 55/56] mb/dell/sklkbl_desktops: Enable legacy 8254 timer
+
+Without this, SeaBIOS hangs.
+
+Change-Id: I22a5fdc566e954ace00756beb7d2de3fd6621c7b
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ src/mainboard/dell/sklkbl_desktops/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/mainboard/dell/sklkbl_desktops/Kconfig b/src/mainboard/dell/sklkbl_desktops/Kconfig
+index 0dce6a90bf..1fab8b41d5 100644
+--- a/src/mainboard/dell/sklkbl_desktops/Kconfig
++++ b/src/mainboard/dell/sklkbl_desktops/Kconfig
+@@ -18,6 +18,7 @@ config BOARD_DELL_SKLKBL_DESKTOPS_COMMON
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 	select SOC_INTEL_KABYLAKE
+ 	select SUPERIO_SMSC_SCH555x
++	select USE_LEGACY_8254_TIMER	# SeaBIOS hangs without this
+ 
+ config BOARD_DELL_OPTIPLEX_3050
+ 	bool
+-- 
+2.47.3
+

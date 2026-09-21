@@ -1,7 +1,7 @@
-From 73475b7a114430b1e35191113f7116a9d78247c7 Mon Sep 17 00:00:00 2001
+From a4f3d7b48e2f0ca3635fbfe8fc791e763e0f29de Mon Sep 17 00:00:00 2001
 From: Vitali64 <5405891-vitali64yt@users.noreply.gitlab.com>
 Date: Wed, 27 Oct 2021 13:36:01 +0200
-Subject: [PATCH 01/50] add c3 and clockgen to apple/macbook21
+Subject: [PATCH 01/56] add c3 and clockgen to apple/macbook21
 
 ---
  src/mainboard/apple/i945_macs/cstates.c     | 13 +++++++++++++
@@ -9,7 +9,7 @@ Subject: [PATCH 01/50] add c3 and clockgen to apple/macbook21
  2 files changed, 19 insertions(+)
 
 diff --git a/src/mainboard/apple/i945_macs/cstates.c b/src/mainboard/apple/i945_macs/cstates.c
-index 13d06f0839b1..88b8669c6181 100644
+index 13d06f0839..88b8669c61 100644
 --- a/src/mainboard/apple/i945_macs/cstates.c
 +++ b/src/mainboard/apple/i945_macs/cstates.c
 @@ -29,6 +29,19 @@ static const acpi_cstate_t cst_entries[] = {
@@ -33,7 +33,7 @@ index 13d06f0839b1..88b8669c6181 100644
  
  int get_cst_entries(const acpi_cstate_t **entries)
 diff --git a/src/mainboard/apple/i945_macs/devicetree.cb b/src/mainboard/apple/i945_macs/devicetree.cb
-index e479c63db142..f7b97c516c58 100644
+index e479c63db1..f7b97c516c 100644
 --- a/src/mainboard/apple/i945_macs/devicetree.cb
 +++ b/src/mainboard/apple/i945_macs/devicetree.cb
 @@ -89,7 +89,13 @@ chip northbridge/intel/i945

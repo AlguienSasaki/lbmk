@@ -1,7 +1,7 @@
-From 3a479ea3bfdf569eeafa10c94163fcf37b4376f2 Mon Sep 17 00:00:00 2001
+From 26a11c48236b9c0c871d7c9f9641b6e4283a6126 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 20 Feb 2026 19:31:19 +0000
-Subject: [PATCH 47/50] me_cleaner: don't modify if -k is used
+Subject: [PATCH 47/56] me_cleaner: don't modify if -k is used
 
 don't remove *anything*. in libreboot, we only
 ever use -k when we werely want to extract the
@@ -18,7 +18,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/util/me_cleaner/me_cleaner.py b/util/me_cleaner/me_cleaner.py
-index 228bac899f6d..269aa4ad0432 100755
+index 228bac899f..269aa4ad04 100755
 --- a/util/me_cleaner/me_cleaner.py
 +++ b/util/me_cleaner/me_cleaner.py
 @@ -677,7 +677,7 @@ if __name__ == "__main__":

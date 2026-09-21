@@ -1,7 +1,7 @@
-From d88dad002b5574fd49cf25211cd557cb938f80be Mon Sep 17 00:00:00 2001
+From 47a2305433ea6b123ef6baf65f496b4583e198da Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Sep 2026 13:00:09 +0100
-Subject: [PATCH 1/1] use -std=gnu2x
+Subject: [PATCH 53/56] use -std=gnu2x
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

@@ -1,7 +1,7 @@
-From d9b40319d0acfc1b925b3c7116301073c857bdb9 Mon Sep 17 00:00:00 2001
+From 6e81af254fa70cd11c6bffd0343da5eb855954f3 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 11:41:41 +0000
-Subject: [PATCH 09/50] dell/e6430: use ME Soft Temporary Disable
+Subject: [PATCH 09/56] dell/e6430: use ME Soft Temporary Disable
 
 i overlooked this. it's set on other boards.
 
@@ -16,7 +16,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/mainboard/dell/snb_ivb_latitude/cmos.default b/src/mainboard/dell/snb_ivb_latitude/cmos.default
-index c883ec40dee8..088da5d84401 100644
+index c883ec40de..088da5d844 100644
 --- a/src/mainboard/dell/snb_ivb_latitude/cmos.default
 +++ b/src/mainboard/dell/snb_ivb_latitude/cmos.default
 @@ -6,5 +6,5 @@ bluetooth=Enable

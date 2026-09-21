@@ -1,7 +1,7 @@
-From ff87dbf28f565a6d227e98d2c71e99e47a34f261 Mon Sep 17 00:00:00 2001
+From 06a4925ea4ecb9015b1bd4007d305e26d0f61fbd Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 4 May 2024 02:00:53 +0100
-Subject: [PATCH 15/50] nb/haswell: lock policy regs when disabling IOMMU
+Subject: [PATCH 15/56] nb/haswell: lock policy regs when disabling IOMMU
 
 Angel Pons told me I should do it. See comments here:
 https://review.coreboot.org/c/coreboot/+/81016
@@ -22,7 +22,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 7 insertions(+), 8 deletions(-)
 
 diff --git a/src/northbridge/intel/haswell/early_init.c b/src/northbridge/intel/haswell/early_init.c
-index 5f07fa0b1731..e0007f72eea2 100644
+index 5f07fa0b17..e0007f72ee 100644
 --- a/src/northbridge/intel/haswell/early_init.c
 +++ b/src/northbridge/intel/haswell/early_init.c
 @@ -83,17 +83,16 @@ static void northbridge_setup_iommu(void)

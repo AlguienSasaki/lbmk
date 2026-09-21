@@ -1,7 +1,7 @@
-From 514f637be0f766d077a09a734832c0c9bfb376e1 Mon Sep 17 00:00:00 2001
+From 621fa31a5342d01c8d199d5f08e6862909e970b5 Mon Sep 17 00:00:00 2001
 From: Todd Baker <todd_baker@student.uml.edu>
 Date: Thu, 12 Mar 2026 13:12:04 -0400
-Subject: [PATCH 50/50] mb/dell: Add OptiPlex 3040 Micro port
+Subject: [PATCH 50/56] mb/dell: Add OptiPlex 3040 Micro port
  (upstream-compatible)
 
 Based on the OptiPlex 3050 Micro (same Skylake H110 PCH-H platform).
@@ -59,7 +59,7 @@ Signed-off-by: Todd Baker <todd_baker@student.uml.edu>
 
 diff --git a/src/mainboard/dell/optiplex_3040/Kconfig b/src/mainboard/dell/optiplex_3040/Kconfig
 new file mode 100644
-index 000000000000..eab8e7d814de
+index 0000000000..eab8e7d814
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Kconfig
 @@ -0,0 +1,37 @@
@@ -102,7 +102,7 @@ index 000000000000..eab8e7d814de
 +endif
 diff --git a/src/mainboard/dell/optiplex_3040/Kconfig.name b/src/mainboard/dell/optiplex_3040/Kconfig.name
 new file mode 100644
-index 000000000000..e06da5010ad3
+index 0000000000..e06da5010a
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Kconfig.name
 @@ -0,0 +1,4 @@
@@ -112,7 +112,7 @@ index 000000000000..e06da5010ad3
 +	bool "Dell OptiPlex 3040 Micro"
 diff --git a/src/mainboard/dell/optiplex_3040/Makefile.mk b/src/mainboard/dell/optiplex_3040/Makefile.mk
 new file mode 100644
-index 000000000000..0bd72fe691a4
+index 0000000000..0bd72fe691
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/Makefile.mk
 @@ -0,0 +1,12 @@
@@ -130,7 +130,7 @@ index 000000000000..0bd72fe691a4
 +ramstage-$(CONFIG_MAINBOARD_USE_LIBGFXINIT) += gma-mainboard.ads
 diff --git a/src/mainboard/dell/optiplex_3040/acpi/ec.asl b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
 new file mode 100644
-index 000000000000..16990d45f428
+index 0000000000..16990d45f4
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/acpi/ec.asl
 @@ -0,0 +1,3 @@
@@ -139,7 +139,7 @@ index 000000000000..16990d45f428
 +/* Please update the license if adding licensable material. */
 diff --git a/src/mainboard/dell/optiplex_3040/acpi/superio.asl b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
 new file mode 100644
-index 000000000000..16990d45f428
+index 0000000000..16990d45f4
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/acpi/superio.asl
 @@ -0,0 +1,3 @@
@@ -148,7 +148,7 @@ index 000000000000..16990d45f428
 +/* Please update the license if adding licensable material. */
 diff --git a/src/mainboard/dell/optiplex_3040/board_info.txt b/src/mainboard/dell/optiplex_3040/board_info.txt
 new file mode 100644
-index 000000000000..e43a925ec3c8
+index 0000000000..e43a925ec3
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/board_info.txt
 @@ -0,0 +1,7 @@
@@ -161,7 +161,7 @@ index 000000000000..e43a925ec3c8
 +Release year: 2016
 diff --git a/src/mainboard/dell/optiplex_3040/bootblock.c b/src/mainboard/dell/optiplex_3040/bootblock.c
 new file mode 100644
-index 000000000000..10689c42a1a9
+index 0000000000..10689c42a1
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/bootblock.c
 @@ -0,0 +1,107 @@
@@ -274,7 +274,7 @@ index 000000000000..10689c42a1a9
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/cmos.default b/src/mainboard/dell/optiplex_3040/cmos.default
 new file mode 100644
-index 000000000000..79961f43d82c
+index 0000000000..79961f43d8
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/cmos.default
 @@ -0,0 +1,5 @@
@@ -285,7 +285,7 @@ index 000000000000..79961f43d82c
 +power_on_after_fail=Disable
 diff --git a/src/mainboard/dell/optiplex_3040/cmos.layout b/src/mainboard/dell/optiplex_3040/cmos.layout
 new file mode 100644
-index 000000000000..54a5147b7d50
+index 0000000000..54a5147b7d
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/cmos.layout
 @@ -0,0 +1,54 @@
@@ -381,7 +381,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/dell/optiplex_3040/devicetree.cb b/src/mainboard/dell/optiplex_3040/devicetree.cb
 new file mode 100644
-index 000000000000..f1c919fbc799
+index 0000000000..f1c919fbc7
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/devicetree.cb
 @@ -0,0 +1,100 @@
@@ -487,7 +487,7 @@ index 000000000000..f1c919fbc799
 +end
 diff --git a/src/mainboard/dell/optiplex_3040/dsdt.asl b/src/mainboard/dell/optiplex_3040/dsdt.asl
 new file mode 100644
-index 000000000000..9762f6ff74c6
+index 0000000000..9762f6ff74
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/dsdt.asl
 @@ -0,0 +1,27 @@
@@ -520,7 +520,7 @@ index 000000000000..9762f6ff74c6
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/gma-mainboard.ads b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
 new file mode 100644
-index 000000000000..cb4c22f2859e
+index 0000000000..cb4c22f285
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/gma-mainboard.ads
 @@ -0,0 +1,19 @@
@@ -545,7 +545,7 @@ index 000000000000..cb4c22f2859e
 +end GMA.Mainboard;
 diff --git a/src/mainboard/dell/optiplex_3040/hda_verb.c b/src/mainboard/dell/optiplex_3040/hda_verb.c
 new file mode 100644
-index 000000000000..5a1db019c7cc
+index 0000000000..5a1db019c7
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/hda_verb.c
 @@ -0,0 +1,90 @@
@@ -641,7 +641,7 @@ index 000000000000..5a1db019c7cc
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/dell/optiplex_3040/include/early_gpio.h b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
 new file mode 100644
-index 000000000000..fdf1a64c7cf6
+index 0000000000..fdf1a64c7c
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/include/early_gpio.h
 @@ -0,0 +1,11 @@
@@ -658,7 +658,7 @@ index 000000000000..fdf1a64c7cf6
 +#endif
 diff --git a/src/mainboard/dell/optiplex_3040/include/gpio.h b/src/mainboard/dell/optiplex_3040/include/gpio.h
 new file mode 100644
-index 000000000000..29da4b11d4b6
+index 0000000000..29da4b11d4
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/include/gpio.h
 @@ -0,0 +1,241 @@
@@ -905,7 +905,7 @@ index 000000000000..29da4b11d4b6
 +#endif
 diff --git a/src/mainboard/dell/optiplex_3040/ramstage.c b/src/mainboard/dell/optiplex_3040/ramstage.c
 new file mode 100644
-index 000000000000..c391e4ac6d45
+index 0000000000..c391e4ac6d
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/ramstage.c
 @@ -0,0 +1,512 @@
@@ -1423,7 +1423,7 @@ index 000000000000..c391e4ac6d45
 +BOOT_STATE_INIT_ENTRY(BS_POST_DEVICE, BS_ON_EXIT, sch5555_ec_hwm_init, NULL);
 diff --git a/src/mainboard/dell/optiplex_3040/romstage.c b/src/mainboard/dell/optiplex_3040/romstage.c
 new file mode 100644
-index 000000000000..c2ce2369a4dc
+index 0000000000..c2ce2369a4
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/romstage.c
 @@ -0,0 +1,22 @@
@@ -1451,7 +1451,7 @@ index 000000000000..c2ce2369a4dc
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.c b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
 new file mode 100644
-index 000000000000..1df5026531c6
+index 0000000000..1df5026531
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.c
 @@ -0,0 +1,54 @@
@@ -1511,7 +1511,7 @@ index 000000000000..1df5026531c6
 +}
 diff --git a/src/mainboard/dell/optiplex_3040/sch5555_ec.h b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
 new file mode 100644
-index 000000000000..9d262d578764
+index 0000000000..9d262d5787
 --- /dev/null
 +++ b/src/mainboard/dell/optiplex_3040/sch5555_ec.h
 @@ -0,0 +1,10 @@

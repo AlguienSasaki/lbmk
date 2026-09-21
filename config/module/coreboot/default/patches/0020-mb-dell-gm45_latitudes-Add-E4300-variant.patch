@@ -1,7 +1,7 @@
-From 96ab76bbfff01f8140c2f4be223feb7b528a750e Mon Sep 17 00:00:00 2001
+From b6f82ec86cd3cc34264f999d6a9a5c30a72cea60 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Thu, 26 Sep 2024 19:51:25 -0600
-Subject: [PATCH 20/50] mb/dell/gm45_latitudes: Add E4300 variant
+Subject: [PATCH 20/56] mb/dell/gm45_latitudes: Add E4300 variant
 
 Change-Id: I0f2059501b11be103187e3ce1a7c04ab85ae63d2
 Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
@@ -21,7 +21,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
  create mode 100644 src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb
 
 diff --git a/src/mainboard/dell/gm45_latitude/Kconfig b/src/mainboard/dell/gm45_latitude/Kconfig
-index 502074499067..d27d5728a82d 100644
+index 5020744990..d27d5728a8 100644
 --- a/src/mainboard/dell/gm45_latitude/Kconfig
 +++ b/src/mainboard/dell/gm45_latitude/Kconfig
 @@ -21,6 +21,9 @@ config BOARD_DELL_GM45_LATITUDE_COMMON
@@ -50,7 +50,7 @@ index 502074499067..d27d5728a82d 100644
  config USBDEBUG_HCD_INDEX
  	default 1
 diff --git a/src/mainboard/dell/gm45_latitude/Kconfig.name b/src/mainboard/dell/gm45_latitude/Kconfig.name
-index aefe777109b7..4dc95f46becc 100644
+index aefe777109..4dc95f46be 100644
 --- a/src/mainboard/dell/gm45_latitude/Kconfig.name
 +++ b/src/mainboard/dell/gm45_latitude/Kconfig.name
 @@ -1,4 +1,7 @@
@@ -103,7 +103,7 @@ HcmV?d00001
 
 diff --git a/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads b/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads
 new file mode 100644
-index 000000000000..89b81b3d690e
+index 0000000000..89b81b3d69
 --- /dev/null
 +++ b/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads
 @@ -0,0 +1,17 @@
@@ -126,7 +126,7 @@ index 000000000000..89b81b3d690e
 +end GMA.Mainboard;
 diff --git a/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c b/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c
 new file mode 100644
-index 000000000000..b50f8da0b5b0
+index 0000000000..b50f8da0b5
 --- /dev/null
 +++ b/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c
 @@ -0,0 +1,138 @@
@@ -270,7 +270,7 @@ index 000000000000..b50f8da0b5b0
 +};
 diff --git a/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c b/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c
 new file mode 100644
-index 000000000000..a9948a93dd81
+index 0000000000..a9948a93dd
 --- /dev/null
 +++ b/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c
 @@ -0,0 +1,37 @@
@@ -313,7 +313,7 @@ index 000000000000..a9948a93dd81
 +AZALIA_ARRAY_SIZES;
 diff --git a/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb b/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb
 new file mode 100644
-index 000000000000..20dfa245fbdd
+index 0000000000..20dfa245fb
 --- /dev/null
 +++ b/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb
 @@ -0,0 +1,10 @@

@@ -1,7 +1,7 @@
-From 0d50772e7dc3423372300d337d9f7fa209ca2299 Mon Sep 17 00:00:00 2001
+From 95028f8238873d05e5e3feb35e4faf5873e15c84 Mon Sep 17 00:00:00 2001
 From: Nicholas Chin <nic.c3.14@gmail.com>
 Date: Fri, 3 May 2024 16:31:12 -0600
-Subject: [PATCH 21/50] mb/dell: Add S3 SMI handler for Dell Latitudes
+Subject: [PATCH 21/56] mb/dell: Add S3 SMI handler for Dell Latitudes
 
 Integrate the previously added mec5035_smi_sleep() function into
 mainboard code to fix S3 suspend on the SNB/IVB Latitudes and the E7240.
@@ -22,7 +22,7 @@ Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
 
 diff --git a/src/mainboard/dell/gm45_latitude/smihandler.c b/src/mainboard/dell/gm45_latitude/smihandler.c
 new file mode 100644
-index 000000000000..00e55b51db04
+index 0000000000..00e55b51db
 --- /dev/null
 +++ b/src/mainboard/dell/gm45_latitude/smihandler.c
 @@ -0,0 +1,9 @@
@@ -37,7 +37,7 @@ index 000000000000..00e55b51db04
 +}
 diff --git a/src/mainboard/dell/haswell_latitude/smihandler.c b/src/mainboard/dell/haswell_latitude/smihandler.c
 new file mode 100644
-index 000000000000..00e55b51db04
+index 0000000000..00e55b51db
 --- /dev/null
 +++ b/src/mainboard/dell/haswell_latitude/smihandler.c
 @@ -0,0 +1,9 @@
@@ -52,7 +52,7 @@ index 000000000000..00e55b51db04
 +}
 diff --git a/src/mainboard/dell/snb_ivb_latitude/smihandler.c b/src/mainboard/dell/snb_ivb_latitude/smihandler.c
 new file mode 100644
-index 000000000000..00e55b51db04
+index 0000000000..00e55b51db
 --- /dev/null
 +++ b/src/mainboard/dell/snb_ivb_latitude/smihandler.c
 @@ -0,0 +1,9 @@

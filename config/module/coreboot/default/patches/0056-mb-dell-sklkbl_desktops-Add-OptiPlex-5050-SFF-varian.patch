@@ -1,0 +1,703 @@
+From 576d0d86086566b67b3b664024015fa6ad0162b9 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Mon, 22 Dec 2025 03:11:56 +0000
+Subject: [PATCH 56/56] mb/dell/sklkbl_desktops: Add OptiPlex 5050 SFF variant
+
+- Boots Linux 6.12.41-0-lts and 6.18.0-3-lts (Alpine, tested with SeaBIOS and EDK II)
+- Tested with i5-6500 and i3-9100
+- All external USB ports work
+- Serial port works
+- PS/2 works in SeaBIOS and Linux
+- Intel Gigabit Ethernet works
+- All 3 SATA ports work, M.2 slot SATA untested (I don't have a
+  compatible SSD to test with)
+- Sound works
+- DisplayPort and HDMI works (however, I only tested DisplayPort with
+  a DP->DVI adapter as I don't have a native DisplayPort monitor, and
+  libgfxinit required a patch in order to correctly initialize it)
+- M.2 slot (PCIe), PCIe x4 slot, and PCIe x16 slot mostly work
+- VGA port and SD card reader untested, as mine does not have these
+- me_cleaner works, provided you use --whitelist MFS (deguard relies
+  on the MFS partition, it won't boot otherwise)
+- SeaBIOS hangs if compiled without USE_LEGACY_8254_TIMER
+
+PCIe hotplug is disabled since it apparently causes Linux to randomly
+rename NVMe devices, potentially resulting in data loss.  I haven't
+actually tested this on a 5050 SFF myself, but this issue also affects the
+OptiPlex 3050 Micro and ThinkPad T480/T480s.  Libreboot disables PCIe
+hotplug on those boards for this reason, but the fix doesn't seem to
+have been submitted upstream.
+
+I say that PCIe mostly works because with one of the cards I was
+testing with (Mellanox CX312C):
+- With stock firmware it works in both x4 and x16 slots, but only at
+  2.5GT/s for some reason.
+- With coreboot it works in the x4 slot (again, at 2.5GT/s), but
+  doesn't even enumerate on the x16 slot.
+- On another machine (OptiPlex 9020 SFF with coreboot) it works in the
+  x4 slot (at 5GT/s), but does not reliably work in the x16 slot (it
+  sometimes fails to enumerate, sometimes the driver fails to load with
+  different error messages).
+I'm not quite sure what's going on there.  There's probably a coreboot
+bug involved, but it doesn't work quite right with the stock firmware
+either.  The other card I tested with (Intel X520-DA2) works at 5GT/s
+in both slots.
+
+Thanks to Nicholas Chin for telling me where to find the USB
+overcurrent pin mapping and helping with PS/2 and PCIe.
+
+Change-Id: I8dc6ed29abc6c14171ed060cea9b58a07f01bd7b
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ src/mainboard/dell/sklkbl_desktops/Kconfig    |   8 +
+ .../dell/sklkbl_desktops/Kconfig.name         |   3 +
+ .../variants/optiplex_5050sff/board_info.txt  |   7 +
+ .../variants/optiplex_5050sff/data.vbt        | Bin 0 -> 6144 bytes
+ .../variants/optiplex_5050sff/early_gpio.c    |  15 ++
+ .../optiplex_5050sff/gma-mainboard.ads        |  19 ++
+ .../variants/optiplex_5050sff/gpio.c          | 245 ++++++++++++++++++
+ .../variants/optiplex_5050sff/hda_verb.c      |  90 +++++++
+ .../optiplex_5050sff/include/acpi/superio.asl |   3 +
+ .../variants/optiplex_5050sff/overridetree.cb |  97 +++++++
+ .../variants/optiplex_5050sff/romstage.c      |  20 ++
+ 11 files changed, 507 insertions(+)
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/board_info.txt
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/data.vbt
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/early_gpio.c
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gma-mainboard.ads
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gpio.c
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/hda_verb.c
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/include/acpi/superio.asl
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
+ create mode 100644 src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/romstage.c
+
+diff --git a/src/mainboard/dell/sklkbl_desktops/Kconfig b/src/mainboard/dell/sklkbl_desktops/Kconfig
+index 1fab8b41d5..d6ac6551fb 100644
+--- a/src/mainboard/dell/sklkbl_desktops/Kconfig
++++ b/src/mainboard/dell/sklkbl_desktops/Kconfig
+@@ -24,6 +24,11 @@ config BOARD_DELL_OPTIPLEX_3050
+ 	bool
+ 	select BOARD_DELL_SKLKBL_DESKTOPS_COMMON
+ 
++config BOARD_DELL_OPTIPLEX_5050_SFF
++	bool
++	select BOARD_DELL_SKLKBL_DESKTOPS_COMMON
++	select MAINBOARD_USES_IFD_GBE_REGION
++
+ if BOARD_DELL_SKLKBL_DESKTOPS_COMMON
+ 
+ config MAINBOARD_DIR
+@@ -31,9 +36,11 @@ config MAINBOARD_DIR
+ 
+ config MAINBOARD_PART_NUMBER
+ 	default "OptiPlex 3050 Micro" if BOARD_DELL_OPTIPLEX_3050
++	default "OptiPlex 5050 SFF" if BOARD_DELL_OPTIPLEX_5050_SFF
+ 
+ config VARIANT_DIR
+ 	default "optiplex_3050" if BOARD_DELL_OPTIPLEX_3050
++	default "optiplex_5050sff" if BOARD_DELL_OPTIPLEX_5050_SFF
+ 
+ config OVERRIDE_DEVICETREE
+ 	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
+@@ -46,6 +53,7 @@ config CBFS_SIZE
+ 
+ config DIMM_SPD_SIZE
+ 	default 512 if BOARD_DELL_OPTIPLEX_3050	# DDR4
++	default 512 if BOARD_DELL_OPTIPLEX_5050_SFF	# DDR4
+ 
+ # Won't boot if MFS partition is missing, deguard requires it
+ config ME_CLEANER_ARGS
+diff --git a/src/mainboard/dell/sklkbl_desktops/Kconfig.name b/src/mainboard/dell/sklkbl_desktops/Kconfig.name
+index 14eab7f52c..e856f670ba 100644
+--- a/src/mainboard/dell/sklkbl_desktops/Kconfig.name
++++ b/src/mainboard/dell/sklkbl_desktops/Kconfig.name
+@@ -2,3 +2,6 @@
+ 
+ config BOARD_DELL_OPTIPLEX_3050
+ 	bool "OptiPlex 3050 Micro"
++
++config BOARD_DELL_OPTIPLEX_5050_SFF
++	bool "OptiPlex 5050 SFF"
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/board_info.txt b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/board_info.txt
+new file mode 100644
+index 0000000000..5554c934c0
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/board_info.txt
+@@ -0,0 +1,7 @@
++Category: desktop
++Board URL: https://www.dell.com/support/product-details/en-uk/product/optiplex-5050-sff/overview
++ROM package: SOIC-8
++ROM protocol: SPI
++ROM socketed: n
++Flashrom support: y
++Release year: 2017
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/data.vbt b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/data.vbt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a4e2ee4ade83e0d0e79ff8814fba96d130e2b7c6
+GIT binary patch
+literal 6144
+zcmeHKU2GIp6h1SvzjtP~vs09^U_Bthw$OIAK!sXmw!4L0+S1)_txGgv3%f|;LQ7jr
+z@sBmugv4m}K@A!-O?=SQmnOz1V<a&u2~p8R^i5t&lxSii#us2b^Fv!8(hc#CxM%jv
+zx%b?&-@WJDzcZ@`I|ne+y{jkM-GvV2L4$9VCG@_YI+J~w-SOx^ba!V@U#uIygxldQ
+z<??xeJjX4QBAOOS9-Jr?!~G2e+k?F$dxndJmUv<O(TR~!OvREI-MhC?EQ}3J6!MrE
+z+#W>}Q)Zoqhl_dKdHBGd!dN>JkVe)R+1R{cBVwebm3~@e6BV`gNL%}+Ei#LD#rk?v
+z$)4yyvTrB$^<zAliDoigy`4R~FxB6eNOmR%y5cgMb0an~dSq<)k^K`Gjx}H__0eR3
+zT0_Rz$k=EzMvF!4H*LnTzc5}Hd#sRemYE515_~QWfOA7l2{^da3ZMfZfD1sG>w^py
+zl&>x-z;EJsGGF5ZPu;>cf)}XnBSf6jqYJ*ufui`%`)nN{yPXow_oBmD%j%+IMS{8@
+zLJoPWU{xHefZtY;@K_~{L$hm}6!>I6^$6%#iB}r*1y*=P`Ois#+`afX_2;<F0cR3G
+zfYV@~zaF*=VVDqjcv{#Dt6ZnR=SNuQSKxl)H1TOSgRhCdBmR;2SK>>=UJrvH@p9t3
+ziCc)b5XXpni60~$BK91Hiw0i;ujO-zb7at#pt#`01}L3y^d}s>{}+2Em?K3;RvI|N
+z@Ot60@p&B>hVMRe1Uey*+g#j1N;tB|l7f(O>H{RrSY@5MVfb@YZKdb$cncOXI}LN2
+z%`m7Vi*D7DR0}(3CkeieDHoKyn_V5iee}94z$CDsv)9N$Rl2e$EpL~+0iKZUxVOWW
+z*T4VGmXLWSEdPl=<7IHhdx1Mv``;{?QB!XCM4Z4HM$jQgQ5Dq)Tor*82{`L7mGRsi
+ziZ8dyZmPdI&7BX^n&dg~(`C)mb?gF(F6}rZAiAJSYU5xfsS;#nn^>v@S>|9hgaPSa
+zmdfSa`hHTn0TF7<4SE9#hoA<=uQe#m5CJs21j4-xhnPCf*i#JOWa@j2eaP^8rvA<t
+zC*oRB-6FD>h{K}#gvg!~@f}h9KxCha__L@QBJ)ewBB@b{bxU|iQlFLB3lhF7sUJ)1
+z3kiRdRIki}GTtMrNttD2JR+;l%j{(t-<Q?TWcH1Wmt?gjz?KDYYd}p0*h2xiQFWL2
+zb6hDHuo4~Lm_%n!mX|Dffm2AjYu3^&cm1Ta9i_|O^j1P4%P)>FU4szGuE20<i5;W*
+zwxc{vm5E>;=Zhocmw_IIHCo-VHXEU??WkboXM{jAZX$G0&h+PAXpL|@4Vtcv*4hX(
+z26L$pNt5nSMF^9a4k@~_0D&u8*<XbSZ?{aIONZ9z+2iwL;L29cC+VKq3dWGws%v{@
+zTXp^9Jc7s0fTTfpC6U~>a&RUM_1d<wGZ$tg%hugVL#ZSVPd1mQbD?@&LuW21lCH9q
+zok}HdC0>L(O4FmWcM(G4{9Kf+JVlyzPgSrUUTc^>lb%|orCwb+haiBJ8dD@ILC_lY
+zQ@N?UR+qN(K_D*#T1@78xXCqXA;>m@8!PbQd<dpfxKxw0*t{2I+K)5_GrL)QU-0dv
+zx<i|r^la1oTnKa)nFw@<c^2On4LamXP@7Yfp!qMb<6wO}Nj=+AyHi643&ov72MV`l
+zr4UawO^h_rN3HGMBJXw2fM<uY7P2!tPEn@**S}eI#<+&~YiRv#@a#4kXOc4a2OtG`
+qSkJuzKM2jU0LSL&mMCs;zF8NEdbPP4focS*5vWF>8iD_P1pWYFD8nBB
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/early_gpio.c b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/early_gpio.c
+new file mode 100644
+index 0000000000..1787d556ab
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/early_gpio.c
+@@ -0,0 +1,15 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/gpe.h>
++#include <soc/gpio.h>
++#include "../../../include/variant/gpio.h"
++
++static const struct pad_config early_gpio_table[] = {
++	PAD_CFG_NF(GPP_C8, NONE, DEEP, NF1),	/* UART0_RXD */
++	PAD_CFG_NF(GPP_C9, NONE, DEEP, NF1),	/* UART0_TXD */
++};
++
++void variant_configure_early_gpios(void)
++{
++	gpio_configure_pads(early_gpio_table, ARRAY_SIZE(early_gpio_table));
++}
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gma-mainboard.ads b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gma-mainboard.ads
+new file mode 100644
+index 0000000000..f58e61cb8b
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gma-mainboard.ads
+@@ -0,0 +1,19 @@
++-- SPDX-License-Identifier: GPL-2.0-or-later
++
++with HW.GFX.GMA;
++with HW.GFX.GMA.Display_Probing;
++
++use HW.GFX.GMA;
++use HW.GFX.GMA.Display_Probing;
++
++private package GMA.Mainboard is
++
++   ports : constant Port_List :=
++      (HDMI1,  -- External HDMI
++       DP2,    -- External DP (native)
++       DP3,    -- External DP (native)
++       HDMI2,  -- External DP (DP++)
++       HDMI3,  -- External DP (DP++)
++       others => Disabled);
++
++end GMA.Mainboard;
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gpio.c b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gpio.c
+new file mode 100644
+index 0000000000..9a133a35de
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/gpio.c
+@@ -0,0 +1,245 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/gpe.h>
++#include <soc/gpio.h>
++#include "../../../include/variant/gpio.h"
++
++static const struct pad_config gpio_table[] = {
++
++	/* ------- GPIO Community 0 ------- */
++
++	/* ------- GPIO Group GPP_A ------- */
++	PAD_CFG_NF(GPP_A0, UP_20K, PLTRST, NF1),			/* RCIN# */
++	PAD_CFG_NF(GPP_A1, UP_20K, PLTRST, NF1),			/* LAD0 */
++	PAD_CFG_NF(GPP_A2, UP_20K, PLTRST, NF1),			/* LAD1 */
++	PAD_CFG_NF(GPP_A3, UP_20K, PLTRST, NF1),			/* LAD2 */
++	PAD_CFG_NF(GPP_A4, UP_20K, PLTRST, NF1),			/* LAD3 */
++	PAD_CFG_NF(GPP_A5, NONE, PLTRST, NF1),				/* LFRAME# */
++	PAD_CFG_NF(GPP_A6, NONE, PLTRST, NF1),				/* SERIRQ */
++	PAD_CFG_GPI_TRIG_OWN(GPP_A7, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_A8, NONE, DEEP, NF1),				/* CLKRUN# */
++	PAD_CFG_NF(GPP_A9, NONE, PLTRST, NF1),				/* CLKOUT_LPC0 */
++	PAD_CFG_NF(GPP_A10, NONE, PLTRST, NF1),				/* CLKOUT_LPC1 */
++	PAD_CFG_NF(GPP_A11, UP_20K, DEEP, NF1),				/* PME# */
++	PAD_CFG_GPO(GPP_A12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_A13, NONE, PLTRST, NF1),				/* SUSWARN#/SUSPWRDNACK */
++	PAD_CFG_GPI_TRIG_OWN(GPP_A14, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_A15, UP_20K, PLTRST, NF1),			/* SUS_ACK# */
++	PAD_CFG_GPO(GPP_A16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A21, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_A23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_B ------- */
++	PAD_CFG_GPO(GPP_B0, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B1, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B2, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_B3, 1, RSMRST),					/* GPIO (ME_CNTL, B3 -> LOW => HDA_SDO -> HIGH) */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B4, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_B5, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B6, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B8, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_B9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_B10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_B11, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_B12, NONE, PLTRST, NF1),				/* SLP_S0# */
++	PAD_CFG_NF(GPP_B13, NONE, PLTRST, NF1),				/* PLTRST# */
++	PAD_CFG_NF(GPP_B14, DN_20K, PLTRST, NF1),			/* SPKR */
++	PAD_CFG_GPO(GPP_B15, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B16, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_B18, DN_20K, DEEP, NF1),				/* GSPIO_MOSI */
++	PAD_CFG_GPO(GPP_B19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_B20, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_B21, 0, DEEP),					/* GPIO */
++	PAD_CFG_NF(GPP_B22, DN_20K, DEEP, NF1),				/* GSPI1_MOSI */
++	PAD_CFG_NF(GPP_B23, DN_20K, DEEP, NF2),				/* PCHHOT# */
++
++	/* ------- GPIO Community 1 ------- */
++
++	/* ------- GPIO Group GPP_C ------- */
++	PAD_CFG_NF(GPP_C0, NONE, DEEP, NF1),				/* SMBCLK */
++	PAD_CFG_NF(GPP_C1, NONE, DEEP, NF1),				/* SMBDATA */
++	PAD_CFG_GPI_TRIG_OWN(GPP_C2, DN_20K, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_C3, NONE, PLTRST, NF1),				/* SML0CLK */
++	PAD_CFG_NF(GPP_C4, NONE, PLTRST, NF1),				/* SML0DATA */
++	PAD_CFG_GPI_TRIG_OWN(GPP_C5, DN_20K, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_C6, NONE, DEEP, NF1),				/* SML1CLK */
++	PAD_CFG_NF(GPP_C7, NONE, DEEP, NF1),				/* SML1DATA */
++	PAD_CFG_NF(GPP_C8, NONE, DEEP, NF1),				/* UART0_RXD */
++	PAD_CFG_NF(GPP_C9, NONE, DEEP, NF1),				/* UART0_TXD */
++	PAD_CFG_GPO(GPP_C10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_NF(GPP_C16, NONE, PLTRST, NF1),				/* I2C0_SDA */
++	PAD_CFG_NF(GPP_C17, NONE, PLTRST, NF1),				/* I2C0_SCL */
++	PAD_CFG_GPO(GPP_C18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_C22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_SCI(GPP_C23, NONE, DEEP, EDGE_SINGLE, INVERT),	/* GPIO */
++
++	/* ------- GPIO Group GPP_D ------- */
++	PAD_CFG_GPO(GPP_D0, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D1, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D2, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D3, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D4, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_D5, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_D6, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_D7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D8, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_D10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D12, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_D23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_E ------- */
++	PAD_CFG_NF(GPP_E0, NONE, DEEP, NF1),				/* SATAXPCIE0 */
++	PAD_CFG_NF(GPP_E1, NONE, DEEP, NF1),				/* SATAXPCIE1 */
++	PAD_CFG_NF(GPP_E2, NONE, DEEP, NF1),				/* SATAXPCIE2 */
++	PAD_CFG_GPO(GPP_E3, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_E4, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_E5, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_E6, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_E7, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_E8, NONE, PLTRST, NF1),				/* SATA_LED# */
++	PAD_CFG_NF(GPP_E9, UP_20K, PLTRST, NF1),			/* USB_OC0# */
++	PAD_CFG_NF(GPP_E10, UP_20K, PLTRST, NF1),			/* USB_OC1# */
++	PAD_CFG_NF(GPP_E11, UP_20K, PLTRST, NF1),			/* USB_OC2# */
++	PAD_CFG_NF(GPP_E12, UP_20K, PLTRST, NF1),			/* USB_OC3# */
++
++	/* ------- GPIO Group GPP_F ------- */
++	PAD_CFG_NF(GPP_F0, NONE, DEEP, NF1),				/* SATAXPCIE3 */
++	PAD_CFG_NF(GPP_F1, NONE, DEEP, NF1),				/* SATAXPCIE4 */
++	PAD_CFG_NF(GPP_F2, NONE, DEEP, NF1),				/* SATAXPCIE5 */
++	PAD_CFG_NF(GPP_F3, NONE, DEEP, NF1),				/* SATAXPCIE6 */
++	PAD_CFG_NF(GPP_F4, NONE, DEEP, NF1),				/* SATAXPCIE7 */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F5, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_F6, NONE, RSMRST, NF1),				/* SATA_DEVSLP4 */
++	PAD_CFG_GPO(GPP_F7, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F8, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_F9, 0, RSMRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F10, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F11, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F12, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_F13, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_F14, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_NF(GPP_F15, UP_20K, DEEP, NF1),				/* USB_OC4# */
++	PAD_CFG_NF(GPP_F16, UP_20K, DEEP, NF1),				/* USB_OC5# */
++	PAD_CFG_NF(GPP_F17, UP_20K, PLTRST, NF1),			/* USB_OC6# */
++	PAD_CFG_TERM_GPO(GPP_F18, 0, UP_20K, DEEP),			/* GPIO */
++	PAD_CFG_GPO(GPP_F19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F20, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_F21, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F22, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_F23, 1, RSMRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_G ------- */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G0, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G1, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G2, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G3, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G4, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G5, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G6, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G7, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G8, NONE, PLTRST, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G9, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G10, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G11, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G12, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPI_TRIG_OWN(GPP_G13, NONE, DEEP, OFF, ACPI),		/* GPIO */
++	PAD_CFG_GPO(GPP_G14, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G15, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G16, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G17, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_G19, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G20, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_G21, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G22, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_G23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Group GPP_H ------- */
++	PAD_CFG_GPO(GPP_H0, 0, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_H1, 1, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H2, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H3, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H4, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H5, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H6, 1, DEEP),					/* GPIO */
++	PAD_CFG_GPO(GPP_H7, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H8, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H9, 0, PLTRST),					/* GPIO */
++	PAD_CFG_GPO(GPP_H10, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H11, 0, PLTRST),				/* GPIO */
++	PAD_CFG_TERM_GPO(GPP_H12, 1, DN_20K, DEEP),			/* GPIO */
++	PAD_CFG_GPO(GPP_H13, 1, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H14, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H15, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H16, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H17, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H18, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H19, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H20, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H21, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H22, 0, PLTRST),				/* GPIO */
++	PAD_CFG_GPO(GPP_H23, 0, PLTRST),				/* GPIO */
++
++	/* ------- GPIO Community 2 ------- */
++
++	/* -------- GPIO Group GPD -------- */
++	PAD_CFG_NF(GPD0, NONE, RSMRST, NF1),				/* BATLOW# */
++	PAD_CFG_GPO(GPD1, 0, PWROK),					/* GPIO */
++	PAD_CFG_NF(GPD2, NONE, RSMRST, NF1),				/* LAN_WAKE# */
++	PAD_CFG_NF(GPD3, UP_20K, RSMRST, NF1),				/* PWRBTN# */
++	PAD_CFG_NF(GPD4, NONE, RSMRST, NF1),				/* SLP_S3# */
++	PAD_CFG_NF(GPD5, NONE, RSMRST, NF1),				/* SLP_S4# */
++	PAD_CFG_NF(GPD6, NONE, RSMRST, NF1),				/* SLP_A# */
++	PAD_CFG_GPO(GPD7, 1, RSMRST),					/* GPIO */
++	PAD_CFG_NF(GPD8, NONE, RSMRST, NF1),				/* SUSCLK */
++	PAD_CFG_NF(GPD9, NONE, RSMRST, NF1),				/* SLP_WLAN# */
++	PAD_CFG_NF(GPD10, NONE, RSMRST, NF1),				/* SLP_S5# */
++	PAD_CFG_GPO(GPD11, 1, RSMRST),					/* GPIO */
++
++	/* ------- GPIO Community 3 ------- */
++
++	/* ------- GPIO Group GPP_I ------- */
++	PAD_CFG_NF(GPP_I0, NONE, PLTRST, NF1),				/* DDPB_HPD0 */
++	PAD_CFG_NF(GPP_I1, NONE, PLTRST, NF1),				/* DDPC_HPD1 */
++	PAD_CFG_NF(GPP_I2, NONE, PLTRST, NF1),				/* DDPD_HPD2 */
++	PAD_CFG_NF(GPP_I3, NONE, PLTRST, NF1),				/* DDPE_HPD3 */
++	PAD_CFG_NF(GPP_I4, NONE, PLTRST, NF1),				/* EDP_HPD */
++	PAD_CFG_NF(GPP_I5, NONE, PLTRST, NF1),				/* DDPB_CTRLCLK */
++	PAD_CFG_NF(GPP_I6, DN_20K, PLTRST, NF1),			/* DDPB_CTRLDATA */
++	PAD_CFG_NF(GPP_I7, NONE, PLTRST, NF1),				/* DDPC_CTRLCLK */
++	PAD_CFG_NF(GPP_I8, DN_20K, PLTRST, NF1),			/* DDPC_CTRLDATA */
++	PAD_CFG_NF(GPP_I9, NONE, PLTRST, NF1),				/* DDPD_CTRLCLK */
++	PAD_CFG_NF(GPP_I10, DN_20K, PLTRST, NF1),			/* DDPD_CTRLDATA */
++};
++
++void variant_configure_gpios(void)
++{
++	gpio_configure_pads(gpio_table, ARRAY_SIZE(gpio_table));
++}
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/hda_verb.c b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/hda_verb.c
+new file mode 100644
+index 0000000000..929bcee5ad
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/hda_verb.c
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <device/azalia_device.h>
++
++const u32 cim_verb_data[] = {
++	/* coreboot specific header, codec 0 */
++	0x10ec0255, /* Realtek ALC3234 */
++	0x102807a2, /* Subsystem ID */
++	11,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(0, 0x102807a2),
++
++	AZALIA_PIN_CFG(0, 0x12, 0x40000000), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x14, AZALIA_PIN_DESC(
++		AZALIA_INTEGRATED,
++		AZALIA_INTERNAL,
++		AZALIA_SPEAKER,
++		AZALIA_OTHER_ANALOG,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_NO_JACK_PRESENCE_DETECT,
++		3, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x17, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x18, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x19, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1a, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x1b, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_REAR,
++		AZALIA_LINE_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		2, 0
++	)),
++	AZALIA_PIN_CFG(0, 0x1d, 0x4054c029), // does not describe a jack or internal device
++	AZALIA_PIN_CFG(0, 0x1e, AZALIA_PIN_CFG_NC(0)),
++	AZALIA_PIN_CFG(0, 0x21, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_EXTERNAL_PRIMARY_CHASSIS | AZALIA_FRONT,
++		AZALIA_HP_OUT,
++		AZALIA_STEREO_MONO_1_8,
++		AZALIA_BLACK,
++		AZALIA_JACK_PRESENCE_DETECT,
++		3, 15
++	)),
++
++	/* coreboot specific header, codec 2 */
++	0x80862809, /* Intel Skylake HDMI */
++	0x80860101, /* Subsystem ID */
++	4,	    /* Number of entries */
++
++	/* Pin Widget Verb Table */
++
++	AZALIA_SUBVENDOR(2, 0x80860101),
++
++	AZALIA_PIN_CFG(2, 0x05, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x06, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++	AZALIA_PIN_CFG(2, 0x07, AZALIA_PIN_DESC(
++		AZALIA_JACK,
++		AZALIA_DIGITAL_DISPLAY,
++		AZALIA_DIGITAL_OTHER_OUT,
++		AZALIA_OTHER_DIGITAL,
++		AZALIA_COLOR_UNKNOWN,
++		AZALIA_JACK_PRESENCE_DETECT,
++		1, 0
++	)),
++};
++
++const u32 pc_beep_verbs[] = {};
++
++AZALIA_ARRAY_SIZES;
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/include/acpi/superio.asl b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/include/acpi/superio.asl
+new file mode 100644
+index 0000000000..55b1db5b11
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/include/acpi/superio.asl
+@@ -0,0 +1,3 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <drivers/pc80/pc/ps2_controller.asl>
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
+new file mode 100644
+index 0000000000..87c0e25b3e
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
+@@ -0,0 +1,97 @@
++## SPDX-License-Identifier: GPL-2.0-only
++
++chip soc/intel/skylake
++
++	device domain 0 on
++
++		subsystemid 0x1028 0x07a2 inherit
++
++		device ref south_xhci on
++			register "usb2_ports" = "{
++				[0] = USB2_PORT_MID(OC0),	// Back panel (black)
++				[1] = USB2_PORT_MID(OC0),	// Front panel (black)
++				[2] = USB2_PORT_MID(OC2),	// Front panel (black)
++				[3] = USB2_PORT_MID(OC1),	// Back panel (black)
++				[4] = USB2_PORT_MID(OC1),	// Back panel (blue)
++				[5] = USB2_PORT_MID(OC3),	// Back panel (blue)
++				[6] = USB2_PORT_MID(OC2),	// Back panel (blue)
++				[7] = USB2_PORT_MID(OC3),	// Back panel (blue)
++				[8] = USB2_PORT_MID(OC4),	// Front panel (blue)
++				[9] = USB2_PORT_MID(OC6),	// Front panel (blue)
++				[10] = USB2_PORT_MID(OC_SKIP),	// Unknown
++				[11] = USB2_PORT_MID(OC5),	// Unknown
++				[12] = USB2_PORT_MID(OC5),	// Unknown
++				[13] = USB2_PORT_MID(OC_SKIP),	// Unknown
++				[14] = USB2_PORT_MID(OC0),	// Unknown
++				[15] = USB2_PORT_MID(OC0),	// Unknown
++			}"
++			register "usb3_ports" = "{
++				[0] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[1] = USB3_PORT_DEFAULT(OC0),	// Front panel (blue)
++				[2] = USB3_PORT_DEFAULT(OC1),	// Back panel (blue)
++				[3] = USB3_PORT_DEFAULT(OC1),	// Back panel (blue)
++				[4] = USB3_PORT_DEFAULT(OC2),	// Back panel (blue)
++				[5] = USB3_PORT_DEFAULT(OC2),	// Back panel (blue)
++			}"
++		end
++
++		device ref sata on
++			register "SataSalpSupport" = "1"
++			register "SataPortsEnable[0]" = "1"
++			register "SataPortsEnable[1]" = "1"
++			register "SataPortsEnable[2]" = "1"
++			register "SataPortsEnable[3]" = "1"
++		end
++
++		# Intel Gigabit Ethernet
++		device ref gbe on
++			register "PcieRpClkReqSupport[4]"		= "0"
++			register "PcieRpHotPlug[4]"			= "0"
++		end
++
++		device ref lpc_espi on
++			# SCH5553
++			chip superio/smsc/sch555x
++				device pnp 2e.0 on		# EMI
++					io 0x60 = 0xa00
++				end
++				device pnp 2e.1 on		# 8042
++					io 0x60 = 0x60
++					irq 0x0f = 0
++					irq 0x70 = 1
++					irq 0x72 = 12
++				end
++				device pnp 2e.7 on		# UART1
++					io 0x60 = 0x3f8
++					irq 0x0f = 2
++					irq 0x70 = 4
++				end
++				device pnp 2e.8 off end 	# UART2
++				device pnp 2e.c on		# LPC interface
++					io 0x60 = 0x2e
++				end
++				device pnp 2e.a on		# Runtime registers
++					io 0x60 = 0xa40
++				end
++				device pnp 2e.b  off end	# Floppy Controller
++				device pnp 2e.11 off end	# Parallel Port
++			end
++		end
++
++		# PCIe x16
++		device ref peg0 on
++		end
++
++		# PCIe x4
++		device ref pcie_rp9 on
++		       register "PcieRpAdvancedErrorReporting[8]" = "1"
++		       register "PcieRpLtrEnable[8]" = "true"
++		end
++
++		# M.2 SSD
++		device ref pcie_rp17 on
++		       register "PcieRpAdvancedErrorReporting[16]" = "1"
++		       register "PcieRpLtrEnable[16]" = "true"
++		end
++	end
++end
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/romstage.c b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/romstage.c
+new file mode 100644
+index 0000000000..1784eb9a11
+--- /dev/null
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/romstage.c
+@@ -0,0 +1,20 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <soc/romstage.h>
++#include <spd_bin.h>
++
++void mainboard_memory_init_params(FSPM_UPD *mupd)
++{
++	struct spd_block blk = { .addr_map = { 0x50, 0x51, 0x52, 0x53, } };
++	get_spd_smbus(&blk);
++	dump_spd_info(&blk);
++
++	FSP_M_CONFIG *mem_cfg = &mupd->FspmConfig;
++	mem_cfg->DqPinsInterleaved = true;
++	mem_cfg->CaVrefConfig      = 2;
++	mem_cfg->MemorySpdDataLen  = blk.len;
++	mem_cfg->MemorySpdPtr00    = (uintptr_t)blk.spd_array[0];
++	mem_cfg->MemorySpdPtr10    = (uintptr_t)blk.spd_array[2];
++	mem_cfg->MemorySpdPtr01    = (uintptr_t)blk.spd_array[1];
++	mem_cfg->MemorySpdPtr11    = (uintptr_t)blk.spd_array[3];
++}
+-- 
+2.47.3
+

@@ -1,7 +1,7 @@
-From c2e91bd82d65513e36c33556165bff58425737e7 Mon Sep 17 00:00:00 2001
+From 172dd89a05d02f074d9e17345c5a287d4f7ac27a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Fri, 20 Feb 2026 01:23:32 +0000
-Subject: [PATCH 46/50] util/ifdtool: option to allow region override
+Subject: [PATCH 46/56] util/ifdtool: option to allow region override
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/util/ifdtool/ifdtool.c b/util/ifdtool/ifdtool.c
-index 9aacccb54000..4ee1c413ae92 100644
+index 9aacccb540..4ee1c413ae 100644
 --- a/util/ifdtool/ifdtool.c
 +++ b/util/ifdtool/ifdtool.c
 @@ -78,6 +78,8 @@ static unsigned int max_regions = 0;

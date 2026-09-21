@@ -1,7 +1,7 @@
-From 44a66dba9b69cfff2f70477bd6078dca8859ba3e Mon Sep 17 00:00:00 2001
+From b06246d570246eb82d8019ac778106811ba3511a Mon Sep 17 00:00:00 2001
 From: Kat Inskip <kat@inskip.me>
 Date: Sat, 21 Feb 2026 19:48:17 +0000
-Subject: [PATCH 49/50] mb/lenovo/x270: Provide correct vbt and hda_verb
+Subject: [PATCH 49/56] mb/lenovo/x270: Provide correct vbt and hda_verb
 
 ---
  .../sklkbl_thinkpad/variants/x270/data.vbt    | Bin 6144 -> 4449 bytes
@@ -42,7 +42,7 @@ zOt#PQ3z%&Gr0KzQq%L?F$qyDI#p`ontd(z|4G<1OH}pZJatA(ZRZ|e`6IX&6k;fD!
 Re`fqpo`k>sC+JqU`~#!PkzxP<
 
 diff --git a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
-index 089e605eafe4..60289355f869 100644
+index 089e605eaf..60289355f8 100644
 --- a/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 +++ b/src/mainboard/lenovo/sklkbl_thinkpad/variants/x270/hda_verb.c
 @@ -3,10 +3,10 @@

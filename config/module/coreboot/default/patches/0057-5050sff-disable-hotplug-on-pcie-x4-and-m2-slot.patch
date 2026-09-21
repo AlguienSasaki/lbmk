@@ -1,0 +1,42 @@
+From 76ee3bd2fc48cada3094798bc4f1c3f77f404a66 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 21 Sep 2026 19:49:34 +0100
+Subject: [PATCH 1/1] 5050sff: disable hotplug on pcie x4 and m2 slot
+
+hotplug is buggy with nvme ssds on these boards, when
+using fsp. the device names get bumped in linux, which
+can cause a crash (or if they're on a raid array, they
+drop out of the array)
+
+ron forgot to add them here. i'm not even going to
+entertain testing this board without this patch, as
+turning off hotplug doesn't really affect anything
+anyway, so there's no harm in doing it.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ .../sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb   | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
+index 87c0e25b3e..a6d7e72fd1 100644
+--- a/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
++++ b/src/mainboard/dell/sklkbl_desktops/variants/optiplex_5050sff/overridetree.cb
+@@ -86,12 +86,14 @@ chip soc/intel/skylake
+ 		device ref pcie_rp9 on
+ 		       register "PcieRpAdvancedErrorReporting[8]" = "1"
+ 		       register "PcieRpLtrEnable[8]" = "true"
++		       register "PcieRpHotPlug[8]" = "0"
+ 		end
+ 
+ 		# M.2 SSD
+ 		device ref pcie_rp17 on
+ 		       register "PcieRpAdvancedErrorReporting[16]" = "1"
+ 		       register "PcieRpLtrEnable[16]" = "true"
++		       register "PcieRpHotPlug[16]" = "0"
+ 		end
+ 	end
+ end
+-- 
+2.47.3
+

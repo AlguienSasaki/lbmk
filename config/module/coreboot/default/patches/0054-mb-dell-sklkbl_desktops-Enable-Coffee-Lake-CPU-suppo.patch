@@ -1,0 +1,29 @@
+From 33e43d984131b5573553af857beb0c5a1b3db763 Mon Sep 17 00:00:00 2001
+From: Ron Nazarov <ron@noisytoot.org>
+Date: Sun, 21 Dec 2025 17:24:09 +0000
+Subject: [PATCH 54/56] mb/dell/sklkbl_desktops: Enable Coffee Lake CPU support
+
+Tested and working with i3-9100 on OptiPlex 5050 SFF, should work on
+3050 Micro too.
+
+Change-Id: Ie2f8f5d6955b7fced12275f67d2f2c45669bc0ce
+Signed-off-by: Ron Nazarov <ron@noisytoot.org>
+---
+ src/mainboard/dell/sklkbl_desktops/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/mainboard/dell/sklkbl_desktops/Kconfig b/src/mainboard/dell/sklkbl_desktops/Kconfig
+index 098d43dc22..0dce6a90bf 100644
+--- a/src/mainboard/dell/sklkbl_desktops/Kconfig
++++ b/src/mainboard/dell/sklkbl_desktops/Kconfig
+@@ -13,6 +13,7 @@ config BOARD_DELL_SKLKBL_DESKTOPS_COMMON
+ 	select MAINBOARD_HAS_LIBGFXINIT
+ 	select MAINBOARD_SUPPORTS_KABYLAKE_CPU
+ 	select MAINBOARD_SUPPORTS_SKYLAKE_CPU
++	select MAINBOARD_SUPPORTS_COFFEELAKE_CPU
+ 	select SKYLAKE_SOC_PCH_H
+ 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+ 	select SOC_INTEL_KABYLAKE
+-- 
+2.47.3
+

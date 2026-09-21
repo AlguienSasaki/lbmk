@@ -1,7 +1,7 @@
-From 5b01b298e9743a53617543ff5a32ed3b7f31db2e Mon Sep 17 00:00:00 2001
+From 7fea0ba7f8aa7b0de008ab3c6362c2ca46d4f9df Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 20 Dec 2025 22:36:18 +0100
-Subject: [PATCH 41/50] tests/Makefile.mk: use 3rdparty/cmocka by default
+Subject: [PATCH 41/56] tests/Makefile.mk: use 3rdparty/cmocka by default
 
 (tests)
 
@@ -11,7 +11,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/tests/Makefile.mk b/tests/Makefile.mk
-index ab302634ecaa..7e6f260b27c5 100644
+index ab302634ec..7e6f260b27 100644
 --- a/tests/Makefile.mk
 +++ b/tests/Makefile.mk
 @@ -25,7 +25,9 @@ TEST_LDFLAGS += --coverage

@@ -1,7 +1,7 @@
-From 2da18395d54bb22452078c0a808e73cba4bef48e Mon Sep 17 00:00:00 2001
+From 688dcbc22e89ab83c7d1ea55273728e837964642 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 6 Apr 2024 01:22:47 +0100
-Subject: [PATCH 13/50] nb/haswell: Fully disable iGPU when dGPU is used
+Subject: [PATCH 13/56] nb/haswell: Fully disable iGPU when dGPU is used
 
 My earlier patch disabled decode *and* disabled the iGPU itself, but
 a subsequent revision disabled only VGA decode. Upon revisiting, I
@@ -33,7 +33,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  1 file changed, 3 insertions(+)
 
 diff --git a/src/northbridge/intel/haswell/gma.c b/src/northbridge/intel/haswell/gma.c
-index fc44a98a57e9..451147d08256 100644
+index fc44a98a57..451147d082 100644
 --- a/src/northbridge/intel/haswell/gma.c
 +++ b/src/northbridge/intel/haswell/gma.c
 @@ -655,6 +655,9 @@ static void gma_func0_disable(struct device *dev)

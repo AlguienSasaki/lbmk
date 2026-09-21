@@ -1,7 +1,7 @@
-From 60bc2adc88482d3e76cd7642e81653e4e61e12e8 Mon Sep 17 00:00:00 2001
+From 9fb0290711e7ece4a1d12b4297c8886980c8ccdf Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Sat, 2 Mar 2024 22:51:09 +0000
-Subject: [PATCH 11/50] nb/intel/haswell: make IOMMU a runtime option
+Subject: [PATCH 11/56] nb/intel/haswell: make IOMMU a runtime option
 
 When I tested graphics cards on a coreboot port for Dell
 OptiPlex 9020 SFF, I could not use a graphics card unless
@@ -38,7 +38,7 @@ Signed-off-by: Leah Rowe <info@minifree.org>
  14 files changed, 49 insertions(+)
 
 diff --git a/src/mainboard/asrock/b85m_pro4/cmos.default b/src/mainboard/asrock/b85m_pro4/cmos.default
-index 01bf20ad169c..dfc8b80fb0d1 100644
+index 01bf20ad16..dfc8b80fb0 100644
 --- a/src/mainboard/asrock/b85m_pro4/cmos.default
 +++ b/src/mainboard/asrock/b85m_pro4/cmos.default
 @@ -4,3 +4,4 @@ boot_option=Fallback
@@ -47,7 +47,7 @@ index 01bf20ad169c..dfc8b80fb0d1 100644
  power_on_after_fail=Disable
 +iommu=Enable
 diff --git a/src/mainboard/asrock/b85m_pro4/cmos.layout b/src/mainboard/asrock/b85m_pro4/cmos.layout
-index efdc333fc26b..c9883ea71def 100644
+index efdc333fc2..c9883ea71d 100644
 --- a/src/mainboard/asrock/b85m_pro4/cmos.layout
 +++ b/src/mainboard/asrock/b85m_pro4/cmos.layout
 @@ -11,6 +11,7 @@
@@ -68,7 +68,7 @@ index efdc333fc26b..c9883ea71def 100644
  
  # -----------------------------------------------------------------
 diff --git a/src/mainboard/asrock/h81m-hds/cmos.default b/src/mainboard/asrock/h81m-hds/cmos.default
-index 01bf20ad169c..dfc8b80fb0d1 100644
+index 01bf20ad16..dfc8b80fb0 100644
 --- a/src/mainboard/asrock/h81m-hds/cmos.default
 +++ b/src/mainboard/asrock/h81m-hds/cmos.default
 @@ -4,3 +4,4 @@ boot_option=Fallback
@@ -77,7 +77,7 @@ index 01bf20ad169c..dfc8b80fb0d1 100644
  power_on_after_fail=Disable
 +iommu=Enable
 diff --git a/src/mainboard/asrock/h81m-hds/cmos.layout b/src/mainboard/asrock/h81m-hds/cmos.layout
-index c9ba76c78fe8..95ee3d36fb61 100644
+index c9ba76c78f..95ee3d36fb 100644
 --- a/src/mainboard/asrock/h81m-hds/cmos.layout
 +++ b/src/mainboard/asrock/h81m-hds/cmos.layout
 @@ -21,6 +21,9 @@ entries
@@ -101,7 +101,7 @@ index c9ba76c78fe8..95ee3d36fb61 100644
  checksums
  
 diff --git a/src/mainboard/dell/optiplex_9020/cmos.default b/src/mainboard/dell/optiplex_9020/cmos.default
-index 6c4a2a1be762..8000eea8c01d 100644
+index 6c4a2a1be7..8000eea8c0 100644
 --- a/src/mainboard/dell/optiplex_9020/cmos.default
 +++ b/src/mainboard/dell/optiplex_9020/cmos.default
 @@ -4,3 +4,4 @@ debug_level=Debug
@@ -110,7 +110,7 @@ index 6c4a2a1be762..8000eea8c01d 100644
  fan_full_speed=Disable
 +iommu=Enable
 diff --git a/src/mainboard/dell/optiplex_9020/cmos.layout b/src/mainboard/dell/optiplex_9020/cmos.layout
-index d10ad95b23ae..4a1496a8781b 100644
+index d10ad95b23..4a1496a878 100644
 --- a/src/mainboard/dell/optiplex_9020/cmos.layout
 +++ b/src/mainboard/dell/optiplex_9020/cmos.layout
 @@ -21,6 +21,9 @@ entries
@@ -134,7 +134,7 @@ index d10ad95b23ae..4a1496a8781b 100644
  checksums
  
 diff --git a/src/mainboard/google/beltino/cmos.layout b/src/mainboard/google/beltino/cmos.layout
-index 78d44c14154f..c143979ae1ab 100644
+index 78d44c1415..c143979ae1 100644
 --- a/src/mainboard/google/beltino/cmos.layout
 +++ b/src/mainboard/google/beltino/cmos.layout
 @@ -19,6 +19,9 @@ entries
@@ -157,7 +157,7 @@ index 78d44c14154f..c143979ae1ab 100644
  checksums
  
 diff --git a/src/mainboard/google/slippy/cmos.layout b/src/mainboard/google/slippy/cmos.layout
-index 78d44c14154f..c143979ae1ab 100644
+index 78d44c1415..c143979ae1 100644
 --- a/src/mainboard/google/slippy/cmos.layout
 +++ b/src/mainboard/google/slippy/cmos.layout
 @@ -19,6 +19,9 @@ entries
@@ -180,7 +180,7 @@ index 78d44c14154f..c143979ae1ab 100644
  checksums
  
 diff --git a/src/mainboard/intel/baskingridge/cmos.layout b/src/mainboard/intel/baskingridge/cmos.layout
-index 78d44c14154f..f2c602f541c1 100644
+index 78d44c1415..f2c602f541 100644
 --- a/src/mainboard/intel/baskingridge/cmos.layout
 +++ b/src/mainboard/intel/baskingridge/cmos.layout
 @@ -19,6 +19,8 @@ entries
@@ -202,7 +202,7 @@ index 78d44c14154f..f2c602f541c1 100644
  checksums
  
 diff --git a/src/mainboard/lenovo/haswell/cmos.default b/src/mainboard/lenovo/haswell/cmos.default
-index e1044343a9ef..13ee202983f5 100644
+index e1044343a9..13ee202983 100644
 --- a/src/mainboard/lenovo/haswell/cmos.default
 +++ b/src/mainboard/lenovo/haswell/cmos.default
 @@ -13,3 +13,4 @@ trackpoint=Enable
@@ -211,7 +211,7 @@ index e1044343a9ef..13ee202983f5 100644
  usb_always_on=Disable
 +iommu=Enable
 diff --git a/src/mainboard/lenovo/haswell/cmos.layout b/src/mainboard/lenovo/haswell/cmos.layout
-index 5fb6972a92fc..a866b47f084f 100644
+index 5fb6972a92..a866b47f08 100644
 --- a/src/mainboard/lenovo/haswell/cmos.layout
 +++ b/src/mainboard/lenovo/haswell/cmos.layout
 @@ -22,6 +22,7 @@ entries
@@ -232,7 +232,7 @@ index 5fb6972a92fc..a866b47f084f 100644
  # -----------------------------------------------------------------
  checksums
 diff --git a/src/mainboard/supermicro/x10slm-f/cmos.default b/src/mainboard/supermicro/x10slm-f/cmos.default
-index 7ce38fb5d768..6049e7938aca 100644
+index 7ce38fb5d7..6049e7938a 100644
 --- a/src/mainboard/supermicro/x10slm-f/cmos.default
 +++ b/src/mainboard/supermicro/x10slm-f/cmos.default
 @@ -5,3 +5,4 @@ debug_level=Debug
@@ -241,7 +241,7 @@ index 7ce38fb5d768..6049e7938aca 100644
  hide_ast2400=Disable
 +iommu=Enable
 diff --git a/src/mainboard/supermicro/x10slm-f/cmos.layout b/src/mainboard/supermicro/x10slm-f/cmos.layout
-index 38ba87aa452f..24d39e97ee87 100644
+index 38ba87aa45..24d39e97ee 100644
 --- a/src/mainboard/supermicro/x10slm-f/cmos.layout
 +++ b/src/mainboard/supermicro/x10slm-f/cmos.layout
 @@ -21,6 +21,9 @@ entries
@@ -265,7 +265,7 @@ index 38ba87aa452f..24d39e97ee87 100644
  checksums
  
 diff --git a/src/northbridge/intel/haswell/early_init.c b/src/northbridge/intel/haswell/early_init.c
-index 6a5ce53a407d..5f07fa0b1731 100644
+index 6a5ce53a40..5f07fa0b17 100644
 --- a/src/northbridge/intel/haswell/early_init.c
 +++ b/src/northbridge/intel/haswell/early_init.c
 @@ -6,6 +6,7 @@

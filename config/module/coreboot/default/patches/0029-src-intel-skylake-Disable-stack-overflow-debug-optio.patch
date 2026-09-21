@@ -1,7 +1,7 @@
-From 2f493545f7e895b8eca3e8b9f7d83d354b0105bc Mon Sep 17 00:00:00 2001
+From 007a83486f5cd2528067f18059fcd81e5f5230fa Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 6 Jan 2025 01:36:23 +0000
-Subject: [PATCH 29/50] src/intel/skylake: Disable stack overflow debug options
+Subject: [PATCH 29/56] src/intel/skylake: Disable stack overflow debug options
 
 The option was appearing in T480/3050micro configs of lbmk,
 after updating on the coreboot/next uprev for 20241206 rev8:
@@ -37,7 +37,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 9 insertions(+)
 
 diff --git a/src/soc/intel/skylake/Kconfig b/src/soc/intel/skylake/Kconfig
-index beb6f13feea7..420dbf44f88c 100644
+index beb6f13fee..420dbf44f8 100644
 --- a/src/soc/intel/skylake/Kconfig
 +++ b/src/soc/intel/skylake/Kconfig
 @@ -137,6 +137,15 @@ config DCACHE_RAM_SIZE
