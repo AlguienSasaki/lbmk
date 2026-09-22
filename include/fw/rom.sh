@@ -60,13 +60,46 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
+	[ "$XBMK_RELEASE" = "y" ] \
+		payload_edk2="" # source-only payload, for now.
+
 	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
+	cook_coreboot_config
+
 	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
+}
+
+cook_coreboot_config()
+{
+	[ -z "$payload_edk2" ] && return 0
+	[ -n "$mode" ] && return 0
+	[ -f "$srcdir/$cfgname" ] || return 0
+
+	# Enable SMMSTORE-related options for EDK2 variable storage.
+	# Because edk2 is source-only (release=n) in lbmk, we don't
+	# enable this in the configs themselves. Instead, we add it
+	# when building a board with EDK2 support in lbmk.git
+
+	# TODO: this relpaces the option backend. i need to make
+	#       coreboot always use a cbfs backend, and set all
+	#       boards universally that way, before starting edk2
+
+	ecfg="CONFIG_SMMSTORE_BLOCK_SIZE=65536 \
+	    CONFIG_DRIVERS_EFI_VARIABLE_STORE=y \
+	    CONFIG_SMMSTORE=y \
+	    CONFIG_SMMSTORE_SIZE=0x80000 \
+	    CONFIG_SPI_FLASH_SMM=y \
+	    CONFIG_DRIVERS_GENERIC_CFR_ASSET_TAG=y \
+	    CONFIG_USE_UEFI_VARIABLE_STORE=y" # replace option backend
+
+	for ecfgval in $ecfg; do
+		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname"
+	done
 }
 
 check_coreboot_util()
@@ -121,9 +154,6 @@ mkcorebootbin()
 mkcorebootbin_real()
 {
 	[ "$target" = "$tree" ] && return 0
-
-	[ "$XBMK_RELEASE" = "y" ] \
-		payload_edk2="" # source-only payload, for now.
 
 	tmprom="$xbtmp/coreboot.rom"
 
