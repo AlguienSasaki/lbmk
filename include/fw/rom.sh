@@ -74,10 +74,17 @@ corebootpremake()
 
 cook_coreboot_config()
 {
-	[ -z "$payload_edk2" ] && return 0
 	[ -n "$mode" ] && return 0
 	[ -f "$srcdir/$cfgname" ] || return 0
 
+	[ -n "$payload_edk2" ] && \
+		cook_coreboot_smmstore
+
+	x_ make -C "$srcdir" oldconfig
+}
+
+cook_coreboot_smmstore()
+{
 	# Enable SMMSTORE-related options for EDK2 variable storage.
 	# Because edk2 is source-only (release=n) in lbmk, we don't
 	# enable this in the configs themselves. Instead, we add it
@@ -98,8 +105,6 @@ cook_coreboot_config()
 	for ecfgval in $ecfg; do
 		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname"
 	done
-
-	x_ make -C "$srcdir" oldconfig
 }
 
 check_coreboot_util()
