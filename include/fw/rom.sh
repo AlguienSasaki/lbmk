@@ -60,15 +60,13 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	[ "$XBMK_RELEASE" = "y" ] \
+	[ "$XBMK_RELEASE" = "y" ] && \
 		payload_edk2="" # source-only payload, for now.
 
 	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
-
-	cook_coreboot_config
 
 	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
@@ -100,6 +98,8 @@ cook_coreboot_config()
 	for ecfgval in $ecfg; do
 		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname"
 	done
+
+	x_ make -C "$srcdir" oldconfig
 }
 
 check_coreboot_util()

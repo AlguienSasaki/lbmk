@@ -89,7 +89,7 @@ eval "`newvar if_not_make_config if_not_build if_not_dry_build if_not_fetch`"
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
     premake release rev tree xarch xgcctree xlang cfgname defscan \
-    if_not_skip_build"
+    if_not_skip_build cook_config"
 
 eval "`newvar buildcfg dest_dir elfdir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
@@ -390,6 +390,9 @@ run_make_command()
 		x_ cmake -B "$srcdir" "$srcdir/$cmakedir"
 	$if_build \
 		check_autoconf "$srcdir"
+
+	$if_build \
+		x_ $cook_config
 
 	check_makefile "$srcdir" && \
 	    x_ make -C "$srcdir" $mode -j$XBMK_THREADS $makeargs
