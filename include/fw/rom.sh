@@ -122,6 +122,9 @@ mkcorebootbin_real()
 {
 	[ "$target" = "$tree" ] && return 0
 
+	[ "$XBMK_RELEASE" = "y" ] \
+		payload_edk2="" # source-only payload, for now.
+
 	tmprom="$xbtmp/coreboot.rom"
 
 	initmode="${buildcfg##*/}"
@@ -141,9 +144,6 @@ mkcorebootbin_real()
 	[ -n "$displaymode" ] && \
 		elfrom="${elfrom}_$displaymode"
 	elfrom="$elfrom/coreboot.rom"
-
-	$if_not_skip_build x_ cp "$elfrom" "$tmprom"
-	$if_not_skip_build unpad_one_byte "$tmprom"
 
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
 	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ] \
@@ -177,10 +177,22 @@ mkcorebootbin_real()
 	[ "$payload_grub" != "y" ] && \
 		payload_grubsea="n"
 
-	[ -f "$cbfscfg" ] && \
-		$if_not_skip_build dx_ add_cbfs_option "$cbfscfg"
+	if [ "$initmode" != "libgfxinit" ] || \
+	    [ "$displaymode" != "corebootfb" ]; then
+		[ "$initmode" != "fspgop" ] && [ "$initmode" != "normal" ] && \
+		    payload_edk2="" # disable on txtmode
+	fi
+
+	$if_not_skip_build prep_tmprom
 
 	if grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
+		if [ -n "$payload_edk2" ]; then
+			pname="edk2"
+			$if_not_skip_build add_edk2 "fallback/payload"
+			$if_not_skip_build cprom # standalone edk2
+
+			$if_not_skip_build prep_tmprom
+		fi
 		if [ "$payload_seabios" = "y" ]; then
 			pname="seabios"
 			$if_not_skip_build add_seabios
@@ -194,6 +206,15 @@ mkcorebootbin_real()
 		pname="custom"
 		$if_not_skip_build cprom
 	fi; :
+}
+
+prep_tmprom()
+{
+	x_ cp "$elfrom" "$tmprom"
+	unpad_one_byte "$tmprom"
+
+	[ -f "$cbfscfg" ] && \
+		dx_ add_cbfs_option "$cbfscfg"; :
 }
 
 # options for cbfs backend (as opposed to nvram/smmstore):
@@ -211,6 +232,14 @@ add_cbfs_option()
 	    2>/dev/null ) || :
 
 	x_ "$cbfstool" "$tmprom" add-int -i "$op_arg" -n "option/$op_name"
+}
+
+add_edk2()
+{
+	edk2dir="elf/coreboot/default/$payload_edk2"
+	edk2="$edk2dir/libgfxinit_corebootfb/UEFIPAYLOAD.fd"
+
+	cbfs "$tmprom" "$edk2" "$1"
 }
 
 # in our design, SeaBIOS is also responsible for starting either
@@ -255,6 +284,9 @@ add_seabios()
 
 	[ "$payload_grub" = "y" ] && \
 		add_grub
+
+	[ -n "$payload_edk2" ] && \
+		add_edk2 "img/edk2"
 
 	[ "$payload_grubsea" != "y" ] && \
 		cprom # seabios, but don't load grub/u-boot first

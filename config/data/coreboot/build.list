@@ -1,1 +1,2 @@
 build/coreboot.rom
+payloads/external/edk2/workspace/Build/UefiPayloadPkgX64/RELEASE_GCC/FV/UEFIPAYLOAD.fd

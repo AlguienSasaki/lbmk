@@ -1,0 +1,47 @@
+From fb17486cd4edf6515d93b294546dd1ef4b9c1a3b Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 22 Sep 2026 08:01:01 +0100
+Subject: [PATCH 1/1] don't delete edk2 builds
+
+lbmk build.list needs to be able to copy this
+
+we rely on the coreboot build system to build
+edk2, by providing a fake coreboot config.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ payloads/external/edk2/Makefile | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/payloads/external/edk2/Makefile b/payloads/external/edk2/Makefile
+index 75b7f7983d..d6f3d98001 100644
+--- a/payloads/external/edk2/Makefile
++++ b/payloads/external/edk2/Makefile
+@@ -413,19 +413,19 @@ $(WORKSPACE)/Build/UefiPayloadPkgIA32/UniversalPayload.fit: \
+ 
+ UefiPayloadPkg: $(WORKSPACE)/Build/UefiPayloadPkgX64/$(RELEASE_STR)_GCC/FV/UEFIPAYLOAD.fd
+ 	mkdir -p $(dir $(EDK2_UEFIPAYLOAD_OUT))
+-	mv $(WORKSPACE)/Build/UefiPayloadPkgX64/$(RELEASE_STR)_GCC/FV/UEFIPAYLOAD.fd \
++	cp $(WORKSPACE)/Build/UefiPayloadPkgX64/$(RELEASE_STR)_GCC/FV/UEFIPAYLOAD.fd \
+ 		$(EDK2_UEFIPAYLOAD_OUT)
+ 
+ UniversalPayload: $(WORKSPACE)/Build/UefiPayloadPkgIA32/UniversalPayload.fit
+ 	mkdir -p $(dir $(EDK2_UNIVERSAL_PAYLOAD_OUT))
+-	mv $(WORKSPACE)/Build/UefiPayloadPkgIA32/UniversalPayload.fit \
++	cp $(WORKSPACE)/Build/UefiPayloadPkgIA32/UniversalPayload.fit \
+ 		$(EDK2_UNIVERSAL_PAYLOAD_OUT)
+ 
+ clean:
+-	test -d $(WORKSPACE) && (cd $(WORKSPACE); rm -rf Build; rm -f Conf/tools_def.txt Conf/CapsuleFmpPkcs7Pcd.inc) || exit 0
++	test -d $(WORKSPACE) && (cd $(WORKSPACE); rm -f Conf/tools_def.txt Conf/CapsuleFmpPkcs7Pcd.inc) || exit 0
+ 
+-distclean:
+-	rm -rf $(WORKSPACE)
++distclean: clean
++	:
+ 
+ .PHONY: $(EDK2_PATH) checktools logo UefiPayloadPkg UniversalPayload clean distclean
+ 
+-- 
+2.47.3
+
