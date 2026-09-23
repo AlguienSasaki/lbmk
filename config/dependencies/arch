@@ -8,7 +8,7 @@ dtc e2fsprogs flex freetype2 fuse2 gawk gcc-ada gdb gettext git \
 help2man innoextract libftdi libgpiod libjaylink libpciaccess libusb nasm \
 ncurses openssl 7zip less libx86 \
 pandoc parted pciutils perl perl-libwww python python-setuptools rsync \
-sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib mtools \
+sharutils subversion swig texinfo ttf-dejavu unarchiver unzip wget xz zlib mtools imagemagick \
 "
 
 aur_notice="bdf-unifont pcf-unifont psf-unifont mipsel-linux-gnu-binutils mipsel-linux-gnu-gcc"

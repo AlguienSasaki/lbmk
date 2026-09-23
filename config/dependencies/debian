@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# TODO: find out what imagemagick is needed for in 15h.org dependencies:
-# https://15h.org/index.php/Coreboot-15h
-# probably the coreboot splash screen option, which we don't use in lbmk
-
 pkg_add="apt-get install --no-install-recommends $reinstall"
 pkglist=" \
 acpica-tools autoconf autogen automake autopoint autotools-dev bc \
@@ -18,5 +14,5 @@ libusb-dev lz4 lzma lzma-alone m4 nasm openssl 7zip parted pciutils \
 perl pkg-config python3 python3-distutils-extra python3-pkg-resources python3-pycryptodome \
 python3-pyelftools python3-setuptools python-is-python3 sharutils swig unar \
 unifont unifont-bin unzip uuid-dev wget xfonts-unifont zlib1g-dev \
-g++-mipsel-linux-gnu make genisoimage mtools libx86-1 libx86-dev libstdc++-arm-none-eabi-newlib autoconf-archive \
+g++-mipsel-linux-gnu make genisoimage mtools libx86-1 libx86-dev libstdc++-arm-none-eabi-newlib autoconf-archive imagemagick \
 "

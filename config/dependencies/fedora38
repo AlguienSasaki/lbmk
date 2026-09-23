@@ -10,5 +10,5 @@ innoextract intltool libftdi-devel libselinux-devel libusb1 libusb1-devel \
 nasm ncurses-devel openssl-devel p7zip p7zip-plugins pandoc parted \
 pciutils-devel perl perl-libwww-perl python-unversioned-command python3 \
 python3-setuptools rsync sharutils subversion texinfo unar unifont \
-unifont-fonts unifont-ttf-fonts unzip wget xz zlib-devel swig \
+unifont-fonts unifont-ttf-fonts unzip wget xz zlib-devel swig imagemagick \
 "
