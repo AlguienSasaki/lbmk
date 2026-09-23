@@ -4,5 +4,3 @@ u-boot.dtb
 u-boot.img
 u-boot.itb
 u-boot.elf
-u-boot-dtb.bin
-u-boot-x86-with-spl.bin

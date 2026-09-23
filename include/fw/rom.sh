@@ -180,21 +180,14 @@ mkcorebootbin_real()
 		elfrom="${elfrom}_$displaymode"
 	elfrom="$elfrom/coreboot.rom"
 
-	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "amd64" ] && \
-	    [ "$payload_uboot" != "i386" ] && [ "$payload_uboot" != "arm64" ] \
-		&& err "'$target' defines bad u-boot type '$payload_uboot'" \
-		    "mkcorebootbin_real" "$@"
-
 	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ] && \
-		payload_seabios="y"
+		err "'$target' defines bad u-boot type '$payload_uboot'" \
+		    "mkcorebootbin_real" "$@"
 
 	[ -z "$uboot_config" ] && \
 		uboot_config="default"
 	[ "$payload_grub" = "y" ] && \
 		payload_seabios="y"
-	[ "$payload_seabios" = "y" ] && [ "$payload_uboot" = "arm64" ] && \
-		err "$target: U-Boot arm / SeaBIOS/GRUB both enabled" \
-		    "mkcorebootbin_real" "$@"
 
 	[ -z "$grub_scan_disk" ] && \
 		grub_scan_disk="nvme ahci ata"
@@ -286,10 +279,6 @@ add_edk2()
 
 add_seabios()
 {
-	[ -n "$payload_uboot" ] && [ "$payload_uboot" != "arm64" ] && \
-	    [ "$displaymode" != "txtmode" ] && [ "$initmode" != "normal" ] && \
-		add_uboot_x86 # u-boot first, due to fixed cbfs offset
-
 	_seabioself="elf/seabios/default/build/$initmode/bios.bin.elf"
 	[ "$initmode" = "fspgop" ] && \
 	    _seabioself="elf/seabios/default/build/libgfxinit/bios.bin.elf"
@@ -324,17 +313,7 @@ add_seabios()
 		add_edk2 "img/edk2"
 
 	[ "$payload_grubsea" != "y" ] && \
-		cprom # seabios, but don't load grub/u-boot first
-
-	# now make seauboot(u-boot loaded by seabios) and SeaGRUB (GRUB loaded
-	# by SeaBIOS) images; users can bypass via ESC to boot from SeaBIOS
-
-	if [ "$payload_uboot" = "amd64" ] && \
-	    [ "$displaymode" != "txtmode" ] && \
-	    [ "$initmode" != "normal" ] && [ "$payload_grubsea" != "y" ]; then
-		pname="seauboot"
-		cprom "seauboot"
-	fi
+		cprom # seabios, but don't load grub first
 
 	if [ "$payload_grub" = "y" ]; then
 		pname="seagrub"
@@ -373,16 +352,6 @@ mkseagrub()
 	fx_ cprom x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
-add_uboot_x86()
-{
-	[ "$payload_uboot" = "amd64" ] && \
-		add_uboot "-l 0x1110000 -e 0x1110000" "img/u-boot" \
-		    "x86_64" "amd64coreboot" "u-boot-x86-with-spl.bin"
-	[ "$payload_uboot" = "i386" ] && \
-		add_uboot "-l 0x1110000 -e 0x1110000" "u-boot" "x86" \
-		    "i386coreboot" "u-boot-dtb.bin"; :
-}
-
 add_uboot()
 {
 	ubootelf="elf/u-boot/$3/$4/$uboot_config/$5"
@@ -419,8 +388,6 @@ cprom()
 
 		if [ "${1%.gkb}" != "$1" ]; then
 			cbfs "$irom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
-		elif [ "$1" = "seauboot" ]; then
-			cbfs "$irom" "$grubdata/bootorder_uboot" bootorder raw
 		fi
 	fi
 

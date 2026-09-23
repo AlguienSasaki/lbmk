@@ -353,7 +353,7 @@ check_xgcc()
 
 	# tell build systems what cross-compiler to use
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
-	export CROSS_COMPILE="${xarch% *}-" # used by e.g. u-boot
+	export CROSS_COMPILE="${xarch% *}-"
 
 	# coreboot-specific (we disable gnat on some trees)
 	[ -n "$xlang" ] && \
