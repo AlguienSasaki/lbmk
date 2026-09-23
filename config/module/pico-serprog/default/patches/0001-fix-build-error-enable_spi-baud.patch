@@ -1,0 +1,39 @@
+From c5af7ae4716ddb729573df950eee0a4b8ce2d23e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 23 Sep 2026 15:38:45 +0100
+Subject: [PATCH 1/1] fix build error: enable_spi(baud)
+
+baud is a global variable in this code. we don't
+need to pass it here. i think riku added this by
+mistake.
+
+it would have resulted in a warning before, on
+older compilers, but would have still compiled.
+
+on gcc 16, it fails with a build error. no worries.
+semantically different with this change, but behaviour
+remains the same.
+
+this fixes the build on gcc16, tested in arch linux.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/main.c b/main.c
+index b06f92f..36a9265 100644
+--- a/main.c
++++ b/main.c
+@@ -322,7 +322,7 @@ int main() {
+ 	/* Setup USB */
+ 	tusb_init();
+ 	/* Setup PL022 SPI */
+-	enable_spi(baud);
++	enable_spi();
+ 
+ 	command_loop();
+ }
+-- 
+2.47.3
+
