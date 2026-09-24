@@ -68,6 +68,8 @@ corebootpremake()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
+	clean_edk2_src
+
 	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
 }
@@ -148,6 +150,18 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
+	clean_edk2_src
+
+	for y in "$defscan"/*; do
+		buildcfg="$y"
+		$if_not_skip_build mkcorebootbin_real
+	done
+
+	$if_not_skip_build mkcoreboottar
+}
+
+clean_edk2_src()
+{
 	# replicates coreboot's handling after edk2 build,
 	# which we patch out for copy. so now we clean it instead,
 	# after we successfully copied it out-of-tree.
@@ -159,13 +173,6 @@ mkcorebootbin()
 	# for now. proper edk2 integration will come to lbmk soon(tm)
 	#
 	x_ rm -Rf "$srcdir/payloads/external/edk2/workspace"
-
-	for y in "$defscan"/*; do
-		buildcfg="$y"
-		$if_not_skip_build mkcorebootbin_real
-	done
-
-	$if_not_skip_build mkcoreboottar
 }
 
 mkcorebootbin_real()
