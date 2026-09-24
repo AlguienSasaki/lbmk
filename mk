@@ -89,7 +89,7 @@ eval "`newvar if_not_make_config if_not_build if_not_dry_build if_not_fetch`"
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
     premake release rev tree xarch xgcctree xlang cfgname defscan \
-    if_not_skip_build cook_config"
+    if_not_skip_build cook_config seen"
 
 eval "`newvar buildcfg dest_dir elfdir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
@@ -260,6 +260,17 @@ try_target_config()
 	eval "`newvar rev tree`"
 
 	. "$_tcfg" || err "Can't read '$_tcfg'" configure_target "$@"
+
+	_tname="${_tcfg%/*}"
+	_tname="${_tname##*/}"
+
+	for loopvar in $seen; do
+		[ "$loopvar" = "$_tname" ] && \
+			err "$project/$target: infinite tree loop"
+	done
+
+	seen="$seen $_tname"
+
 	if [ -n "$rev" ] && [ -z "$tree" ]; then
 		# this makes setting tree= optional on configless projects
 		tree="${_tcfg%/target.cfg}"
@@ -280,7 +291,6 @@ try_target_config()
 
 # projects can specify which other projects
 # to build first, as declared dependencies:
-# TODO: detect infinite loops
 mk_dependencies()
 {
 	bdf="${1-}"
