@@ -60,15 +60,13 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	[ "$XBMK_RELEASE" = "y" ] && \
-		payload_edk2="" # source-only payload, for now.
-
 	forx 'check_coreboot_util %s' cbfstool ifdtool
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
-	clean_edk2_src
+	[ -n "$payload_edk2" ] && $if_not_dry_build \
+		prep_edk2_src
 
 	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
@@ -87,15 +85,6 @@ cook_coreboot_config()
 
 cook_coreboot_smmstore()
 {
-	# Enable SMMSTORE-related options for EDK2 variable storage.
-	# Because edk2 is source-only (release=n) in lbmk, we don't
-	# enable this in the configs themselves. Instead, we add it
-	# when building a board with EDK2 support in lbmk.git
-
-	# TODO: this relpaces the option backend. i need to make
-	#       coreboot always use a cbfs backend, and set all
-	#       boards universally that way, before starting edk2
-
 	ecfg="CONFIG_SMMSTORE_BLOCK_SIZE=65536 \
 	    CONFIG_DRIVERS_EFI_VARIABLE_STORE=y \
 	    CONFIG_SMMSTORE=y \
@@ -151,7 +140,8 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	clean_edk2_src
+	$if_not_dry_build \
+		clean_edk2_src
 
 	for y in "$defscan"/*; do
 		buildcfg="$y"
@@ -159,6 +149,26 @@ mkcorebootbin()
 	done
 
 	$if_not_skip_build mkcoreboottar
+}
+
+prep_edk2_src()
+{
+	clean_edk2_src
+
+	# we keep a source-only copy of edk2, that is never built.
+	# we copy it into coreboot and use coreboot's script to build it.
+
+	# what we copy is a clean source archive, and never built, so there
+	# will never be build artifacts in it. we build a copy. this takes up
+	# more disk space, but it's easier than building it ourselves.
+
+	# coreboot's edk2 makefile is patched to never delete it, and never
+	# download it. *we* delete it, after copying the payload out-of-tree
+
+	x_ mkdir "$srcdir/payloads/external/edk2/workspace"
+
+	x_ cp -a "src/edk2/$payload_edk2/" \
+	    "$srcdir/payloads/external/edk2/workspace/mrchromebox"
 }
 
 clean_edk2_src()

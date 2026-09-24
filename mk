@@ -221,9 +221,6 @@ configure_target()
 	[ -z "$tree" ] && \
 		err "$project/$target: tree unset" configure_target "$@"
 
-	$if_build $if_not_dry_build $if_not_fetch \
-		mk_dependencies -b $build_depend
-
 	srcdir="src/$project/$tree"
 
 	# specify directory containing e.g. coreboot defconfigs
@@ -251,10 +248,13 @@ configure_target()
 
 	mdir="$xbmkpwd/config/submodule/$project/$tree"
 
-	[ -f "CHANGELOG" ] && return 0 # disable fetching on release archives
+	if [ ! -f "CHANGELOG" ]; then
+		delete_old_project_files
+		x_ fetch_trees
+	fi
 
-	delete_old_project_files
-	[ ! -f "CHANGELOG" ] && x_ fetch_trees; :
+	$if_build $if_not_dry_build $if_not_fetch \
+		mk_dependencies -b $build_depend; :
 }
 
 try_target_config()

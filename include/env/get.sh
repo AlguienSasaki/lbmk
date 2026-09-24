@@ -51,7 +51,7 @@ same_pjhash()
 	fi
 
 	eval "$build_sbase"
-	fx_ "x_ util/sbase/sha512sum" find "$@" -type f -not -path \
+	fx_ "x_ util/sbase/sha512sum" find "$@" -L -type f -not -path \
 	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
 	    err "!h $project $hashdir" \
 	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
@@ -94,6 +94,17 @@ git_prep()
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 
+	[ -f "$mdir/module.list" ] && \
+		git_prep_submodules "$@"
+
+	[ "$_loc" != "${_loc%/*}" ] && \
+		x_ mkdir -p "${_loc%/*}"
+
+	x_ mv "$tmpgit" "$_loc"
+}
+
+git_prep_submodules()
+{
 	# we must sort by git clone path, but separators screw
 	# up sorting. we will sort without the separator, then
 	# in fetch_submodule will we re-grep the corresponding line
@@ -104,11 +115,6 @@ git_prep()
 
 	dx_ fetch_submodule "$tmpmodlist"
 	rm -f "$tmpmodlist"
-
-	[ "$_loc" != "${_loc%/*}" ] && \
-		x_ mkdir -p "${_loc%/*}"
-
-	x_ mv "$tmpgit" "$_loc"
 }
 
 fetch_submodule()
