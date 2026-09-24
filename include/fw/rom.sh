@@ -105,7 +105,8 @@ cook_coreboot_smmstore()
 	    CONFIG_USE_UEFI_VARIABLE_STORE=y" # replace option backend
 
 	for ecfgval in $ecfg; do
-		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname"
+		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname" || \
+		    err "can't cook config '$srcdir/$cfgname'"; :
 	done
 }
 
