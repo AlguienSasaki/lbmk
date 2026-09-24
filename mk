@@ -84,6 +84,7 @@ if_make_config=":"
 if_build=":" # can be false even if make is true
 if_dry_build=":"
 eval "`newvar if_not_make_config if_not_build if_not_dry_build if_not_fetch`"
+if_skip_build=":"
 
 # these variables will also be initialised in configure_target
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
@@ -240,8 +241,10 @@ configure_target()
 	# coreboot needs a .config or it will behave unpredictably. we will
 	# use the do_build macro to disable builds in this situation. this
 	# does not disable mkhelpers or dry builds.
-	[ ! -d "$target_dir/config" ] && [ "$noconfig" != "y" ] && \
+	if [ ! -d "$target_dir/config" ] && [ "$noconfig" != "y" ]; then
 		if_not_skip_build=":" # skip make on e.g. ./mk -b coreboot default
+		if_skip_build=""
+	fi
 
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 1

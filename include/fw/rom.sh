@@ -184,56 +184,42 @@ mkcorebootbin_real()
 		err "'$target' defines bad u-boot type '$payload_uboot'" \
 		    "mkcorebootbin_real" "$@"
 
-	[ -z "$uboot_config" ] && \
-		uboot_config="default"
-	[ "$payload_grub" = "y" ] && \
-		payload_seabios="y"
-
-	[ -z "$grub_scan_disk" ] && \
-		grub_scan_disk="nvme ahci ata"
-	[ -z "$grubtree" ] && \
-		grubtree="default"
-	grubelf="elf/grub/$grubtree/$grubtree/noconfig/grub.elf"
-
 	[ "$payload_memtest" != "y" ] && \
 		payload_memtest="n"
 	[ "$(uname -m)" != "x86_64" ] && \
 		payload_memtest="n"
 
-	[ "$payload_grubsea" = "y" ] && [ "$initmode" = "normal" ] && \
-		payload_grubsea="n"
-	[ "$payload_grub" != "y" ] && \
-		payload_grubsea="n"
+	$if_skip_build \
+		return 0
 
-	if [ "$initmode" != "libgfxinit" ] || \
-	    [ "$displaymode" != "corebootfb" ]; then
-		[ "$initmode" != "fspgop" ] && [ "$initmode" != "normal" ] && \
-		    payload_edk2="" # disable on txtmode
+	prep_tmprom
+
+	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
+		cprom custom
+		prep_tmprom
+		return 0
 	fi
 
-	$if_not_skip_build prep_tmprom
+	[ -n "$payload_edk2" ] && \
+		mk_coreboot_with edk2
+	[ "$payload_seabios" = "y" ] && \
+		mk_coreboot_with seabios
+	[ "$payload_grub" = "y" ] && \
+		mk_coreboot_with grub
+	[ "$payload_uboot" = "arm64" ] && \
+		mk_coreboot_with uboot; :
 
-	if grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
-		if [ -n "$payload_edk2" ]; then
-			pname="edk2"
-			$if_not_skip_build add_edk2 "fallback/payload"
-			$if_not_skip_build cprom # standalone edk2
+	[ "$rom_prepared" = "n" ] && \
+		printf "WARNING: no payloads configured for cb/%s\n" \
+		    "$target" 1>&2; :
+}
 
-			$if_not_skip_build prep_tmprom
-		fi
-		if [ "$payload_seabios" = "y" ]; then
-			pname="seabios"
-			$if_not_skip_build add_seabios
-		fi
-		if [ "$payload_uboot" = "arm64" ]; then
-			pname="uboot"
-			$if_not_skip_build add_uboot "" fallback/payload \
-			    default "$target" u-boot.elf
-		fi
-	else
-		pname="custom"
-		$if_not_skip_build cprom
-	fi; :
+mk_coreboot_with()
+{
+	add_$1 || return 0
+
+	prep_tmprom
+	rom_prepared="y"
 }
 
 prep_tmprom()
@@ -264,10 +250,18 @@ add_cbfs_option()
 
 add_edk2()
 {
+	# allowed modes for edk2: libgfxinit_corebootfb, fspgop, normal
+
+	# NOTE: "normal" removed from checks. in this setup, edk2 uses gop.
+	[ "$initmode" = "vgarom" ] && return 1 # vga rom incompatible. use gop.
+	[ "$initmode" = "libgfxinit" ] && [ "$displaymode" != "corebootfb" ] && \
+		return 1 # text mode incompatible
+
 	edk2dir="elf/coreboot/default/$payload_edk2"
 	edk2="$edk2dir/libgfxinit_corebootfb/UEFIPAYLOAD.fd"
 
-	cbfs "$tmprom" "$edk2" "$1"
+	cbfs "$tmprom" "$edk2" "fallback/payload"
+	cprom edk2
 }
 
 # in our design, SeaBIOS is also responsible for starting either
@@ -283,11 +277,7 @@ add_seabios()
 	[ "$initmode" = "fspgop" ] && \
 	    _seabioself="elf/seabios/default/build/libgfxinit/bios.bin.elf"
 
-	_seaname="fallback/payload"
-	[ "$payload_grubsea" = "y" ] && \
-		 _seaname="seabios.elf"
-
-	cbfs "$tmprom" "$_seabioself" "$_seaname"
+	cbfs "$tmprom" "$_seabioself" "fallback/payload"
 
 	x_ "$cbfstool" "$tmprom" add-int -i 3000 -n etc/ps2-keyboard-spinup
 
@@ -301,34 +291,20 @@ add_seabios()
 		cbfs "$tmprom" "$seavgabiosrom" vgaroms/seavgabios.bin raw
 	fi
 
-	[ "$payload_memtest" = "y" ] && \
-		cbfs "$tmprom" \
-		    "elf/memtest86plus/default/default/noconfig/memtest.bin" \
-		    img/memtest
+	add_memtest86plus
 
-	[ "$payload_grub" = "y" ] && \
-		add_grub
-
-	[ -n "$payload_edk2" ] && \
-		add_edk2 "img/edk2"
-
-	[ "$payload_grubsea" != "y" ] && \
-		cprom # seabios, but don't load grub first
-
-	if [ "$payload_grub" = "y" ]; then
-		pname="seagrub"
-		mkseagrub
-	fi
+	cprom seabios
 }
 
 add_grub()
 {
-	# path in CBFS for the GRUB payload
-	_grubname="img/grub2"
-	[ "$payload_grubsea" = "y" ] && \
-		_grubname="fallback/payload"
+	[ "$initmode" = "normal" ] && \
+		return 1 # no gfxinit required by grub ("normal" not allowed)
 
-	cbfs "$tmprom" "$grubelf" "$_grubname"
+	[ -z "$grub_scan_disk" ] && \
+		grub_scan_disk="nvme ahci ata"
+	[ -z "$grubtree" ] && \
+		grubtree="default"
 
 	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
 	    > "$xbtmp/tmpcfg" || \
@@ -339,33 +315,48 @@ add_grub()
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 		cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 		    "background.png" raw; :
+
+	cbfs "$tmprom" "elf/grub/$grubtree/$grubtree/noconfig/grub.elf" \
+	    "fallback/payload"
+
+	add_memtest86plus
+
+	fx_ "cprom_grub" x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
-mkseagrub()
+add_memtest86plus()
 {
-	if [ "$payload_grubsea" = "y" ]; then
-		pname="grub"
-	else
-		cbfs "$tmprom" "$grubdata/bootorder" bootorder raw
-	fi
-
-	fx_ cprom x_ find "$grubdata/keymap" -type f -name "*.gkb"
+	[ "$payload_memtest" = "y" ] && \
+		cbfs "$tmprom" \
+		    "elf/memtest86plus/default/default/noconfig/memtest.bin" \
+		    img/memtest; :
 }
 
 add_uboot()
 {
-	ubootelf="elf/u-boot/$3/$4/$uboot_config/$5"
+	[ -z "$uboot_config" ] && \
+		uboot_config="default"
+
+	ubootelf="elf/u-boot/default/$target/$uboot_config/u-boot.elf"
 	[ ! -f "$ubootelf" ] && \
 		ubootelf="${ubootelf%.elf}" # hack (fix arm64 build)
 
-	cbfs "$tmprom" "$ubootelf" "$2" $1
-	[ "$payload_seabios" != "y" ] && \
-		cprom; :
+	cbfs "$tmprom" "$ubootelf" "fallback/payload"
 }
 
 # prepare the final image in bin/ for user installation:
+
+cprom_grub()
+{
+	cprom grub "$@"
+}
+
 cprom()
 {
+	pname="${1-}"
+	[ -z "$pname" ] && pname="undefined"
+	shift 1 2>/dev/null || :
+
 	cpcmd="cp"
 
 	tmpnew=""

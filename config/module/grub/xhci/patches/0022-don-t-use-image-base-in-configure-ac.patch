@@ -1,0 +1,36 @@
+From 3e245b015f4503c68d6b66089b45bfaeaa6c2d8a Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 24 Sep 2026 11:34:04 +0100
+Subject: [PATCH 1/1] don't use --image-base in configure-ac
+
+fixes a build error:
+
+kernel.img' is miscompiled: its start address is 0x9074 instead of 0x9000: ld.gold bug?
+
+this isn't needed on newer linux e.g. archlinux which has
+a newer linker. it does however fix building on my
+debian 13 machine.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index c476756e9..94ce6da7b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1509,8 +1509,8 @@ else
+   TARGET_IMG_LDFLAGS='-Wl,-N'
+   TARGET_IMG_LDFLAGS_AC='-Wl,-N'
+   if test "x$target_cpu-$platform" != "xi386-pc"; then
+-    AX_CHECK_LINK_FLAG([-Wl,--image-base,0],
+-        [TARGET_IMG_BASE_LDOPT="-Wl,--image-base,0 -Wl,-Ttext"],
++    AX_CHECK_LINK_FLAG([-Wl,0],
++        [TARGET_IMG_BASE_LDOPT="-Wl,0 -Wl,-Ttext"],
+         [TARGET_IMG_BASE_LDOPT="-Wl,-Ttext"],
+         [],
+         [AC_LANG_SOURCE([
+-- 
+2.47.3
+
