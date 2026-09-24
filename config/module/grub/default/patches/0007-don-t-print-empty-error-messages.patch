@@ -1,7 +1,7 @@
-From 557d3e583e6aaa887d7b3876c6980ba0e0e671a3 Mon Sep 17 00:00:00 2001
+From bae0d6479233726e1ebfd3da96dad6f706f63eca Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sun, 5 Nov 2023 17:25:20 +0000
-Subject: [PATCH 07/10] don't print empty error messages
+Subject: [PATCH 07/11] don't print empty error messages
 
 this is part two of the quest to kill the prefix
 error message. after i disabled prefix-related
@@ -13,10 +13,10 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/grub-core/kern/err.c b/grub-core/kern/err.c
-index ba04b57fb..dab62646d 100644
+index f4c1b42c5..12a28f072 100644
 --- a/grub-core/kern/err.c
 +++ b/grub-core/kern/err.c
-@@ -116,7 +116,8 @@ grub_print_error (void)
+@@ -130,7 +130,8 @@ grub_print_error (void)
      {
        if (grub_errno != GRUB_ERR_NONE)
  	{

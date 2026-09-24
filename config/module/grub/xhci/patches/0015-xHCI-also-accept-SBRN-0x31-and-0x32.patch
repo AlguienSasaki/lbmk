@@ -1,0 +1,26 @@
+From ec511d13a3f82274ef6072cfe2f5765859f132c7 Mon Sep 17 00:00:00 2001
+From: Sven Anderson <sven@anderson.de>
+Date: Sat, 28 May 2022 21:39:23 +0200
+Subject: [PATCH 15/21] xHCI: also accept SBRN 0x31 and 0x32
+
+Signed-off-by: Sven Anderson <sven@anderson.de>
+---
+ grub-core/bus/usb/xhci-pci.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grub-core/bus/usb/xhci-pci.c b/grub-core/bus/usb/xhci-pci.c
+index a5bd3c97d..cde21f57a 100644
+--- a/grub-core/bus/usb/xhci-pci.c
++++ b/grub-core/bus/usb/xhci-pci.c
+@@ -76,7 +76,7 @@ grub_xhci_pci_iter (grub_pci_device_t dev, grub_pci_id_t pciid,
+       /* Check Serial Bus Release Number */
+       addr = grub_pci_make_address (dev, GRUB_XHCI_PCI_SBRN_REG);
+       release = grub_pci_read_byte (addr);
+-      if (release != 0x30)
++      if (release != 0x30 && release != 0x31 &&release != 0x32)
+ 	{
+ 	  grub_dprintf ("xhci", "XHCI grub_xhci_pci_iter: Wrong SBRN: %0x\n",
+ 			release);
+-- 
+2.47.3
+

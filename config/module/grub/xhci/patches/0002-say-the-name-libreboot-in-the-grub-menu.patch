@@ -1,0 +1,25 @@
+From c7b6d14ea4364097261cee13989e049b04c09511 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 19 Nov 2022 16:30:24 +0000
+Subject: [PATCH 02/21] say the name libreboot, in the grub menu
+
+---
+ grub-core/normal/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grub-core/normal/main.c b/grub-core/normal/main.c
+index de9a3f961..c7a172a8b 100644
+--- a/grub-core/normal/main.c
++++ b/grub-core/normal/main.c
+@@ -215,7 +215,7 @@ grub_normal_init_page (struct grub_term_output *term,
+ 
+   grub_term_cls (term);
+ 
+-  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
++  msg_formatted = grub_xasprintf (_("Libreboot 26.01 Magnanimous Max (GRUB menu): https://libreboot.org/"));
+   if (!msg_formatted)
+     return;
+ 
+-- 
+2.47.3
+
