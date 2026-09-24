@@ -158,7 +158,7 @@ mkcorebootbin()
 	# not occur. this however means that we must set release=n
 	# for now. proper edk2 integration will come to lbmk soon(tm)
 	#
-	x_ rm -Rf "$srdir/payloads/external/edk2/workspace"
+	x_ rm -Rf "$srcdir/payloads/external/edk2/workspace"
 
 	for y in "$defscan"/*; do
 		buildcfg="$y"
