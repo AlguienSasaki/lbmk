@@ -148,6 +148,18 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
+	# replicates coreboot's handling after edk2 build,
+	# which we patch out for copy. so now we clean it instead,
+	# after we successfully copied it out-of-tree.
+	# this enables clean re-building when modifying cb/edk2_mrchromebox
+	#
+	# so long as metadata in config/ doesn't change, and we
+	# have a build in elf/, then a re-build/re-download will
+	# not occur. this however means that we must set release=n
+	# for now. proper edk2 integration will come to lbmk soon(tm)
+	#
+	x_ rm -Rf "$srdir/payloads/external/edk2/workspace"
+
 	for y in "$defscan"/*; do
 		buildcfg="$y"
 		$if_not_skip_build mkcorebootbin_real
