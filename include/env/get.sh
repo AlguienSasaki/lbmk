@@ -93,7 +93,9 @@ git_prep()
 		err "$project/$tree: rev unset" "git_prep" "$@"
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
-	dx_ fetch_submodule "$mdir/module.list"
+
+
+	dsx_ fetch_submodule "$mdir/module.list"
 
 	[ "$_loc" != "${_loc%/*}" ] && \
 		x_ mkdir -p "${_loc%/*}"
@@ -103,7 +105,11 @@ git_prep()
 
 fetch_submodule()
 {
-	mcfgdir="$mdir/${1##*/}"
+	mcfgdir="$(printf "%s\n" "$1" | awk -F : '{print $2}')"
+	mcfgdir="$mdir/${mcfgdir##*/}"
+
+	subpdir="$(printf "%s\n" "$1" | awk -F : '{print $1}')"
+
 	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
 
 	e "$mcfgdir/module.cfg" f missing && return 0
@@ -122,10 +128,11 @@ fetch_submodule()
 		err "subhash not set" "fetch_submodule" "$@"
 
 	[ "$st" = "git" ] && \
-		x_ rm -Rf "$tmpgit/$1"
+		x_ rm -Rf "$tmpgit/$subpdir"
 
-	eval "xbget \"\$st\" \"\$sub$st\" \"\$sub${st}_bkup\" \"\$tmpgit/\$1\" \
-	    \"\$subhash\" \"\$mdir/\${1##*/}/patches\""
+	eval "xbget \"\$st\" \"\$sub$st\" \"\$sub${st}_bkup\" \
+	    \"\$tmpgit/\$subpdir\" \
+	    \"\$subhash\" \"\$mcfgdir/patches\""
 }
 
 # TODO: in the following functions, argument numbers are used
