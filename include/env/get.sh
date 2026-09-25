@@ -94,8 +94,16 @@ git_prep()
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 
+	# we must sort by git clone path, but separators screw
+	# up sorting. we will sort without the separator, then
+	# in fetch_submodule will we re-grep the corresponding line
+	tmpmodlist="$(mktemp || err "can't make tmpfile")" || err
+	x_ rm -f "$tmpmodlist"
+	x_ awk -F ':' '{print $1}' "$mdir/module.list" | sort \
+	    >> "$tmpmodlist" || err "can't make tmpmodlist" git_prep "$@"
 
-	dsx_ fetch_submodule "$mdir/module.list"
+	dx_ fetch_submodule "$tmpmodlist"
+	rm -f "$tmpmodlist"
 
 	[ "$_loc" != "${_loc%/*}" ] && \
 		x_ mkdir -p "${_loc%/*}"
@@ -105,10 +113,13 @@ git_prep()
 
 fetch_submodule()
 {
-	mcfgdir="$(printf "%s\n" "$1" | awk -F : '{print $2}')"
+	mcfgstr="$(x_ grep "$1:" "$mdir/module.list")" || err
+
+	mcfgdir="$(printf "%s\n" "$mcfgstr" | awk -F : '{print $2}' || \
+	    err "can't separate module string" fetch_submodule "$@")" || err
 	mcfgdir="$mdir/${mcfgdir##*/}"
 
-	subpdir="$(printf "%s\n" "$1" | awk -F : '{print $1}')"
+	subpdir="$1"
 
 	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
 

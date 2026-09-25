@@ -134,18 +134,6 @@ fx_()
 	x_ rm -f "$xfile"
 }
 
-dsx_() # sorted dx_
-{
-	xchk dx_ "$@"
-	dsxtmp="$(mktemp || err "can't make tmpfile")" || err
-	dsxcmd="$1"
-	dsxarg="$2"
-	shift 2
-	x_ sort "$dsxarg" > "$dsxtmp" || \
-	    err "can't sort '$dsxarg', '$dsxtmp'" dsx_ "$dsxcmd" "$dsxarg" "$@"
-	dx_ "$dsxcmd" "$dsxtmp"
-}
-
 dx_()
 {
 	xchk dx_ "$@"
