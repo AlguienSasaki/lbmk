@@ -22,13 +22,15 @@ delete_old_project_files()
 
 	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mhash/$project$tree"
 
-	if [ -n "$target" ] && [ "$target" != "$tree" ]; then
-		# delete only target builds, if only the target changed
-		same_pjhash mtghash "$target" badtghash "$configdir/$target" \
-		    || x_ rm -Rf "elf/$project/$tree/$target"
-
-		x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mtghash/$project$target"
+	if [ -z "$target" ] || [ "$target" = "$tree" ]; then
+		return 0
 	fi
+
+	# delete only target builds, if only the target changed
+	same_pjhash mtghash "$target" badtghash "$configdir/$target" \
+	    || x_ rm -Rf "elf/$project/$tree/$target"
+
+	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mtghash/$project$target"
 }
 
 same_pjhash()
