@@ -53,7 +53,7 @@ same_pjhash()
 	fi
 
 	eval "$build_sbase"
-	fx_ "x_ util/sbase/sha512sum" find "$@" -L -type f -not -path \
+	fx_ "x_ util/sbase/sha512sum" find -L "$@" -type f -not -path \
 	    "*/.git*/*" | awk '{print $1}' > "$xbtmp/tmp.hash" || \
 	    err "!h $project $hashdir" \
 	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
