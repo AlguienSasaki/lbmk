@@ -77,26 +77,7 @@ cook_coreboot_config()
 	[ -n "$mode" ] && return 0
 	[ -f "$srcdir/$cfgname" ] || return 0
 
-	[ -n "$payload_edk2" ] && \
-		cook_coreboot_smmstore
-
 	x_ make -C "$srcdir" oldconfig
-}
-
-cook_coreboot_smmstore()
-{
-	ecfg="CONFIG_SMMSTORE_BLOCK_SIZE=65536 \
-	    CONFIG_DRIVERS_EFI_VARIABLE_STORE=y \
-	    CONFIG_SMMSTORE=y \
-	    CONFIG_SMMSTORE_SIZE=0x80000 \
-	    CONFIG_SPI_FLASH_SMM=y \
-	    CONFIG_DRIVERS_GENERIC_CFR_ASSET_TAG=y \
-	    CONFIG_USE_UEFI_VARIABLE_STORE=y" # replace option backend
-
-	for ecfgval in $ecfg; do
-		printf "%s\n" "$ecfgval" >> "$srcdir/$cfgname" || \
-		    err "can't cook config '$srcdir/$cfgname'"; :
-	done
 }
 
 check_coreboot_util()
