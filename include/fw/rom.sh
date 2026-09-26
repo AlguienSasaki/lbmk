@@ -124,7 +124,11 @@ mkcorebootbin()
 	$if_not_dry_build \
 		clean_edk2_src
 
+	[ -z "$defscan" ] && err "defscan empty" mkcorebootbin "$@"
+
 	for y in "$defscan"/*; do
+		[ -f "$y" ] || continue
+
 		buildcfg="$y"
 		$if_not_skip_build mkcorebootbin_real
 	done

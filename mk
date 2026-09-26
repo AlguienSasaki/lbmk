@@ -89,10 +89,10 @@ if_skip_build=":"
 # these variables will also be initialised in configure_target
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
-    premake release rev tree xarch xgcctree xlang cfgname defscan \
+    premake release rev tree xarch xgcctree xlang cfgname \
     if_not_skip_build cook_config seen"
 
-eval "`newvar buildcfg dest_dir flag forcepull listfile mdir \
+eval "`newvar buildcfg defscan dest_dir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
     $cfgvars`"
 
@@ -312,8 +312,12 @@ mk_dependencies()
 
 handle_buildcfg()
 {
+	[ -z "$defscan" ] && err "defscan empty" handle_buildcfg "$@"
+
 	[ ! -d "$srcdir" ] || for y in "$defscan"/*
 	do
+		[ -f "$y" ] || continue
+
 		buildcfg="$y"
 		dest_dir="elf/$project/$tree/$target/${y##*/}"
 
