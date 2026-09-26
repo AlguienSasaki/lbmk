@@ -181,8 +181,16 @@ main()
 	x_ touch "$mkhelpercfg"
 
 	[ ! -d "$configdir" ] && err "missing '$configdir'" handle_target "$@"
-	[ $# -lt 1 ] && fx_ handle_target find "$configdir" \
-		    -mindepth 1 -maxdepth 1 -type d
+
+
+	if [ $# -lt 1 ]; then
+		[ -n "$configdir" ] || err "configdir string empty" main "$@"
+		for tgcfg in "$configdir"/*; do
+			[ -d "$tgcfg" ] || continue
+			x_ "$mk" $flag $project $tgcfg
+		done
+		return 0
+	fi
 
 	while [ $# -gt 0 ]; do
 		handle_target "$1"
