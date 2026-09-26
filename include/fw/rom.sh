@@ -165,6 +165,17 @@ prep_edk2_src()
 	# coreboot's edk2 makefile is patched to never delete it, and never
 	# download it. *we* delete it, after copying the payload out-of-tree
 
+
+	efidir="elf/coreboot/default/$payload_edk2/libgfxinit_corebootfb/"
+	efiname="UEFIPAYLOAD.fd"
+
+	# skip copying/building if we already have the binary. we know
+	# that it was handled by build_depend, so the binary will be
+	# up to date on the current configuration.
+
+	[ -f "$efidir/$efiname" ] && \
+		return 0
+
 	x_ mkdir "$srcdir/payloads/external/edk2/workspace"
 
 	x_ cp -a "src/edk2/$payload_edk2/" \
