@@ -92,7 +92,7 @@ cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     premake release rev tree xarch xgcctree xlang cfgname defscan \
     if_not_skip_build cook_config seen"
 
-eval "`newvar buildcfg dest_dir elfdir flag forcepull listfile mdir \
+eval "`newvar buildcfg dest_dir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
     $cfgvars`"
 
