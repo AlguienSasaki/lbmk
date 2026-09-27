@@ -1,0 +1,277 @@
+#!/bin/sh
+
+# Copyright (c) 2026 Leah Rowe <leah@libreboot.org>
+# SPDX-License-Identifier: MIT
+
+# Usage: ./scraper.sh PATH
+# PATH is a mrchromebox coreboot clone.
+
+# This script creates the directory structure inside
+# config/ for importing mrchromebox coreboot into lbmk.
+
+# This script outputs a path to a temporary directory
+# containing that structure. Further scripting can then
+# deal with patches and such. This script was written so
+# as to keep in sync with MrChromebox for chromebooks.
+
+# Repeated use of this script per update can be used to
+# stay in sync with mrchromebox. At present, this script
+# will generate files all with release="n", which means
+# that they will not be provided as binaries in Libreboot
+# releases - the latter shall be subject to further tests.
+
+set -u -e
+
+rval=0
+
+tmpfile_stat_minus="$(mktemp || exit 1)" || exit 1
+tmpfile_stat="$(mktemp || exit 1)" || exit 1
+tmpfile_paths="$(mktemp || exit 1)" || exit 1
+tmpfile_urls="$(mktemp || exit 1)" || exit 1
+tmpfile_urls_paths_commitids="$(mktemp || exit 1)" || exit 1
+tmpfile_tree_cfg="$(mktemp || exit 1)" || exit 1
+
+# the final tmpdir containing files
+tmpdir="$(mktemp -d || exit 1)" || exit 1
+
+main()
+{
+  [ -z "${1-}" ] && err "no/empty path given"
+
+  (
+  x_ cd "${1-}" # arg1 is the mrchromebox coreboot clone. we use current HEAD
+
+  mr_commit="$(x_ git log | head -n1 | awk '{print $2}' || err "awk c")" || \
+      err "can't grab commit"
+
+  mr_repo="https://github.com/MrChromebox/coreboot"
+
+  x_ init_tmpfiles "$@"
+  x_ init_module_list "$@"
+
+  x_ init_tree_cfg "$mr_commit" "$mr_repo" > "$tmpfile_tree_cfg" || \
+      err "can't create target.cfg"
+
+  x_ mkmrdirs "$mr_commit" "$mr_repo"
+
+  x_ printf "%s\n" "$tmpdir"
+
+  ) || return 1;
+}
+
+init_tmpfiles()
+{
+  x_ git submodule status 2>/dev/null > "$tmpfile_stat_minus" || \
+      err "can't make tmpfile (status, minus)"
+
+  while read -r module; do
+    x_ printf "%s\n" "${module#-}" >> "$tmpfile_stat" || \
+        err "can't create tmpfile (stat)"
+  done < "$tmpfile_stat_minus" || err "can't read tmpfile (stat, minus)"
+
+  x_ grep "path = " .gitmodules | awk '{print $3}' > "$tmpfile_paths" || \
+      err "can't make tmpfile (paths)"
+
+  x_ grep "url = " .gitmodules | awk '{print $3}' > "$tmpfile_urls" || \
+      err "can't make tmpfile (urls)"
+}
+
+init_module_list()
+{
+  urls="$(x_ collapse "$tmpfile_urls" || err "can't read url tmpfile")" || \
+      err "can't read url tmpfile"
+
+  paths="$(x_ collapse "$tmpfile_paths" || err "can't read path tmpfile") " || \
+      err "can't read path tmpfile"
+
+  for url in $urls; do
+    path="${paths%% *}"
+    paths="${paths#* }"
+
+    commitid="$(x_ grep "$path" "$tmpfile_stat" | awk '{print $1}' || \
+        err "can't grep stat")" || err "can't grep stat"
+
+    x_ printf "%s %s %s\n" "$url" "$path" "$commitid" >> \
+        "$tmpfile_urls_paths_commitids" || err "can't make final module list"
+  done
+}
+
+collapse()
+{
+  x_ printf "%s\n" "$(x_ echo $(x_ cat "${1-}") || \
+      err "echo!")" || err "can't cat tmpfile"
+}
+
+mkmrdirs()
+{
+  mr_commit="$1"
+  mr_repo="$2"
+
+  x_ mkdir -p "$tmpdir"
+
+  x_ mkdir -p "$tmpdir/module/mrchromebox"
+  x_ init_tree_cfg "$mr_commit" "$mr_repo" > \
+      "$tmpdir/module/mrchromebox/target.cfg" \
+      || err "can't make mrchromebox/target.cfg"
+
+  for mrdir in configs/*/*.uefi; do
+    [ -f "$mrdir" ] || continue;
+
+    mrtarget="${mrdir##*/}"
+    mrtarget="${mrtarget#config.}"
+    mrtarget="${mrtarget%.uefi}"
+
+    mrplatform="${mrdir%/*}"
+    mrplatform="${mrplatform##*/}"
+
+    mrtarget="mrchromebox_${mrplatform}_${mrtarget}_uefi"
+
+    x_ mkdir -p "$tmpdir/module/$mrtarget"
+    x_ init_target_cfg "$mrplatform" "$mrtarget" > \
+        "$tmpdir/module/$mrtarget/target.cfg" || \
+        err "can't make target.cfg for target '$mrtarget'";
+
+    # TODO: detect fspgop and others. for now just assume libgfx.
+    #       it's a do-not-care for our purposes, since we don't set vcfg=
+    mrcbcfg="$tmpdir/module/$mrtarget/config/libgfxinit_corebootfb"
+
+    x_ mkdir -p "${mrcbcfg%/*}"
+    x_ cp "$mrdir" "$mrcbcfg"
+
+    printf "CONFIG_PAYLOAD_NONE=y\n" >> "$mrcbcfg" || \
+            err "can't set payload none on '$mrcbcfg'";
+
+  done
+
+  x_ init_submodule_configs
+}
+
+init_tree_cfg()
+{
+  mr_commit="${1-}"
+  mr_repo="${2-}"
+
+  printf "# SPDX-License-Identifier: GPL-3.0-or-later\n\n"
+
+  printf "url=\"%s\"\n" "$mr_repo"
+  printf "bkup_url=\"%s\"\n\n" "$mr_repo"
+
+  printf "rev=\"%s\"\n\n" "$mr_commit"
+
+  printf "tree=\"mrchromebox\"\n\n"
+
+  printf "release=\"n\"\n"
+}
+
+init_target_cfg()
+{
+  mrplatform="$1"
+  mrtarget="$2"
+
+  ifdplatform="$(get_platform "$mrplatform")"
+
+  printf "# SPDX-License-Identifier: GPL-3.0-or-later\n\n"
+
+  printf "tree=\"mrchromebox\"\n"
+  printf "xarch=\"i386-elf\"\n\n"
+
+  [ -n "$ifdplatform" ] && \
+    printf "IFD_platform=\"%s\"\n" "$ifdplatform";
+
+  printf "payload_edk2=\"edk2_mrchromebox\"\n\n"
+
+  printf "build_depend=\"coreboot/edk2_mrchromebox\"\n\n"
+
+  printf "release=\"n\"\n"
+}
+
+init_submodule_configs()
+{
+  a="a"
+  while read -r modline; do
+
+    x_ mkdir -p "$tmpdir/submodule"
+
+    modurl="$(x_ printf "%s\n" "$modline" | awk '{print $1}')"
+    modpath="$(x_ printf "%s\n" "$modline" | awk '{print $2}')"
+    moddir="$(printf "%s\n" "$modpath" | sed 's,/,_,g')"
+    modrev="$(x_ printf "%s\n" "$modline" | awk '{print $3}')"
+
+    printf "%s:%s\n" "$modpath" "$moddir" >> \
+        "$tmpdir/submodule/module.list" || err "can't update module.list";
+
+    modcfg="$tmpdir/submodule/$moddir/module.cfg"
+    x_ mkdir -p "${modcfg%/*}"
+
+    x_ init_module_cfg "$modurl" "$modrev" > "$modcfg" || \
+        err "can't create modcfg for '$modpath'"
+
+  done < "$tmpfile_urls_paths_commitids" || err "can't read modlist";
+}
+
+init_module_cfg()
+{
+  modurl="$1"
+  modrev="$2"
+
+  printf "# SPDX-License-Identifier: GPL-3.0-or-later\n\n"
+
+  printf "subgit=\"%s\"\n" "$modurl"
+  printf "subgit_bkup=\"%s\"\n" "$modurl"
+  printf "subhash=\"%s\"\n" "$modrev"
+}
+
+# for --platform in ifdtool
+get_platform()
+{
+  p=""
+
+  case "$1" in
+  kbl) p="sklkbl";;
+  mtl) p="mtl";;
+  adl_n) p="adl";;
+  jsl) p="jsl";;
+  skl) p="sklkbl";;
+  adl) p="adl";;
+  tgl) p="tgl";;
+  glk) p="glk";;
+  apl) p="aplk";;
+  *) :;;
+  esac
+
+  printf "%s\n" "$p";
+}
+
+x_()
+{
+  [ $# -lt 1 ] || "$@" || err "$@";
+}
+
+err()
+{
+  printf "ERR: %s\n" "$@"
+  rm_tmpfiles
+  err_rm_tmp
+  exit 1
+}
+
+rm_tmpfiles()
+{
+  rm -f "$tmpfile_stat_minus" "$tmpfile_stat" "$tmpfile_paths" \
+      "$tmpfile_urls" "$tmpfile_urls_paths_commitids" "$tmpfile_tree_cfg" \
+      1>/dev/null 2>/dev/null || :;
+}
+
+err_rm_tmp()
+{
+  [ ! -d "$tmpdir" ] || [ -L "$tmpdir" ] || rm -Rf "$tmpdir" \
+      1>/dev/null 2>/dev/null || :;
+}
+
+main "$@" || rval=1; :
+
+rm_tmpfiles
+
+[ $rval -gt 0 ] && err_rm_tmp;
+
+exit $rval
