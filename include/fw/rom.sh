@@ -55,12 +55,18 @@ mkpayload_grub()
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 
-corebootpremake()
+corebootpreconfig()
 {
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
 	forx 'check_coreboot_util %s' cbfstool ifdtool
+}
+
+corebootpremake()
+{
+	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
+		return 0
 
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"

@@ -90,7 +90,7 @@ if_skip_build=":"
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
     premake release rev tree xarch xgcctree xlang cfgname \
-    if_not_skip_build cook_config seen"
+    if_not_skip_build cook_config seen preconfig"
 
 eval "`newvar buildcfg defscan dest_dir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
@@ -320,6 +320,9 @@ mk_dependencies()
 
 handle_buildcfg()
 {
+	$if_build \
+		x_ $preconfig # for e.g. ./mk -d coreboot default (build utils)
+
 	[ -z "$defscan" ] && err "defscan empty" handle_buildcfg "$@"
 
 	[ ! -d "$srcdir" ] || for y in "$defscan"/*
