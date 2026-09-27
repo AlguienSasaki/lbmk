@@ -12,14 +12,12 @@ extract_refcode()
 
 	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
 	# and refcode is extracted from an image using the old scheme. we use
-	# cbfstool from coreboot 4.11_branch, the tree used by ASUS KGPE-D16:
-
-	[ -z "$cbfstoolref" ] && \
-		err "cbfstoolref not set" "extract_refcode" "$@"
+	# cbfstool from coreboot 4.11, which uses the old design
 
 	x_ mkdir -p "${_pre_dest%/*}"
 
-	x_ "$cbfstoolref" "$appdir/bios.bin" extract \
+	x_ "$mk" -d coreboot fam15h_15h
+	x_ "elf/coreboot/fam15h_15h/cbfstool" "$appdir/bios.bin" extract \
 	    -m x86 -n fallback/refcode -f "$appdir/ref" -r RO_SECTION
 
 	# enable the Intel GbE device, if told by offset MRC_refcode_gbe

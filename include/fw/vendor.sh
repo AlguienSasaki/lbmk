@@ -36,8 +36,8 @@ checkvarsxbmk="CONFIG_ME_BIN_PATH CONFIG_SMSC_SCH5545_EC_FW_FILE \
     CONFIG_FSP_FD_PATH CONFIG_IFD_BIN_PATH CONFIG_MRC_FILE CONFIG_FSP_M_CBFS"
 
 # lbmk-specific extensions; general variables
-eval "`newvar cbdir cbfstoolref has_hashes hashfile kbc1126_ec_dump mecleaner \
-    mfs nuke rom vcfg xromsize _7ztest _dest _dl _dl_bin _me _metmp _pre_dest`"
+eval "`newvar cbdir has_hashes hashfile kbc1126_ec_dump mecleaner _pre_dest \
+    mfs nuke rom vcfg xromsize _7ztest _dest _dl _dl_bin _me _metmp`"
 
 # lbmk-specific extensions; declared by pkg.cfg files in config/vendor/
 eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
@@ -45,7 +45,7 @@ eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
     EC_FW1_hash EC_FW2_hash EC_hash EC_url EC_url_bkup FSPFD_hash \
     FSPM_bin_hash FSPS_bin_hash ME11bootguard ME11delta ME11pch ME11sku \
     ME11version ME_bin_hash MEcheck MEclean MEshrink MRC_bin_hash \
-    MRC_refcode_cbtree MRC_refcode_gbe REF_bin_hash SCH5545EC_bin_hash \
+    MRC_refcode_gbe REF_bin_hash SCH5545EC_bin_hash \
     SCH5545EC_DL_hash SCH5545EC_DL_url SCH5545EC_DL_url_bkup TBFW_bin_hash \
     TBFW_hash TBFW_size TBFW_url TBFW_url_bkup XBMKmecleaner`"
 
@@ -424,11 +424,6 @@ bootstrap()
 
 	[ -d "${kbc1126_ec_dump%/*}" ] && \
 		x_ make -C "$cbdir/util/kbc1126"
-
-	if [ -n "$MRC_refcode_cbtree" ]; then
-		cbfstoolref="elf/coreboot/$MRC_refcode_cbtree/cbfstool"
-		x_ "$mk" -d coreboot "$MRC_refcode_cbtree"; :
-	fi
 }
 
 prep()
