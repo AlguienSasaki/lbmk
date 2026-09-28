@@ -1,0 +1,92 @@
+From 064d2d6c9f39f0cb60f3ac84b1fc8863146fe1d1 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 29 Sep 2026 00:42:09 +0100
+Subject: [PATCH 1/1] always keep the flash hot before sending a command
+
+--workaround-mx kept, but now does nothing. its behaviour
+is now applied by default. it spams non-operations to the
+flash to keep it alive before sending a real command. this
+is required for stability on some ICs.
+
+it's documented loosely on libreboot.org, but not a lot
+of people know about it. enabling it for everything is harmless,
+and they come to IRC asking questions about why flashing
+doesn't work.
+
+prevent the question by preventing the issue.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ cli_classic.c        |  4 ++--
+ include/programmer.h |  2 --
+ spi.c                | 10 ++++++----
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/cli_classic.c b/cli_classic.c
+index b4636ce3..17ff1310 100644
+--- a/cli_classic.c
++++ b/cli_classic.c
+@@ -72,7 +72,6 @@ static void cli_classic_usage(const char *name)
+ 	       " -o | --output <logfile>            log output to <logfile>\n"
+ 	       "      --flash-contents <ref-file>   assume flash contents to be <ref-file>\n"
+ 	       " -L | --list-supported              print supported devices\n"
+-	       " -m | --workaround-mx               keep flash busy before sending command\n"
+ #if CONFIG_PRINT_WIKI == 1
+ 	       " -z | --list-supported-wiki         print supported devices in wiki syntax\n"
+ #endif
+@@ -404,7 +403,8 @@ int flashprog_classic_main(int argc, char *argv[])
+ 			exit(0);
+ 			break;
+ 		case 'm': /* --workaround-mx */
+-			workaround_mx = 1;
++			/* does nothing. this behaviour is applied by default,
++			   but the toggle is kept for backward compatibility */
+ 			break;
+ 		case OPTION_PROGRESS:
+ 			show_progress = true;
+diff --git a/include/programmer.h b/include/programmer.h
+index 1f2c88c4..f43cb6f5 100644
+--- a/include/programmer.h
++++ b/include/programmer.h
+@@ -388,8 +388,6 @@ enum ich_chipset {
+ 	CHIPSET_PANTHER_LAKE,
+ };
+ 
+-extern int workaround_mx; /* workaround for MX25* chips, makes flash operations more reliable, less failures */
+-
+ /* ichspi.c */
+ #if CONFIG_INTERNAL == 1
+ int ich7_init_spi(void *spibar, enum ich_chipset);
+diff --git a/spi.c b/spi.c
+index 6089f8b7..97a702a2 100644
+--- a/spi.c
++++ b/spi.c
+@@ -49,8 +49,6 @@ static int spi_send_wrapped_command(
+ 	return mst->multicommand(mst, cmd);
+ }
+ 
+-int workaround_mx; /* Make operations with MX25* chips more reliable */
+-
+ int spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+ 		     unsigned int readcnt, const unsigned char *writearr,
+ 		     unsigned char *readarr)
+@@ -58,10 +56,14 @@ int spi_send_command(const struct flashctx *flash, unsigned int writecnt,
+ 	if (spi_current_io_mode(flash) != SINGLE_IO_1_1_1) {
+ 		return spi_send_wrapped_command(flash->mst.spi, spi_current_io_mode(flash),
+ 						writecnt, readcnt, writearr, readarr);
+-	} else if (workaround_mx) {
++	} else {
+ 		const unsigned char cmd[JEDEC_READ_OUTSIZE] = {JEDEC_READ, 0, 0, 0};
+ 		unsigned char buf[256];
+-		/* keep flash busy for some time, keep CS warm before sending actual command */
++
++		/* keep flash busy for some time, keep CS warm before sending actual command,
++		   which is needed on some flash ICs. it is otherwise harmless when not
++		   needed, so we just always do it. send a bunch of no-ops to the flash */
++
+ 		flash->mst.spi->command(flash->mst.spi, sizeof(cmd), sizeof(buf), cmd, buf);
+ 	}
+ 
+-- 
+2.47.3
+
