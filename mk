@@ -267,6 +267,7 @@ configure_target()
 			x_ "$mk" -f "$project" "$srclink"
 			(
 			x_ cd "src/$project/"
+			x_ rm -f "$srctree"
 			x_ ln -s "$srclink" "$srctree"
 			) || err "can't link projects"
 		fi
