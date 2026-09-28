@@ -134,6 +134,8 @@ mkmrdirs()
     # TODO: detect fspgop and others. for now just assume libgfx.
     #       it's a do-not-care for our purposes, since we don't set vcfg=
     mrcbcfg="$tmpdir/module/$mrtarget/config/libgfxinit_corebootfb"
+    grep "CONFIG_RUN_FSP_GOP=y" "$mrdir" 1>/dev/null 2>/dev/null && \
+        mrcbcfg="$tmpdir/module/$mrtarget/config/fspgop"
 
     x_ mkdir -p "${mrcbcfg%/*}"
     x_ cp "$mrdir" "$mrcbcfg"
