@@ -143,7 +143,7 @@ readkconfig()
 scankconfig()
 {
 	for cbc in $checkvars; do
-		grep "$cbc" "$1" 2>/dev/null | grep -v "\$(obj)" \
+		grep "$cbc" "$1" 2>/dev/null | grep -v "\$(" \
 		    1>>"$xbtmp/cbcfg" || :
 	done
 }
