@@ -65,7 +65,9 @@ init_tmpfiles()
       err "can't make tmpfile (status, minus)"
 
   while read -r module; do
-    x_ printf "%s\n" "${module#-}" >> "$tmpfile_stat" || \
+    modinsert="${module#-}"
+    modinsert="${modinsert#+}"
+    x_ printf "%s\n" "${modinsert#-}" >> "$tmpfile_stat" || \
         err "can't create tmpfile (stat)"
   done < "$tmpfile_stat_minus" || err "can't read tmpfile (stat, minus)"
 
