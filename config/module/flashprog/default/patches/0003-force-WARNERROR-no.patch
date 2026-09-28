@@ -1,7 +1,7 @@
-From 5f79b0def288d97534ebb4b477152d13b00cedb5 Mon Sep 17 00:00:00 2001
+From 13b2d90c46b1bb7fc396e3ca12a1fbc7bcc1563a Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Sep 2026 11:59:02 +0100
-Subject: [PATCH 1/1] force WARNERROR=no
+Subject: [PATCH 3/3] force WARNERROR=no
 
 the variable itself is kept, in case upstream
 adds anything else that uses it in the future.
@@ -16,7 +16,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  5 files changed, 8 insertions(+), 20 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index e514e300..05cee5ff 100644
+index ce19ef8d..43d1709f 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -57,13 +57,8 @@ override CPPFLAGS := $(CPPFLAGS)
@@ -36,7 +36,7 @@ index e514e300..05cee5ff 100644
  ifdef LIBS_BASE
  PKG_CONFIG_LIBDIR ?= $(LIBS_BASE)/lib/pkgconfig
 diff --git a/Makefile.include b/Makefile.include
-index 1bca4f3a..18c1e55b 100644
+index a0b5fa95..1025d29d 100644
 --- a/Makefile.include
 +++ b/Makefile.include
 @@ -46,11 +46,11 @@ $(strip $(call debug_shell, $(CC) -E $1 | tail -n 1 | tr -d '"'))
@@ -54,10 +54,10 @@ index 1bca4f3a..18c1e55b 100644
  
  define find_dependency
 diff --git a/README.md b/README.md
-index 2051810c..f6a11a14 100644
+index 29d90e4d..f1794de0 100644
 --- a/README.md
 +++ b/README.md
-@@ -180,9 +180,7 @@ Processor architecture dependent features:
+@@ -187,9 +187,7 @@ Processor architecture dependent features:
  
  Compiler quirks:
  
@@ -69,7 +69,7 @@ index 2051810c..f6a11a14 100644
  Installation
  ------------
 diff --git a/meson.build b/meson.build
-index 39ae0c47..dc665c46 100644
+index 32ec4a73..13ef9940 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -5,7 +5,7 @@ project('flashprogutils', 'c',

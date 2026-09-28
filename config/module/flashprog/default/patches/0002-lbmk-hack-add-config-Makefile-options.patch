@@ -1,7 +1,7 @@
-From 10b23a84799c7b81a8b0b974529e67cc3f22429d Mon Sep 17 00:00:00 2001
+From 5741703e10bc3c2978697feabd9f588842334f74 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Thu, 22 May 2025 11:25:42 +0100
-Subject: [PATCH 2/2] lbmk hack: add config Makefile options
+Subject: [PATCH 2/3] lbmk hack: add config Makefile options
 
 this prevents a build error when running the
 -u, -m, -s, -l and -n options in lbmk without
@@ -11,18 +11,17 @@ this makes no functional changes to flashprog.
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
- Makefile | 18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
+ Makefile | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index 2d94afea..e514e300 100644
+index b3bceee5..ce19ef8d 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1116,7 +1116,23 @@ libpayload: clean
+@@ -1153,8 +1153,24 @@ libpayload: clean
  gitconfig:
  	./util/getrevision.sh -c 2>/dev/null && ./util/git-hooks/install.sh
  
--.PHONY: all install clean distclean config branch tag versioninfo _export export tarball libpayload gitconfig
 +oldconfig:
 +	:
 +
@@ -38,8 +37,9 @@ index 2d94afea..e514e300 100644
 +nconfig:
 +	:
 +
-+
-+.PHONY: all install clean distclean config branch tag versioninfo _export export tarball libpayload gitconfig oldconfig menuconfig savedefconfig olddefconfig nconfig
+ .PHONY: all install clean distclean config additional_tests branch tag
+ .PHONY: versioninfo _export export tarball libpayload gitconfig
++.PHONY: oldconfig menuconfig savedefconfig olddefconfig nconfig
  
  # Disable implicit suffixes and built-in rules (for performance and profit)
  .SUFFIXES:
