@@ -146,26 +146,7 @@ prep_edk2_src()
 {
 	clean_edk2_src
 
-	# we keep a source-only copy of edk2, that is never built.
-	# we copy it into coreboot and use coreboot's script to build it.
-
-	# what we copy is a clean source archive, and never built, so there
-	# will never be build artifacts in it. we build a copy. this takes up
-	# more disk space, but it's easier than building it ourselves.
-
-	# coreboot's edk2 makefile is patched to never delete it, and never
-	# download it. *we* delete it, after copying the payload out-of-tree
-
-	edk2elf="elf/coreboot/default"
-	[ "$payload_edk2" != "edk2_mrchromebox" ] && \
-		edk2elf="elf/coreboot/mrchromebox"
-	edk2elf="$edk2elf/$payload_edk2/libgfxinit_corebootfb/UEFIPAYLOAD.fd"
-
-	# skip copying/building if we already have the binary. we know
-	# that it was handled by build_depend, so the binary will be
-	# up to date on the current configuration.
-
-	[ -f "$edk2elf" ] && \
+	[ -f "$(edk2path)" ] && \
 		return 0
 
 	x_ mkdir "$srcdir/payloads/external/edk2/workspace"
@@ -290,13 +271,18 @@ add_edk2()
 	[ "$initmode" = "libgfxinit" ] && [ "$displaymode" != "corebootfb" ] && \
 		return 1 # text mode incompatible
 
+	cbfs "$tmprom" "$(edk2path)" "fallback/payload"
+	cprom edk2
+}
+
+edk2path()
+{
 	edk2dir="elf/coreboot/default"
 	[ "$payload_edk2" != "edk2_mrchromebox" ] && \
 		edk2dir="elf/coreboot/mrchromebox"
-	edk2dir="$edk2dir/$payload_edk2/libgfxinit_corebootfb/UEFIPAYLOAD.fd"
 
-	cbfs "$tmprom" "$edk2dir" "fallback/payload"
-	cprom edk2
+	printf "%s/%s/libgfxinit_corebootfb/UEFIPAYLOAD.fd\n" \
+	    "$edk2dir" "$payload_edk2"
 }
 
 # in our design, SeaBIOS is also responsible for starting either
