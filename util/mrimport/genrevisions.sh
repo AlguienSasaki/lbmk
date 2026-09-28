@@ -178,9 +178,9 @@ init_target_cfg()
   [ -n "$ifdplatform" ] && \
     printf "IFD_platform=\"%s\"\n" "$ifdplatform";
 
-  printf "payload_edk2=\"edk2_mrchromebox\"\n\n"
+  printf "payload_edk2=\"edk2_chromebook\"\n\n"
 
-  printf "build_depend=\"coreboot/edk2_mrchromebox\"\n\n"
+  printf "build_depend=\"coreboot/edk2_chromebook\"\n\n"
 
   printf "release=\"n\"\n"
 }
