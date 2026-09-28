@@ -277,6 +277,10 @@ add_edk2()
 
 edk2path()
 {
+	# on non-mrchromebox targets, we only use one edk2 tree,
+	# universal to all boards. on mrchromebox, we support
+	# multiple edk2 payloads all under coreboot/mrchromebox
+
 	edk2dir="elf/coreboot/default"
 	[ "$payload_edk2" != "edk2_mrchromebox" ] && \
 		edk2dir="elf/coreboot/mrchromebox"
