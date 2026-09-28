@@ -169,7 +169,7 @@ prep_edk2_src()
 
 	x_ mkdir "$srcdir/payloads/external/edk2/workspace"
 
-	x_ cp -a "src/edk2/$payload_edk2/" \
+	x_ cp -a "$(findpath "src/edk2/$payload_edk2/")" \
 	    "$srcdir/payloads/external/edk2/workspace/mrchromebox"
 }
 

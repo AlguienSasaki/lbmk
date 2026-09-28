@@ -90,7 +90,7 @@ if_skip_build=":"
 cfgvars="autogenargs cmakedir configureargs badhash badtghash bootstrapargs \
     build_depend cleanargs fetch_depend makeargs mkhelper noconfig postmake \
     premake release rev tree xarch xgcctree xlang cfgname \
-    if_not_skip_build cook_config seen preconfig"
+    if_not_skip_build cook_config seen preconfig srclink"
 
 eval "`newvar buildcfg defscan dest_dir flag forcepull listfile mdir \
     mkhelpercfg mode project srcdir target target_dir _tcfg \
@@ -257,8 +257,19 @@ configure_target()
 	mdir="$xbmkpwd/config/submodule/$project/$tree"
 
 	if [ ! -f "CHANGELOG" ]; then
-		delete_old_project_files
-		x_ fetch_trees
+		if [ -z "$srclink" ]; then
+			delete_old_project_files
+			x_ fetch_trees
+		else
+			# used when multiple targets use the same source
+			# e.g. edk2 source trees
+			srctree="${srcdir#"src/$project/"}"
+			x_ "$mk" -f "$project" "$srclink"
+			(
+			x_ cd "src/$project/"
+			x_ ln -s "$srclink" "$srctree"
+			) || err "can't link projects"
+		fi
 	fi
 
 	$if_build $if_not_dry_build $if_not_fetch \
