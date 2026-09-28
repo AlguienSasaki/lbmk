@@ -257,8 +257,8 @@ configure_target()
 	mdir="$xbmkpwd/config/submodule/$project/$tree"
 
 	if [ ! -f "CHANGELOG" ]; then
+		delete_old_project_files
 		if [ -z "$srclink" ]; then
-			delete_old_project_files
 			x_ fetch_trees
 		else
 			# used when multiple targets use the same source
