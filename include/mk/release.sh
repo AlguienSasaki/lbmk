@@ -50,9 +50,6 @@ prep_release()
 	(
 	if [ "$1" != "tarball" ]; then
 		x_ cd "$rsrc"
-
-		# we want -d coreboot to be tested, so test can't re-use cache
-
 		[ ! -e "cache" ] && \
 			x_ ln -s "$XBMK_CACHE" "cache"; :
 	fi
