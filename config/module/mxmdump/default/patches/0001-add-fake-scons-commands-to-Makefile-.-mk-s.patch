@@ -1,0 +1,39 @@
+From 28ba3c7618936f78ee07aae185c88b9c50fdfb00 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 29 Sep 2026 21:47:49 +0100
+Subject: [PATCH 1/1] add fake scons commands to Makefile (./mk -s)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 3451434..d165e4b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -5,3 +5,21 @@ mxmdump: mxm_parse.c mxmdump.c
+ 
+ clean:
+ 	rm -f mxmdump
++
++distclean:
++	rm -f mxmdump
++
++oldconfig:
++	:
++
++menuconfig:
++	:
++
++savedefconfig:
++	:
++
++olddefconfig:
++	:
++
++nconfig:
++	:
+-- 
+2.47.3
+
