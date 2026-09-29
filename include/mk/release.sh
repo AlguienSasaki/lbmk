@@ -122,7 +122,7 @@ prep_release_test()
 	# earlier parts don't fail first.
 
 	for ptest in bios_extract biosutilities deguard docs \
-	    edk2 flashprog gpio-scripts grub int libarchive \
+	    edk2 flashprog grub int libarchive \
 	    me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
 	    pico-serprog seabios stm32-vserprog u-boot uefitool \
 	    coreboot; do # coreboot must come last for this test
