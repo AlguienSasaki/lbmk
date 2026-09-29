@@ -1,13 +1,26 @@
-From a4f3d7b48e2f0ca3635fbfe8fc791e763e0f29de Mon Sep 17 00:00:00 2001
+From b732a93fe70c7f75a8c4f7a7cf4e90e305fc75d6 Mon Sep 17 00:00:00 2001
 From: Vitali64 <5405891-vitali64yt@users.noreply.gitlab.com>
 Date: Wed, 27 Oct 2021 13:36:01 +0200
-Subject: [PATCH 01/56] add c3 and clockgen to apple/macbook21
+Subject: [PATCH 1/1] add c3 and clockgen to apple/macbook21
 
 ---
+ src/mainboard/apple/i945_macs/Kconfig       |  1 +
  src/mainboard/apple/i945_macs/cstates.c     | 13 +++++++++++++
- src/mainboard/apple/i945_macs/devicetree.cb |  6 ++++++
- 2 files changed, 19 insertions(+)
+ src/mainboard/apple/i945_macs/devicetree.cb |  5 +++++
+ 3 files changed, 19 insertions(+)
 
+diff --git a/src/mainboard/apple/i945_macs/Kconfig b/src/mainboard/apple/i945_macs/Kconfig
+index bcdc696ec8..f9d5585431 100644
+--- a/src/mainboard/apple/i945_macs/Kconfig
++++ b/src/mainboard/apple/i945_macs/Kconfig
+@@ -15,6 +15,7 @@ config BOARD_APPLE_I945_MACS_COMMON
+ 	select INTEL_INT15
+ 	select HAVE_ACPI_TABLES
+ 	select HAVE_ACPI_RESUME
++	select DRIVERS_I2C_CK505
+ 
+ config BOARD_APPLE_MACBOOK11
+ 	bool
 diff --git a/src/mainboard/apple/i945_macs/cstates.c b/src/mainboard/apple/i945_macs/cstates.c
 index 13d06f0839..88b8669c61 100644
 --- a/src/mainboard/apple/i945_macs/cstates.c
@@ -33,10 +46,10 @@ index 13d06f0839..88b8669c61 100644
  
  int get_cst_entries(const acpi_cstate_t **entries)
 diff --git a/src/mainboard/apple/i945_macs/devicetree.cb b/src/mainboard/apple/i945_macs/devicetree.cb
-index e479c63db1..f7b97c516c 100644
+index e479c63db1..8ad1c30665 100644
 --- a/src/mainboard/apple/i945_macs/devicetree.cb
 +++ b/src/mainboard/apple/i945_macs/devicetree.cb
-@@ -89,7 +89,13 @@ chip northbridge/intel/i945
+@@ -89,6 +89,11 @@ chip northbridge/intel/i945
  			end
  			device pci 1f.3 on # SMBUS
  				subsystemid 0x8086 0x7270
@@ -46,10 +59,8 @@ index e479c63db1..f7b97c516c 100644
 +					device i2c 69 on end
 +				end
  			end
-+
  		end
  	end
- end
 -- 
 2.47.3
 
