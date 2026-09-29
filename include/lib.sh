@@ -39,7 +39,7 @@ update_xbmkver()
 	    err "can't write '$versiondate'" "update_xbmkver" "$@"; :
 }
 
-version()
+mkversion()
 {
 	printf "%s\nWebsite: %s\n" "$relname" "$projectsite"
 }

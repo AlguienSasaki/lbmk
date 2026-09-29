@@ -76,8 +76,11 @@ x_ xbmk_init "$@"
 _f="${1-}"
 shift 1 2>/dev/null || :
 
-eval "$(printf "version release download inject\n" | awk '{ for (i=1; i<=NF; \
-    i++) $i = "[ \""$i"\" = \"$_f\" ] && x_ "$i" \"$@\" && exit 0;"; print }')"
+for xmkarg in version test release download inject; do
+	[ "$_f" = "$xmkarg" ] || continue;
+	x_ mk$xmkarg "$@"
+	exit 0
+done
 
 # macros, overridden depending on the flag
 if_make_config=":"

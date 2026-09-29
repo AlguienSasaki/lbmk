@@ -49,7 +49,7 @@ eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
     SCH5545EC_DL_hash SCH5545EC_DL_url SCH5545EC_DL_url_bkup TBFW_bin_hash \
     TBFW_hash TBFW_size TBFW_url TBFW_url_bkup XBMKmecleaner`"
 
-download()
+mkdownload()
 {
 	[ $# -lt 1 ] && err "No argument given" "download" "$@"
 

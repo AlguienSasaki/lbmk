@@ -2,9 +2,15 @@
 
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
-eval "`newvar reldest reldir rsrc vdir`"
+eval "`newvar reldest reldir rsrc vdir mktest`"
 
-release()
+mktest()
+{
+	mktest="y"
+	x_ mkrelease "$@"
+}
+
+mkrelease()
 {
 	export XBMK_RELEASE="y"
 	reldir="release"

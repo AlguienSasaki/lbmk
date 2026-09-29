@@ -14,7 +14,7 @@ checkvars="CONFIG_GBE_BIN_PATH ${checkvarsxbmk-} ${checkvarschk-}"
 eval "`newvar archive board boarddir IFD_platform ifdprefix \
     new_mac nuke tmpromdir tree xchanged $checkvars`"
 
-inject()
+mkinject()
 {
 	remkdir "$tmpromdel"
 
