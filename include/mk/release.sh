@@ -131,19 +131,22 @@ prep_release_test()
 	# is the most time-consuming part. we often want to test that
 	# earlier parts don't fail first.
 
-	for ptest in bios_extract biosutilities deguard docs \
+	progs="bios_extract biosutilities deguard docs \
 	    edk2 flashprog grub int libarchive \
 	    me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
 	    pico-serprog seabios stm32-vserprog u-boot uefitool \
-	    coreboot; do # coreboot must come last for this test
+	    coreboot" # coreboot must come last for this test
 
+	for ptest in $progs; do
 		for ftest in d f b; do
 			x_ ./mk -$ftest "$ptest"
 		done
+	done
 
+	for ptest in $progs; do
 		for ftest in s l u; do
 			yes '' | ./mk -$ftest "$ptest" || \
-			    err "TEST FAIL: ./mk -$ftest '$ptest'"
+			    err "TEST FAIL: ./mk -$ftest '$ptest'";
 		done
 	done
 }
