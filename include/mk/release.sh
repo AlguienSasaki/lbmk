@@ -85,6 +85,8 @@ prep_release_tarball()
 	x_ rm -Rf "$rsrc/xbmkwd" "$rsrc/util/sbase"
 	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase"
 
+	[ "$mktest" = "y" ] && return 0
+
 	(
 	x_ cd "${rsrc%/*}"
 	x_ mktarball "${rsrc##*/}" "${rsrc##*/}.tar.xz"
@@ -94,12 +96,44 @@ prep_release_tarball()
 
 prep_release_bin()
 {
+	if [ "$mktest" = "y" ]; then # <- ./mk test
+		prep_release_test
+		return 0
+	fi # ./mk release:
+
 	x_ ./mk -d coreboot
 
-	forx 'x_ ./mk -b' coreboot pico-serprog stm32-vserprog pcsx-redux
+	forx 'x_ ./mk -b' coreboot pico-serprog stm32-vserprog \
+	    pcsx-redux
 
 	fx_ mkrom_tarball x_ find bin -mindepth 1 -maxdepth 1 \
 	    -type d -name "serprog_*"
 
 	x_ mv bin ../roms
+}
+
+prep_release_test()
+{
+	# when we want to test other parts of lbmk, we may not
+	# want to test coreboot roms. we want to test other projects.
+
+	# this is an exhaustive test, but tests coreboot last, which
+	# is the most time-consuming part. we often want to test that
+	# earlier parts don't fail first.
+
+	for ptest in bios_extract biosutilities deguard docs \
+	    edk2 flashprog gpio-scripts grub int libarchive \
+	    me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
+	    pico-serprog seabios stm32-vserprog u-boot uefitool \
+	    coreboot; do # coreboot must come last for this test
+
+		for ftest in u l; do
+			yes '' | ./mk -$ftest "$ptest" || \
+			    err "TEST FAIL: ./mk -$ftest '$ptest'"
+		done
+
+		for ftest in d f s b; do
+			x_ ./mk -$ftest "$ptest"
+		done
+	done
 }
