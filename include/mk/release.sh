@@ -53,7 +53,7 @@ prep_release()
 
 		# we want -d coreboot to be tested, so test can't re-use cache
 
-		[ "$mktest" != "y" ] && [ ! -e "cache" ] && \
+		[ ! -e "cache" ] && \
 			x_ ln -s "$XBMK_CACHE" "cache"; :
 	fi
 
