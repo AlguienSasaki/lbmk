@@ -1,7 +1,7 @@
-From 3d0026fca9b7883b67291454f7ee0e5ef9270f20 Mon Sep 17 00:00:00 2001
+From 6d3ad952afa32a49e0e8aef561598237b28b08fb Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 21 Sep 2026 10:46:07 +0100
-Subject: [PATCH 15/17] remove -Werror tree-wide
+Subject: [PATCH 1/4] remove -Werror tree-wide
 
 Remove KCONFIG_WERROR as well
 
@@ -28,7 +28,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  util/cbmem/Makefile                           |  2 +-
  util/crossgcc/patches/gcc-15.2.0_libcpp.patch |  2 +-
  util/ectool/Makefile                          |  2 +-
- util/futility/Makefile.mk                     |  4 ++
+ util/futility/Makefile.mk                     |  2 +-
  util/ifdtool/Makefile.mk                      |  2 +-
  util/intelvbttool/Makefile                    |  2 +-
  util/kconfig/Makefile                         |  4 --
@@ -41,7 +41,7 @@ Signed-off-by: Leah Rowe <leah@libreboot.org>
  util/superiotool/Makefile                     |  6 +-
  util/uio_usbdebug/Makefile                    |  2 +-
  util/xcompile/xcompile                        |  2 +-
- 34 files changed, 70 insertions(+), 84 deletions(-)
+ 34 files changed, 67 insertions(+), 85 deletions(-)
 
 diff --git a/Documentation/getting_started/kconfig.md b/Documentation/getting_started/kconfig.md
 index 2917c53aae..6c4102ba17 100644
@@ -611,18 +611,15 @@ index a90773e5c6..5724ac6009 100644
  PROGRAM = ectool
  INSTALL ?= /usr/bin/env install
 diff --git a/util/futility/Makefile.mk b/util/futility/Makefile.mk
-index 2f386d6aae..30989f97da 100644
+index 2f386d6aae..ba930a046b 100644
 --- a/util/futility/Makefile.mk
 +++ b/util/futility/Makefile.mk
-@@ -10,7 +10,11 @@ $(VBOOT_FUTILITY): | check-openssl-presence
+@@ -10,7 +10,7 @@ $(VBOOT_FUTILITY): | check-openssl-presence
  	unset CFLAGS LDFLAGS; $(MAKE) -C $(VBOOT_SOURCE) \
  		BUILD=$(VBOOT_HOST_BUILD) \
  		CC="$(HOSTCC)" \
-+<<<<<<< HEAD
- 		WERROR="-Werror -Wno-deprecated-declarations -Wno-error=discarded-qualifiers" \
-+=======
+-		WERROR="-Werror -Wno-deprecated-declarations -Wno-error=discarded-qualifiers" \
 +		WERROR=" -Wno-deprecated-declarations" \
-+>>>>>>> 051b52b929 (remove -Werror tree-wide)
  		PKG_CONFIG="$(HOSTPKGCONFIG)" \
  		V=$(V) \
  		USE_FLASHROM=0 \
