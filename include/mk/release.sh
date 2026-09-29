@@ -127,7 +127,7 @@ prep_release_test()
 	    pico-serprog seabios stm32-vserprog u-boot uefitool \
 	    coreboot; do # coreboot must come last for this test
 
-		for ftest in u l; do
+		for ftest in l u; do
 			yes '' | ./mk -$ftest "$ptest" || \
 			    err "TEST FAIL: ./mk -$ftest '$ptest'"
 		done
