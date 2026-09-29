@@ -2,6 +2,9 @@
 
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
+# TODO: split ./mk test logic out of this file. make another modular
+#	file that test.sh and release.sh can use. perhaps move to lib.sh.
+
 eval "`newvar reldest reldir rsrc vdir mktest`"
 
 mktest()
@@ -12,7 +15,10 @@ mktest()
 
 mkrelease()
 {
-	export XBMK_RELEASE="y"
+	unset XBMK_RELEASE
+	[ "$mktest" != "y" ] && \
+		export XBMK_RELEASE="y"
+
 	reldir="release"
 
 	reldest="$reldir/$version"
@@ -44,9 +50,15 @@ prep_release()
 	(
 	if [ "$1" != "tarball" ]; then
 		x_ cd "$rsrc"
-		[ ! -e "cache" ] && \
+
+		# we want -d coreboot to be tested, so test can't re-use cache
+
+		[ "$mktest" != "y" ] && [ ! -e "cache" ] && \
 			x_ ln -s "$XBMK_CACHE" "cache"; :
 	fi
+
+	[ "$mktest" = "y" ] && [ "$1" = "src" ] && \
+		return 0; # don't prune test sources
 
 	prep_release_$1
 
@@ -56,7 +68,6 @@ prep_release()
 prep_release_src()
 {
 	x_ cp -R "util/sbase" "util/sbase2"
-
 	x_ ./mk -f
 
 	forx 'fx_ \"x_ rm -Rf\" x_ find . -name \".%s\"' git gitmodules
@@ -77,15 +88,17 @@ nuke()
 
 prep_release_tarball()
 {
+	[ "$mktest" = "y" ] && return 0; # full mk test. no CHANGELOG.
+
+	# (in test mode, we want to test all of lbmk, even when release=n)
+
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$rsrc/CHANGELOG" || \
 	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 
 
 	x_ rm -f "$rsrc/lock" "$rsrc/cache"
 	x_ rm -Rf "$rsrc/xbmkwd" "$rsrc/util/sbase"
-	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase"
-
-	[ "$mktest" = "y" ] && return 0
+	x_ mv "$rsrc/util/sbase2" "$rsrc/util/sbase";
 
 	(
 	x_ cd "${rsrc%/*}"
