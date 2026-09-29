@@ -2,9 +2,6 @@
 
 # Copyright (c) 2023-2026 Leah Rowe <leah@libreboot.org>
 
-# TODO: split ./mk test logic out of this file. make another modular
-#	file that test.sh and release.sh can use. perhaps move to lib.sh.
-
 eval "`newvar reldest reldir rsrc vdir mktest`"
 
 mktest()
@@ -34,7 +31,11 @@ mkrelease()
 	x_ git clone . "$rsrc"
 	update_xbmkver "$rsrc"
 
-	forx 'prep_release %s' src tarball bin
+	if [ "$mktest" = "y" ]; then # ./mk test
+		x_ prep_release test
+	else # ./mk release
+		x_ forx 'x_ prep_release %s' src tarball bin
+	fi
 
 	x_ rm -Rf "$rsrc"
 
@@ -54,15 +55,12 @@ prep_release()
 			x_ ln -s "$XBMK_CACHE" "cache"; :
 	fi
 
-	[ "$mktest" = "y" ] && [ "$1" = "src" ] && \
-		return 0; # don't prune test sources
-
 	prep_release_$1
 
 	) || err "can't prep release $1" "prep_release" "$@"
 }
 
-prep_release_src()
+prep_release_src() # ./mk release
 {
 	x_ cp -R "util/sbase" "util/sbase2"
 	x_ ./mk -f
@@ -83,12 +81,8 @@ nuke()
 	fi
 }
 
-prep_release_tarball()
+prep_release_tarball() # ./mk release
 {
-	[ "$mktest" = "y" ] && return 0; # full mk test. no CHANGELOG.
-
-	# (in test mode, we want to test all of lbmk, even when release=n)
-
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$rsrc/CHANGELOG" || \
 	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 
@@ -104,13 +98,8 @@ prep_release_tarball()
 	) || err "can't create src tarball" "prep_release_tarball" "$@"; :
 }
 
-prep_release_bin()
+prep_release_bin() # ./mk release
 {
-	if [ "$mktest" = "y" ]; then # <- ./mk test
-		prep_release_test
-		return 0
-	fi # ./mk release:
-
 	x_ ./mk -d coreboot
 
 	forx 'x_ ./mk -b' coreboot pico-serprog stm32-vserprog \
@@ -122,7 +111,7 @@ prep_release_bin()
 	x_ mv bin ../roms
 }
 
-prep_release_test()
+prep_release_test() # ./mk test
 {
 	# when we want to test other parts of lbmk, we may not
 	# want to test coreboot roms. we want to test other projects.
