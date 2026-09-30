@@ -34,7 +34,7 @@ copyps1bios()
 	    err "can't write PCSX Redux copyright info" "copyps1bios" "$@"
 
 	x_ cat config/snippet/mit >>bin/playstation/COPYING.txt || \
-	    err "can't copy MIT license snippet" "copyps1bios" "$@"
+	    err "can't copy MIT license snippet" "copyps1bios" "$@";
 }
 
 mkpayload_grub()

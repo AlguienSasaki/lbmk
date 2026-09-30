@@ -26,6 +26,8 @@ mkrom_tarball()
 
 update_xbmkver()
 {
+	[ -d "$1" ] || return 0;
+
 	xbmk_sanitize_version
 
 	if [ -z "${version-}" ] || [ -z "${versiondate-}" ]; then
