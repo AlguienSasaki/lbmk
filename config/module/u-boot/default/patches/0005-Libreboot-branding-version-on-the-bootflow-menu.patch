@@ -1,27 +1,28 @@
-From 4ff0f509aa28eb8e85f1c0c9929c63996c646bb8 Mon Sep 17 00:00:00 2001
+From 63373feff4521e1a266476a923980e523b65413d Mon Sep 17 00:00:00 2001
 From: Leah Rowe <info@minifree.org>
 Date: Wed, 4 Dec 2024 18:20:19 +0000
-Subject: [PATCH 1/1] Libreboot branding/version on the bootflow menu
+Subject: [PATCH 5/6] Libreboot branding/version on the bootflow menu
 
 Signed-off-by: Leah Rowe <info@minifree.org>
 ---
- boot/bootflow_menu.c          |   2 +-
+ boot/bootflow_menu.c          |   3 ++-
  drivers/video/u_boot_logo.bmp | Bin 6932 -> 27350 bytes
- 2 files changed, 1 insertion(+), 1 deletion(-)
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/boot/bootflow_menu.c b/boot/bootflow_menu.c
-index 84831915a2..8e26ec2aef 100644
+index 4a442e16850..9af986c8de7 100644
 --- a/boot/bootflow_menu.c
 +++ b/boot/bootflow_menu.c
-@@ -59,7 +59,7 @@ int bootflow_menu_new(struct expo **expp, const char *prompt)
+@@ -62,7 +62,8 @@ int bootflow_menu_new(struct expo **expp)
  	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
  	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
  	ret |= scene_txt_str(scn, "title", OBJ_MENU_TITLE, STR_MENU_TITLE,
 -			     "U-Boot - Boot Menu", NULL);
-+	    "Libreboot 26.01 Magnanimous Max (U-Boot menu): https://libreboot.org/", NULL);
- 	ret |= scene_menu_set_title(scn, OBJ_MENU, OBJ_PROMPT);
- 
- 	logo = video_get_u_boot_logo();
++	    "Libreboot 26.01 Magnanimous Max (U-Boot): https://libreboot.org/",
++	    NULL);
+ 	ret |= scene_obj_set_bbox(scn, OBJ_MENU_TITLE, 0, 32,
+ 				  SCENEOB_DISPLAY_MAX, 30);
+ 	ret |= scene_obj_set_halign(scn, OBJ_MENU_TITLE, SCENEOA_CENTRE);
 diff --git a/drivers/video/u_boot_logo.bmp b/drivers/video/u_boot_logo.bmp
 index 47f1e9b99789584d2f6dd71e954b51927b35d783..bc9ae001badb25bc900058c167a47247ef91dc7c 100644
 GIT binary patch
@@ -209,5 +210,5 @@ z-h-Z3*4}s5`>>EG>Ls@Kbv6tOjMv)U*V_?zUes%DIA)7_-|c<#<twn(^9szDVQq?x
 wA@94_V)cG3+BniCF!%phCa^V`EuNoDjq0U&Do6FaK0m2mbu}=?pJWRCZ}IWH!~g&Q
 
 -- 
-2.39.5
+2.47.3
 

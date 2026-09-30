@@ -1,7 +1,8 @@
-From faa87ed4d2ff07e9e8cc98cd08cbb34c905c1ac6 Mon Sep 17 00:00:00 2001
+From 9d0c5e618ed45bfa96116aee89d0ac6507875efe Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Wed, 10 Jul 2024 17:37:56 +0300
-Subject: [PATCH] HACK: Makefile: Ignore missing input files for binman images
+Subject: [PATCH 3/6] HACK: Makefile: Ignore missing input files for binman
+ images
 
 For Rockchip boards binman tries to build SPI and MMC images that
 require an externally built BL31 file to be provided, and the build
@@ -17,18 +18,18 @@ Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index a7593e8a1680..30deb760bf8f 100644
+index 7f5d83658d7..c8933363c5e 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1410,7 +1410,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
+@@ -1684,7 +1684,7 @@ cmd_binman = $(srctree)/tools/binman/binman $(if $(BINMAN_DEBUG),-D) \
  		$(if $(BINMAN_VERBOSE),-v$(BINMAN_VERBOSE)) \
  		build -u -d $(binman_dtb) -O . -m \
  		--allow-missing --fake-ext-blobs \
 -		$(if $(BINMAN_ALLOW_MISSING),--ignore-missing) \
 +		--ignore-missing \
- 		-I . -I $(srctree) -I $(srctree)/board/$(BOARDDIR) \
+ 		-I . -I $(srctree)/board/$(BOARDDIR) -I $(srctree) \
  		$(foreach f,$(of_list_dirs),-I $(f)) -a of-list=$(of_list) \
  		$(foreach f,$(BINMAN_INDIRS),-I $(f)) \
 -- 
-2.49.0
+2.47.3
 

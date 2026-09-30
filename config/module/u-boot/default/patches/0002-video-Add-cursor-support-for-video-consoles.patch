@@ -1,0 +1,161 @@
+From 3486f43bcbe2520a1da585d761fcf89a66a14f2c Mon Sep 17 00:00:00 2001
+From: Andre Przywara <andre.przywara@arm.com>
+Date: Mon, 10 Jan 2022 00:56:31 +0000
+Subject: [PATCH 2/6] video: Add cursor support for video consoles
+
+So far the video console is completely lacking any cursor, which makes
+typing and correcting quite irritating.
+
+Add a simple cursor display by writing a SPACE glyph in the background
+colour to the next character position on the screen. Any typed character
+will naturally overwrite it, so we need to only explicitly clear it if
+the next character will appear somewhere else (newline, backspace).
+
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+Reviewed-by: Simon Glass <sjg@chromium.org>
+Tested-by: Simon Glass <sjg@chromium.org>
+Link: https://lore.kernel.org/r/20220110005638.21599-2-andre.przywara@arm.com
+[Alper: Rebase for console_set_font(), reword for CONFIG_VIDEO]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ drivers/video/console_core.c      |  1 +
+ drivers/video/vidconsole-uclass.c | 42 +++++++++++++++++++++++++++++++
+ include/video_console.h           |  1 +
+ 3 files changed, 44 insertions(+)
+
+diff --git a/drivers/video/console_core.c b/drivers/video/console_core.c
+index 939363653f6..6b531718276 100644
+--- a/drivers/video/console_core.c
++++ b/drivers/video/console_core.c
+@@ -30,6 +30,7 @@ static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata
+ 	debug("height: %d\n", fontdata->height);
+ 
+ 	priv->fontdata = fontdata;
++	vc_priv->cursor_visible = true;
+ 	vc_priv->x_charsize = fontdata->width;
+ 	vc_priv->y_charsize = fontdata->height;
+ 	if (vid_priv->rot % 2) {
+diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
+index f1b2d61bd8f..0288b79082d 100644
+--- a/drivers/video/vidconsole-uclass.c
++++ b/drivers/video/vidconsole-uclass.c
+@@ -57,6 +57,26 @@ int vidconsole_entry_start(struct udevice *dev)
+ 	return ops->entry_start(dev);
+ }
+ 
++static void draw_cursor(struct udevice *dev, bool state)
++{
++	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
++	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
++	u32 tmp;
++
++	if (!priv->cursor_visible)
++		return;
++
++	if (state) {
++		tmp = vid_priv->colour_bg;
++		vid_priv->colour_bg = vid_priv->colour_fg;
++	}
++
++	vidconsole_putc_xy(dev, priv->xcur_frac, priv->ycur, ' ');
++
++	if (state)
++		vid_priv->colour_bg = tmp;
++}
++
+ /* Move backwards one space */
+ static int vidconsole_back(struct udevice *dev)
+ {
+@@ -64,6 +84,8 @@ static int vidconsole_back(struct udevice *dev)
+ 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+ 	int ret;
+ 
++	draw_cursor(dev, false);
++
+ 	if (ops->backspace) {
+ 		ret = ops->backspace(dev);
+ 		if (ret != -ENOSYS)
+@@ -90,6 +112,8 @@ static void vidconsole_newline(struct udevice *dev)
+ 	const int rows = CONFIG_VAL(CONSOLE_SCROLL_LINES);
+ 	int i, ret;
+ 
++	draw_cursor(dev, false);
++
+ 	priv->xcur_frac = priv->xstart_frac;
+ 	priv->ycur += priv->y_charsize;
+ 
+@@ -289,6 +313,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
+ 
+ 		break;
+ 	}
++	case 'l':
++		  draw_cursor(dev, false);
++		  priv->cursor_visible = 0;
++		  break;
++	case 'h':
++		  priv->cursor_visible = 1;
++		  draw_cursor(dev, true);
++		  break;
+ 	case 'J': {
+ 		int mode;
+ 
+@@ -463,6 +495,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+ 	int cp, ret;
+ 
++	/*
++	 * We don't need to clear the cursor since we are going to overwrite
++	 * that character anyway.
++	 */
++
+ 	if (priv->escape) {
+ 		vidconsole_escape_char(dev, ch);
+ 		return 0;
+@@ -477,6 +514,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		/* beep */
+ 		break;
+ 	case '\r':
++		draw_cursor(dev, false);
+ 		priv->xcur_frac = priv->xstart_frac;
+ 		break;
+ 	case '\n':
+@@ -484,6 +522,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		vidconsole_entry_start(dev);
+ 		break;
+ 	case '\t':	/* Tab (8 chars alignment) */
++		draw_cursor(dev, false);
+ 		priv->xcur_frac = ((priv->xcur_frac / priv->tab_width_frac)
+ 				+ 1) * priv->tab_width_frac;
+ 
+@@ -508,6 +547,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		break;
+ 	}
+ 
++	draw_cursor(dev, true);
++
+ 	return 0;
+ }
+ 
+@@ -744,6 +785,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
+ 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+ 
+ 	priv->xsize_frac = VID_TO_POS(vid_priv->xsize);
++	priv->cursor_visible = false;
+ 
+ 	return 0;
+ }
+diff --git a/include/video_console.h b/include/video_console.h
+index 8f3f58f3aa9..59c6b8ef183 100644
+--- a/include/video_console.h
++++ b/include/video_console.h
+@@ -76,6 +76,7 @@ struct vidconsole_priv {
+ 	int escape_len;
+ 	int row_saved;
+ 	int col_saved;
++	bool cursor_visible;
+ 	char escape_buf[32];
+ 	char utf8_buf[5];
+ 	bool quiet;
+-- 
+2.47.3
+
