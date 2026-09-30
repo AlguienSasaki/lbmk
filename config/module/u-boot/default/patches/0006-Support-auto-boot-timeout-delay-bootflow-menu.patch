@@ -1,0 +1,302 @@
+From d9371422ac74ea73d1620f01300a7136a7649754 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <info@minifree.org>
+Date: Wed, 4 Dec 2024 06:52:39 +0000
+Subject: [PATCH 1/1] Support auto-boot timeout delay bootflow menu
+
+The bootflow menu cannot currently auto-boot a selected entry,
+which means that the user must press enter to boot their system.
+This can be a problem on headless setups; for example, it is not
+currently feasible to set up a headless server with U-Boot, when
+using it to boot via UEFI on a coreboot setup.
+
+This patch adds the following build-time configuration option:
+
+CONFIG_CMD_BOOTFLOW_BOOTDELAY
+
+This creates a timeout delay in the given number of seconds.
+If an arrow key is press to navigate the menu, the timer is
+disabled and the user must then press enter to boot the selected
+option. When this happens, the timeout display is replaced by
+the old message indicating that the user should press enter.
+
+The default boot delay is 30 seconds, and the timeout is enabled
+by default. Setting it to zero will restore the old behaviour,
+whereby no timeout is provided and the user must press enter.
+
+If a negative integer is provided, the timer will default to
+zero. The timer value is further filtered by modulus of 100,
+so that the maximum number of seconds allowed is 99 seconds.
+
+Signed-off-by: Leah Rowe <info@minifree.org>
+---
+ boot/bootflow_menu.c       | 117 +++++++++++++++++++++++++++++++++++--
+ cmd/Kconfig                |  12 ++++
+ doc/usage/cmd/bootflow.rst |  11 ++++
+ include/bootflow.h         |  10 +++-
+ 4 files changed, 143 insertions(+), 7 deletions(-)
+
+diff --git a/boot/bootflow_menu.c b/boot/bootflow_menu.c
+index 9d0dc352f9..172139b187 100644
+--- a/boot/bootflow_menu.c
++++ b/boot/bootflow_menu.c
+@@ -30,7 +30,7 @@ struct menu_priv {
+ 	int num_bootflows;
+ };
+ 
+-int bootflow_menu_new(struct expo **expp)
++int bootflow_menu_new(struct expo **expp, const char *prompt)
+ {
+ 	struct udevice *last_bootdev;
+ 	struct scene_obj_menu *menu;
+@@ -54,7 +54,7 @@ int bootflow_menu_new(struct expo **expp)
+ 		return log_msg_ret("scn", ret);
+ 
+ 	ret |= scene_txt_str(scn, "prompt", OBJ_PROMPT, STR_PROMPT,
+-			     "UP and DOWN to choose, ENTER to select", NULL);
++			     prompt, NULL);
+ 
+ 	ret = scene_menu(scn, "main", OBJ_MENU, &menu);
+ 	ret |= scene_obj_set_pos(scn, OBJ_MENU, MARGIN_LEFT, 100);
+@@ -138,6 +138,29 @@ int bootflow_menu_new(struct expo **expp)
+ 	return 0;
+ }
+ 
++int bootflow_menu_show_countdown(struct expo *exp, char *prompt,
++    char bootflow_delay)
++{
++	char *i;
++
++	if (prompt == NULL)
++		return 0;
++	if (strlen(prompt) < 2)
++		return 0;
++
++	i = prompt + strlen(prompt) - 2;
++
++	if (bootflow_delay >= 10) {
++		*(i) = 48 + (bootflow_delay / 10);
++		*(i + 1) = 48 + (bootflow_delay % 10);
++	} else {
++		*(i) = 48 + bootflow_delay;
++		*(i + 1) = ' ';
++	}
++
++	return expo_render(exp);
++}
++
+ int bootflow_menu_apply_theme(struct expo *exp, ofnode node)
+ {
+ 	struct menu_priv *priv = exp->priv;
+@@ -184,14 +207,62 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
+ 	struct expo *exp;
+ 	uint sel_id;
+ 	bool done;
+-	int ret;
++	int i, ret;
++
++	/* Auto-boot countdown */
++	char bootflow_delay_secs, *prompt;
++	int bootflow_time, bootflow_delay;
++	bool skip_render_once = false;
++	bool bootflow_countdown = false;
++
++	/* TODO: perhaps set based on defconfig? */
++	/* WARNING: These two strings must be of the same length. */
++	char promptChoice[] = "UP and DOWN to choose, ENTER to select";
++	char promptTimeout[] = "UP and DOWN to choose. Auto-boot in   ";
++/*
++	// Uncomment if the strings become configurable (defconfig):
++	// (to prevent buffer overflows)
++	char promptDefault[] = "UP and DOWN to choose, ENTER to select";
++	if (promptTimeout = NULL)
++		promptTimeout = promptDefault;
++	if (promptChoice = NULL)
++		promptChoice = promptDefault;
++	if (strlen(promptChoice) < 2)
++		promptChoice = promptDefault;
++	if (strlen(promptTimeout) < 2)
++		promptTimeout = promptDefault;
++	if (strlen(promptChoice) != strlen(promptTimeout))
++		promptChoice = promptTimeout;
++*/
++	prompt = promptChoice;
++
++	bootflow_delay_secs = 15; /* TODO: set based on defconfig. */
++
++#if defined(CONFIG_CMD_BOOTFLOW_BOOTDELAY)
++	/* If set to zero, the auto-boot timeout is disabled. */
++	bootflow_delay_secs = CONFIG_CMD_BOOTFLOW_BOOTDELAY;
++#else
++	bootflow_delay_secs = 30;
++#endif
++
++	if (bootflow_delay_secs < 0)
++		bootflow_delay_secs = 0; /* disable countdown if negative */
++	bootflow_delay_secs %= 100; /* No higher than 99 seconds */
++
++	if (bootflow_delay_secs > 0) {
++		bootflow_countdown = true; /* enable auto-boot countdown */
++		prompt = promptTimeout;
++		bootflow_time = 0; /* Time elapsed in milliseconds */
++		bootflow_delay =
++		    (int)bootflow_delay_secs * 1000; /* milliseconds */
++	}
+ 
+ 	cli_ch_init(cch);
+ 
+ 	sel_bflow = NULL;
+ 	*bflowp = NULL;
+ 
+-	ret = bootflow_menu_new(&exp);
++	ret = bootflow_menu_new(&exp, prompt);
+ 	if (ret)
+ 		return log_msg_ret("exp", ret);
+ 
+@@ -216,12 +287,20 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
+ 	if (text_mode)
+ 		expo_set_text_mode(exp, text_mode);
+ 
++	if (bootflow_countdown) {
++		ret = bootflow_menu_show_countdown(exp, prompt,
++		    bootflow_delay_secs);
++		skip_render_once = true; /* Don't print menu twice on start */
++	}
+ 	done = false;
+ 	do {
+ 		struct expo_action act;
+ 		int ichar, key;
+ 
+-		ret = expo_render(exp);
++		if (skip_render_once)
++			skip_render_once = false;
++		else
++			ret = expo_render(exp);
+ 		if (ret)
+ 			break;
+ 
+@@ -231,7 +310,23 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
+ 				schedule();
+ 				mdelay(2);
+ 				ichar = cli_ch_process(cch, -ETIMEDOUT);
++				if (bootflow_countdown) {
++					bootflow_delay -= 2;
++					bootflow_time += 2;
++					if (bootflow_delay <= 0)
++						ichar='\n';
++					if (bootflow_time < 1000)
++						continue;
++					bootflow_time = 0;
++					--bootflow_delay_secs;
++					ret = bootflow_menu_show_countdown(exp,
++					    prompt, bootflow_delay_secs);
++					if (ret)
++						break;
++				}
+ 			}
++			if (ret)
++				break;
+ 			if (!ichar) {
+ 				ichar = getchar();
+ 				ichar = cli_ch_process(cch, ichar);
+@@ -265,6 +360,17 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
+ 				break;
+ 			}
+ 		}
++		if (bootflow_countdown) {
++			/* A key press interrupted the auto-boot timeout */
++			bootflow_countdown = false;
++			if (strlen(prompt) == strlen(promptChoice)) {
++				/* "Auto-boot in" becomes "Press ENTER" */
++				(void) memcpy(prompt, promptChoice,
++				    strlen(promptChoice));
++				ret = expo_render(exp);
++				skip_render_once = true;
++			}
++		}
+ 	} while (!done);
+ 
+ 	if (ret)
+@@ -272,7 +378,6 @@ int bootflow_menu_run(struct bootstd_priv *std, bool text_mode,
+ 
+ 	if (sel_id) {
+ 		struct bootflow *bflow;
+-		int i;
+ 
+ 		for (ret = bootflow_first_glob(&bflow), i = 0; !ret && i < 36;
+ 		     ret = bootflow_next_glob(&bflow), i++) {
+diff --git a/cmd/Kconfig b/cmd/Kconfig
+index 978f44eda4..0303869625 100644
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -288,6 +288,7 @@ config CMD_BOOTDEV
+ config CMD_BOOTFLOW
+ 	bool "bootflow"
+ 	depends on BOOTSTD
++	select CMD_BOOTFLOW_BOOTDELAY
+ 	default y
+ 	help
+ 	  Support scanning for bootflows available with the bootdevs. The
+@@ -303,6 +304,17 @@ config CMD_BOOTFLOW_FULL
+ 
+ 	  This command is not necessary for bootstd to work.
+ 
++config CMD_BOOTFLOW_BOOTDELAY
++	int "bootflow - delay in seconds before booting the first menu option"
++	depends on CMD_BOOTFLOW
++	default 30
++	help
++	  On the bootflow menu, wait for the defined number of seconds before
++	  automatically booting. Unless interrupted, this will auto-boot the
++	  first option in the generated list of boot options.
++
++	  Set this to zero if you wish to disable the auto-boot timeout.
++
+ config CMD_BOOTMETH
+ 	bool "bootmeth"
+ 	depends on BOOTSTD
+diff --git a/doc/usage/cmd/bootflow.rst b/doc/usage/cmd/bootflow.rst
+index 5d41fe37a7..728f294274 100644
+--- a/doc/usage/cmd/bootflow.rst
++++ b/doc/usage/cmd/bootflow.rst
+@@ -32,6 +32,17 @@ Note that `CONFIG_BOOTSTD_FULL` (which enables `CONFIG_CMD_BOOTFLOW_FULL) must
+ be enabled to obtain full functionality with this command. Otherwise, it only
+ supports `bootflow scan` which scans and boots the first available bootflow.
+ 
++The `CONFIG_CMD_BOOTFLOW_BOOTDELAY` option can be set, defining (in seconds) the
++amount of time that U-Boot will wait; after this time passes, it will
++automatically boot the first item when generating a bootflow menu. If the value
++is set to zero, the timeout is disabled and the user must press enter; if it's
++negative, the timeout is disabled, and the maximum number of seconds is 99
++seconds. If a value higher than 100 is provided, the value is changed to a
++modulus of 100 (remainder of the value divided by 100).
++
++If the `CONFIG_BOOTFLOW_BOOTFLOW` option is undefined, the timeout will default
++to 30 seconds.
++
+ bootflow scan
+ ~~~~~~~~~~~~~
+ 
+diff --git a/include/bootflow.h b/include/bootflow.h
+index 4d2fc7b69b..9f4245caa7 100644
+--- a/include/bootflow.h
++++ b/include/bootflow.h
+@@ -452,7 +452,15 @@ int bootflow_iter_check_system(const struct bootflow_iter *iter);
+  * @expp: Returns the expo created
+  * Returns 0 on success, -ve on error
+  */
+-int bootflow_menu_new(struct expo **expp);
++int bootflow_menu_new(struct expo **expp, const char *prompt);
++
++/**
++ * bootflow_menu_show_countdown() - Show countdown timer for auto-boot
++ *
++ * Returns the value of expo_render()
++ */
++int bootflow_menu_show_countdown(struct expo *exp, char *prompt,
++    char bootflow_delay);
+ 
+ /**
+  * bootflow_menu_apply_theme() - Apply a theme to a bootmenu
+-- 
+2.39.5
+

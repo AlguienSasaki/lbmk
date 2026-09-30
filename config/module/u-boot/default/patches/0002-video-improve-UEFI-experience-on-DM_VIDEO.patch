@@ -1,0 +1,246 @@
+From 780d8ffe985441824a242e5b853721dfe14435dd Mon Sep 17 00:00:00 2001
+From: Andre Przywara <andre.przywara@arm.com>
+Date: Mon, 10 Jan 2022 00:56:31 +0000
+Subject: [PATCH 1/3] video: Add cursor support for video consoles
+
+So far the video console is completely lacking any cursor, which makes
+typing and correcting quite irritating.
+
+Add a simple cursor display by writing a SPACE glyph in the background
+colour to the next character position on the screen. Any typed character
+will naturally overwrite it, so we need to only explicitly clear it if
+the next character will appear somewhere else (newline, backspace).
+
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+Reviewed-by: Simon Glass <sjg@chromium.org>
+Tested-by: Simon Glass <sjg@chromium.org>
+Link: https://lore.kernel.org/r/20220110005638.21599-2-andre.przywara@arm.com
+[Alper: Rebase for console_set_font(), reword for CONFIG_VIDEO]
+Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
+---
+ drivers/video/console_core.c      |  1 +
+ drivers/video/vidconsole-uclass.c | 42 +++++++++++++++++++++++++++++++
+ include/video_console.h           |  1 +
+ 3 files changed, 44 insertions(+)
+
+diff --git a/drivers/video/console_core.c b/drivers/video/console_core.c
+index 939363653f6c..6b531718276f 100644
+--- a/drivers/video/console_core.c
++++ b/drivers/video/console_core.c
+@@ -30,6 +30,7 @@ static int console_set_font(struct udevice *dev, struct video_fontdata *fontdata
+ 	debug("height: %d\n", fontdata->height);
+ 
+ 	priv->fontdata = fontdata;
++	vc_priv->cursor_visible = true;
+ 	vc_priv->x_charsize = fontdata->width;
+ 	vc_priv->y_charsize = fontdata->height;
+ 	if (vid_priv->rot % 2) {
+diff --git a/drivers/video/vidconsole-uclass.c b/drivers/video/vidconsole-uclass.c
+index ebe96bf0c2f3..8613c464040f 100644
+--- a/drivers/video/vidconsole-uclass.c
++++ b/drivers/video/vidconsole-uclass.c
+@@ -57,6 +57,26 @@ int vidconsole_entry_start(struct udevice *dev)
+ 	return ops->entry_start(dev);
+ }
+ 
++static void draw_cursor(struct udevice *dev, bool state)
++{
++	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
++	struct video_priv *vid_priv = dev_get_uclass_priv(dev->parent);
++	u32 tmp;
++
++	if (!priv->cursor_visible)
++		return;
++
++	if (state) {
++		tmp = vid_priv->colour_bg;
++		vid_priv->colour_bg = vid_priv->colour_fg;
++	}
++
++	vidconsole_putc_xy(dev, priv->xcur_frac, priv->ycur, ' ');
++
++	if (state)
++		vid_priv->colour_bg = tmp;
++}
++
+ /* Move backwards one space */
+ static int vidconsole_back(struct udevice *dev)
+ {
+@@ -64,6 +84,8 @@ static int vidconsole_back(struct udevice *dev)
+ 	struct vidconsole_ops *ops = vidconsole_get_ops(dev);
+ 	int ret;
+ 
++	draw_cursor(dev, false);
++
+ 	if (ops->backspace) {
+ 		ret = ops->backspace(dev);
+ 		if (ret != -ENOSYS)
+@@ -90,6 +112,8 @@ static void vidconsole_newline(struct udevice *dev)
+ 	const int rows = CONFIG_VAL(CONSOLE_SCROLL_LINES);
+ 	int i, ret;
+ 
++	draw_cursor(dev, false);
++
+ 	priv->xcur_frac = priv->xstart_frac;
+ 	priv->ycur += priv->y_charsize;
+ 
+@@ -286,6 +310,14 @@ static void vidconsole_escape_char(struct udevice *dev, char ch)
+ 
+ 		break;
+ 	}
++	case 'l':
++		  draw_cursor(dev, false);
++		  priv->cursor_visible = 0;
++		  break;
++	case 'h':
++		  priv->cursor_visible = 1;
++		  draw_cursor(dev, true);
++		  break;
+ 	case 'J': {
+ 		int mode;
+ 
+@@ -460,6 +492,11 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 	struct vidconsole_priv *priv = dev_get_uclass_priv(dev);
+ 	int cp, ret;
+ 
++	/*
++	 * We don't need to clear the cursor since we are going to overwrite
++	 * that character anyway.
++	 */
++
+ 	if (priv->escape) {
+ 		vidconsole_escape_char(dev, ch);
+ 		return 0;
+@@ -474,6 +511,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		/* beep */
+ 		break;
+ 	case '\r':
++		draw_cursor(dev, false);
+ 		priv->xcur_frac = priv->xstart_frac;
+ 		break;
+ 	case '\n':
+@@ -481,6 +519,7 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		vidconsole_entry_start(dev);
+ 		break;
+ 	case '\t':	/* Tab (8 chars alignment) */
++		draw_cursor(dev, false);
+ 		priv->xcur_frac = ((priv->xcur_frac / priv->tab_width_frac)
+ 				+ 1) * priv->tab_width_frac;
+ 
+@@ -505,6 +544,8 @@ int vidconsole_put_char(struct udevice *dev, char ch)
+ 		break;
+ 	}
+ 
++	draw_cursor(dev, true);
++
+ 	return 0;
+ }
+ 
+@@ -725,6 +766,7 @@ static int vidconsole_pre_probe(struct udevice *dev)
+ 	struct video_priv *vid_priv = dev_get_uclass_priv(vid);
+ 
+ 	priv->xsize_frac = VID_TO_POS(vid_priv->xsize);
++	priv->cursor_visible = false;
+ 
+ 	return 0;
+ }
+diff --git a/include/video_console.h b/include/video_console.h
+index 723d2315606d..17a9aa3f9295 100644
+--- a/include/video_console.h
++++ b/include/video_console.h
+@@ -74,6 +74,7 @@ struct vidconsole_priv {
+ 	int escape_len;
+ 	int row_saved;
+ 	int col_saved;
++	bool cursor_visible;
+ 	char escape_buf[32];
+ 	char utf8_buf[5];
+ };
+-- 
+2.49.0
+
+
+From b2b921d7bc69b505562cf02d1b4c6f6d4325c7d5 Mon Sep 17 00:00:00 2001
+From: Andre Przywara <andre.przywara@arm.com>
+Date: Mon, 10 Jan 2022 00:56:36 +0000
+Subject: [PATCH 2/3] efi-selftest: Add international characters test
+
+UEFI relies entirely on unicode output, which actual fonts displayed on
+the screen might not be ready for.
+
+Add a test displaying some international characters, to reveal missing
+glyphs, especially in our builtin fonts.
+This would be needed to be manually checked on the screen for
+correctness.
+
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+Link: https://lore.kernel.org/r/20220110005638.21599-7-andre.przywara@arm.com
+---
+ lib/efi_selftest/efi_selftest_textoutput.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lib/efi_selftest/efi_selftest_textoutput.c b/lib/efi_selftest/efi_selftest_textoutput.c
+index a3023c82567c..2f8d8d323c2b 100644
+--- a/lib/efi_selftest/efi_selftest_textoutput.c
++++ b/lib/efi_selftest/efi_selftest_textoutput.c
+@@ -154,6 +154,11 @@ static int execute(void)
+ 		efi_st_printf("Unicode not handled properly\n");
+ 		return EFI_ST_FAILURE;
+ 	}
++	ret = con_out->output_string(con_out, L"Österreich Edelweiß Smørrebrød Smörgås Niño René >Ἑλλάς<\n");
++	if (ret != EFI_ST_SUCCESS) {
++		efi_st_error("OutputString failed for international chars\n");
++		return EFI_ST_FAILURE;
++	}
+ 	efi_st_printf("\n");
+ 	ret = con_out->output_string(con_out, text);
+ 	if (ret != EFI_ST_SUCCESS) {
+-- 
+2.49.0
+
+
+From 082422499a5f2689e715df68bfd025a5cc15cc64 Mon Sep 17 00:00:00 2001
+From: Andre Przywara <andre.przywara@arm.com>
+Date: Mon, 10 Jan 2022 00:56:37 +0000
+Subject: [PATCH 3/3] efi_selftest: Add box drawing character selftest
+
+UEFI applications rely on Unicode output capability, and might use that
+for drawing pseudo-graphical interfaces using Unicode defined box
+drawing characters.
+
+Add a simple test to display the most basic box characters, which would
+need to be checked manually on the screen for correctness.
+To facilitate this, add a three second delay after the output at this
+point.
+
+Signed-off-by: Andre Przywara <andre.przywara@arm.com>
+Link: https://lore.kernel.org/r/20220110005638.21599-8-andre.przywara@arm.com
+---
+ lib/efi_selftest/efi_selftest_textoutput.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/lib/efi_selftest/efi_selftest_textoutput.c b/lib/efi_selftest/efi_selftest_textoutput.c
+index 2f8d8d323c2b..02209a5bf224 100644
+--- a/lib/efi_selftest/efi_selftest_textoutput.c
++++ b/lib/efi_selftest/efi_selftest_textoutput.c
+@@ -159,6 +159,17 @@ static int execute(void)
+ 		efi_st_error("OutputString failed for international chars\n");
+ 		return EFI_ST_FAILURE;
+ 	}
++	ret  = con_out->output_string(con_out, L"┌─┬─┐\n");
++	ret |= con_out->output_string(con_out, L"│ │ │\n");
++	ret |= con_out->output_string(con_out, L"├─┼─┤\n");
++	ret |= con_out->output_string(con_out, L"│ │ │\n");
++	ret |= con_out->output_string(con_out, L"└─┴─┘\n");
++	if (ret != EFI_ST_SUCCESS) {
++		efi_st_error("OutputString failed for box drawing chars\n");
++		return EFI_ST_FAILURE;
++	}
++	con_out->output_string(con_out, L"waiting for admiration...\n");
++	EFI_CALL(systab.boottime->stall(3000000));
+ 	efi_st_printf("\n");
+ 	ret = con_out->output_string(con_out, text);
+ 	if (ret != EFI_ST_SUCCESS) {
+-- 
+2.49.0
+

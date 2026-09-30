@@ -1,8 +1,8 @@
-From 92bbcd78fda003c8f37ed8db40a0185406184277 Mon Sep 17 00:00:00 2001
+From d02163324baeb817ed55df41fac863cab4be038c Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Wed, 10 Jul 2024 14:32:19 +0300
-Subject: [PATCH 4/6] HACK: rk3399: gru: Remove assigned clock dt properties
- for EDP node
+Subject: [PATCH] HACK: rk3399: gru: Remove assigned clock dt properties for
+ EDP node
 
 Having the PCLK_EDP clock in the assigned-clocks property of the `edp`
 node means that U-Boot tries to set its rate automatically. This clock
@@ -18,10 +18,10 @@ Signed-off-by: Alper Nebi Yasak <alpernebiyasak@gmail.com>
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/arm/dts/rk3399-gru-u-boot.dtsi b/arch/arm/dts/rk3399-gru-u-boot.dtsi
-index dfc7be4c621..e563a607864 100644
+index 5517176aa4a0..9f40cf1e0208 100644
 --- a/arch/arm/dts/rk3399-gru-u-boot.dtsi
 +++ b/arch/arm/dts/rk3399-gru-u-boot.dtsi
-@@ -29,6 +29,9 @@
+@@ -27,6 +27,9 @@ &cros_ec {
  
  &edp {
  	rockchip,panel = <&edp_panel>;
@@ -32,5 +32,5 @@ index dfc7be4c621..e563a607864 100644
  
  &emmc_phy {
 -- 
-2.47.3
+2.49.0
 

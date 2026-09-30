@@ -1,7 +1,7 @@
-From a3ff8cade81ddfa064650f9b11b3fd90ca676c13 Mon Sep 17 00:00:00 2001
+From ee94f55d37fc8c133faa5055184f75f99830cfdc Mon Sep 17 00:00:00 2001
 From: Alper Nebi Yasak <alpernebiyasak@gmail.com>
 Date: Fri, 8 Oct 2021 17:33:22 +0300
-Subject: [PATCH 1/6] clk: rockchip: rk3399: Set hardcoded clock rates same as
+Subject: [PATCH] clk: rockchip: rk3399: Set hardcoded clock rates same as
  devicetree
 
 Update hardcoded RK3399 clock rate definitions to match those in its
@@ -21,7 +21,7 @@ Link: https://github.com/alpernebbi/u-boot/commit/7e73b7a7550cfdd22a1413c263026e
  2 files changed, 16 insertions(+), 13 deletions(-)
 
 diff --git a/arch/arm/include/asm/arch-rockchip/cru_rk3399.h b/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
-index d941a129f3e..54035c0df1f 100644
+index d941a129f3e5..54035c0df1f3 100644
 --- a/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
 +++ b/arch/arm/include/asm/arch-rockchip/cru_rk3399.h
 @@ -69,7 +69,8 @@ check_member(rockchip_cru, sdio1_con[1], 0x594);
@@ -60,7 +60,7 @@ index d941a129f3e..54035c0df1f 100644
  #define PWM_CLOCK_HZ    PMU_PCLK_HZ
  
 diff --git a/drivers/clk/rockchip/clk_rk3399.c b/drivers/clk/rockchip/clk_rk3399.c
-index 6e87db18be0..1b8ffe9e794 100644
+index 6e87db18be07..1b8ffe9e794e 100644
 --- a/drivers/clk/rockchip/clk_rk3399.c
 +++ b/drivers/clk/rockchip/clk_rk3399.c
 @@ -53,10 +53,11 @@ struct pll_div {
@@ -96,5 +96,5 @@ index 6e87db18be0..1b8ffe9e794 100644
  	/* configure perihp aclk, hclk, pclk */
  	aclk_div = GPLL_HZ / PERIHP_ACLK_HZ - 1;
 -- 
-2.47.3
+2.49.0
 
