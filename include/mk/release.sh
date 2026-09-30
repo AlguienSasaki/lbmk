@@ -60,7 +60,7 @@ prep_release()
 	) || err "can't prep release $1" "prep_release" "$@"
 }
 
-prep_release_src() # ./mk release
+prep_release_src()
 {
 	x_ cp -R "util/sbase" "util/sbase2"
 	x_ ./mk -f
@@ -81,7 +81,7 @@ nuke()
 	fi
 }
 
-prep_release_tarball() # ./mk release
+prep_release_tarball()
 {
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$rsrc/CHANGELOG" || \
@@ -98,7 +98,7 @@ prep_release_tarball() # ./mk release
 	) || err "can't create src tarball" "prep_release_tarball" "$@"; :
 }
 
-prep_release_bin() # ./mk release
+prep_release_bin()
 {
 	x_ ./mk -d coreboot
 
@@ -111,7 +111,7 @@ prep_release_bin() # ./mk release
 	x_ mv bin ../roms
 }
 
-prep_release_test() # ./mk test
+prep_release_test()
 {
 	# when we want to test other parts of lbmk, we may not
 	# want to test coreboot roms. we want to test other projects.
@@ -124,7 +124,7 @@ prep_release_test() # ./mk test
 	    edk2 flashprog grub int libarchive \
 	    me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
 	    pico-serprog seabios stm32-vserprog u-boot uefitool \
-	    coreboot" # coreboot must come last for this test
+	    coreboot"
 
 	for ptest in $progs; do
 		for ftest in d f b; do
