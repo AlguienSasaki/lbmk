@@ -1,0 +1,27 @@
+From 104764a12e60bf71a9cec689b91396bcd7fffb67 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 30 Sep 2026 10:20:46 +0100
+Subject: [PATCH 1/1] add fake scons options
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 6c9c170..85b376d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -88,7 +88,8 @@ LDLIBS  += $(LIBOPENCM3) $(LIBC) $(LIBGCC)
+ 
+ 
+ .PHONY: firmware docs clean distclean flash flash-dfu reboot size symbols \
+-	test libopencm3-just-make
++	test libopencm3-just-make oldconfig menuconfig savedefconfig \
++	olddefconfig nconfig
+ 
+ firmware: $(BIN) $(HEX) $(DMP) size
+ docs: $(DOCS)
+-- 
+2.47.3
+
