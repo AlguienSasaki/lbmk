@@ -367,6 +367,8 @@ add_uboot()
 		ubootelf="${ubootelf%.elf}" # hack (fix arm64 build)
 
 	cbfs "$tmprom" "$ubootelf" "fallback/payload"
+
+	cprom uboot
 }
 
 # prepare the final image in bin/ for user installation:
