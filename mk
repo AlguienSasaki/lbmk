@@ -423,7 +423,8 @@ handle_makefile()
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
 
-	[ "$noconfig" != "y" ] && $if_make_config $if_not_skip_build \
+	[ "$noconfig" != "y" ] && [ -f "$srcdir/$_copy" ] && \
+	    $if_make_config $if_not_skip_build \
 		x_ cp "$srcdir/$_copy" "$buildcfg"; :
 }
 
