@@ -1,7 +1,7 @@
-From 7e71137b28eb178c5ff035305ef1fdf35cdf1b71 Mon Sep 17 00:00:00 2001
+From 1faa2b858783be043c6f05ef0634889f816264ab Mon Sep 17 00:00:00 2001
 From: Jaipaul Cheernam <jaipaul.cheernam@est.tech>
 Date: Tue, 11 Aug 2026 15:34:33 +0200
-Subject: [PATCH 1/1] pylibfdt: Replace removed SWIG Python 2 compatibility
+Subject: [PATCH 1/2] pylibfdt: Replace removed SWIG Python 2 compatibility
  macros
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -60,5 +60,5 @@ index e4659489a96..326a15c7941 100644
  }
  
 -- 
-2.47.3
+2.55.0
 
