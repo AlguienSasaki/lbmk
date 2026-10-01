@@ -1,0 +1,124 @@
+From 902ae71b1d7d286b6ed05a3de94a4ccf9088acd1 Mon Sep 17 00:00:00 2001
+From: hustlerone <nine-ball@tutanota.com>
+Date: Wed, 31 Dec 2025 17:01:31 +0100
+Subject: [PATCH] Revert "cpu/intel/car/non-evict: Improve CAR setup"
+
+Commit 97dbfd3098ae12ef3f51e5f95cd6d66c25214205 prevents the x230t from going past the `postcar` stage.
+---
+ src/arch/x86/car.ld                        |  1 -
+ src/cpu/intel/car/non-evict/cache_as_ram.S | 65 ++++++++++------------
+ 2 files changed, 30 insertions(+), 36 deletions(-)
+
+diff --git a/src/arch/x86/car.ld b/src/arch/x86/car.ld
+index bbfd682934..9d54037b7a 100644
+--- a/src/arch/x86/car.ld
++++ b/src/arch/x86/car.ld
+@@ -122,7 +122,6 @@ _car_region_end = . + CONFIG_DCACHE_RAM_SIZE - (. - _car_region_start)
+ }
+ 
+ #if ENV_BOOTBLOCK
+-. = ALIGN(64);
+ _car_mtrr_end = .;
+ _car_mtrr_start = _car_region_start;
+ 
+diff --git a/src/cpu/intel/car/non-evict/cache_as_ram.S b/src/cpu/intel/car/non-evict/cache_as_ram.S
+index 91035dabb4..7186422595 100644
+--- a/src/cpu/intel/car/non-evict/cache_as_ram.S
++++ b/src/cpu/intel/car/non-evict/cache_as_ram.S
+@@ -151,16 +151,21 @@ update_microcode:
+ 	jmp	update_bsp_microcode
+ end_microcode_update:
+ #endif
+-
+-	/* Disable caching. */
++	/* Disable caching to change MTRR's. */
+ 	movl	%cr0, %eax
+ 	orl	$CR0_CacheDisable, %eax
+ 	movl	%eax, %cr0
+ 
+-	invd
++	/* Clear the mask valid to disable the MTRR */
++	movl	$MTRR_PHYS_MASK(1), %ecx
++	rdmsr
++	andl	$(~MTRR_PHYS_MASK_VALID), %eax
++	wrmsr
+ 
+-	/* Enable caching */
++	/* Enable cache. */
++	movl	%cr0, %eax
+ 	andl	$(~(CR0_CacheDisable | CR0_NoWriteThrough)), %eax
++	invd
+ 	movl	%eax, %cr0
+ 
+ 	/* enable the 'no eviction' mode */
+@@ -170,46 +175,36 @@ end_microcode_update:
+ 	andl	$~2, %eax
+ 	wrmsr
+ 
+-	/* Fill up the cache next. */
++	/* Clear the cache memory region. This will also fill up the cache. */
++	cld
++	xorl	%eax, %eax
+ 	movl	$_car_mtrr_start, %edi
+-
+-	/* Number of loops. */
+ 	movl	$_car_mtrr_size, %ecx
+-	shr	$6, %ecx
+-	xorl	%ebx, %ebx
+-	mov	$64, %bl
++	shr	$2, %ecx
++	rep	stosl
+ 
+-1:
+-	/*
+-	 * BWG: *One* location in each 64-byte cache line must be written
+-	 * to set all cached values to modified state.
+-	 *
+-	 * Value of %eax doesn't matter here. CAR is zeroed later.
+-	 *
+-	 * Zeroing the whole cache here *not* work when CR0.CD = 0.
+-	 * Zeroing the whole cache here *does* work when CR0.CD = 1,
+-	 * but will be a couple of times slower (4 times on Sandy Bridge).
+-	 */
+-	movl	%eax, (%edi)
+-	addl	%ebx, %edi
++	/* enable the 'no eviction run' state */
++	movl	$NoEvictMod_MSR, %ecx
++	rdmsr
++	orl	$3, %eax
++	wrmsr
+ 
+-	loop	1b
++	post_code(POSTCODE_SOC_DISABLE_CACHE)
++	/* Enable Cache-as-RAM mode by disabling cache. */
++	movl	%cr0, %eax
++	orl	$CR0_CacheDisable, %eax
++	movl	%eax, %cr0
+ 
+-	/* enable the 'no eviction run' state. */
+-	movl	$NoEvictMod_MSR, %ecx
++	movl	$MTRR_PHYS_MASK(1), %ecx
+ 	rdmsr
+-	or	$3, %al
++	orl	$MTRR_PHYS_MASK_VALID, %eax
+ 	wrmsr
+ 
+ 	post_code(POSTCODE_SOC_ENABLE_CACHE)
+-
+-	/* Now that CAR is enabled clear it. */
+-	movl	$_car_mtrr_start, %edi
+-	movl	$_car_mtrr_size, %ecx
+-	cld
+-	xorl	%eax, %eax
+-	shr	$2, %ecx
+-	rep	stosl
++	/* Enable cache. */
++	movl	%cr0, %eax
++	andl	$(~(CR0_CacheDisable | CR0_NoWriteThrough)), %eax
++	movl	%eax, %cr0
+ 
+ 	/* Setup the stack. */
+ 	mov	$_ecar_stack, %esp
+-- 
+2.51.2
+
