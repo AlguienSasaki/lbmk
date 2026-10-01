@@ -76,7 +76,7 @@ x_ xbmk_init "$@"
 _f="${1-}"
 shift 1 2>/dev/null || :
 
-for xmkarg in version test release download inject import_uboot; do
+for xmkarg in version test release download inject import_uboot cbtest; do
 	[ "$_f" = "$xmkarg" ] || continue;
 	x_ mk$xmkarg "$@"
 	exit 0

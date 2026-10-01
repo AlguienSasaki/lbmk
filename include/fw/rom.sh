@@ -443,3 +443,68 @@ mkcoreboottar()
 	mkrom_tarball "bin/$target"
 	x_ "$mk" inject "bin/${relname}_${target}.tar.xz" nuke
 }
+
+# when we do ./mk -u coreboot after an update, a board may have changed to
+# a variant upstream, or otherwise renamed. in some instances, we may have
+# inadvertently changed the board because Kconfig will otherwise then default
+# to the first board Kconfig list for src/mainboard/VENDOR. Here then, we tie
+# current lbmk board names to CONFIG_BOARD_*=y and check if it changed since
+# last time. WARNING: this function is a giant nightmarish HACK, like kconfig
+mkcbtest()
+{
+	(
+	testval=0
+	cbsafe="$xbtmp/newtargetlist"
+	cbsafe_final="config/data/coreboot/targets.list"
+
+	writesafe="y"
+	[ -f "$cbsafe_final" ] && writesafe="n"
+
+	for cbhotd in config/module/coreboot/*; do
+		[ -d "$cbhotd" ] || continue;
+
+		cbmatch=""
+
+		for cbhot in "$cbhotd/config/"*; do
+			[ -f "$cbhot" ] || continue;
+
+			cbtname="${cbhot#config/module/coreboot/}"
+			cbtname="${cbtname%%/*}"
+
+			cbkname="$(x_ grep CONFIG_BOARD_ "$cbhot" | \
+			    grep "=y" | \
+			    grep -v SPECIFIC | head -n1 | \
+			    awk -F '=' '{print $1}' || \
+			    err "Can't find CONFIG_BOARD in '$cbhot'")" \
+			    || err "Please fix the configs for: '$cbhotd'";
+
+			if [ -z "$cbmatch" ]; then
+				x_ printf "%s:%s\n" "$cbtname" "$cbkname" >> \
+				    "$cbsafe" || err "can't write to '$cbsafe'";
+			fi
+
+			[ -f "$cbsafe_final" ] && for cbchange in \
+			    $(x_ grep "$cbtname:" "$cbsafe_final"); do
+				[ "$cbtname:$cbkname" != "$cbchange" ] ||
+					continue;
+
+				testval=1;
+				( err "'$cbhotd' name change: $cbkname" ) || :
+			
+				break	
+			done;
+			[ $testval -gt 0 ] && break;
+
+			[ -z "$cbmatch" ] && cbmatch="$cbtname:$cbkname";
+			[ "$cbtname:$cbkname" != "$cbmatch" ] && \
+				err "differing boards for configs: '$cbhotd'";
+		done
+		[ $testval -gt 0 ] && break;
+	done
+	[ $testval -gt 0 ] || \
+		x_ mv "$cbsafe" "$cbsafe_final";
+
+	exit $testval
+	) || err "Issue with configs under config/module/coreboot/";
+}
+
