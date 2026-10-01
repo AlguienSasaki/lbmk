@@ -76,7 +76,7 @@ x_ xbmk_init "$@"
 _f="${1-}"
 shift 1 2>/dev/null || :
 
-for xmkarg in version test release download inject; do
+for xmkarg in version test release download inject import_uboot; do
 	[ "$_f" = "$xmkarg" ] || continue;
 	x_ mk$xmkarg "$@"
 	exit 0
@@ -387,6 +387,7 @@ check_xgcc()
 
 	xfix="${1%-*}"
 	[ "$xfix" = "x86_64" ] && xfix="x64"
+	[ "$xfix" = "riscv64" ] && xfix="riscv"
 
 	xgccfile="$cbelfdir/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"

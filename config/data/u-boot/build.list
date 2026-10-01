@@ -4,3 +4,13 @@ u-boot.dtb
 u-boot.img
 u-boot.itb
 u-boot.elf
+u-boot-dtb.bin
+u-boot-x86-with-spl.bin
+u-boot-with-spl-pbl.bin
+u-boot.pbl
+spl/u-boot-spl.bin
+u-boot-ivt.img 
+tpl/u-boot-tpl.bin
+vpl/u-boot-vpl.bin
+u-boot-payload.efi
+u-boot-app.efi

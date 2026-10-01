@@ -84,6 +84,59 @@ e()
 	printf "%s %s\n" "$1" "$es2" 1>&2
 }
 
+mkimport_uboot()
+{
+	upstream="${1-}"
+	upstream="${upstream##*/}"
+	[ -z "$upstream" ] && upstream="default"
+
+	arm64="ROCKCHIP_RK3308 ROCKCHIP_RK3328 ROCKCHIP_RK3368 ROCKCHIP_RK3399 \
+	    ROCKCHIP_RK3568 ROCKCHIP_RK3588"
+
+	x_ "$mk" -f u-boot "$upstream"
+
+#	mk_uboot_configs X86 "i386-elf" # TODO distinguish amd64 startup
+
+	mk_uboot_configs "$arm64" "aarch64-elf arm-eabi" "$upstream"
+	mk_uboot_configs RISCV "riscv64-elf"
+}
+
+mk_uboot_configs()
+{
+	ucfgs="src/u-boot/$3/configs"
+
+	rm -f "$xbtmp/ucfg"
+	for a in $1; do
+		x_ grep -Rl "CONFIG_${a}=y" "$ucfgs" >> "$xbtmp/ucfg" || \
+		    err "can't make ucfg" "mkimport_uboot" "$@"
+	done
+
+	while read -r a; do
+		cp_uboot_cfg "$a" "$2"
+	done < "$xbtmp/ucfg" || err "can't read ucfg" mkimport_uboot "$@";
+}
+
+cp_uboot_cfg()
+{
+	udir="${1##*/}"
+	udir="$(printf "%s\n" "$udir" | sed 's,-,_,g')"
+
+	ldir="config/module/u-boot/$udir"
+
+	x_ remkdir "$ldir" "$ldir/config"
+	x_ cp "$1" "$ldir/config/default"
+
+	x_ printf "tree=\"default\"\n" > "$ldir/target.cfg" || \
+	    err "can't make target.cfg tree=" cp_uboot_config "$@"
+	x_ printf "xarch=\"%s\"\n" "$2" >> \
+	    "$ldir/target.cfg" || err "targetfcg xarch" cp_uboot_config "$@";
+	x_ printf "release=\"n\"" >> "$ldir/target.cfg" || \
+	    err "can't set release=n" cp_uboot_config "$@"
+
+	x_ yes '' | "$mk" -l u-boot $udir || \
+	    err "can't update cfg" cp_uboot_config "$@";
+}
+
 pad_one_byte()
 {
 	paddedfile="`mktemp || err "mktemp pad_one_byte"`" || \
