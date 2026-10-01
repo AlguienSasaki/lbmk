@@ -499,7 +499,6 @@ mkcbtest()
 			[ "$cbtname:$cbkname" != "$cbmatch" ] && \
 				err "differing boards for configs: '$cbhotd'";
 		done
-		[ $testval -gt 0 ] && break;
 	done
 	[ $testval -gt 0 ] || \
 		x_ mv "$cbsafe" "$cbsafe_final";
