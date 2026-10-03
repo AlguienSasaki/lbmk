@@ -283,6 +283,7 @@ edk2path()
 
 	edk2dir="elf/coreboot/default"
 	[ "$payload_edk2" != "edk2_mrchromebox" ] && \
+	[ "$payload_edk2" != "edk2_mrchromebox_nohpet" ] && \
 		edk2dir="elf/coreboot/mrchromebox"
 
 	printf "%s/%s/libgfxinit_corebootfb/UEFIPAYLOAD.fd\n" \
