@@ -47,7 +47,7 @@ eval "`newvar DL_hash DL_url DL_url_bkup E6400_VGA_bin_hash E6400_VGA_DL_hash \
     ME11version ME_bin_hash MEcheck MEclean MEshrink MRC_bin_hash \
     MRC_refcode_gbe REF_bin_hash SCH5545EC_bin_hash \
     SCH5545EC_DL_hash SCH5545EC_DL_url SCH5545EC_DL_url_bkup TBFW_bin_hash \
-    TBFW_hash TBFW_size TBFW_url TBFW_url_bkup XBMKmecleaner`"
+    TBFW_hash TBFW_size TBFW_url TBFW_url_bkup XBMKmecleaner FSPFD_path`"
 
 mkdownload()
 {
@@ -88,10 +88,10 @@ getfiles()
 		fetch "tbfw" "$TBFW_url" "$TBFW_url_bkup" "$TBFW_hash" \
 		    "$CONFIG_LENOVO_TBFW_BIN" "curl" "$TBFW_bin_hash"
 	[ -n "$CONFIG_FSP_M_FILE" ] && \
-		fetch "fsp" "$CONFIG_FSP_FD_PATH" "$CONFIG_FSP_FD_PATH" \
+		fetch "fsp" "$FSPFD_path" "$FSPFD_path" \
 		    "$FSPFD_hash" "$CONFIG_FSP_M_FILE" "copy" "$FSPM_bin_hash"
 	[ -n "$CONFIG_FSP_S_FILE" ] && \
-		fetch "fsp" "$CONFIG_FSP_FD_PATH" "$CONFIG_FSP_FD_PATH" \
+		fetch "fsp" "$FSPFD_path" "$FSPFD_path" \
 		    "$FSPFD_hash" "$CONFIG_FSP_S_FILE" copy "$FSPS_bin_hash"; :
 }
 
