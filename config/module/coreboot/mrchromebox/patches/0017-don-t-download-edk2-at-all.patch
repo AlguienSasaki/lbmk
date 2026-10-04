@@ -1,0 +1,64 @@
+From e959f856a1695ebd330613db0bfd8cf9914b9935 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 24 Sep 2026 22:18:41 +0100
+Subject: [PATCH 17/17] don't download edk2 at all
+
+lbmk handles it now.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ payloads/external/edk2/Makefile | 36 ++-------------------------------
+ 1 file changed, 2 insertions(+), 34 deletions(-)
+
+diff --git a/payloads/external/edk2/Makefile b/payloads/external/edk2/Makefile
+index 7ed88f1843..6b041327e5 100644
+--- a/payloads/external/edk2/Makefile
++++ b/payloads/external/edk2/Makefile
+@@ -265,42 +265,10 @@ $(WORKSPACE):
+ 	mkdir $(WORKSPACE)
+ 
+ $(EDK2_PLATFORMS_PATH): $(WORKSPACE)
+-	if [ ! -d "$(EDK2_PLATFORMS_PATH)" ]; then \
+-		git clone --recurse-submodules $(CONFIG_EDK2_PLATFORMS_REPOSITORY) $(EDK2_PLATFORMS_PATH) -j5; \
+-	fi
+-	cd $(EDK2_PLATFORMS_PATH); \
+-		if ! git rev-parse --verify -q $(CONFIG_EDK2_PLATFORMS_TAG_OR_REV)^{object} >/dev/null; then \
+-			echo "    $(CONFIG_EDK2_PLATFORMS_TAG_OR_REV) is not a valid git reference"; \
+-			exit 1; \
+-		fi; \
+-		if git status --ignore-submodules=dirty | grep -q "nothing to commit, working tree clean"; then \
+-			echo "    Checking out edk2-platforms revision $(CONFIG_EDK2_PLATFORMS_TAG_OR_REV)"; \
+-			git checkout --detach $(CONFIG_EDK2_PLATFORMS_TAG_OR_REV) -f; \
+-		else \
+-			echo "    Working directory not clean; will not overwrite"; \
+-		fi; \
+-		git submodule update --init --checkout
++	:
+ 
+ $(EDK2_PATH): $(WORKSPACE)
+-	if [ ! -d "$(EDK2_PATH)" ]; then \
+-		git clone --recurse-submodules $(CONFIG_EDK2_REPOSITORY) $(EDK2_PATH) -j5; \
+-	fi
+-	cd $(EDK2_PATH); \
+-		git checkout MdeModulePkg/Logo/Logo.bmp > /dev/null 2>&1 || true; \
+-		echo "    Fetching new commits from $(CONFIG_EDK2_REPOSITORY)"; \
+-		git fetch origin 2>/dev/null; \
+-		if ! git rev-parse --verify -q $(CONFIG_EDK2_TAG_OR_REV)^{object} >/dev/null; then \
+-			echo "    $(CONFIG_EDK2_TAG_OR_REV) is not a valid git reference"; \
+-			exit 1; \
+-		fi; \
+-		if git status --ignore-submodules=dirty | grep -q -e clean -e "nothing added"; then \
+-			echo "    Checking out $(project_name) revision $(CONFIG_EDK2_TAG_OR_REV)"; \
+-			git checkout --detach $(CONFIG_EDK2_TAG_OR_REV) -f; \
+-			git submodule update --checkout --recursive; \
+-		else \
+-			echo "    Working directory not clean; will not overwrite"; \
+-		fi; \
+-		git submodule update --init --checkout --recursive
++	:
+ 
+ logo: $(EDK2_PATH)
+ 	case "$(CONFIG_EDK2_BOOTSPLASH_FILE)" in \
+-- 
+2.47.3
+
