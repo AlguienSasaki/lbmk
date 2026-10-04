@@ -41,7 +41,8 @@ main()
 	(
 	x_ cd "${1-}" # arg1 is the mrchromebox coreboot clone. we use current HEAD
 
-	x_ git submodule update --init --checkout
+	git submodule update --init --checkout 1>/dev/null 2>/dev/null || \
+	    err "cannot update submodules"
 
 	mr_commit="$(x_ git log | head -n1 | awk '{print $2}' \
 	    || err "awk c")" || err "can't grab commit"
