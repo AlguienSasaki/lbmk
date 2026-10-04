@@ -83,7 +83,7 @@ cook_coreboot_config()
 	[ -n "$mode" ] && return 0
 	[ -f "$srcdir/$cfgname" ] || return 0
 
-	x_ make -C "$srcdir" oldconfig
+	x_ make -C "$srcdir" olddefconfig
 }
 
 check_coreboot_util()
