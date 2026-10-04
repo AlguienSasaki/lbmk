@@ -198,7 +198,7 @@ init_target_cfg()
 	printf "release=\"n\"\n"
 }
 
-init_submodule_configs()
+init_submodule_config()
 {
 	x_ mkdir -p "$tmpdir/submodule"
 
