@@ -1,6 +1,5 @@
 3rdparty/arm-trusted-firmware:arm-trusted-firmware
 3rdparty/fsp:fsp
-3rdparty/fspcc36ae2b5775fa7400cb3282680afc0f6cb37a3c:fspcc36ae2b5775fa7400cb3282680afc0f6cb37a3c
 3rdparty/intel-microcode:intel-microcode
 3rdparty/libgfxinit:libgfxinit
 3rdparty/libhwbase:libhwbase
