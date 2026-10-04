@@ -90,17 +90,22 @@ init_module_list()
 	    err "can't read path tmpfile"
 
 	for url in $urls; do
-		path="${paths%% *}"
+		print_module "${paths%% *}"
 		paths="${paths#* }"
-
-		commitid="$(x_ grep "$path" "$tmpfile_stat" | \
-		    awk '{print $1}' || \
-		    err "can't grep stat")" || err "can't grep stat"
-
-		x_ printf "%s %s %s\n" "$url" "$path" "$commitid" >> \
-		    "$tmpfile_urls_paths_commitids" || \
-		    err "can't make final modlist"
 	done
+}
+
+print_module()
+{
+	path="$1"
+
+	commitid="$(x_ grep "$path" "$tmpfile_stat" | \
+	    awk '{print $1}' || \
+	    err "can't grep stat")" || err "can't grep stat"
+
+	x_ printf "%s %s %s\n" "$url" "$path" "$commitid" >> \
+	    "$tmpfile_urls_paths_commitids" || \
+	    err "can't make final modlist"
 }
 
 collapse()
