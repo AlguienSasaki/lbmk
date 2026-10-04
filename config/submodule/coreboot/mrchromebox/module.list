@@ -18,6 +18,7 @@ src/vendorcode/amd/opensil/genoa_poc/opensil:src_vendorcode_amd_opensil_genoa_po
 3rdparty/open-power-signing-utils:3rdparty_open-power-signing-utils
 src/vendorcode/amd/opensil/phoenix_poc/opensil:src_vendorcode_amd_opensil_phoenix_poc_opensil
 src/vendorcode/amd/opensil/turin_poc/opensil:src_vendorcode_amd_opensil_turin_poc_opensil
+payloads/external/iPXE/ipxe_src:payload_ipxe
 util/crossgcc/tarballs/binutils-2.46.1.tar.xz:binutils-2.46.1.tar.xz
 util/crossgcc/tarballs/gcc-15.2.0.tar.xz:gcc-15.2.0.tar.xz
 util/crossgcc/tarballs/gmp-6.3.0.tar.xz:gmp-6.3.0.tar.xz
