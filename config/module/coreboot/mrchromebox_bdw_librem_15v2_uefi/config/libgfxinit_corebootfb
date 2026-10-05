@@ -9,4 +9,4 @@ CONFIG_MRC_FILE="3rdparty/blobs/mainboard/purism/librem_bdw/mrc.bin"
 CONFIG_HAVE_REFCODE_BLOB=y
 CONFIG_REFCODE_BLOB_FILE="3rdparty/blobs/mainboard/purism/librem_bdw/refcode.elf"
 CONFIG_HAVE_ME_BIN=y
-CONFIG_PAYLOAD_NONE=y
+CONFIG_EDK2_BOOTSPLASH_FILE="../../../config/data/coreboot/libreboot.bmp"

@@ -11,4 +11,4 @@ CONFIG_CPU_UCODE_BINARIES="3rdparty/blobs/mainboard/google/octopus/ampton/cpu_mi
 CONFIG_EC_GOOGLE_CHROMEEC_FIRMWARE_EXTERNAL=y
 CONFIG_EC_GOOGLE_CHROMEEC_FIRMWARE_FILE="3rdparty/blobs/mainboard/google/octopus/ampton/ec.RW.flat"
 CONFIG_DO_NOT_TOUCH_DESCRIPTOR_REGION=y
-CONFIG_PAYLOAD_NONE=y
+CONFIG_EDK2_BOOTSPLASH_FILE="../../../config/data/coreboot/libreboot.bmp"

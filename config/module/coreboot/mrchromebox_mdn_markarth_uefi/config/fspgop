@@ -4,4 +4,4 @@ CONFIG_VGA_BIOS=y
 CONFIG_BOARD_GOOGLE_MARKARTH=y
 CONFIG_SPL_TABLE_FILE="3rdparty/amd_blobs/mendocino/PSP/TypeId0x55_SplTableBl_MDN.sbin"
 CONFIG_RUN_FSP_GOP=y
-CONFIG_PAYLOAD_NONE=y
+CONFIG_EDK2_BOOTSPLASH_FILE="../../../config/data/coreboot/libreboot.bmp"

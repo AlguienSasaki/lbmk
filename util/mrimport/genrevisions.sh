@@ -267,8 +267,9 @@ init_target_defconfig()
 	x_ mkdir -p "${mrcbcfg%/*}"
 	x_ cp "$mrdir" "$mrcbcfg"
 
-	printf "CONFIG_PAYLOAD_NONE=y\n" >> "$mrcbcfg" || \
-	    err "can't set payload none on '$mrcbcfg'";
+	lblogo="../../../config/data/coreboot/libreboot.bmp"
+	printf "CONFIG_EDK2_BOOTSPLASH_FILE=\"%s\"\n" "$lblogo" \
+	    >> "$dummydef" || err "can't set rainbow on '$dummydef'";
 }
 
 init_target_cb_edk2_dummy()
@@ -295,7 +296,6 @@ init_target_cb_edk2_dummy()
 	x_ ln -s ../../../submodule/edk2/edk2_mrchromebox/ edk2_submodule
 	) || err "can't create symlinks for '$dummydir'";
 
-	# gay libreboot rainbow inside your firmware
 	lblogo="../../../config/data/coreboot/libreboot.bmp"
 	printf "CONFIG_EDK2_BOOTSPLASH_FILE=\"%s\"\n" "$lblogo" \
 	    >> "$dummydef" || err "can't set rainbow on '$dummydef'";
