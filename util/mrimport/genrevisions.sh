@@ -142,6 +142,7 @@ init_tree_cfg()
 	printf "bkup_url=\"%s\"\n\n" "$mr_repo"
 
 	printf "rev=\"%s\"\n\n" "$mr_commit"
+	printf "build_depend=\"\"\n\n" # don't build other payloads
 
 	printf "tree=\"mrchromebox\"\n\n"
 
@@ -159,10 +160,7 @@ prep_mrtarget()
 	mrcbcfg="$(target_getvidmode "$mrdir")" || \
 	    err "can't get edk2 vid mode '$mrdir'"
 
-	edk2_config_hash="$(target_edk2cfgcatsha)" || \
-	    err "can't get edk2 cfg sha '$mrdir'";
-
-	mkmrtarget "$mrdir" "$edk2_config_hash" "$mrcbcfg";
+	mkmrtarget "$mrdir" "$mrcbcfg";
 }
 
 # determine e.g. libgfxinit_corebootfb, fspgop
@@ -182,32 +180,19 @@ target_getvidmode()
 	x_ printf "%s\n" "$mrvid";
 }
 
-# hashed concatenation of edk2 build time config options to
-# determine payload_edk2= setting for lbmk coreboot target
-target_edk2cfgcatsha()
-{
-	x_ grep "CONFIG_EDK2" .config | grep -v "is not set" | \
-	    sort | sha512sum | awk '{print $1}' || err "edk2 cfg sha";
-}
-
 mkmrtarget()
 {
 	mrdir="$1"
-	edk2_config_hash="$2"
-	mrcbcfg="$3"
+	mrcbcfg="$2"
 
 	mrtarget="$(mrtargetname "$mrdir")"
 	mrplatform="$(mrplatformstr "$mrdir")"
 
 	x_ mkdir -p "$tmpdir/module/$mrtarget"
-	x_ init_target_cfg "$mrplatform" "$mrtarget" "$edk2_config_hash" \
+	x_ init_target_cfg "$mrplatform" "$mrtarget" \
 	    > "$tmpdir/module/$mrtarget/target.cfg" || \
 	    err "can't make target.cfg for target '$mrtarget'";
-	x_ init_target_defconfig "$mrdir" "$mrcbcfg" # nopayload (lbmk inserts)
-	x_ init_target_cb_edk2_dummy \
-	    "$mrdir" "$edk2_config_hash" # actual edk2 build
-
-	x_ init_edk2_target "$edk2_config_hash"
+	x_ init_target_defconfig "$mrdir" "$mrcbcfg"
 }
 
 mrtargetname()
@@ -239,7 +224,6 @@ init_target_cfg()
 {
 	mrplatform="$1"
 	mrtarget="$2"
-	edk2_config_hash="$3"
 
 	ifdplatform="$(get_platform "$mrplatform")"
 
@@ -250,11 +234,6 @@ init_target_cfg()
 
 	[ -n "$ifdplatform" ] && \
 		printf "IFD_platform=\"%s\"\n" "$ifdplatform";
-
-	printf "payload_edk2=\"edk2_chromebook_%s\"\n\n" "$edk2_config_hash"
-
-	printf "build_depend=\"coreboot/edk2_chromebook_%s\"\n\n" \
-	    "$edk2_config_hash"
 
 	printf "release=\"n\"\n"
 }
@@ -269,77 +248,7 @@ init_target_defconfig()
 
 	lblogo="../../../config/data/coreboot/libreboot.bmp"
 	printf "CONFIG_EDK2_BOOTSPLASH_FILE=\"%s\"\n" "$lblogo" \
-	    >> "$dummydef" || err "can't set rainbow on '$dummydef'";
-}
-
-init_target_cb_edk2_dummy()
-{
-	mrdir="$1"
-	edk2_config_hash="$2"
-
-	dummydir="$tmpdir/module/edk2_chromebook_$edk2_config_hash"
-	dummytcfg="$dummydir/target.cfg"
-	dummydef="$dummydir/config/libgfxinit_corebootfb"
-
-	[ -d "$dummydir" ] && return 0; # already created
-
-	x_ mkdir -p "${dummydef%/*}"
-	x_ cp "$mrdir" "$dummydef"
-
-	x_ init_edk2_dummy_tcfg "$edk2_config_hash" > "$dummytcfg" || \
-	    err "can't generate dummy edk2 coreboot target '$dummytcfg'"
-
-	(
-	x_ cd "$dummydir"
-	x_ ln -s ../../../data/edk2/ edk2_data
-	x_ ln -s ../../edk2/edk2_mrchromebox/ edk2_module
-	x_ ln -s ../../../submodule/edk2/edk2_mrchromebox/ edk2_submodule
-	) || err "can't create symlinks for '$dummydir'";
-
-	lblogo="../../../config/data/coreboot/libreboot.bmp"
-	printf "CONFIG_EDK2_BOOTSPLASH_FILE=\"%s\"\n" "$lblogo" \
-	    >> "$dummydef" || err "can't set rainbow on '$dummydef'";
-}
-
-init_edk2_dummy_tcfg()
-{
-	edk2_config_hash="$1"
-
-	printf "%s\n\n" "$mkgenstr"
-
-	printf "xarch=\"i386-elf\"\n\n"
-
-	printf "tree=\"mrchromebox\"\n"
-
-	# more like a fetch depend in this context
-	printf "build_depend=\"edk2/edk2_chromebook_%s\"\n" \
-	    "$edk2_config_hash"
-
-	printf "payload_edk2=\"edk2_chromebook_%s\"\n" "$edk2_config_hash";
-}
-
-init_edk2_target()
-{
-	edk2_config_hash="$1"
-	edk2tcfg="$tmpdir/edk2/edk2_chromebook_$edk2_config_hash/target.cfg"
-
-	x_ mkdir -p "${edk2tcfg%/target.cfg}"
-
-	x_ gen_edk2_mirror_cfg "$edk2_config_hash" > "$edk2tcfg" || \
-	    err "can't generate '$edk2tcfg'"
-}
-
-gen_edk2_mirror_cfg()
-{
-	edk2_config_hash="$1"
-
-	printf "%s\n\n" "$mkgenstr"
-
-	printf "tree=\"edk2_chromebook_$edk2_config_hash\"\n"
-	printf "srclink=\"edk2_mrchromebox\"\n\n"
-
-	printf "noconfig=\"y\"\n"
-	printf "release=\"n\"\n"
+	    >> "$mrcbcfg" || err "can't set rainbow on '$mrcbcfg'";
 }
 
 init_submodule_config()

@@ -1,0 +1,44 @@
+From d11e3488f9f0ce96075cbe97fd9fcc0f94af2447 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 5 Oct 2026 03:10:05 +0100
+Subject: [PATCH 1/1] edk2: copy local source each time
+
+for chromebooks, i'm adapting a new rule: edk2 and all
+its submodules will be handled as submodules of coreboot,
+again with a clean copy. payload_edk2 will not be used in
+lbmk, which means we get custom_*.rom in lbmk when building
+
+this is part of a new design: always rely on mrchromebox
+coreboot.git to build edk2 for every chromebook, to ensure
+that the current build configs and files are always used.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ payloads/external/edk2/Makefile | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/payloads/external/edk2/Makefile b/payloads/external/edk2/Makefile
+index 6b041327e5..df64c84dab 100644
+--- a/payloads/external/edk2/Makefile
++++ b/payloads/external/edk2/Makefile
+@@ -262,13 +262,15 @@ endif
+ all: UefiPayloadPkg
+ 
+ $(WORKSPACE):
+-	mkdir $(WORKSPACE)
++	mkdir -p $(WORKSPACE)
+ 
+ $(EDK2_PLATFORMS_PATH): $(WORKSPACE)
+ 	:
+ 
+ $(EDK2_PATH): $(WORKSPACE)
+-	:
++	rm -Rf $(WORKSPACE)/mrchromebox
++	mkdir -p $(WORKSPACE)
++	cp -a edk2_src $(WORKSPACE)/mrchromebox
+ 
+ logo: $(EDK2_PATH)
+ 	case "$(CONFIG_EDK2_BOOTSPLASH_FILE)" in \
+-- 
+2.47.3
+
