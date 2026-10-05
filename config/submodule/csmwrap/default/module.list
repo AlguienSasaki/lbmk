@@ -1,0 +1,7 @@
+freestnd-c-hdrs:freestnd-c-hdrs
+cc-runtime:cc-runtime
+picoefi:picoefi
+nanoprintf:nanoprintf
+seabios:seabios
+uACPI:uACPI
+flanterm:flanterm

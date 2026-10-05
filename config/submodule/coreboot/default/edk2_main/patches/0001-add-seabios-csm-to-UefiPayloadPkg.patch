@@ -1,0 +1,83 @@
+From f58f1ec90d56284345d97420da64fc137500fdf0 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Mon, 5 Oct 2026 19:31:27 +0100
+Subject: [PATCH 1/1] add seabios csm to UefiPayloadPkg
+
+with a csm, we can boot legacy operating systems that
+rely on bios.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ .../PlatformBootManagerLib/PlatformBootManager.c      | 11 +++++++++++
+ .../PlatformBootManagerLib/PlatformBootManagerLib.inf |  2 ++
+ UefiPayloadPkg/UefiPayloadPkg.dec                     |  4 ++++
+ UefiPayloadPkg/UefiPayloadPkg.fdf                     |  6 ++++++
+ 4 files changed, 23 insertions(+)
+
+diff --git a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+index b235733a47..9fd14f3301 100644
+--- a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
++++ b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+@@ -538,6 +538,17 @@ PlatformBootManagerAfterConsole (
+       );
+   }
+ 
++  //
++  // Register SeaBIOS CSM if the binary is present in the firmware volume.
++  //
++  if ((PcdGetPtr (PcdiCSMFile) != NULL) && (PcdGetPtr (PcdiCSMOptionName) != NULL)) {
++    PlatformRegisterFvBootOption (
++      (EFI_GUID *)PcdGetPtr (PcdiCSMFile),
++      (CHAR16 *)PcdGetPtr (PcdiCSMOptionName),
++      LOAD_OPTION_ACTIVE
++      );
++  }
++
+   if (FixedPcdGetBool (PcdBootManagerEscape)) {
+     if (FixedPcdGetBool (PcdSerialTerminalPrintEnabled)) {
+       Print (
+diff --git a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+index d1a15df444..fa900d8180 100644
+--- a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
++++ b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+@@ -86,3 +86,5 @@
+   gUefiPayloadPkgTokenSpaceGuid.PcdSerialTerminalPrintEnabled
+   gUefiPayloadPkgTokenSpaceGuid.PcdiPXEFile
+   gUefiPayloadPkgTokenSpaceGuid.PcdiPXEOptionName
++  gUefiPayloadPkgTokenSpaceGuid.PcdiCSMFile
++  gUefiPayloadPkgTokenSpaceGuid.PcdiCSMOptionName
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.dec b/UefiPayloadPkg/UefiPayloadPkg.dec
+index 7f9b4391e5..fc213a7986 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.dec
++++ b/UefiPayloadPkg/UefiPayloadPkg.dec
+@@ -116,6 +116,10 @@ gUefiPayloadPkgTokenSpaceGuid.PcdBootloaderParameter|0|UINT64|0x10000004
+ gUefiPayloadPkgTokenSpaceGuid.PcdiPXEFile|{ 0xC7, 0x53, 0x86, 0xB6, 0xA1, 0xEE, 0x35, 0x44, 0xA1, 0x99, 0xA4, 0x4F, 0x59, 0xE4, 0x47, 0x6C }|VOID*|0x10000032
+ gUefiPayloadPkgTokenSpaceGuid.PcdiPXEOptionName|L"iPXE Network Boot"|VOID*|0x10000033
+ 
++## FFS filename to find SeaBIOS CSM
++gUefiPayloadPkgTokenSpaceGuid.PcdiCSMFile|{ 0x8F, 0x74, 0x83, 0x2D, 0x73, 0x22, 0xB5, 0x43, 0xB3, 0x98, 0xB2, 0x37, 0x8A, 0x54, 0x0E, 0x1D }|VOID*|0x10000034
++gUefiPayloadPkgTokenSpaceGuid.PcdiCSMOptionName|L"SeaBIOS CSM Payload"|VOID*|0x10000035
++
+ ## Used to help reduce fragmentation in the EFI memory map
+ gUefiPayloadPkgTokenSpaceGuid.PcdMemoryTypeEfiACPIReclaimMemory|0x19|UINT32|0x10000012
+ gUefiPayloadPkgTokenSpaceGuid.PcdMemoryTypeEfiACPIMemoryNVS|0x04|UINT32|0x10000013
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.fdf b/UefiPayloadPkg/UefiPayloadPkg.fdf
+index 3577a4df13..db7b986f99 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.fdf
++++ b/UefiPayloadPkg/UefiPayloadPkg.fdf
+@@ -475,6 +475,12 @@ INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+ INF UefiPayloadPkg/CfrSetupMenuDxe/CfrSetupMenuDxe.inf
+ INF RuleOverride = UI MdeModulePkg/Application/UiApp/UiApp.inf
+ INF MdeModulePkg/Application/BootManagerMenuApp/BootManagerMenuApp.inf
++
++# BOFH hack: add seabios csm
++FILE FREEFORM = 2D83748F-2273-43B5-B398-B2378A540E1D {
++  SECTION PE32 = UefiPayloadPkg/seabios.efi
++}
++
+ #
+ # UEFI network modules
+ #
+-- 
+2.47.3
+
