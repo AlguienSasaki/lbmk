@@ -71,9 +71,6 @@ corebootpremake()
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
-	[ -n "$payload_edk2" ] && $if_not_dry_build \
-		prep_edk2_src
-
 	[ "$target" != "$tree" ] && \
 		x_ "$mk" download "$target"; :
 }
@@ -127,9 +124,6 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	$if_not_dry_build \
-		clean_edk2_src
-
 	[ -z "$defscan" ] && err "defscan empty" mkcorebootbin "$@"
 
 	for y in "$defscan"/*; do
@@ -140,34 +134,6 @@ mkcorebootbin()
 	done
 
 	$if_not_skip_build mkcoreboottar
-}
-
-prep_edk2_src()
-{
-	clean_edk2_src
-
-	[ -f "$(edk2path)" ] && \
-		return 0
-
-	x_ mkdir "$srcdir/payloads/external/edk2/workspace"
-
-	x_ cp -a "$(findpath "src/edk2/$payload_edk2/")" \
-	    "$srcdir/payloads/external/edk2/workspace/mrchromebox"
-}
-
-clean_edk2_src()
-{
-	# replicates coreboot's handling after edk2 build,
-	# which we patch out for copy. so now we clean it instead,
-	# after we successfully copied it out-of-tree.
-	# this enables clean re-building when modifying cb/edk2_mrchromebox
-	#
-	# so long as metadata in config/ doesn't change, and we
-	# have a build in elf/, then a re-build/re-download will
-	# not occur. this however means that we must set release=n
-	# for now. proper edk2 integration will come to lbmk soon(tm)
-	#
-	x_ rm -Rf "$srcdir/payloads/external/edk2/workspace"
 }
 
 mkcorebootbin_real()

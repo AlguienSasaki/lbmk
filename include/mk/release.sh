@@ -120,11 +120,9 @@ prep_release_test()
 	# is the most time-consuming part. we often want to test that
 	# earlier parts don't fail first.
 
-	progs="bios_extract biosutilities deguard docs \
-	    edk2 flashprog grub int libarchive \
-	    me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
-	    pico-serprog seabios stm32-vserprog u-boot uefitool \
-	    coreboot"
+	progs="bios_extract biosutilities deguard docs flashprog grub int \
+	    libarchive me_cleaner memtest86plus mxmdump pcsx-redux pico-sdk \
+	    pico-serprog seabios stm32-vserprog u-boot uefitool coreboot"
 
 	for ptest in $progs; do
 		for ftest in d f b; do
