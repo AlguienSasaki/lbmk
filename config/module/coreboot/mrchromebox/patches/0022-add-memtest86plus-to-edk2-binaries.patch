@@ -1,0 +1,27 @@
+From 93bb3754a2d30a07484ef302846b8fab6e873765 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 6 Oct 2026 17:02:59 +0100
+Subject: [PATCH 1/1] add memtest86plus to edk2 binaries
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ payloads/external/edk2/Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/payloads/external/edk2/Makefile b/payloads/external/edk2/Makefile
+index b99c2494db..aa8ea8cb30 100644
+--- a/payloads/external/edk2/Makefile
++++ b/payloads/external/edk2/Makefile
+@@ -270,6 +270,9 @@ $(EDK2_PATH): $(WORKSPACE)
+ 	echo "    Adding SeaBIOS CSM build to edk2"; \
+ 	cp $(top)/../../../elf/csmwrap/default/default/noconfig/csmwrap.efi \
+ 		$(EDK2_PATH)/UefiPayloadPkg/seabios.efi; \
++	echo "    Adding MemTest86+ EFI build to edk2"; \
++	cp $(top)/../../../elf/memtest86plus/default/default/noconfig/mt86plus \
++		$(EDK2_PATH)/UefiPayloadPkg/memtest.efi; \
+ 
+ logo: $(EDK2_PATH)
+ 	case "$(CONFIG_EDK2_BOOTSPLASH_FILE)" in \
+-- 
+2.47.3
+

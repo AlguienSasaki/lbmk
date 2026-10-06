@@ -1,0 +1,80 @@
+From 55cda42fea62da79e9f45251b08991d83b1a6ca0 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 6 Oct 2026 17:40:23 +0100
+Subject: [PATCH 1/1] add memtest86plus payload to UefiPayloadPkg
+
+build using lbmk and inserted at build time
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ .../PlatformBootManagerLib/PlatformBootManager.c       | 10 ++++++++++
+ .../PlatformBootManagerLib/PlatformBootManagerLib.inf  |  2 ++
+ UefiPayloadPkg/UefiPayloadPkg.dec                      |  4 ++++
+ UefiPayloadPkg/UefiPayloadPkg.fdf                      |  5 +++++
+ 4 files changed, 21 insertions(+)
+
+diff --git a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+index 9fd14f3301..556e68aa25 100644
+--- a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
++++ b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+@@ -549,6 +549,16 @@ PlatformBootManagerAfterConsole (
+       );
+   }
+ 
++  // Register MemTest86+ if the binary is present in the firmware volume.
++  //
++  if ((PcdGetPtr (PcdiMT86File) != NULL) && (PcdGetPtr (PcdiMT86OptionName) != NULL)) {
++    PlatformRegisterFvBootOption (
++      (EFI_GUID *)PcdGetPtr (PcdiMT86File),
++      (CHAR16 *)PcdGetPtr (PcdiMT86OptionName),
++      LOAD_OPTION_ACTIVE
++      );
++  }
++
+   if (FixedPcdGetBool (PcdBootManagerEscape)) {
+     if (FixedPcdGetBool (PcdSerialTerminalPrintEnabled)) {
+       Print (
+diff --git a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+index fa900d8180..b5aa3eeaec 100644
+--- a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
++++ b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+@@ -88,3 +88,5 @@
+   gUefiPayloadPkgTokenSpaceGuid.PcdiPXEOptionName
+   gUefiPayloadPkgTokenSpaceGuid.PcdiCSMFile
+   gUefiPayloadPkgTokenSpaceGuid.PcdiCSMOptionName
++  gUefiPayloadPkgTokenSpaceGuid.PcdiMT86File
++  gUefiPayloadPkgTokenSpaceGuid.PcdiMT86OptionName
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.dec b/UefiPayloadPkg/UefiPayloadPkg.dec
+index bc9949efab..40a9371304 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.dec
++++ b/UefiPayloadPkg/UefiPayloadPkg.dec
+@@ -120,6 +120,10 @@ gUefiPayloadPkgTokenSpaceGuid.PcdiPXEOptionName|L"iPXE Network Boot"|VOID*|0x100
+ gUefiPayloadPkgTokenSpaceGuid.PcdiCSMFile|{ 0x8F, 0x74, 0x83, 0x2D, 0x73, 0x22, 0xB5, 0x43, 0xB3, 0x98, 0xB2, 0x37, 0x8A, 0x54, 0x0E, 0x1D }|VOID*|0x10000034
+ gUefiPayloadPkgTokenSpaceGuid.PcdiCSMOptionName|L"SeaBIOS CSM Payload"|VOID*|0x10000035
+ 
++## FFS filename to find MemTest86+
++gUefiPayloadPkgTokenSpaceGuid.PcdiMT86File|{ 0x11, 0x29, 0xCE, 0x03, 0xA1, 0x04, 0xEA, 0x49, 0x90, 0x57, 0x67, 0x59, 0xEA, 0xF1, 0xBA, 0xDE }|VOID*|0x10000037
++gUefiPayloadPkgTokenSpaceGuid.PcdiMT86OptionName|L"MemTest86+ EFI Payload"|VOID*|0x10000038
++
+ ## Used to help reduce fragmentation in the EFI memory map
+ gUefiPayloadPkgTokenSpaceGuid.PcdMemoryTypeEfiACPIReclaimMemory|0x19|UINT32|0x10000012
+ gUefiPayloadPkgTokenSpaceGuid.PcdMemoryTypeEfiACPIMemoryNVS|0x04|UINT32|0x10000013
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.fdf b/UefiPayloadPkg/UefiPayloadPkg.fdf
+index db7b986f99..371db296ba 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.fdf
++++ b/UefiPayloadPkg/UefiPayloadPkg.fdf
+@@ -481,6 +481,11 @@ FILE FREEFORM = 2D83748F-2273-43B5-B398-B2378A540E1D {
+   SECTION PE32 = UefiPayloadPkg/seabios.efi
+ }
+ 
++# BOFH hack: add memtest86plus
++FILE FREEFORM = 03CE2911-04A1-49EA-9057-6759EAF1BADE {
++  SECTION PE32 = UefiPayloadPkg/memtest.efi
++}
++
+ #
+ # UEFI network modules
+ #
+-- 
+2.47.3
+

@@ -199,7 +199,11 @@ mkmrtarget()
 	x_ ln -s ../../../data/csmwrap/ csmwrap_data
 	x_ ln -s ../../../submodule/csmwrap/default/ csmwrap_submodule
 	x_ ln -s ../../csmwrap/default/ csmwrap_tree
-	) || err "can't make csmwrap symlinks"; :
+	x_ ln -s ../../../data/memtest86plus/ memtest86plus_data
+	x_ ln -s ../../../submodule/memtest86plus/default/ \
+	    memtest86plus_submodule
+	x_ ln -s ../../memtest86plus/default/ memtest86plus_tree
+	) || err "can't make csmwrap and memtest86plus symlinks"; :
 }
 
 mrtargetname()
