@@ -320,7 +320,7 @@ add_memtest86plus()
 {
 	[ "$payload_memtest" = "y" ] && \
 		cbfs "$tmprom" \
-		    "elf/memtest86plus/default/default/noconfig/memtest.bin" \
+		    "elf/memtest86plus/default/default/noconfig/mt86plus" \
 		    img/memtest; :
 }
 

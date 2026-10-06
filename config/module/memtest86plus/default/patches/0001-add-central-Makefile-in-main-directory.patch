@@ -29,13 +29,13 @@ index 0000000..59fcbef
 +# SPDX-FileCopyrightText: 2023 Leah Rowe <leah@libreboot.org>
 +
 +all:
-+	make -C build64
++	make -C build/x86_64
 +
 +clean:
-+	make -C build64 clean
++	make -C build/x86_64 clean
 +
 +distclean:
-+	make -C build64 clean
++	make -C build/x86_64 clean
 -- 
 2.39.2
 

@@ -15,7 +15,7 @@ index 59fcbef..ee451bc 100644
 @@ -9,3 +9,18 @@ clean:
  
  distclean:
- 	make -C build64 clean
+ 	make -C build/x86_64 clean
 +
 +oldconfig:
 +	:
