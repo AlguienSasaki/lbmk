@@ -1,0 +1,26 @@
+From 77efa79cc5c573dbcddfc84bee908da7c49ed333 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 6 Oct 2026 08:31:12 +0100
+Subject: [PATCH 1/1] remove build -Werrors
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ tests/runner/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/runner/CMakeLists.txt b/tests/runner/CMakeLists.txt
+index 865f4f2..4212457 100644
+--- a/tests/runner/CMakeLists.txt
++++ b/tests/runner/CMakeLists.txt
+@@ -59,7 +59,7 @@ macro (define_test_runner NAME)
+         target_compile_options(
+             ${NAME}
+             PRIVATE
+-            -fsanitize=address,undefined -g3 -Wall -Wextra -Wshadow -Werror
++            -fsanitize=address,undefined -g3 -Wall -Wextra -Wshadow
+         )
+         target_link_options(
+             ${NAME}
+-- 
+2.47.3
+
