@@ -1,0 +1,78 @@
+From 976e6635cfa49cf508b6ab6d7ddfcd68d642d17e Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Tue, 6 Oct 2026 08:25:58 +0100
+Subject: [PATCH 1/1] remove build -Werrors
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/Makefile.housekeeping | 16 ++++------------
+ src/Makefile.linux        |  3 ---
+ 2 files changed, 4 insertions(+), 15 deletions(-)
+
+diff --git a/src/Makefile.housekeeping b/src/Makefile.housekeeping
+index 7a965130e..780524ff7 100644
+--- a/src/Makefile.housekeeping
++++ b/src/Makefile.housekeeping
+@@ -495,14 +495,6 @@ LDFLAGS		+= $(WORKAROUND_LDFLAGS) $(EXTRA_LDFLAGS)
+ HOST_CFLAGS	+= -O2 -g
+ HOST_EFI_CFLAGS	+= -fshort-wchar
+ 
+-# Inhibit -Werror if NO_WERROR is specified on make command line
+-#
+-ifneq ($(NO_WERROR),1)
+-CFLAGS		+= -Werror
+-ASFLAGS		+= --fatal-warnings
+-HOST_CFLAGS	+= -Werror
+-endif
+-
+ # Enable per-item sections and section garbage collection.  Some older
+ # versions of gcc issue a spurious and uninhibitable warning if
+ # -ffunction-sections is used with -g, which would break our build
+@@ -1087,7 +1079,7 @@ CLEANUP		+= $(BIN)/NIC	# Doesn't match the $(BIN)/*.* pattern
+ 
+ # Analyse a target name (e.g. "bin/dfe538--prism2_pci.rom.tmp") and
+ # derive the variables:
+-# 
++#
+ # TGT_ELEMENTS : the elements of the target (e.g. "dfe538 prism2_pci")
+ # TGT_PREFIX   : the prefix type (e.g. "pcirom")
+ # TGT_DRIVERS  : the driver for each element (e.g. "rtl8139 prism2_pci")
+@@ -1346,7 +1338,7 @@ $(BIN)/%.zbin : $(BIN)/%.bin $(BIN)/%.zinfo $(ZBIN)
+ # Rules for each media format.  These are generated and placed in an
+ # external Makefile fragment.  We could do this via $(eval ...), but
+ # that would require make >= 3.80.
+-# 
++#
+ # Note that there's an alternative way to generate most .rom images:
+ # they can be copied from their 'master' ROM image using cp and
+ # reprocessed with makerom to add the PCI IDs and ident string.  The
+@@ -1355,10 +1347,10 @@ $(BIN)/%.zbin : $(BIN)/%.bin $(BIN)/%.zinfo $(ZBIN)
+ #   $(BIN)/dfe538%rom : $(BIN)/rtl8139%rom
+ #	cat $< $@
+ #	$(FINALISE_rom)
+-# 
++#
+ # You can derive the ROM/driver relationships using the variables
+ # DRIVER_<rom> and/or ROMS_<driver>.
+-# 
++#
+ # We don't currently do this, because (a) it would require generating
+ # yet more Makefile fragments (since you need a rule for each ROM in
+ # ROMS), and (b) the linker is so fast that it probably wouldn't make
+diff --git a/src/Makefile.linux b/src/Makefile.linux
+index 67afd4244..2a863c743 100644
+--- a/src/Makefile.linux
++++ b/src/Makefile.linux
+@@ -33,9 +33,6 @@ LINUX_CFLAGS	+= -Wall -W
+ ifneq ($(SYSROOT),)
+ LINUX_CFLAGS	+= --sysroot=$(SYSROOT)
+ endif
+-ifneq ($(NO_WERROR),1)
+-LINUX_CFLAGS	+= -Werror
+-endif
+ 
+ # Check for libslirp
+ #
+-- 
+2.47.3
+
