@@ -142,7 +142,7 @@ init_tree_cfg()
 	printf "bkup_url=\"%s\"\n\n" "$mr_repo"
 
 	printf "rev=\"%s\"\n\n" "$mr_commit"
-	printf "build_depend=\"\"\n\n" # don't build other payloads
+	printf "build_depend=\"csmwrap/default\"\n\n"
 
 	printf "tree=\"mrchromebox\"\n\n"
 
@@ -193,6 +193,13 @@ mkmrtarget()
 	    > "$tmpdir/module/$mrtarget/target.cfg" || \
 	    err "can't make target.cfg for target '$mrtarget'";
 	x_ init_target_defconfig "$mrdir" "$mrcbcfg"
+
+	(
+	x_ cd "$tmpdir/module/$mrtarget"
+	x_ ln -s ../../../data/csmwrap/ csmwrap_data
+	x_ ln -s ../../../submodule/csmwrap/default/ csmwrap_submodule
+	x_ ln -s ../../csmwrap/default/ csmwrap_tree
+	) || err "can't make csmwrap symlinks"; :
 }
 
 mrtargetname()
