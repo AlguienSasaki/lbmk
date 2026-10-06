@@ -111,12 +111,44 @@ check_coreboot_util()
 		x_ cp "$utilsrcdir/rmodtool" "$utilelfdir"; :
 }
 
-coreboot_pad_one_byte()
+cook_coreboot_build()
 {
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
 	$if_not_skip_build pad_one_byte "$srcdir/build/coreboot.rom"
+
+	[ "$skip_unlock" != "y" ] && $if_build $if_not_skip_build \
+		x_ unlock_rom; :
+}
+
+unlock_rom()
+{
+	# We will analyse IFD/ME inclusion and modify the ROM. it's more
+	# more reliable to do it here, on the full config (not defconfig)
+
+	is_ifd="$(grep "CONFIG_HAVE_IFD_BIN=y" "$srcdir/$cfgname" 2>/dev/null)"
+	[ -z "$is_ifd" ] && \
+		return 0; :
+
+	# for ifdtool platform quirks
+	ifd_chipset="$(grep "CONFIG_IFD_CHIPSET=" "$srcdir/$cfgname" \
+	    2>/dev/null | awk -F '"' '{print $2}')"
+	[ -n "$ifd_chipset" ] && \
+		ifd_chipset="-p $ifd_chipset"; :
+
+	is_me="$(grep "CONFIG_HAVE_ME_BIN=y" "$srcdir/$cfgname" 2>/dev/null)"
+
+	u_ifdtool="elf/coreboot/$tree/ifdtool"
+
+	# unlock IFD regions (set read-write)
+	x_ "$u_ifdtool" $ifd_chipset -u "$srcdir/build/coreboot.rom" \
+	    -O "$srcdir/build/coreboot.rom"
+
+	[ -z "$is_me" ] && return 0; :
+	# disable ME via HAP bit
+	x_ "$u_ifdtool" $ifd_chipset -M 1 "$srcdir/build/coreboot.rom" \
+	    -O "$srcdir/build/coreboot.rom"; :
 }
 
 mkcorebootbin()
