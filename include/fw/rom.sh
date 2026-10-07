@@ -96,6 +96,8 @@ cook_ifd_mac_address()
 	gbepath=""
 	MAINBOARDDIR="" # populated later
 	VARIANT_DIR="" # populated later
+	CONFIG_VARIANT_DIR=""
+	CONFIG_MAINBOARD_DIR=""
 
 	# variables inside defconfig
 	obj="$srcdir/build"
