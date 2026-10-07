@@ -167,7 +167,7 @@ xbmk_parent_set_env()
 
 	remkdir "$xbtmp" "$xbtmp/xbmkpath"
 
-	forx 'xbmk_set_%s' pyver mirror
+	xbmk_set_pyver
 }
 
 xbmk_parent_check_tmp()
