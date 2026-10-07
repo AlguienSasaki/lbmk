@@ -82,7 +82,8 @@ cook_coreboot_config()
 
 	x_ make -C "$srcdir" olddefconfig
 
-	[ "$XBMK_RELEASE" != "y" ] && $if_build $if_not_dry_build \
+	[ "$XBMK_RELEASE" != "y" ] && [ "$skip_gbe_cook" != "y" ] && \
+	    $if_build $if_not_dry_build \
 		x_ cook_ifd_mac_address; :
 }
 
