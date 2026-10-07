@@ -1,0 +1,31 @@
+From d7efdb095586c0031335a4554f8b5adcc569c788 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 8 Oct 2026 00:23:51 +0100
+Subject: [PATCH 1/1] site-local: add gop only if NO_GFX_INIT
+
+thank you to matt for telling me this much simpler
+method than the one i was previously using.
+
+we only need to add a gop driver inside edk2 if
+coreboot isn't doing anything.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ site-local/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/site-local/Kconfig b/site-local/Kconfig
+index 04677a0df4..9ed9bed2d7 100644
+--- a/site-local/Kconfig
++++ b/site-local/Kconfig
+@@ -80,6 +80,7 @@ config CBFS_SIZE
+ 	default 0x500000
+ 
+ config EDK2_GOP_FILE
++	depends on NO_GFX_INIT
+ 	default "3rdparty/blobs/soc/intel/bdw/IntelGopDriver.efi" if NORTHBRIDGE_INTEL_HASWELL || SOC_INTEL_BROADWELL
+ 	default "3rdparty/blobs/soc/intel/byt/IntelGopDriver.efi" if SOC_INTEL_BAYTRAIL
+ 	default "3rdparty/blobs/soc/intel/bsw/IntelGopDriver.efi" if SOC_INTEL_BRASWELL
+-- 
+2.47.3
+
