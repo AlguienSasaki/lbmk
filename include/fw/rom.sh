@@ -127,27 +127,49 @@ unlock_rom()
 	# We will analyse IFD/ME inclusion and modify the ROM. it's more
 	# more reliable to do it here, on the full config (not defconfig)
 
-	is_ifd="$(grep "CONFIG_HAVE_IFD_BIN=y" "$srcdir/$cfgname" 2>/dev/null)"
-	[ -z "$is_ifd" ] && \
+	eval "$(newvar ifd_quirk ifd_chipset is_ifd is_me)"
+
+	while read -r cfgread; do
+		[ -n "$ifd_chipset" ] || \
+		    [ "$cfgread" = "${cfgread#"CONFIG_IFD_CHIPSET="}" ] || \
+			ifd_chipset="$cfgread"; :
+
+		[ "$cfgread" = "CONFIG_HAVE_IFD_BIN=y" ] && \
+			is_ifd="y"; :
+		[ "$cfgread" = "CONFIG_HAVE_ME_BIN=y" ] && \
+			is_me="y"; :
+
+	done < "$srcdir/$cfgname" || \
+	    err "can't read '$srcdir/$cfgname'" unlock_rom "$@"
+
+	[ "$is_ifd" != "y" ] && \
 		return 0; :
 
-	# for ifdtool platform quirks
-	ifd_chipset="$(grep "CONFIG_IFD_CHIPSET=" "$srcdir/$cfgname" \
-	    2>/dev/null | awk -F '"' '{print $2}')"
-	[ -n "$ifd_chipset" ] && \
-		ifd_chipset="-p $ifd_chipset"; :
+	ifd_chipset="$(printf "%s\n" "$ifd_chipset" | awk -F '"' '{print $2}' \
+	    || err "couldn't run awk" unlock_rom "$@")" \
+	    || err "couldn't run awk" unlock_rom "$@"
 
-	is_me="$(grep "CONFIG_HAVE_ME_BIN=y" "$srcdir/$cfgname" 2>/dev/null)"
+	# for ifdtool platform quirks
+	for ifd_test in adl aplk cnl lbg dnv ehl glk icl ifd2 jsl mtl sklkbl \
+	    tgl ptl nvl wbg; do
+		[ "$ifd_test" = "$ifd_chipset" ] || \
+			continue; :
+
+		ifd_quirk="-p $ifd_test"
+		break
+	done
 
 	u_ifdtool="elf/coreboot/$tree/ifdtool"
 
 	# unlock IFD regions (set read-write)
-	x_ "$u_ifdtool" $ifd_chipset -u "$srcdir/build/coreboot.rom" \
+	x_ "$u_ifdtool" $ifd_quirk -u "$srcdir/build/coreboot.rom" \
 	    -O "$srcdir/build/coreboot.rom"
 
-	[ -z "$is_me" ] && return 0; :
+	[ "$is_me" != "y" ] && \
+		return 0; :
+
 	# disable ME via HAP bit
-	x_ "$u_ifdtool" $ifd_chipset -M 1 "$srcdir/build/coreboot.rom" \
+	x_ "$u_ifdtool" $ifd_quirk -M 1 "$srcdir/build/coreboot.rom" \
 	    -O "$srcdir/build/coreboot.rom"; :
 }
 
