@@ -116,10 +116,10 @@ cook_coreboot_build()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	$if_not_skip_build pad_one_byte "$srcdir/build/coreboot.rom"
-
 	[ "$skip_unlock" != "y" ] && $if_build $if_not_skip_build \
 		x_ unlock_rom; :
+
+	$if_not_skip_build pad_one_byte "$srcdir/build/coreboot.rom"
 }
 
 unlock_rom()
