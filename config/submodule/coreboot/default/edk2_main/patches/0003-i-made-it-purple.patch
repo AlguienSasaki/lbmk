@@ -1,0 +1,201 @@
+From 06ca85970bee40ef4b00ee7f82cb55b8ad0c4ea2 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Wed, 7 Oct 2026 17:48:56 +0100
+Subject: [PATCH 1/1] i made it purple
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ ArmPkg/Library/PlatformBootManagerLib/PlatformBm.c     |  2 +-
+ EmulatorPkg/Library/PlatformBmLib/PlatformBm.c         |  7 +++++--
+ .../Console/GraphicsConsoleDxe/GraphicsConsole.c       |  2 +-
+ .../Console/GraphicsOutputDxe/GraphicsOutput.c         |  6 +++---
+ MdeModulePkg/Universal/HiiDatabaseDxe/Font.c           |  2 +-
+ OvmfPkg/Library/PlatformBootManagerLib/BdsPlatform.c   |  2 +-
+ .../Library/PlatformBootManagerLibBhyve/BdsPlatform.c  |  2 +-
+ .../Library/PlatformBootManagerLibLight/PlatformBm.c   |  2 +-
+ .../Library/PlatformBootManagerLib/PlatformBm.c        |  2 +-
+ UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutput.c      |  6 +++---
+ .../PlatformBootManagerLib/PlatformBootManager.c       | 10 ++++++++--
+ 11 files changed, 26 insertions(+), 17 deletions(-)
+
+diff --git a/ArmPkg/Library/PlatformBootManagerLib/PlatformBm.c b/ArmPkg/Library/PlatformBootManagerLib/PlatformBm.c
+index ea093bb725..b2201141a3 100644
+--- a/ArmPkg/Library/PlatformBootManagerLib/PlatformBm.c
++++ b/ArmPkg/Library/PlatformBootManagerLib/PlatformBm.c
+@@ -1083,7 +1083,7 @@ PlatformBootManagerWaitCallback (
+ 
+   Timeout = PcdGet16 (PcdPlatformBootTimeOut);
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   Status = BootLogoUpdateProgress (
+diff --git a/EmulatorPkg/Library/PlatformBmLib/PlatformBm.c b/EmulatorPkg/Library/PlatformBmLib/PlatformBm.c
+index 774075d55a..cfd5bcfe40 100644
+--- a/EmulatorPkg/Library/PlatformBmLib/PlatformBm.c
++++ b/EmulatorPkg/Library/PlatformBmLib/PlatformBm.c
+@@ -301,7 +301,10 @@ PlatformBdsRegisterStaticBootOptions (
+   EFI_BOOT_MANAGER_LOAD_OPTION   BootOption;
+   UINTN                          OptionNumber;
+ 
+-  Black.Blue = Black.Green = Black.Red = Black.Reserved = 0;
++  Black.Blue = 0x22;
++  Black.Green = 0xb;
++  Black.Red = 0x28;
++  Black.Reserved = 0;
+   White.Blue = White.Green = White.Red = White.Reserved = 0xFF;
+ 
+   //
+@@ -426,7 +429,7 @@ PlatformBootManagerWaitCallback (
+ 
+   Timeout = PcdGet16 (PcdPlatformBootTimeOut);
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   BootLogoUpdateProgress (
+diff --git a/MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsole.c b/MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsole.c
+index 170dc7d002..3af2779384 100644
+--- a/MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsole.c
++++ b/MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsole.c
+@@ -66,7 +66,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL  mGraphicsEfiColors[16] = {
+   //
+   // B    G    R   reserved
+   //
+-  { 0x00, 0x00, 0x00, 0x00 },  // BLACK
++  { 0x22, 0x0b, 0x28, 0x00 },  // BLACK
+   { 0x98, 0x00, 0x00, 0x00 },  // LIGHTBLUE
+   { 0x00, 0x98, 0x00, 0x00 },  // LIGHGREEN
+   { 0x98, 0x98, 0x00, 0x00 },  // LIGHCYAN
+diff --git a/MdeModulePkg/Universal/Console/GraphicsOutputDxe/GraphicsOutput.c b/MdeModulePkg/Universal/Console/GraphicsOutputDxe/GraphicsOutput.c
+index 2259d6d4ea..71bc8a9ade 100644
+--- a/MdeModulePkg/Universal/Console/GraphicsOutputDxe/GraphicsOutput.c
++++ b/MdeModulePkg/Universal/Console/GraphicsOutputDxe/GraphicsOutput.c
+@@ -88,9 +88,9 @@ GraphicsOutputSetMode (
+ 
+   Private = GRAPHICS_OUTPUT_PRIVATE_FROM_THIS (This);
+ 
+-  Black.Blue     = 0;
+-  Black.Green    = 0;
+-  Black.Red      = 0;
++  Black.Blue     = 0x22;
++  Black.Green    = 0xb;
++  Black.Red      = 0x28;
+   Black.Reserved = 0;
+ 
+   Status = FrameBufferBlt (
+diff --git a/MdeModulePkg/Universal/HiiDatabaseDxe/Font.c b/MdeModulePkg/Universal/HiiDatabaseDxe/Font.c
+index 8a0b12f72f..fd1a883f48 100644
+--- a/MdeModulePkg/Universal/HiiDatabaseDxe/Font.c
++++ b/MdeModulePkg/Universal/HiiDatabaseDxe/Font.c
+@@ -13,7 +13,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL  mHiiEfiColors[16] = {
+   //
+   // B     G     R
+   //
+-  { 0x00, 0x00, 0x00, 0x00 },  // BLACK
++  { 0x22, 0x0b, 0x28, 0x00 },  // BLACK
+   { 0x98, 0x00, 0x00, 0x00 },  // BLUE
+   { 0x00, 0x98, 0x00, 0x00 },  // GREEN
+   { 0x98, 0x98, 0x00, 0x00 },  // CYAN
+diff --git a/OvmfPkg/Library/PlatformBootManagerLib/BdsPlatform.c b/OvmfPkg/Library/PlatformBootManagerLib/BdsPlatform.c
+index 3edb92fabc..1a111342d8 100644
+--- a/OvmfPkg/Library/PlatformBootManagerLib/BdsPlatform.c
++++ b/OvmfPkg/Library/PlatformBootManagerLib/BdsPlatform.c
+@@ -1844,7 +1844,7 @@ PlatformBootManagerWaitCallback (
+     return;
+   }
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   BootLogoUpdateProgress (
+diff --git a/OvmfPkg/Library/PlatformBootManagerLibBhyve/BdsPlatform.c b/OvmfPkg/Library/PlatformBootManagerLibBhyve/BdsPlatform.c
+index 4489eaae0b..a6c92310d7 100644
+--- a/OvmfPkg/Library/PlatformBootManagerLibBhyve/BdsPlatform.c
++++ b/OvmfPkg/Library/PlatformBootManagerLibBhyve/BdsPlatform.c
+@@ -1712,7 +1712,7 @@ PlatformBootManagerWaitCallback (
+ 
+   Timeout = PcdGet16 (PcdPlatformBootTimeOut);
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   BootLogoUpdateProgress (
+diff --git a/OvmfPkg/Library/PlatformBootManagerLibLight/PlatformBm.c b/OvmfPkg/Library/PlatformBootManagerLibLight/PlatformBm.c
+index 2c24c65489..1a81b58eab 100644
+--- a/OvmfPkg/Library/PlatformBootManagerLibLight/PlatformBm.c
++++ b/OvmfPkg/Library/PlatformBootManagerLibLight/PlatformBm.c
+@@ -1082,7 +1082,7 @@ PlatformBootManagerWaitCallback (
+     return;
+   }
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   BootLogoUpdateProgress (
+diff --git a/OvmfPkg/RiscVVirt/Library/PlatformBootManagerLib/PlatformBm.c b/OvmfPkg/RiscVVirt/Library/PlatformBootManagerLib/PlatformBm.c
+index 44fd21f74f..e5fbd3ba4c 100644
+--- a/OvmfPkg/RiscVVirt/Library/PlatformBootManagerLib/PlatformBm.c
++++ b/OvmfPkg/RiscVVirt/Library/PlatformBootManagerLib/PlatformBm.c
+@@ -1003,7 +1003,7 @@ PlatformBootManagerWaitCallback (
+     return;
+   }
+ 
+-  Black.Raw = 0x00000000;
++  Black.Raw = 0x00280b22;
+   White.Raw = 0x00FFFFFF;
+ 
+   BootLogoUpdateProgress (
+diff --git a/UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutput.c b/UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutput.c
+index 74c1ce12cf..a44d6c9c87 100644
+--- a/UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutput.c
++++ b/UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutput.c
+@@ -88,9 +88,9 @@ GraphicsOutputSetMode (
+ 
+   Private = GRAPHICS_OUTPUT_PRIVATE_FROM_THIS (This);
+ 
+-  Black.Blue     = 0;
+-  Black.Green    = 0;
+-  Black.Red      = 0;
++  Black.Blue     = 0x22;
++  Black.Green    = 0xb;
++  Black.Red      = 0x28;
+   Black.Reserved = 0;
+ 
+   Status = FrameBufferBlt (
+diff --git a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+index 556e68aa25..fdd7c3fab1 100644
+--- a/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
++++ b/UefiPayloadPkg/Library/PlatformBootManagerLib/PlatformBootManager.c
+@@ -279,7 +279,10 @@ BootManagerEntryNotifyCallback (
+   //
+   static UINTN UpdateProgressMessage = 1;
+ 
+-  Black.Blue = Black.Green = Black.Red = Black.Reserved = 0;
++  Black.Blue = 0x22;
++  Black.Green = 0xb;
++  Black.Red = 0x28;
++  Black.Reserved = 0;
+   White.Blue = White.Green = White.Red = White.Reserved = 0xFF;
+ 
+   if (UpdateProgressMessage) {
+@@ -470,7 +473,10 @@ PlatformBootManagerAfterConsole (
+   EFI_GRAPHICS_OUTPUT_BLT_PIXEL  White;
+   EFI_STATUS                     Status;
+ 
+-  Black.Blue = Black.Green = Black.Red = Black.Reserved = 0;
++  Black.Blue = 0x22;
++  Black.Green = 0xb;
++  Black.Red = 0x28;
++  Black.Reserved = 0;
+   White.Blue = White.Green = White.Red = White.Reserved = 0xFF;
+ 
+   //
+-- 
+2.47.3
+
