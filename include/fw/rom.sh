@@ -93,6 +93,8 @@ cook_coreboot_config()
 # NOTE: this function is not called during release builds
 cook_ifd_mac_address()
 {
+	cook_rval=0
+
 	gbepath=""
 	MAINBOARDDIR="" # populated later
 	VARIANT_DIR="" # populated later
@@ -102,6 +104,7 @@ cook_ifd_mac_address()
 	# variables inside defconfig
 	obj="$srcdir/build"
 
+	set +u +e
 	(
 	x_ cp "$srcdir/$cfgname" "$xbtmp/gbecfg"
 
@@ -138,7 +141,11 @@ cook_ifd_mac_address()
 
 	x_ mv "$xbtmp/gbecfg" "$srcdir/$cfgname"
 
-	) || err "can't cook GbE file" cook_ifd_mac_address "$@"; :
+	) || cook_rval=1; :
+
+	set -u -e
+	[ $cook_rval -gt 0 ] && \
+		err "can't cook GbE file" cook_ifd_mac_address "$@"; :
 }
 
 check_coreboot_util()
