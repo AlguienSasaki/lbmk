@@ -127,9 +127,7 @@ xbmk_child_set_env()
 	[ -z "${XBMK_CACHE+x}" ] && \
 		err "XBMK_CACHE unset on child" "set_env" "$@"
 	[ -z "${XBMK_THREADS+x}" ] && \
-		set_threads
-	[ -z "${XBMK_CACHE_MIRROR+x}" ] && \
-		xbmk_set_mirror; :
+		set_threads; :
 }
 
 xbmk_child_set_tmp()
@@ -330,22 +328,6 @@ pybin()
 	# Defer to normal command -v if not a venv
 	command -v "$1" 2>/dev/null || \
 		return 1; :
-}
-
-xbmk_set_mirror()
-{
-	# defines whether cache/clone/ (regular clones)
-	# or cache/mirror (--mirror clones) are used, per project
-
-	# to use cache/mirror/ do: export XBMK_CACHE_MIRROR="y"
-	# mirror/ stores a separate directory per repository, even per backup.
-	# it's slower, and uses more disk space, and some upstreams might not
-	# appreciate it, so it should only be used for development or archival
-
-	[ -z "${XBMK_CACHE_MIRROR+x}" ] && \
-		export XBMK_CACHE_MIRROR="n"
-	[ "$XBMK_CACHE_MIRROR" != "y" ] && \
-		export XBMK_CACHE_MIRROR="n"; :
 }
 
 git_init()

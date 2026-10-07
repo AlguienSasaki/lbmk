@@ -180,11 +180,7 @@ try_fetch_git()
 	# let's say it was https://foo.example.com/repo, then cached
 	# directories becomes cache/mirror/foo.example.com/repo
 
-	cached="clone"
-	[ "$XBMK_CACHE_MIRROR" = "y" ] && \
-		cached="mirror"
-	cached="$cached/${1#*://}"
-	cached="$XBMK_CACHE/$cached"
+	cached="$XBMK_CACHE/mirror/${1#*://}"
 
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
@@ -264,12 +260,8 @@ try_git()
 	x_ rm -Rf "$tmpgitcache"
 
 	if [ ! -d "$gitdest" ]; then
-		if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-			( x_ git clone --mirror "$2" "$tmpgitcache" ) || \
-			    return 1
-		else
-			( x_ git clone "$2" "$tmpgitcache" ) || return 1
-		fi
+		( x_ git clone --mirror "$2" "$tmpgitcache" ) || \
+		    return 1
 
 		x_ mkdir -p "${gitdest%/*}"
 		x_ mv "$tmpgitcache" "$gitdest"
@@ -279,12 +271,8 @@ try_git()
 	    [ "$forcepull" != "y" ] && \
 		return 0 # don't pull changes if target rev exists locally
 
-	if [ "$XBMK_CACHE_MIRROR" = "y" ]; then
-		( x_ git -C "$gitdest" fetch ) || :; :
-		( x_ git -C "$gitdest" update-server-info ) || :; :
-	else
-		( x_ git -C "$gitdest" pull --all ) || :; :
-	fi
+	( x_ git -C "$gitdest" fetch ) || :; :
+	( x_ git -C "$gitdest" update-server-info ) || :; :
 }
 
 bad_checksum()
