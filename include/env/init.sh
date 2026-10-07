@@ -223,6 +223,10 @@ xbmk_parent_set_export()
 		export XBMK_RELEASE="y"
 	[ "$XBMK_RELEASE" != "y" ] && \
 		export XBMK_RELEASE="n"; :
+
+	# change IFD MAC address at build time (GbE NVM)
+	[ -z "${XBMK_MAC+x}" ] && \
+		export XBMK_MAC="xx:xx:xx:xx:xx:xx"; :
 }
 
 set_threads()

@@ -81,6 +81,61 @@ cook_coreboot_config()
 	[ -f "$srcdir/$cfgname" ] || return 0
 
 	x_ make -C "$srcdir" olddefconfig
+
+	[ "$XBMK_RELEASE" != "y" ] && $if_build $if_not_dry_build \
+		x_ cook_ifd_mac_address; :
+}
+
+# cook CONFIG_GBE_BIN_PATH in config; copy the actual
+# one to a tmpfile and modify the MAC address. this
+# avoids the user having to change it post-build.
+# NOTE: this function is not called during release builds
+cook_ifd_mac_address()
+{
+	gbepath=""
+	MAINBOARDDIR="" # populated later
+	VARIANT_DIR="" # populated later
+
+	# variables inside defconfig
+	obj="$srcdir/build"
+
+	(
+	x_ cp "$srcdir/$cfgname" "$xbtmp/gbecfg"
+
+	x_ sed -i -e 's,$(,${,g' "$xbtmp/gbecfg"
+	x_ sed -i -e 's,),},g' "$xbtmp/gbecfg"
+
+	. "$xbtmp/gbecfg" 2>/dev/null || :; :
+
+	# again so we get proper strings
+	MAINBOARDDIR="$CONFIG_MAINBOARD_DIR"
+	VARIANT_DIR="$CONFIG_VARIANT_DIR"
+	. "$xbtmp/gbecfg" || \
+	    err "can't read defconfig" cook_ifd_mac_address "$@"; :
+
+	[ -z "$CONFIG_GBE_BIN_PATH" ] && \
+		exit 0; # GBE file not specified
+
+	gbepath="$(findpath "$srcdir/$CONFIG_GBE_BIN_PATH" || \
+	    err "can't resolve path" cook_ifd_mac_address "$@")" || \
+	    err "can't resolve path" cook_ifd_mac_address "$@"; :
+
+	x_ cp "$gbepath" "$xbtmp/gbecook.bin"
+
+	x_ make -C util/nvmutil clean 1>/dev/null 2>/dev/null
+	x_ make -C util/nvmutil 1>/dev/null 2>/dev/null
+	x_ util/nvmutil/nvmutil "$xbtmp/gbecook.bin" setmac "$XBMK_MAC"
+
+	x_ grep -v CONFIG_GBE_BIN_PATH "$srcdir/$cfgname" > "$xbtmp/gbecfg" \
+	    || err "can't strip GBE" cook_ifd_mac_address "$@"; :
+
+	printf "CONFIG_GBE_BIN_PATH=\"%s\"\n" "$xbtmp/gbecook.bin" \
+	    >> "$xbtmp/gbecfg" || \
+	    err "can't cook GbE path" cook_ifd_mac_address "$@"; :
+
+	x_ mv "$xbtmp/gbecfg" "$srcdir/$cfgname"
+
+	) || err "can't cook GbE file" cook_ifd_mac_address "$@"; :
 }
 
 check_coreboot_util()
