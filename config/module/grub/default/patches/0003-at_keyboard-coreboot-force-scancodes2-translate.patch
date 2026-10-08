@@ -1,7 +1,7 @@
-From 58726beb8168b43a0127a4dd005bfc7f28625fe8 Mon Sep 17 00:00:00 2001
+From a0b28991f11fcbdc0f3b95105376ac40de283dfc Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Mon, 30 Oct 2023 22:19:21 +0000
-Subject: [PATCH 03/11] at_keyboard coreboot: force scancodes2+translate
+Subject: [PATCH 1/1] at_keyboard coreboot: force scancodes2+translate
 
 Scan code set 2 with translation should be assumed in
 every case, as the default starting position.
@@ -11,20 +11,26 @@ such as set 2 without translation, or set 1 without
 translation from set 2; it also detects no-mode and
 assumes mode 1, on really old keyboards.
 
-The current behaviour has been retained, for everything
-except GRUB_MACHINE_COREBOOT; for the latter, scan code
-set 2 with translation is hardcoded, and forced in code.
+However, this patch changes it for all targets. We now
+hardcode scancode set 2 with translation enabled. This
+is the most compatible setting, used by literally
+everything. GRUB likes to overengineer everything, but
+this patch simplifies everything instead.
 
 This is required to make keyboard initialisation work on
 the MEC5035 EC used by the Dell Latitude E6400, when
 running GRUB as a coreboot payload on that laptop. The
 EC reports scancode set 2 with translation when probed,
-but actually only outputs scancode set 1.
+but actually only outputs scancode set 1. The MEC5035
+emulates a normal keyboard controller, and there are
+likely to be other buggy implementations out in the
+wild. GRUB's probing of scan modes assumes that these
+controllers are all reliable - they absolutely aren't.
 
 Since GRUB is attempting to use it without translation,
-and since the machine reports set 2 with translation,
+and since the MEC5035 reports set 2 with translation,
 but only ever outputs set 1 scancodes, this results in
-wrong keypresses for every key.
+wrong keypresses for every key on Dell Latitude E6400.
 
 This fix fixed that, by forcing set 2 with translation,
 treating it as set 1, but only on coreboot. This is the
@@ -32,76 +38,134 @@ same behaviour used in GNU+Linux systems and SeaBIOS.
 With this change, GRUB keyboard initialisation now works
 just fine on those machines.
 
-This has *also* been tested on other coreboot machines
-running GRUB; several HP EliteBooks, ThinkPads and
-Dell Precision T1650. All seems to work just fine.
+This version of the patch sets it universally, not just
+on coreboot, because GRUB is now also being adapted to
+EDK2 for Libreboot release purposes.
 
 Signed-off-by: Leah Rowe <leah@libreboot.org>
 ---
- grub-core/term/at_keyboard.c | 20 ++++++++++++++++++--
- 1 file changed, 18 insertions(+), 2 deletions(-)
+ grub-core/term/at_keyboard.c | 82 ++----------------------------------
+ 1 file changed, 4 insertions(+), 78 deletions(-)
 
 diff --git a/grub-core/term/at_keyboard.c b/grub-core/term/at_keyboard.c
-index f8a129eb7..8207225c2 100644
+index f8a129eb7..262efd1b0 100644
 --- a/grub-core/term/at_keyboard.c
 +++ b/grub-core/term/at_keyboard.c
-@@ -138,6 +138,7 @@ write_mode (int mode)
+@@ -97,24 +97,6 @@ grub_keyboard_controller_write (grub_uint8_t c)
+   grub_outb (c, KEYBOARD_REG_DATA);
+ }
+ 
+-#if defined (GRUB_MACHINE_MIPS_LOONGSON) || defined (GRUB_MACHINE_QEMU) || defined (GRUB_MACHINE_COREBOOT) || defined (GRUB_MACHINE_MIPS_QEMU_MIPS)
+-#define USE_SCANCODE_SET 1
+-#else
+-#define USE_SCANCODE_SET 0
+-#endif
+-
+-#if !USE_SCANCODE_SET
+-
+-static grub_uint8_t
+-grub_keyboard_controller_read (void)
+-{
+-  at_command (KEYBOARD_COMMAND_READ);
+-  keyboard_controller_wait_until_ready ();
+-  return grub_inb (KEYBOARD_REG_DATA);
+-}
+-
+-#endif
+-
+ static int
+ write_mode (int mode)
+ {
+@@ -138,67 +120,19 @@ write_mode (int mode)
    return (i != GRUB_AT_TRIES);
  }
  
-+#if !defined (GRUB_MACHINE_COREBOOT)
- static int
- query_mode (void)
- {
-@@ -161,10 +162,12 @@ query_mode (void)
-     return 3;
-   return 0;
- }
-+#endif
- 
+-static int
+-query_mode (void)
+-{
+-  grub_uint8_t ret;
+-  int e;
+-
+-  e = write_mode (0);
+-  if (!e)
+-    return 0;
+-
+-  do {
+-    keyboard_controller_wait_until_ready ();
+-    ret = grub_inb (KEYBOARD_REG_DATA);
+-  } while (ret == GRUB_AT_ACK);
+-  /* QEMU translates the set even in no-translate mode.  */
+-  if (ret == 0x43 || ret == 1)
+-    return 1;
+-  if (ret == 0x41 || ret == 2)
+-    return 2;
+-  if (ret == 0x3f || ret == 3)
+-    return 3;
+-  return 0;
+-}
+-
  static void
  set_scancodes (void)
  {
-+#if !defined (GRUB_MACHINE_COREBOOT)
-   /* You must have visited computer museum. Keyboard without scancode set
-      knowledge. Assume XT. */
-   if (!grub_keyboard_orig_set)
-@@ -173,20 +176,33 @@ set_scancodes (void)
-       ps2_state.current_set = 1;
-       return;
-     }
-+#endif
- 
- #if !USE_SCANCODE_SET
-   ps2_state.current_set = 1;
-   return;
+-  /* You must have visited computer museum. Keyboard without scancode set
+-     knowledge. Assume XT. */
+-  if (!grub_keyboard_orig_set)
+-    {
+-      grub_dprintf ("atkeyb", "No sets support assumed\n");
+-      ps2_state.current_set = 1;
+-      return;
+-    }
+-
+-#if !USE_SCANCODE_SET
+-  ps2_state.current_set = 1;
+-  return;
 -#else
-+#endif
- 
-+#if defined (GRUB_MACHINE_COREBOOT)
+-
 +  /* enable translation */
-+  grub_keyboard_controller_write (grub_keyboard_controller_orig
-+				  & ~KEYBOARD_AT_DISABLE);
-+#else
-+  /* if not coreboot, disable translation and try mode 2 first, before 1 */
    grub_keyboard_controller_write (grub_keyboard_controller_orig
- 				  & ~KEYBOARD_AT_TRANSLATE
+-				  & ~KEYBOARD_AT_TRANSLATE
  				  & ~KEYBOARD_AT_DISABLE);
-+#endif
  
    keyboard_controller_wait_until_ready ();
    grub_outb (KEYBOARD_COMMAND_ENABLE, KEYBOARD_REG_DATA);
 -
    write_mode (2);
+-  ps2_state.current_set = query_mode ();
+-  grub_dprintf ("atkeyb", "returned set %d\n", ps2_state.current_set);
+-  if (ps2_state.current_set == 2)
+-    return;
+-
+-  write_mode (1);
+-  ps2_state.current_set = query_mode ();
+-  grub_dprintf ("atkeyb", "returned set %d\n", ps2_state.current_set);
+-  if (ps2_state.current_set == 1)
+-    return;
+-  grub_dprintf ("atkeyb", "no supported scancode set found\n");
+-#endif
 +
-+#if defined (GRUB_MACHINE_COREBOOT)
 +  /* mode 2 with translation, so make grub treat as set 1 */
 +  ps2_state.current_set = 1;
-+#else
-+  /* if not coreboot, translation isn't set; test 2 and fall back to 1 */
-   ps2_state.current_set = query_mode ();
-   grub_dprintf ("atkeyb", "returned set %d\n", ps2_state.current_set);
-   if (ps2_state.current_set == 2)
+ }
+ 
+ static void
+@@ -267,17 +201,9 @@ grub_keyboard_controller_init (void)
+       keyboard_controller_wait_until_ready ();
+       grub_inb (KEYBOARD_REG_DATA);
+     }
+-#if defined (GRUB_MACHINE_MIPS_LOONGSON) || defined (GRUB_MACHINE_MIPS_QEMU_MIPS)
+-  grub_keyboard_controller_orig = 0;
+-  grub_keyboard_orig_set = 2;
+-#elif defined (GRUB_MACHINE_QEMU) || defined (GRUB_MACHINE_COREBOOT)
+   /* *BSD relies on those settings.  */
+   grub_keyboard_controller_orig = KEYBOARD_AT_TRANSLATE;
+   grub_keyboard_orig_set = 2;
+-#else
+-  grub_keyboard_controller_orig = grub_keyboard_controller_read ();
+-  grub_keyboard_orig_set = query_mode ();
+-#endif
+   set_scancodes ();
+   keyboard_controller_led (ps2_state.led_status);
+ }
 -- 
 2.47.3
 
