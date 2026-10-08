@@ -39,18 +39,32 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	eval "`newvar grub_modules grub_install_modules`"
-
-	. "$grubdata/module/$tree" || \
-	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"
+	grub_modules=""
 
 	x_ rm -f "$srcdir/grub.elf"
 
+	x_ find "$srcdir" -type f -name "*.mod" > "$xbtmp/gmod.list" || \
+	    err "can't make glist '$srcdir'" mkpayload_grub "$@"; :
+
+	while read -r gmod; do
+
+		gmodname="${gmod##*/}"
+		gmodname="${gmodname%.mod}"
+
+		grub_modules="$grub_modules $gmodname"
+
+	done < "$xbtmp/gmod.list" || \
+	    err "can't read gmod.list '$srcdir'" mkpayload_grub "$@"; :
+
+	garch="i386-coreboot"
+	[ "$srcdir" = "src/grub/efi" ] && \
+		garch="x86_64-efi"
+
 	x_ "$srcdir/grub-mkstandalone" \
 	    --grub-mkimage="$srcdir/grub-mkimage" \
-	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
-	    --fonts= --themes= --locales=  --modules="$grub_modules" \
-	    --install-modules="$grub_install_modules" \
+	    -O $garch -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
+	    --fonts= --themes= --locales=  --modules="${grub_modules# }" \
+	    --install-modules="" \
 	    "/boot/grub/grub_default.cfg=$grubdata/cfg/$tree.config" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
