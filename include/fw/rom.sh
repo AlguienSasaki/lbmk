@@ -55,28 +55,6 @@ mkpayload_grub()
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 
-mkefipayload_grub()
-{
-	x_ rm -f "$srcdir/grub.efi"
-
-	(
-	x_ cd "$srcdir"
-
-	gmodules=""
-
-	x_ find . -type f -name "*.mod" > "$xbtmp/modlist" || err "!modlist"
-	while read -r gmod; do
-		gmodules="$gmodules ${gmod%.mod}"
-	done < "$xbtmp/modlist" || err "!r modlist"
-
-	x_ ./grub-mkimage -d "./grub-core" \
-	    -o "grub.efi" -O x86_64-efi \
-	    -c "$xbmkpwd/$grubdata/cfg/$tree.config" \
-	    -p "/do-not-care-because-its-set-in-config" $gmodules || \
-	    err "can't build efi grub" mkefipayload_grub "$@"; :
-	) || err "can't build efi grub payload" mkefipayload_grub "$@"; :
-}
-
 corebootpreconfig()
 {
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
