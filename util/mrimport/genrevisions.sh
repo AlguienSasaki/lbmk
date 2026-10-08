@@ -203,6 +203,9 @@ mkmrtarget()
 	x_ ln -s ../../../submodule/memtest86plus/default/ \
 	    memtest86plus_submodule
 	x_ ln -s ../../memtest86plus/default/ memtest86plus_tree
+	x_ ln -s ../../../data/grub/ grub_data
+	x_ ln -s ../../../submodule/grub/efi/ grub_submodule
+	x_ ln -s ../../grub/efi/ grub_tree
 	) || err "can't make csmwrap and memtest86plus symlinks"; :
 }
 
