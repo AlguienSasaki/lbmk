@@ -1,0 +1,35 @@
+From ef89abb7b1bb270d250208e91d3fd559ec364a2d Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 8 Oct 2026 01:57:28 +0100
+Subject: [PATCH 1/1] i made it purple
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ system/screen.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/system/screen.c b/system/screen.c
+index 5401914..76d2737 100644
+--- a/system/screen.c
++++ b/system/screen.c
+@@ -37,7 +37,7 @@ typedef struct {
+ static const rgb_value_t vga_pallete[16] = {
+     //  R    G    B
+     {   0,   0,   0 },  // BLACK
+-    {   0,   0, 170 },  // BLUE
++    {  40,  11,  34 },  // LIBREBOOT (formerly BLUE)
+     {   0, 170,   0 },  // GREEN
+     {   0, 170, 170 },  // CYAN
+     { 170,   0,   0 },  // RED
+@@ -45,7 +45,7 @@ static const rgb_value_t vga_pallete[16] = {
+     { 170,  85,   0 },  // YELLOW (brown really)
+     { 170, 170, 170 },  // WHITE
+     {  85,  85,  85 },  // BOLD+BLACK
+-    {  85,  85, 255 },  // BOLD+BLUE
++    { 125,  96, 119 },  // BOLD+LIBREBOOT (formerly BOLD+BLUE)
+     {  85, 255,  85 },  // BOLD+GREEN
+     {  85, 255, 255 },  // BOLD+CYAN
+     { 255,  85,  85 },  // BOLD+RED
+-- 
+2.47.3
+
