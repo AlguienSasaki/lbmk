@@ -1,0 +1,31 @@
+From 62f241265ef4af3e0baefb7eb10d0efb6fe76ac4 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sun, 5 Nov 2023 17:25:20 +0000
+Subject: [PATCH 07/21] don't print empty error messages
+
+this is part two of the quest to kill the prefix
+error message. after i disabled prefix-related
+messages, it still printed "error: ." on screen.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ grub-core/kern/err.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/grub-core/kern/err.c b/grub-core/kern/err.c
+index f4c1b42c5..12a28f072 100644
+--- a/grub-core/kern/err.c
++++ b/grub-core/kern/err.c
+@@ -130,7 +130,8 @@ grub_print_error (void)
+     {
+       if (grub_errno != GRUB_ERR_NONE)
+ 	{
+-	  grub_err_printf (_("error: %s.\n"), grub_errmsg);
++          if (grub_strlen(grub_errmsg) > 0)
++	    grub_err_printf (_("error: %s.\n"), grub_errmsg);
+ 	  grub_err_printed_errors++;
+ 	}
+     }
+-- 
+2.47.3
+
