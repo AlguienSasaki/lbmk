@@ -142,7 +142,7 @@ init_tree_cfg()
 	printf "bkup_url=\"%s\"\n\n" "$mr_repo"
 
 	printf "rev=\"%s\"\n\n" "$mr_commit"
-	printf "build_depend=\"csmwrap/default\"\n\n"
+	printf "build_depend=\"csmwrap/default memtest86plus/default grub/efi\"\n\n"
 
 	printf "tree=\"mrchromebox\"\n\n"
 
