@@ -17,7 +17,7 @@ index aa8ea8cb30..cb41ff6e68 100644
  	cp $(top)/../../../elf/memtest86plus/default/default/noconfig/mt86plus \
  		$(EDK2_PATH)/UefiPayloadPkg/memtest.efi; \
 +	echo "    Adding GRUB EFI build to edk2"; \
-+	cp $(top)/../../../elf/grub/efi/efi/noconfig/grub.elf \
++	cp $(top)/../../../elf/grub/default/efi/noconfig/grub.elf \
 +		$(EDK2_PATH)/UefiPayloadPkg/grub.efi; \
  
  logo: $(EDK2_PATH)
