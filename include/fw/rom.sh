@@ -67,6 +67,8 @@ mkpayload_grub()
 	    --install-modules="" \
 	    "/boot/grub/grub_default.cfg=$grubdata/grub.cfg" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
+
+	x_ printf "%s\n" "$grub_modules" > "$srcdir/grub.modlist"
 }
 
 corebootpreconfig()
