@@ -65,7 +65,7 @@ mkpayload_grub()
 	    -O $garch -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
 	    --fonts= --themes= --locales=  --modules="${grub_modules# }" \
 	    --install-modules="" \
-	    "/boot/grub/grub_default.cfg=$grubdata/cfg/$tree.config" \
+	    "/boot/grub/grub_default.cfg=$grubdata/grub.cfg" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 }
 

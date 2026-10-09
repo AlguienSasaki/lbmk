@@ -1,7 +1,7 @@
-From 868c276214905e5be2af4e72279023225898e425 Mon Sep 17 00:00:00 2001
+From c7b6d14ea4364097261cee13989e049b04c09511 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 19 Nov 2022 16:30:24 +0000
-Subject: [PATCH 02/11] say the name libreboot, in the grub menu
+Subject: [PATCH 02/21] say the name libreboot, in the grub menu
 
 ---
  grub-core/normal/main.c | 2 +-
