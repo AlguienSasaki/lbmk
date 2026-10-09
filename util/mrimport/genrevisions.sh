@@ -146,6 +146,8 @@ init_tree_cfg()
 
 	printf "tree=\"mrchromebox\"\n\n"
 
+	printf "grubtree=\"efi\"\n\n"
+
 	printf "release=\"n\"\n"
 }
 
@@ -245,6 +247,8 @@ init_target_cfg()
 
 	printf "tree=\"mrchromebox\"\n"
 	printf "xarch=\"i386-elf\"\n\n"
+
+	printf "grubtree=\"efi\"\n\n"
 
 	[ -n "$ifdplatform" ] && \
 		printf "IFD_platform=\"%s\"\n" "$ifdplatform";

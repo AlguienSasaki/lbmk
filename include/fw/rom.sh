@@ -371,7 +371,13 @@ add_edk2()
 		return 1 # text mode incompatible
 
 	cbfs "$tmprom" "$(edk2path)" "fallback/payload"
-	cprom edk2
+
+	# we add GRUB EFI to EDK2 images, as a boot option, so now
+	# we will use the GRUB logic; in this context, GRUB is already
+	# inserted and the logic to insert the coreboot one is skipped
+
+	# actual rom will begin with edk2_, not grub_, due to srcdir path
+	mk_coreboot_with grub
 }
 
 edk2path()
@@ -441,12 +447,19 @@ add_grub()
 		cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 		    "background.png" raw; :
 
+	[ "$grubtree" != "efi" ] && \
+		x_ add_grub_coreboot_payloads; :
+
+	fx_ "cprom_grub" x_ find "$grubdata/keymap" -type f -name "*.gkb"
+}
+
+# only used on payload_grub (not edk2 grub)
+add_grub_coreboot_payloads()
+{
 	cbfs "$tmprom" "elf/grub/$grubtree/$grubtree/noconfig/grub.elf" \
 	    "fallback/payload"
 
 	add_memtest86plus
-
-	fx_ "cprom_grub" x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
 add_memtest86plus()
@@ -475,7 +488,11 @@ add_uboot()
 
 cprom_grub()
 {
-	cprom grub "$@"
+	if [ "$grubtree" = "efi" ]; then
+		cprom edk2 "$@" # grub efi inside edk2 payload
+	else
+		cprom grub "$@"
+	fi
 }
 
 cprom()
