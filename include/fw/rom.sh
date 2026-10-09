@@ -455,16 +455,8 @@ add_grub()
 	[ "$initmode" = "normal" ] && \
 		return 1 # no gfxinit required by grub ("normal" not allowed)
 
-	[ -z "$grub_scan_disk" ] && \
-		grub_scan_disk="nvme ahci ata"
 	[ -z "$grubtree" ] && \
 		grubtree="default"
-
-	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$xbtmp/tmpcfg" || \
-	    err "$target: !insert scandisk" "add_grub" "$@"
-
-	cbfs "$tmprom" "$xbtmp/tmpcfg" scan.cfg raw
 
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 		cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
