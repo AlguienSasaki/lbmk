@@ -307,7 +307,7 @@ mkcorebootbin_real()
 
 	prep_tmprom
 
-	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
+	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg" 1>/dev/null; then
 		cprom custom
 		prep_tmprom
 		return 0
