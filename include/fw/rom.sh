@@ -307,14 +307,33 @@ mkcorebootbin_real()
 
 	prep_tmprom
 
+	if grep "CONFIG_PAYLOAD_EDK2=y" "$buildcfg" 1>/dev/null || \
+	    [ "$tree" = "mrchromebox" ]; then
+		edk2_inserted="y" # skip inserting later on
+	fi		
+
 	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg" 1>/dev/null; then
-		cprom custom
-		prep_tmprom
-		return 0
+		if [ "$edk2_inserted" != "y" ]; then
+
+			# if edk2_inserted=y, then we're building edk2,
+			# for which lbmk does further processing. we
+			# will otherwise lean entirely on coreboot.git
+
+			cprom custom
+			prep_tmprom
+			return 0
+		fi
 	fi
 
-	[ -n "$payload_edk2" ] && \
+	if [ -n "$payload_edk2" ] || [ "$edk2_inserted" = "y" ]; then
 		mk_coreboot_with edk2
+	fi
+
+	[ "$edk2_inserted" = "y" ] && \
+		return 0 # don't bulk-insert other payloads as in this context,
+			# the coreboot build system was used for the payload;
+			# so ends our post-processing on coreboot edk2 builds
+
 	[ "$payload_seabios" = "y" ] && \
 		mk_coreboot_with seabios
 	[ "$payload_grub" = "y" ] && \
@@ -370,7 +389,11 @@ add_edk2()
 	[ "$initmode" = "libgfxinit" ] && [ "$displaymode" != "corebootfb" ] && \
 		return 1 # text mode incompatible
 
-	cbfs "$tmprom" "$(edk2path)" "fallback/payload"
+	# edk2_inserted=y is set when the target specified edk2 in defconfig,
+	# we still want to e.g. add multiple grub keymaps in different roms
+
+	[ "$edk2_inserted" != "y" ] && \
+		cbfs "$tmprom" "$(edk2path)" "fallback/payload"
 
 	# we add GRUB EFI to EDK2 images, as a boot option, so now
 	# we will use the GRUB logic; in this context, GRUB is already
