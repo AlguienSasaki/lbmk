@@ -57,7 +57,7 @@ mkpayload_grub()
 	    err "can't read gmod.list '$srcdir'" mkpayload_grub "$@"; :
 
 	garch="i386-coreboot"
-	[ "$srcdir" = "src/grub/efi" ] && \
+	[ "$target" = "efi" ] && \
 		garch="x86_64-efi"
 
 	x_ "$srcdir/grub-mkstandalone" \
