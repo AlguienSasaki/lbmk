@@ -18,8 +18,10 @@ xbmk_init()
 	basetmp="$xbmkpwd/xbmkwd"
 	sha512sum="$xbmkpwd/util/sbase/sha512sum"
 
-	export XBMK_CACHE="$xbmkpwd/cache"
 	export PATH="$PATH"
+
+	export PWD="$xbmkpwd"
+	export XBMK_CACHE="$xbmkpwd/cache"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
@@ -32,7 +34,6 @@ xbmk_init()
 	[ "$(id -u)" = "0" ] && \
 		err "this command as root is not permitted" "xbmk_init" "$@"
 
-	export PWD="$xbmkpwd"
 	x_ mkdir -p "$basetmp" "cache"
 
 	eval "$(printf "get_ver set_env set_threads git_init xchild\n" | awk \
