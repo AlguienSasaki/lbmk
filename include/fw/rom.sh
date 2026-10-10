@@ -155,7 +155,7 @@ cook_ifd_mac_address()
 
 	x_ make -C util/nvmutil clean 1>/dev/null 2>/dev/null
 	x_ make -C util/nvmutil 1>/dev/null 2>/dev/null
-	x_ util/nvmutil/nvmutil "$xbtmp/gbecook.bin" setmac "$XBMK_MAC"
+	x_ util/nvmutil/nvmutil "$xbtmp/gbecook.bin" setmac $XBMK_MAC
 
 	x_ grep -v CONFIG_GBE_BIN_PATH "$srcdir/$cfgname" > "$xbtmp/gbecfg" \
 	    || err "can't strip GBE" cook_ifd_mac_address "$@"; :
