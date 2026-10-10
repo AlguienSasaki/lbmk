@@ -1,6 +1,6 @@
 pkg_add="xbps-install"
 pkglist=" \
-acpica-utils autogen base-devel bison cmake \
+xxd acpica-utils autogen base-devel bison cmake \
 cross-arm-none-eabi-binutils cross-arm-none-eabi-gcc \
 cross-arm-none-eabi-libstdc++ cross-arm-none-eabi-newlib curl \
 dejavu-fonts-ttf device-mapper doxygen e2fsprogs flex font-unifont-bdf \

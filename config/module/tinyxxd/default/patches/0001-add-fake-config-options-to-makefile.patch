@@ -1,0 +1,46 @@
+From df7a14549a962dca968cd4047a9771507354304d Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 10 Oct 2026 18:00:57 +0100
+Subject: [PATCH 1/1] add fake config options to makefile
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ Makefile | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 29759f0..be471aa 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,4 @@
+-.PHONY: clean fmt install linux_aarch64 profile test uninstall win64
++.PHONY: oldconfig menuconfig savedefconfig olddefconfig nconfig distclean clean fmt install linux_aarch64 profile test uninstall win64
+ 
+ OPTFLAGS ?= -O2 -finline-functions
+ WARNFLAGS ?= -Wall -Wextra -Wpedantic -Wshadow -Werror -Wfatal-errors -Wconversion -Wsign-conversion -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-c11-extensions
+@@ -204,3 +204,22 @@ uninstall:
+ 
+ clean:
+ 	rm -r -f -- *.bin *.dat *.hex *.o *.pkl *.tar.gz callgrind.out.* og_xxd* output_* tinyxxd tinyxxd.exe tinyxxd-aarch64 tinyxxd_* tinyxxd_debug xxd testfiles/xxd.c xxd_*
++
++clean: distclean
++	:
++
++menuconfig:
++	:
++
++oldconfig:
++	:
++
++savedefconfig:
++	:
++
++olddefconfig:
++	:
++
++nconfig:
++	:
++
+-- 
+2.47.3
+
