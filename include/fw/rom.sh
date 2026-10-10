@@ -39,18 +39,17 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	grub_modules=""
+	eval "`newvar grub_modules mod_blacklist`"
 
 	x_ rm -f "$srcdir/grub.elf"
 
 	x_ find "$srcdir" -type f -name "*.mod" > "$xbtmp/gmod.list" || \
 	    err "can't make glist '$srcdir'" mkpayload_grub "$@"; :
 
-	mod_blacklist="part_acorn part_sunpc part_sun part_dvh part_plan \
-	    part_apple part_amiga part_sunpc appleldr \
-	    minix2_be minix2 minix3 minix_be minix3_be minix \
-	    reiserfs jfs sfs affs hfspluscomp hfsplus hfs bfs macbless \
-	    xnu_uuid xnu xnu_uuid_test gdb hello"
+	while read -r gmod; do
+		mod_blacklist="$mod_blacklist $gmod"
+	done < "$grubdata/blacklist.mod" || \
+	    err "can't read blacklist '$srcdir'" mkpayload_grub "$@"; :
 
 	while read -r gmod; do
 
