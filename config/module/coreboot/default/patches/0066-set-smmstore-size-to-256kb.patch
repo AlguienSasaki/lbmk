@@ -1,0 +1,40 @@
+From 5aecc37f39be67bd7ee0d694e58c713499431141 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Sat, 10 Oct 2026 02:34:00 +0100
+Subject: [PATCH 1/1] set smmstore size to 256kb
+
+my edk2 build with grub+memtest+seabios+ipxe *just*
+by about 230kb does not fit into some targets with 4mb
+of flash.
+
+we really don't need the full 512kb smmstore area. 256kb
+ought to be good enough and will fit 4mb.
+
+on bigger flash, i want the smaller smmstore area so that
+i can more easily fit linux (i plan to integrate a stripped
+down version of zfsbootmenu in libreboot)
+
+i'm not bothering with this patch on chromebooks, because
+they all have flash sizes big enough.
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ src/drivers/smmstore/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/drivers/smmstore/Kconfig b/src/drivers/smmstore/Kconfig
+index b5d9a90fd8..bff292d9da 100644
+--- a/src/drivers/smmstore/Kconfig
++++ b/src/drivers/smmstore/Kconfig
+@@ -14,7 +14,7 @@ if SMMSTORE
+ 
+ config SMMSTORE_SIZE
+ 	hex "size of the SMMSTORE FMAP region"
+-	default 0x80000
++	default 0x40000
+ 	help
+ 	  Sets the size of the default SMMSTORE FMAP region.
+ 	  If using an UEFI payload, note that UEFI specifies at least 64K.
+-- 
+2.47.3
+

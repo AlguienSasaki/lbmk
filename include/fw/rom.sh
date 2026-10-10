@@ -39,20 +39,45 @@ copyps1bios()
 
 mkpayload_grub()
 {
-	eval "`newvar grub_modules grub_install_modules`"
-
-	. "$grubdata/module/$tree" || \
-	    err "Can't read '$grubdata/module/$tree'" "mkpayload_grub" "$@"
+	eval "`newvar grub_modules mod_blacklist`"
 
 	x_ rm -f "$srcdir/grub.elf"
 
+	x_ find "$srcdir" -type f -name "*.mod" > "$xbtmp/gmod.list" || \
+	    err "can't make glist '$srcdir'" mkpayload_grub "$@"; :
+
+	while read -r gmod; do
+		mod_blacklist="$mod_blacklist $gmod"
+	done < "$grubdata/blacklist.mod" || \
+	    err "can't read blacklist '$srcdir'" mkpayload_grub "$@"; :
+
+	while read -r gmod; do
+
+		gmodname="${gmod##*/}"
+		gmodname=" ${gmodname%.mod}"
+
+		for skip_gmod in $mod_blacklist; do
+			[ "$skip_gmod" = "${gmodname# }" ] && gmodname=""; :
+		done
+
+		grub_modules="$grub_modules$gmodname"
+
+	done < "$xbtmp/gmod.list" || \
+	    err "can't read gmod.list '$srcdir'" mkpayload_grub "$@"; :
+
+	garch="i386-coreboot"
+	[ "$target" = "efi" ] && \
+		garch="x86_64-efi"
+
 	x_ "$srcdir/grub-mkstandalone" \
 	    --grub-mkimage="$srcdir/grub-mkimage" \
-	    -O i386-coreboot -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
-	    --fonts= --themes= --locales=  --modules="$grub_modules" \
-	    --install-modules="$grub_install_modules" \
-	    "/boot/grub/grub_default.cfg=$grubdata/cfg/$tree.config" \
+	    -O $garch -o "$srcdir/grub.elf" -d "${srcdir}/grub-core/" \
+	    --fonts= --themes= --locales=  --modules="${grub_modules# }" \
+	    --install-modules="" \
+	    "/boot/grub/grub_default.cfg=$grubdata/grub.cfg" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
+
+	x_ printf "%s\n" "$grub_modules" > "$srcdir/grub.modlist" || :; :
 }
 
 corebootpreconfig()
@@ -293,14 +318,33 @@ mkcorebootbin_real()
 
 	prep_tmprom
 
-	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg"; then
-		cprom custom
-		prep_tmprom
-		return 0
+	if grep "CONFIG_PAYLOAD_EDK2=y" "$buildcfg" 1>/dev/null || \
+	    [ "$tree" = "mrchromebox" ]; then
+		edk2_inserted="y" # skip inserting later on
+	fi		
+
+	if ! grep "CONFIG_PAYLOAD_NONE=y" "$buildcfg" 1>/dev/null; then
+		if [ "$edk2_inserted" != "y" ]; then
+
+			# if edk2_inserted=y, then we're building edk2,
+			# for which lbmk does further processing. we
+			# will otherwise lean entirely on coreboot.git
+
+			cprom custom
+			prep_tmprom
+			return 0
+		fi
 	fi
 
-	[ -n "$payload_edk2" ] && \
+	if [ -n "$payload_edk2" ] || [ "$edk2_inserted" = "y" ]; then
 		mk_coreboot_with edk2
+	fi
+
+	[ "$edk2_inserted" = "y" ] && \
+		return 0 # don't bulk-insert other payloads as in this context,
+			# the coreboot build system was used for the payload;
+			# so ends our post-processing on coreboot edk2 builds
+
 	[ "$payload_seabios" = "y" ] && \
 		mk_coreboot_with seabios
 	[ "$payload_grub" = "y" ] && \
@@ -356,8 +400,18 @@ add_edk2()
 	[ "$initmode" = "libgfxinit" ] && [ "$displaymode" != "corebootfb" ] && \
 		return 1 # text mode incompatible
 
-	cbfs "$tmprom" "$(edk2path)" "fallback/payload"
-	cprom edk2
+	# edk2_inserted=y is set when the target specified edk2 in defconfig,
+	# we still want to e.g. add multiple grub keymaps in different roms
+
+	[ "$edk2_inserted" != "y" ] && \
+		cbfs "$tmprom" "$(edk2path)" "fallback/payload"
+
+	# we add GRUB EFI to EDK2 images, as a boot option, so now
+	# we will use the GRUB logic; in this context, GRUB is already
+	# inserted and the logic to insert the coreboot one is skipped
+
+	# actual rom will begin with edk2_, not grub_, due to srcdir path
+	mk_coreboot_with grub
 }
 
 edk2path()
@@ -412,27 +466,26 @@ add_grub()
 	[ "$initmode" = "normal" ] && \
 		return 1 # no gfxinit required by grub ("normal" not allowed)
 
-	[ -z "$grub_scan_disk" ] && \
-		grub_scan_disk="nvme ahci ata"
 	[ -z "$grubtree" ] && \
 		grubtree="default"
-
-	printf "set grub_scan_disk=\"%s\"\n" "$grub_scan_disk" \
-	    > "$xbtmp/tmpcfg" || \
-	    err "$target: !insert scandisk" "add_grub" "$@"
-
-	cbfs "$tmprom" "$xbtmp/tmpcfg" scan.cfg raw
 
 	[ "$initmode" != "normal" ] && [ "$displaymode" != "txtmode" ] && \
 		cbfs "$tmprom" "$grubdata/background/background1280x800.png" \
 		    "background.png" raw; :
 
+	[ "$grubtree" != "efi" ] && \
+		x_ add_grub_coreboot_payloads; :
+
+	fx_ "cprom_grub" x_ find "$grubdata/keymap" -type f -name "*.gkb"
+}
+
+# only used on payload_grub (not edk2 grub)
+add_grub_coreboot_payloads()
+{
 	cbfs "$tmprom" "elf/grub/$grubtree/$grubtree/noconfig/grub.elf" \
 	    "fallback/payload"
 
 	add_memtest86plus
-
-	fx_ "cprom_grub" x_ find "$grubdata/keymap" -type f -name "*.gkb"
 }
 
 add_memtest86plus()
@@ -461,7 +514,11 @@ add_uboot()
 
 cprom_grub()
 {
-	cprom grub "$@"
+	if [ "$grubtree" = "efi" ]; then
+		cprom edk2 "$@" # grub efi inside edk2 payload
+	else
+		cprom grub "$@"
+	fi
 }
 
 cprom()

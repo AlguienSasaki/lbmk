@@ -17,7 +17,7 @@ index 538b316d..e02bf3d2 100644
  
      // Write to screen.
 -    printf("SeaBIOS (version %s)\n", VERSION);
-+    printf("Libreboot 26.01 Magnanimous Max (SeaBIOS menu): https://libreboot.org/\n");
++    printf("Libreboot 26.10 Ominous Olive (SeaBIOS menu): https://libreboot.org/\n");
      display_uuid();
  }
  

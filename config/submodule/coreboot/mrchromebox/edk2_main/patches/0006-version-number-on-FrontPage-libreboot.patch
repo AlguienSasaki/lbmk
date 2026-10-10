@@ -1,0 +1,35 @@
+From 39a39a9f7b98528d04928f6f88fe1fdcacc17b88 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Fri, 9 Oct 2026 16:41:34 +0100
+Subject: [PATCH 1/1] version number on FrontPage (libreboot)
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ MdeModulePkg/Application/UiApp/FrontPage.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/MdeModulePkg/Application/UiApp/FrontPage.c b/MdeModulePkg/Application/UiApp/FrontPage.c
+index 8765020180..b09a914a29 100644
+--- a/MdeModulePkg/Application/UiApp/FrontPage.c
++++ b/MdeModulePkg/Application/UiApp/FrontPage.c
+@@ -830,14 +830,11 @@ UpdateFrontPageBannerStrings (
+       GetOptionalStringByIndex ((CHAR8 *)((UINT8 *)Type0Record + Type0Record->Hdr.Length), VersionIdx, &FwVersion);
+       GetOptionalStringByIndex ((CHAR8 *)((UINT8 *)Type0Record + Type0Record->Hdr.Length), DateIdx, &FwDate);
+ 
+-      // Allocate buffer: " FW: " (5) + version + " " (1) + date + null
+-      BufferSize = (5 + StrLen (FwVersion) + 1 + StrLen (FwDate) + 1) * sizeof (CHAR16);
++      // Allocate buffer: " Libreboot 26.10 Ominous Olive - https://libreboot.org/" + null
++      BufferSize = 56 * sizeof (CHAR16);
+       TmpBuffer  = AllocateZeroPool (BufferSize);
+ 
+-      StrCatS (TmpBuffer, BufferSize / sizeof (CHAR16), L" FW: ");
+-      StrCatS (TmpBuffer, BufferSize / sizeof (CHAR16), FwVersion);
+-      StrCatS (TmpBuffer, BufferSize / sizeof (CHAR16), L" ");
+-      StrCatS (TmpBuffer, BufferSize / sizeof (CHAR16), FwDate);
++      StrCatS (TmpBuffer, BufferSize / sizeof (CHAR16), L" Libreboot 26.10 Ominous Olive - https://libreboot.org/");
+ 
+       HiiSetString (gFrontPagePrivate.HiiHandle, STRING_TOKEN (STR_FRONT_PAGE_BIOS_VERSION), TmpBuffer, NULL);
+ 
+-- 
+2.47.3
+

@@ -1,0 +1,39 @@
+From 1794d30e199a787935f36276f11b64c06fe81472 Mon Sep 17 00:00:00 2001
+From: Leah Rowe <leah@libreboot.org>
+Date: Thu, 8 Oct 2026 23:33:34 +0100
+Subject: [PATCH 1/1] increase size allowances so grub can fit in FV
+
+Signed-off-by: Leah Rowe <leah@libreboot.org>
+---
+ UefiPayloadPkg/UefiPayloadPkg.fdf | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/UefiPayloadPkg/UefiPayloadPkg.fdf b/UefiPayloadPkg/UefiPayloadPkg.fdf
+index c0a5154763..97d2863e28 100644
+--- a/UefiPayloadPkg/UefiPayloadPkg.fdf
++++ b/UefiPayloadPkg/UefiPayloadPkg.fdf
+@@ -14,15 +14,15 @@ DEFINE FD_BASE       = 0x00800000
+ DEFINE FD_BLOCK_SIZE = 0x00001000
+ 
+ !if $(TARGET) == "NOOPT"
+-DEFINE FD_SIZE     = 0x00850000
+-DEFINE NUM_BLOCKS  = 0x850
++DEFINE FD_SIZE     = 0x00C50000
++DEFINE NUM_BLOCKS  = 0xC50
+ !else
+ !if $(TARGET) == DEBUG
+-DEFINE FD_SIZE     = 0x0B00000
+-DEFINE NUM_BLOCKS  = 0xB00
++DEFINE FD_SIZE     = 0x0F00000
++DEFINE NUM_BLOCKS  = 0xF00
+ !else
+-DEFINE FD_SIZE     = 0x0A00000
+-DEFINE NUM_BLOCKS  = 0xA00
++DEFINE FD_SIZE     = 0x0E00000
++DEFINE NUM_BLOCKS  = 0xE00
+ !endif
+ !endif
+ 
+-- 
+2.47.3
+

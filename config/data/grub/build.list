@@ -1,1 +1,3 @@
 grub.elf
+grub.modlist
+grub-core/moddep.lst

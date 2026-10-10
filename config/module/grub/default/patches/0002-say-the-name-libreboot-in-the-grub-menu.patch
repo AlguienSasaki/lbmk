@@ -1,7 +1,7 @@
-From 868c276214905e5be2af4e72279023225898e425 Mon Sep 17 00:00:00 2001
+From c7b6d14ea4364097261cee13989e049b04c09511 Mon Sep 17 00:00:00 2001
 From: Leah Rowe <leah@libreboot.org>
 Date: Sat, 19 Nov 2022 16:30:24 +0000
-Subject: [PATCH 02/11] say the name libreboot, in the grub menu
+Subject: [PATCH 02/21] say the name libreboot, in the grub menu
 
 ---
  grub-core/normal/main.c | 2 +-
@@ -16,7 +16,7 @@ index de9a3f961..c7a172a8b 100644
    grub_term_cls (term);
  
 -  msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
-+  msg_formatted = grub_xasprintf (_("Libreboot 26.01 Magnanimous Max (GRUB menu): https://libreboot.org/"));
++  msg_formatted = grub_xasprintf (_("Libreboot 26.10 Ominous Olive (GRUB menu): https://libreboot.org/"));
    if (!msg_formatted)
      return;
  
