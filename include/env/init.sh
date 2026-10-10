@@ -19,6 +19,7 @@ xbmk_init()
 	sha512sum="$xbmkpwd/util/sbase/sha512sum"
 
 	export XBMK_CACHE="$xbmkpwd/cache"
+	export PATH="$PATH"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
