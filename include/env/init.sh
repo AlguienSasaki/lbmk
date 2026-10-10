@@ -18,6 +18,8 @@ xbmk_init()
 	basetmp="$xbmkpwd/xbmkwd"
 	sha512sum="$xbmkpwd/util/sbase/sha512sum"
 
+	export XBMK_CACHE="$xbmkpwd/cache"
+
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
 		exit 0
@@ -203,8 +205,6 @@ xbmk_parent_check_tmp()
 
 xbmk_parent_set_export()
 {
-	export XBMK_CACHE="$xbmkpwd/cache"
-
 	[ -e "$XBMK_CACHE" ] && [ ! -d "$XBMK_CACHE" ] && \
 		err "cachedir '$XBMK_CACHE' is a file" \
 		    "xbmk_parent_set_export" "$@"
