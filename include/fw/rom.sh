@@ -46,12 +46,22 @@ mkpayload_grub()
 	x_ find "$srcdir" -type f -name "*.mod" > "$xbtmp/gmod.list" || \
 	    err "can't make glist '$srcdir'" mkpayload_grub "$@"; :
 
+	mod_blacklist="part_acorn part_sunpc part_sun part_dvh part_plan \
+	    part_apple part_amiga part_sunpc appleldr \
+	    minix2_be minix2 minix3 minix_be minix3_be minix \
+	    reiserfs jfs sfs affs hfspluscomp hfsplus hfs bfs macbless \
+	    xnu_uuid xnu xnu_uuid_test gdb hello"
+
 	while read -r gmod; do
 
 		gmodname="${gmod##*/}"
-		gmodname="${gmodname%.mod}"
+		gmodname=" ${gmodname%.mod}"
 
-		grub_modules="$grub_modules $gmodname"
+		for skip_gmod in $mod_blacklist; do
+			[ "$skip_gmod" = "${gmodname# }" ] && gmodname=""; :
+		done
+
+		grub_modules="$grub_modules$gmodname"
 
 	done < "$xbtmp/gmod.list" || \
 	    err "can't read gmod.list '$srcdir'" mkpayload_grub "$@"; :
@@ -68,7 +78,7 @@ mkpayload_grub()
 	    "/boot/grub/grub_default.cfg=$grubdata/grub.cfg" \
 	    "/boot/grub/grub.cfg=$grubdata/memdisk.cfg"; :
 
-	x_ printf "%s\n" "$grub_modules" > "$srcdir/grub.modlist"
+	x_ printf "%s\n" "$grub_modules" > "$srcdir/grub.modlist" || :; :
 }
 
 corebootpreconfig()
