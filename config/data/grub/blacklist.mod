@@ -31,12 +31,10 @@ part_sun
 part_sunpc
 part_sunpc
 pci
-progress
 reiserfs
 serial
 sfs
 spkmodem
-testspeed
 tftp
 tga
 ufs1
