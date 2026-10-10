@@ -22,6 +22,7 @@ xbmk_init()
 
 	export PWD="$xbmkpwd"
 	export XBMK_CACHE="$xbmkpwd/cache"
+	export TMPDIR="${TMPDIR-}"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
