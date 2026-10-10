@@ -22,13 +22,6 @@ xbmk_init()
 	export PWD="$xbmkpwd"
 
 	export XBMK_CACHE="$xbmkpwd/cache"
-	export TMPDIR="${TMPDIR-}"
-	export XBMK_RELEASE="${XBMK_RELEASE-}"
-	export XBMK_MAC="${XBMK_MAC-}"
-	export XBMK_THREADS="${XBMK_THREADS-}"
-	export LOCALVERSION="${LOCALVERSION-}"
-	export GIT_COMMITTER_DATE="${GIT_COMMITTER_DATE-}"
-	export GIT_AUTHOR_DATE="${GIT_AUTHOR_DATE-}"
 
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
