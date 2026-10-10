@@ -2,7 +2,7 @@
 
 pkg_add="dnf ${reinstall}install"
 pkglist=" \
-xxd acpica-tools arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-gcc-cs-c++ \
+acpica-tools arm-none-eabi-binutils arm-none-eabi-gcc arm-none-eabi-gcc-cs-c++ \
 arm-none-eabi-gcc arm-none-eabi-newlib autogen bison bzip2 cmake curl \
 dejavu-fonts-all device-mapper doxygen e2fsprogs flex freetype-devel fuse \
 gawk gcc gcc-gnat gdb gettext gettext-devel git gprbuild help2man \

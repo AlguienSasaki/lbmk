@@ -168,22 +168,6 @@ xbmk_parent_set_env()
 	remkdir "$xbtmp" "$xbtmp/xbmkpath"
 
 	xbmk_set_pyver
-
-	# xxd used by several projects but it's not a standard utility.
-	# it's used for e.g. creating C header file from seabios in csmwrap.
-	# because its spec is implementation-defined, we control the latter.
-
-	x_ build_sbase 1>/dev/null 2>/dev/null || \
-	    err "could not build sbase (needed for sha512sum)"
-	x_ ./mk -b tinyxxd 1>/dev/null 2>/dev/null || \
-	    err "could not build tinyxxd"
-
-	(
-	x_ mkdir -p "$xbtmp/xbmkpath"
-	x_ cd "$xbtmp/xbmkpath"
-	x_ ln -s "$xbmkpwd/elf/tinyxxd/default/default/noconfig/tinyxxd" xxd
-	x_ ln -s "$xbmkpwd/elf/tinyxxd/default/default/noconfig/tinyxxd" tinyxxd
-	) || err "can't set up utils in '$xbtmp/xbmkpath'"; :
 }
 
 xbmk_parent_check_tmp()

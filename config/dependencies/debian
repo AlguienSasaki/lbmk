@@ -2,7 +2,7 @@
 
 pkg_add="apt-get install --no-install-recommends $reinstall"
 pkglist=" \
-xxd acpica-tools autoconf autogen automake autopoint autotools-dev bc \
+acpica-tools autoconf autogen automake autopoint autotools-dev bc \
 binutils-arm-none-eabi bison build-essential cmake curl device-tree-compiler \
 doxygen e2fsprogs efitools flex fonts-unifont gawk gcc-arm-linux-gnueabi \
 gcc-arm-none-eabi gdb gettext git gnat help2man innoextract libdevmapper-dev \
