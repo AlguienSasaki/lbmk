@@ -20,7 +20,7 @@ delete_old_project_files()
 	    "$configdir/$tree" "$mdir" || \
 		x_ rm -Rf "src/$project/$tree" "elf/$project/$tree"
 
-	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mhash/$project$tree"
+	x_ cp "$xbtmp/new.hash" "$xbmkcache/mhash/$project$tree"
 
 	if [ -z "$target" ] || [ "$target" = "$tree" ]; then
 		return 0
@@ -30,7 +30,7 @@ delete_old_project_files()
 	same_pjhash mtghash "$target" badtghash "$configdir/$target" \
 	    || x_ rm -Rf "elf/$project/$tree/$target"
 
-	x_ cp "$xbtmp/new.hash" "$XBMK_CACHE/mtghash/$project$target"
+	x_ cp "$xbtmp/new.hash" "$xbmkcache/mtghash/$project$target"
 }
 
 same_pjhash()
@@ -43,12 +43,12 @@ same_pjhash()
 
 	shift 3
 
-	x_ mkdir -p "$XBMK_CACHE/$hashdir"
+	x_ mkdir -p "$xbmkcache/$hashdir"
 
-	if [ -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
-		read -r old_hash < "$XBMK_CACHE/$hashdir/$project$hashname" \
+	if [ -f "$xbmkcache/$hashdir/$project$hashname" ]; then
+		read -r old_hash < "$xbmkcache/$hashdir/$project$hashname" \
 		    || err \
-		    "$hashdir: err '$XBMK_CACHE/$hashdir/$project$hashname'" \
+		    "$hashdir: err '$xbmkcache/$hashdir/$project$hashname'" \
 		    same_pjhash "$hashdir" "$hashname" "$badhashvar" "$@"
 	fi
 
@@ -63,7 +63,7 @@ same_pjhash()
 	    "same_pjhash" "$hashdir" "$hashname" "$badhashvar" "$@"
 
 	if [ "$hash" != "$old_hash" ] || \
-	    [ ! -f "$XBMK_CACHE/$hashdir/$project$hashname" ]; then
+	    [ ! -f "$xbmkcache/$hashdir/$project$hashname" ]; then
 		eval "$badhashvar=\"y\""
 	fi
 
@@ -180,7 +180,7 @@ try_fetch_git()
 	# let's say it was https://foo.example.com/repo, then cached
 	# directories becomes cache/mirror/foo.example.com/repo
 
-	cached="$XBMK_CACHE/mirror/${1#*://}"
+	cached="$xbmkcache/mirror/${1#*://}"
 
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
 
@@ -206,7 +206,7 @@ try_fetch_copy()
 try_fetch_curl()
 {
 	cached="file/$6"
-	cached="$XBMK_CACHE/$cached"
+	cached="$xbmkcache/$cached"
 
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
 

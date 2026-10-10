@@ -21,8 +21,6 @@ xbmk_init()
 	export PATH="$PATH"
 	export PWD="$xbmkpwd"
 
-	export XBMK_CACHE="$xbmkpwd/cache"
-
 	if [ $# -gt 0 ] && [ "$1" = "dependencies" ]; then
 		x_ xbmkpkg "$@"
 		exit 0
@@ -128,8 +126,8 @@ xbmk_child_set_env()
 {
 	xbmk_child_set_tmp
 
-	[ -z "${XBMK_CACHE+x}" ] && \
-		err "XBMK_CACHE unset on child" "set_env" "$@"
+	[ -z "${xbmkcache+x}" ] && \
+		err "xbmkcache unset on child" "set_env" "$@"
 	[ -z "${XBMK_THREADS+x}" ] && \
 		set_threads; :
 }
@@ -207,8 +205,8 @@ xbmk_parent_check_tmp()
 
 xbmk_parent_set_export()
 {
-	[ -e "$XBMK_CACHE" ] && [ ! -d "$XBMK_CACHE" ] && \
-		err "cachedir '$XBMK_CACHE' is a file" \
+	[ -e "$xbmkcache" ] && [ ! -d "$xbmkcache" ] && \
+		err "cachedir '$xbmkcache' is a file" \
 		    "xbmk_parent_set_export" "$@"
 
 	export PATH="$xbtmp/xbmkpath:$PATH"

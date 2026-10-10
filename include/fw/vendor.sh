@@ -102,14 +102,14 @@ fetch()
 	dl_bkup="$3"
 	dlsum="$4"
 	_dest="${5##*../}"
-	_pre_dest="$XBMK_CACHE/tmpdl/check"
+	_pre_dest="$xbmkcache/tmpdl/check"
 	dlop="$6"
 	binsum="$7"
 
 	[ -z "$binsum" ] && err "binsum is empty (no checksum)" "fetch" "$@"
 
-	_dl="$XBMK_CACHE/file/$dlsum" # internet file to extract from e.g. .exe
-	_dl_bin="$XBMK_CACHE/file/$binsum" # extracted file e.g. me.bin
+	_dl="$xbmkcache/file/$dlsum" # internet file to extract from e.g. .exe
+	_dl_bin="$xbmkcache/file/$binsum" # extracted file e.g. me.bin
 
 	[ "$5" = "/dev/null" ] && return 0 # fetch/extract disabled
 

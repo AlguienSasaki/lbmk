@@ -57,6 +57,7 @@ mk="$0"
 
 mk="$(x_ findpath "$mk")" || exit 1
 xbmkpwd="$(x_ dirname "$mk")" || exit 1
+xbmkcache="$xbmkpwd/cache"
 
 x_ cd "$xbmkpwd"
 

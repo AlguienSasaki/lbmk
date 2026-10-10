@@ -52,7 +52,7 @@ prep_release()
 	if [ "$1" != "tarball" ]; then
 		x_ cd "$rsrc"
 		[ ! -e "cache" ] && \
-			x_ ln -s "$XBMK_CACHE" "cache"; :
+			x_ ln -s "$xbmkcache" "cache"; :
 	fi
 
 	prep_release_$1
