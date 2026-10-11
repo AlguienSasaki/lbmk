@@ -427,7 +427,6 @@ getvfile()
 bootstrap()
 {
 	x_ chkvar "$xbmkpwd" xbmkpwd
-	x_ chkvar "$cbdir" cbdir
 
 	cbdir="src/coreboot/$tree"
 	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
