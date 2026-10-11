@@ -507,7 +507,6 @@ copy_elf()
 	x_ chkvar "$dest_dir" dest_dir
 	x_ chkvar "$srcdir" srcdir
 	x_ chkvar "$dest_dir" dest_dir
-	x_ chkvar "$listfile" listfile
 
 	[ -f "$listfile" ] && \
 		x_ mkdir -p "$dest_dir"
