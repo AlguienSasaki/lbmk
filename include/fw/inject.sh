@@ -136,8 +136,10 @@ readkconfig()
 	x_ chkvar "$xbtmp" xbtmp
 	x_ chkvar "$boarddir" boarddir
 
-	x_ rm -f "$xbtmp/cbcfg"
-	fx_ scankconfig x_ find "$boarddir/config" -type f
+	x_ rm -f "$xbtmp/cbcfg" "$xbtmp/cbcfg_full"
+
+	fx_ copykconfig x_ find "$boarddir/config" -type f
+	scankconfig "$xbtmp/cbcfg_full"
 
 	e "$xbtmp/cbcfg" f missing && \
 		return 1
@@ -146,6 +148,20 @@ readkconfig()
 	    err "Can't read '$xbtmp/cbcfg'" "readkconfig" "$@"
 
 	setvfile "$@" || return 1; :
+}
+
+copykconfig()
+{
+	x_ chkvar "$tree" tree
+	x_ chkvar "$xbtmp" xbtmp
+
+	x_ make -C "src/coreboot/$tree" distclean
+
+	x_ cp -a "$1" "src/coreboot/$tree/.config"
+	x_ make -C "src/coreboot/$tree" olddefconfig
+
+	x_ cat "src/coreboot/$tree/.config" >> "$xbtmp/cbcfg_full" || \
+	    err "can't write to tmpcfg" copykconfig "$@"; :
 }
 
 scankconfig()
