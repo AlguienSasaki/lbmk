@@ -6,6 +6,8 @@
 eval "`newvar url bkup_url fetch_depend loc subcurl subcurl_bkup subgit \
     subgit_bkup subhash badhash badtghash`"
 
+x_ chkvar "$xbtmp" xbtmp
+
 tmpgit="$xbtmp/gitclone"
 tmpgitcache="$xbtmp/tmpgit"
 
@@ -15,6 +17,10 @@ tmpgitcache="$xbtmp/tmpgit"
 
 delete_old_project_files()
 {
+	x_ chkvar "$configdir" configdir
+	x_ chkvar "$datadir" datadir
+	x_ chkvar "$xbtmp" xbtmp
+
 	# delete an entire source tree along with its builds:
 	same_pjhash mhash "$tree" badhash "$datadir" \
 	    "$configdir/$tree" "$mdir" || \
@@ -25,6 +31,9 @@ delete_old_project_files()
 	if [ -z "$target" ] || [ "$target" = "$tree" ]; then
 		return 0
 	fi
+
+	x_ chkvar "$configdir" configdir
+	x_ chkvar "$xbmkcache" xbmkcache
 
 	# delete only target builds, if only the target changed
 	same_pjhash mtghash "$target" badtghash "$configdir/$target" \
@@ -42,6 +51,9 @@ same_pjhash()
 	badhashvar="$3"
 
 	shift 3
+
+	x_ chkvar "$xbmkcache" xbmkcache
+	x_ chkvar "$xbtmp" xbtmp
 
 	x_ mkdir -p "$xbmkcache/$hashdir"
 
@@ -76,6 +88,8 @@ same_pjhash()
 
 fetch_trees()
 {
+	x_ chkvar "$xbmkpwd" xbmkpwd
+
 	[ -d "src/$project/$tree" ] && return 0
 
 	mk_dependencies -f $fetch_depend
@@ -96,6 +110,7 @@ git_prep()
 
 	xbget git "$1" "$2" "$tmpgit" "$rev" "$_patchdir"
 
+	x_ chkvar "$mdir" mdir
 	[ -f "$mdir/module.list" ] && \
 		git_prep_submodules "$@"
 
@@ -121,6 +136,8 @@ git_prep_submodules()
 
 fetch_submodule()
 {
+	x_ chkvar "$mdir" mdir
+
 	mcfgstr="$(x_ grep "$1:" "$mdir/module.list")" || err
 
 	mcfgdir="$(printf "%s\n" "$mcfgstr" | awk -F : '{print $2}' || \
@@ -130,6 +147,8 @@ fetch_submodule()
 	subpdir="$1"
 
 	eval "`newvar st subcurl subcurl_bkup subgit subgit_bkup subhash`"
+
+	x_ chkvar "$mcfgdir" mcfgdir
 
 	e "$mcfgdir/module.cfg" f missing && return 0
 	. "$mcfgdir/module.cfg" || \
@@ -145,6 +164,8 @@ fetch_submodule()
 		return 0
 	[ -z "$subhash" ] && \
 		err "subhash not set" "fetch_submodule" "$@"
+
+	x_ chkvar "$tmpgit" tmpgit
 
 	[ "$st" = "git" ] && \
 		x_ rm -Rf "$tmpgit/$subpdir"
@@ -180,6 +201,8 @@ try_fetch_git()
 	# let's say it was https://foo.example.com/repo, then cached
 	# directories becomes cache/mirror/foo.example.com/repo
 
+	x_ chkvar "$xbmkcache" xbmkcache
+
 	cached="$xbmkcache/mirror/${1#*://}"
 
 	x_ mkdir -p "${5%/*}" "${cached%/*}"
@@ -205,6 +228,8 @@ try_fetch_copy()
 
 try_fetch_curl()
 {
+	x_ chkvar "$xbmkcache" xbmkcache
+
 	cached="file/$6"
 	cached="$xbmkcache/$cached"
 

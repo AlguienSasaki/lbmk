@@ -83,6 +83,9 @@ check_release()
 
 check_target()
 {
+	x_ chkvar "$cbcfgsdir" cbcfgsdir
+	x_ chkvar "$boarddir" boarddir
+
 	[ "$board" = "${board#serprog_}" ] || return 1
 
 	boarddir="$cbcfgsdir/$board"
@@ -102,6 +105,8 @@ check_target()
 
 patch_release()
 {
+	x_ chkvar "$tmpromdel" tmpromdel
+
 	[ "$nuke" != "nuke" ] && \
 		x_ "$mk" download "$board"
 
@@ -128,6 +133,9 @@ patch_release()
 
 readkconfig()
 {
+	x_ chkvar "$xbtmp" xbtmp
+	x_ chkvar "$boarddir" boarddir
+
 	x_ rm -f "$xbtmp/cbcfg"
 	fx_ scankconfig x_ find "$boarddir/config" -type f
 
@@ -142,6 +150,8 @@ readkconfig()
 
 scankconfig()
 {
+	x_ chkvar "$xbtmp" xbtmp
+
 	for cbc in $checkvars; do
 		grep "$cbc" "$1" 2>/dev/null | grep -v "\$(" \
 		    1>>"$xbtmp/cbcfg" || :
@@ -150,6 +160,9 @@ scankconfig()
 
 modify_mac()
 {
+	x_ chkvar "$xbtmp" xbtmp
+	x_ chkvar "$tmpromdir" tmpromdir
+
 	x_ cp "${CONFIG_GBE_BIN_PATH##*../}" "$xbtmp/gbe"
 
 	if [ -n "$new_mac" ] && [ "$new_mac" != "restore" ]; then
@@ -166,6 +179,8 @@ modify_mac()
 
 newmac()
 {
+	x_ chkvar "$xbtmp" xbtmp
+
 	e "$1" f || return 0
 	xchanged="y"
 	x_ "$ifdtool" $ifdprefix -i GbE:"$xbtmp/gbe" "$1" -O "$1"

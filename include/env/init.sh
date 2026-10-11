@@ -14,6 +14,8 @@ eval "`newvar aur_notice basetmp board checkvarschk checkvarsxbmk configdir \
 
 xbmk_init()
 {
+	x_ chkvar "$xbmkpwd" xbmkpwd
+
 	xbmklock="$xbmkpwd/lock"
 	basetmp="$xbmkpwd/xbmkwd"
 	sha512sum="$xbmkpwd/util/sbase/sha512sum"
@@ -167,6 +169,7 @@ xbmk_parent_set_env()
 
 	forx 'xbmk_%s' parent_set_export set_version
 
+	x_ chkvar "$xbtmp" xbtmp
 	remkdir "$xbtmp" "$xbtmp/xbmkpath"
 
 	xbmk_set_pyver
@@ -181,6 +184,8 @@ xbmk_parent_check_tmp()
 
 	x_ rm -f "$xbmklist"
 	x_ touch "$xbmklist"
+
+	x_ chkvar "$basetmp" basetmp
 
 	for xtmpdir in "$basetmp"/xbmk_*; do
 		[ ! -e "$xtmpdir" ] || \
@@ -208,6 +213,8 @@ xbmk_parent_set_export()
 	[ -e "$xbmkcache" ] && [ ! -d "$xbmkcache" ] && \
 		err "cachedir '$xbmkcache' is a file" \
 		    "xbmk_parent_set_export" "$@"
+
+	x_ chkvar "$xbtmp" xbtmp
 
 	export PATH="$xbtmp/xbmkpath:$PATH"
 	xbmkpath="$PATH"
@@ -282,6 +289,7 @@ xbmk_set_pyver()
 
 	# set up python in PATH (environmental variable):
 	(
+		x_ chkvar "$xbtmp" xbtmp
 		x_ cd "$xbtmp/xbmkpath"
 		x_ ln -s "`x_ pybin "$python"`" python || \
 		    err "can't make symlink" "xbmk_set_pyver" "$@"

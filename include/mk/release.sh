@@ -17,13 +17,15 @@ mkrelease()
 		export XBMK_RELEASE="y"
 
 	reldir="release"
-
 	reldest="$reldir/$version"
 	[ -e "$reldest" ] && \
 		err "already exists: \"$reldest\"" "release" "$@"
 
 	vdir="`mktemp -d || err "can't make vdir"`" || \
 	    err "can't make tmp vdir" "release" "$@"
+
+	x_ chkvar "$vdir" vdir
+
 	vdir="$vdir/$version"
 	rsrc="$vdir/${relname}_src"
 
@@ -73,6 +75,8 @@ prep_release_src()
 
 nuke()
 {
+	x_ chkvar "$rsrc" rsrc
+
 	r="$rsrc/src/${1#config/module/}"
 
 	if [ -d "${r%/*}" ]; then
@@ -83,6 +87,8 @@ nuke()
 
 prep_release_tarball()
 {
+	x_ chkvar "$rsrc" rsrc
+
 	git log --graph --pretty=format:'%Cred%h%Creset %s %Creset' \
 	    --abbrev-commit > "$rsrc/CHANGELOG" || \
 	    err "can't create '$rsrc/CHANGELOG'" "prep_release_tarball" "$@" 

@@ -13,14 +13,15 @@
 # with inject.sh concatenated onto vendor.sh; they are inexorably intertwined.
 # The main "mk" script sources vendor.sh first, and then inject.sh, in lbmk.
 
+x_ chkvar "$xbmkpwd" xbmkpwd
+
 e6400_unpack="$xbmkpwd/src/bios_extract/default/dell_inspiron_1100_unpacker.py"
 me7updateparser="$xbmkpwd/util/me7_update_parser/me7_update_parser.py"
 pfs_extract="$xbmkpwd/src/biosutilities/default/Dell_PFS_Extract.py"
 uefiextract="$xbmkpwd/elf/uefitool/default/default/noconfig/uefiextract"
 bsdtar="$xbmkpwd/elf/libarchive/default/default/noconfig/bsdtar"
 bsdunzip="$xbmkpwd/elf/libarchive/default/default/noconfig/bsdunzip"
-vendir="vendorfiles"
-appdir="$vendir/app"
+appdir="vendorfiles/app"
 vfix="DO_NOT_FLASH_YET._FIRST,_INJECT_FILES_VIA_INSTRUCTIONS_ON_LIBREBOOT.ORG_"
 
 # lbmk-specific extension to the "checkvars" variable (not suitable for cbmk)
@@ -108,6 +109,9 @@ fetch()
 
 	[ -z "$binsum" ] && err "binsum is empty (no checksum)" "fetch" "$@"
 
+	x_ chkvar "$xbmkcache" xbmkcache
+	x_ chkvar "$cbdir" cbdir
+
 	_dl="$xbmkcache/file/$dlsum" # internet file to extract from e.g. .exe
 	_dl_bin="$xbmkcache/file/$binsum" # extracted file e.g. me.bin
 
@@ -173,6 +177,9 @@ mkdst()
 
 extract_intel_me()
 {
+	x_ chkvar "$xbtmp" xbtmp
+	x_ chkvar "$xbmkpwd" xbmkpwd
+
 	mfs=""
 	_7ztest="$xbtmp/metmp/a"
 	_metmp="$xbtmp/me.bin"
@@ -215,6 +222,9 @@ extract_intel_me()
 # must be called inside a subshell.
 find_me()
 {
+	# err won't work here. skip if xbtmp not set, for safety
+	( x_ chkvar "$xbtmp" xbtmp ) || return 0; :
+
 	[ -f "$_metmp" ] && exit 1 # me.bin found
 	[ -L "$1" ] && return 0 # symlinks disabled for security reasons
 
@@ -282,6 +292,8 @@ extract_archive()
 
 extract_kbc1126ec()
 {
+	x_ chkvar "$appdir" appdir
+
 	( extract_kbc1126ec_dump ) || \
 	    err "$board: can't extract kbc1126 fw" "extract_kbc1126ec" "$@"
 
@@ -294,6 +306,8 @@ extract_kbc1126ec()
 
 extract_kbc1126ec_dump()
 {
+	x_ chkvar "$appdir" appdir
+
 	x_ cd "$appdir/"
 
 	mv Rompaq/68*.BIN ec.bin || \
@@ -310,6 +324,8 @@ extract_kbc1126ec_dump()
 
 extract_e6400vga()
 {
+	x_ chkvar "$appdir" appdir
+
 	set +u +e
 
 	if [ -z "$E6400_VGA_offset" ] || [ -z "$E6400_VGA_romname" ]; then
@@ -348,6 +364,8 @@ extract_sch5545ec()
 # https://pcsupport.lenovo.com/us/en/products/laptops-and-netbooks/thinkpad-t-series-laptops/thinkpad-t480-type-20l5-20l6/20l5/solutions/ht508988
 extract_tbfw()
 {
+	x_ chkvar "$appdir" appdir
+
 	[ -z "$TBFW_size" ] && err "$board: TBFW_size unset" extract_tbfw "$@"
 
 	fx_ copytb x_ find "$appdir" -type f -name "TBT.bin"
@@ -365,6 +383,7 @@ copytb()
 
 extract_fsp()
 {
+	x_ chkvar "$cbdir" cbdir
 	x_ python "$cbdir/3rdparty/fsp/Tools/SplitFspBin.py" split -f "$1" \
 	    -o "${_pre_dest%/*}" -n "Fsp.fd"
 }
@@ -407,6 +426,9 @@ getvfile()
 
 bootstrap()
 {
+	x_ chkvar "$xbmkpwd" xbmkpwd
+	x_ chkvar "$cbdir" cbdir
+
 	cbdir="src/coreboot/$tree"
 	kbc1126_ec_dump="$xbmkpwd/$cbdir/util/kbc1126/kbc1126_ec_dump"
 	cbfstool="elf/coreboot/$tree/cbfstool"
@@ -518,6 +540,8 @@ add_vfiles()
 
 vfile()
 {
+	x_ chkvar "$xbtmp" xbtmp
+
 	[ "$2" = "/dev/null" ] && return 0
 
 	cbfsname="$1"

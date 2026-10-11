@@ -18,6 +18,10 @@ newvar()
 
 mkrom_tarball()
 {
+	mkrom_arg1="${1-}"
+	x_ chkvar "$mkrom_arg1" "mkrom_tarball arg1"
+	x_ chkvar "${mkrom_arg1%/*}" "mkrom_tarball arg1%/*"
+
 	update_xbmkver "$1"
 	mktarball "$1" "${1%/*}/${relname}_${1##*/}.tar.xz"
 
@@ -26,6 +30,8 @@ mkrom_tarball()
 
 update_xbmkver()
 {
+	x_ chkvar "$1" "update_xbmkver arg1"
+
 	[ -d "$1" ] || return 0;
 
 	xbmk_sanitize_version
@@ -103,6 +109,8 @@ mkimport_uboot()
 
 mk_uboot_configs()
 {
+	x_ chkvar "$xbtmp" xbtmp
+
 	ucfgs="src/u-boot/$3/configs"
 
 	rm -f "$xbtmp/ucfg"
@@ -121,6 +129,8 @@ cp_uboot_cfg()
 	udir="${1##*/}"
 	udir="$(printf "%s\n" "$udir" | sed 's,-,_,g')"
 
+	x_ chkvar "$udir" udir
+
 	ldir="config/module/u-boot/$udir"
 
 	x_ remkdir "$ldir" "$ldir/config"
@@ -133,7 +143,7 @@ cp_uboot_cfg()
 	x_ printf "release=\"n\"" >> "$ldir/target.cfg" || \
 	    err "can't set release=n" cp_uboot_config "$@"
 
-	x_ yes '' | "$mk" -l u-boot $udir || \
+	x_ "$mk" -l u-boot $udir || \
 	    err "can't update cfg" cp_uboot_config "$@";
 }
 

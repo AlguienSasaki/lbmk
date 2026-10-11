@@ -8,6 +8,9 @@ eval "`newvar MRC_board MRC_hash MRC_url MRC_url_bkup SHELLBALL`"
 
 extract_refcode()
 {
+	x_ chkvar "$appdir" appdir
+	x_ chkvar "$_pre_dest" _pre_dest
+
 	extract_mrc
 
 	# cbfstool after coreboot 4.13 changed the stage file attribute scheme,
@@ -30,6 +33,8 @@ extract_refcode()
 
 extract_mrc()
 {
+	x_ chkvar "$appdir" appdir
+
 	[ -z "$MRC_board" ] && \
 		err "MRC_board unset" "extract_mrc" "$@"
 	[ -z "$CONFIG_MRC_FILE" ] && \
@@ -43,6 +48,9 @@ extract_mrc()
 		extract_archive "$SHELLBALL" .
 
 	) || err "mrc download/extract failure" "extract_mrc" "$@"
+
+	x_ chkvar "$appdir" appdir
+	x_ chkvar "${_pre_dest%/*}" "pre_dest%/*"
 
 	x_ "$cbfstool" "$appdir/"bios.bin extract -n mrc.bin \
 	    -f "${_pre_dest%/*}/mrc.bin" -r RO_SECTION

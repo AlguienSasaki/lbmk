@@ -33,6 +33,12 @@ forx()
 	done
 }
 
+chkvar()
+{
+	[ -z "${1-}" ] && \
+	    err "!!ABORT TRAP: empty path prefix '${2-}'; DIRECTORY ESCAPE!!"; :
+}
+
 x_()
 {
 	[ $# -lt 1 ] || "$@" || err "UNHANDLED ERROR" "x_" "$@"; :
@@ -57,6 +63,8 @@ mk="$0"
 
 mk="$(x_ findpath "$mk")" || exit 1
 xbmkpwd="$(x_ dirname "$mk")" || exit 1
+
+x_ chkvar "$xbmkpwd" xbmkpwd
 xbmkcache="$xbmkpwd/cache"
 
 x_ cd "$xbmkpwd"
@@ -172,13 +180,17 @@ main()
 		x_ ls -1 "$configdir" && \
 		return 0
 
+	x_ chkvar "$datadir" datadir
 	listfile="$datadir/build.list"
 	[ ! -f "$listfile" ] && \
 		listfile="" # TODO: override listfile per-tree
 
 	mkhelpercfg="$datadir/mkhelper.cfg"
+
+	x_ chkvar "$xbtmp" xbtmp
 	e "$mkhelpercfg" f missing && \
 		mkhelpercfg="$xbtmp/mkhelper.cfg"
+
 	x_ touch "$mkhelpercfg"
 
 	remkdir "${tmpgit%/*}"
@@ -188,9 +200,9 @@ main()
 
 
 	if [ $# -lt 1 ]; then
-		[ -n "$configdir" ] || err "configdir string empty" main "$@"
+		x_ chkvar "$configdir" configdir
 		for tgcfg in "$configdir"/*; do
-			[ -d "$tgcfg" ] || continue
+			[ -d "$tgcfg" ] || continue; :
 			x_ "$mk" $flag $project $tgcfg
 		done
 		return 0
@@ -213,6 +225,10 @@ handle_target()
 	target_dir="$configdir/$target"
 	defscan="$target_dir/config"
 
+	x_ chkvar "$target" target
+	x_ chkvar "$target_dir" target_dir
+	x_ chkvar "$configdir" configdir
+
 	configure_target "$target_dir" && \
 		$if_not_fetch x_ handle_buildcfg
 
@@ -222,6 +238,8 @@ handle_target()
 
 configure_target()
 {
+	x_ chkvar "$1" "configure_target arg1"
+
 	_tcfg="$1/target.cfg"
 
 	eval "`newvar $cfgvars`"
@@ -234,6 +252,9 @@ configure_target()
 		err "$project/$target: tree unset" configure_target "$@"
 
 	srcdir="src/$project/$tree"
+
+	x_ chkvar "$xbtmp" xbtmp
+	x_ chkvar "$target_dir" target_dir
 
 	# specify directory containing e.g. coreboot defconfigs
 	x_ mkdir -p "$xbtmp/noconfig/config"
@@ -258,6 +279,7 @@ configure_target()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 1
 
+	x_ chkvar "$xbmkpwd" xbmkpwd
 	mdir="$xbmkpwd/config/submodule/$project/$tree"
 
 	if [ ! -f "CHANGELOG" ]; then
@@ -369,6 +391,7 @@ check_build_environment()
 {
 	[ ! -f "$1" ] && return 1
 
+	x_ chkvar "$dest_dir" dest_dir
 	( fx_ "eval exit 1 && err" find "$dest_dir" -type f ) || return 1
 
 	eval "$(printf '%s\n' "$xarch" | awk \
@@ -390,11 +413,15 @@ check_xgcc()
 	[ "$xfix" = "x86_64" ] && xfix="x64"
 	[ "$xfix" = "riscv64" ] && xfix="riscv"
 
+	x_ chkvar "$cbelfdir" cbelfdir
 	xgccfile="$cbelfdir/xgcc_${xfix}_was_compiled"
 	xgccargs="crossgcc-$xfix UPDATED_SUBMODULES=1 CPUS=$XBMK_THREADS"
 
 	x_ "$mk" -f coreboot "${cbdir#src/coreboot/}"
 	x_ mkdir -p "$cbelfdir"
+
+	x_ chkvar "$xbmkpwd" xbmkpwd
+	x_ chkvar "$cbdir" cbdir
 
 	# tell build systems what cross-compiler to use
 	export PATH="$xbmkpwd/$cbdir/util/crossgcc/xgcc/bin:$PATH"
@@ -415,6 +442,10 @@ handle_makefile()
 {
 	clean_src
 
+	x_ chkvar "$srcdir" srcdir
+	x_ chkvar "$cfgname" cfgname
+	x_ chkvar "$buildcfg" buildcfg
+
 	[ -f "$buildcfg" ] && [ "$noconfig" != "y" ] && \
 		x_ cp "$buildcfg" "$srcdir/$cfgname"
 
@@ -424,6 +455,10 @@ handle_makefile()
 	_copy="$cfgname"
 	[ "$mode" = "savedefconfig" ] && \
 		_copy="defconfig"
+
+	x_ chkvar "$srcdir" srcdir
+	x_ chkvar "$_copy" _copy
+	x_ chkvar "$buildcfg" buildcfg
 
 	[ "$noconfig" != "y" ] && [ -f "$srcdir/$_copy" ] && \
 	    $if_make_config $if_not_skip_build \
@@ -461,12 +496,19 @@ check_autoconf()
 
 check_makefile()
 {
+	x_ chkvar "${1-}" "check_makefile first arg" 
+
 	[ ! -f "$1/Makefile" ] && [ ! -f "$1/makefile" ] && \
 	    [ ! -f "$1/GNUmakefile" ] && return 1; :
 }
 
 copy_elf()
 {
+	x_ chkvar "$dest_dir" dest_dir
+	x_ chkvar "$srcdir" srcdir
+	x_ chkvar "$dest_dir" dest_dir
+	x_ chkvar "$listfile" listfile
+
 	[ -f "$listfile" ] && \
 		x_ mkdir -p "$dest_dir"
 

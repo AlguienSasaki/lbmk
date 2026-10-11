@@ -10,6 +10,8 @@ grubdata="config/data/grub"
 
 buildser()
 {
+	x_ chkvar "$sersrc" sersrc
+
 	if [ "$1" = "pico" ]; then
 		x_ cmake -DPICO_BOARD="$2" \
 		    -DPICO_SDK_PATH="$picosdk" -B "$sersrc/build" "$sersrc"
@@ -40,6 +42,10 @@ copyps1bios()
 mkpayload_grub()
 {
 	eval "`newvar grub_modules mod_blacklist`"
+
+	x_ chkvar "$srcdir" srcdir
+	x_ chkvar "$xbtmp" xbtmp
+	x_ chkvar "$grubdata" grubdata
 
 	x_ rm -f "$srcdir/grub.elf"
 
@@ -93,6 +99,8 @@ corebootpremake()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
+	x_ chkvar "$srcdir" srcdir
+
 	printf "%s\n" "${version%%-*}" > "$srcdir/.coreboot-version" || \
 	    err "!mk $srcdir .coreboot-version" "corebootpremake" "$@"
 
@@ -102,6 +110,8 @@ corebootpremake()
 
 cook_coreboot_config()
 {
+	x_ chkvar "$srcdir" srcdir
+
 	[ -n "$mode" ] && return 0
 	[ -f "$srcdir/$cfgname" ] || return 0
 
@@ -125,6 +135,9 @@ cook_ifd_mac_address()
 	VARIANT_DIR="" # populated later
 	CONFIG_VARIANT_DIR=""
 	CONFIG_MAINBOARD_DIR=""
+
+	x_ chkvar "$srcdir" srcdir
+	x_ chkvar "$xbtmp" xbtmp
 
 	# variables inside defconfig
 	obj="$srcdir/build"
@@ -219,6 +232,8 @@ unlock_rom()
 
 	eval "$(newvar ifd_quirk ifd_chipset is_ifd is_me)"
 
+	x_ chkvar "$srcdir" srcdir
+
 	while read -r cfgread; do
 		[ -n "$ifd_chipset" ] || \
 		    [ "$cfgread" = "${cfgread#"CONFIG_IFD_CHIPSET="}" ] || \
@@ -268,7 +283,7 @@ mkcorebootbin()
 	[ "$XBMK_RELEASE" = "y" ] && [ "$release" = "n" ] && \
 		return 0
 
-	[ -z "$defscan" ] && err "defscan empty" mkcorebootbin "$@"
+	x_ chkvar "$defscan" defscan
 
 	for y in "$defscan"/*; do
 		[ -f "$y" ] || continue
@@ -283,6 +298,8 @@ mkcorebootbin()
 mkcorebootbin_real()
 {
 	[ "$target" = "$tree" ] && return 0
+
+	x_ chkvar "$xbtmp" xbtmp
 
 	tmprom="$xbtmp/coreboot.rom"
 
@@ -463,6 +480,8 @@ add_seabios()
 
 add_grub()
 {
+	x_ chkvar "$grubdata" grubdata
+
 	[ "$initmode" = "normal" ] && \
 		return 1 # no gfxinit required by grub ("normal" not allowed)
 
@@ -548,6 +567,7 @@ cprom()
 		x_ cp "$tmprom" "$irom" && cpcmd="mv"
 
 		if [ "${1%.gkb}" != "$1" ]; then
+			x_ chkvar "$grubdata" grubdata
 			cbfs "$irom" "$grubdata/keymap/$tmpnew" keymap.gkb raw
 		fi
 	fi
@@ -596,6 +616,8 @@ mkcoreboottar()
 mkcbtest()
 {
 	(
+	x_ chkvar "$xbtmp" xbtmp
+
 	testval=0
 	cbsafe="$xbtmp/newtargetlist"
 	cbsafe_final="config/data/coreboot/targets.list"
@@ -607,6 +629,8 @@ mkcbtest()
 		[ -d "$cbhotd" ] || continue;
 
 		cbmatch=""
+
+		x_ chkvar "$cbhotd" cbhotd
 
 		for cbhot in "$cbhotd/config/"*; do
 			[ -f "$cbhot" ] || continue;
@@ -647,6 +671,6 @@ mkcbtest()
 		x_ mv "$cbsafe" "$cbsafe_final";
 
 	exit $testval
-	) || err "Issue with configs under config/module/coreboot/";
+	) || err "Issue with configs under config/module/coreboot/"; :
 }
 
