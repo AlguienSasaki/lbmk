@@ -84,7 +84,7 @@ check_release()
 check_target()
 {
 	x_ chkvar "$cbcfgsdir" cbcfgsdir
-	x_ chkvar "$boarddir" boarddir
+	x_ chkvar "$board" boarddir
 
 	[ "$board" = "${board#serprog_}" ] || return 1
 
